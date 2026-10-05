@@ -9,14 +9,20 @@ class FakeMesh:
         self.name = name
         self.users = 0
         self.vertices = []
+        self.polygons = []
+        self.shape_keys = None
         self.faces = []
         self.table = table
         self.library = None
         self.materials = FakeMaterialLinks()
 
     def from_pydata(self, vertices, edges, faces):
-        self.vertices = vertices
+        self.vertices = [NS(co=list(vertex)) for vertex in vertices]
         self.faces = faces
+        self.polygons = [NS(vertices=list(face)) for face in faces]
+
+    def validate(self):
+        return False
 
     def update(self):
         pass
@@ -25,6 +31,7 @@ class FakeMesh:
         mesh = self.table.new(self.name + "Copy")
         mesh.vertices = copy.deepcopy(self.vertices)
         mesh.faces = copy.deepcopy(self.faces)
+        mesh.polygons = copy.deepcopy(self.polygons)
         return mesh
 
 

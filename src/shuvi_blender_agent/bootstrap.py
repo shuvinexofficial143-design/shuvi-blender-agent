@@ -17,6 +17,7 @@ def main() -> None:
     from shuvi_blender_agent.bridge import serve
     from shuvi_blender_agent.files import OutputWorkspace
     from shuvi_blender_agent.inspection import BpyInspector
+    from shuvi_blender_agent.mesh import MeshOperations
     from shuvi_blender_agent.operations import ObjectOperations
     from shuvi_blender_agent.rendering import RenderOperations
     from shuvi_blender_agent.safety import SafetyPolicy
@@ -39,6 +40,7 @@ def main() -> None:
     appearance = AppearanceOperations(operations)
     assets = AssetOperations(operations)
     animation = AnimationOperations(operations)
+    meshes = MeshOperations(operations)
     output_directory = os.environ.pop("SHUVI_OUTPUT_DIRECTORY", "")
     rendering = RenderOperations(
         operations, policy, OutputWorkspace(Path(output_directory)) if output_directory else None
@@ -56,6 +58,7 @@ def main() -> None:
                     *assets.tools(),
                     *animation.tools(),
                     *rendering.tools(),
+                    *meshes.tools(),
                 ],
                 policy,
             ),

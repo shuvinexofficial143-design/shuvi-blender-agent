@@ -3,12 +3,12 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest pushed commit before this checkpoint: 7755a3f7aca6a1c89a68fd2ca0ee872def2f08a0.
+Latest pushed commit before this checkpoint: cd69465a39ecc203a7a3853f7b72b2533fd576c5.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-9 initial bounded source capabilities implemented; Phase 10 mesh tooling next.
+Phases 1-10 initial bounded source capabilities implemented; Phase 11 orchestration next.
 
 ## Completed and verified
 - Fetched actual public remote; empty repository, no prior commits/files to preserve.
@@ -30,16 +30,18 @@ Phases 1-9 initial bounded source capabilities implemented; Phase 10 mesh toolin
   legacy/slotted action readback, coordinates/interpolation verification, no overwrites.
 - CPU-only bounded render configuration/execution, disabled render policy by default,
   confined non-overwriting outputs, structural PNG verification and .blend copy checkpoints.
+- Indexed mesh inspection/creation and vertex translation with separate geometry revisions,
+  strict work limits, prevalidated indices and actual geometry comparison.
 
 ## Status
-Source: foundation through initial rendering/checkpoint tools implemented. Unit tests: 107 passing.
+Source: foundation through initial indexed mesh tools implemented. Unit tests: 115 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
 CI all prior checkpoints: success. Latest assets run 37314216937. Current CI pending.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-rendering.py, files.py, safety.py, process.py, inspection.py, tests/test_rendering.py.
-Next: bounded indexed mesh inspection/creation/editing with geometry revision checks.
+mesh.py, bootstrap.py, tests/test_mesh.py, fake_bpy.py.
+Next: typed client facade/capabilities and bounded fail-fast plan execution, no provider duplication.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -60,6 +62,6 @@ Next: bounded indexed mesh inspection/creation/editing with geometry revision ch
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Build bounded indexed mesh workflows and actual geometry readback using bpy-shaped fakes.
+Build typed client/orchestration contract with validated data references and no Python eval.
 Deletion stays deferred until runtime-verified checkpoint recovery. Never launch Blender.
 Keep destructive deletion deferred until checkpoint/recovery exists. Do not launch Blender.
