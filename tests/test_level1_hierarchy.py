@@ -253,3 +253,58 @@ def test_linked_collection_mutations_are_denied():
         )
     )
     assert linked.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_collection_move_rejects_unlinked_destination():
+    bpy, registry = setup()
+    orphan_collection = bpy.data.collections.new("Unlinked")
+    assert orphan_collection not in bpy.context.scene.collection.children
+    item = snapshots(registry)["Cube"]
+    result = registry.dispatch(
+        Request(
+            "collection.move_object",
+            {
+                "source": "Collection",
+                "destination": "Unlinked",
+                "target": target(item),
+                "expected_scene_revision": scene_revision(registry),
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert bpy.context.scene.collection in bpy.data.objects.get("Cube").users_collection
+
+
+def test_child_collection_requires_scene_reachable_parent_and_bounded_depth():
+    bpy, registry = setup()
+    unlinked = bpy.data.collections.new("UnlinkedParent")
+    denied = registry.dispatch(
+        Request(
+            "collection.create_child",
+            {
+                "name": "NeverCreated",
+                "parent": unlinked.name,
+                "expected_scene_revision": scene_revision(registry),
+            },
+        )
+    )
+    assert denied.error.code == ErrorCode.SAFETY_DENIED
+    assert bpy.data.collections.get("NeverCreated") is None
+
+    parent = bpy.context.scene.collection
+    for index in range(32):
+        child = bpy.data.collections.new(f"Depth{index}")
+        parent.children.link(child)
+        parent = child
+    denied = registry.dispatch(
+        Request(
+            "collection.create_child",
+            {
+                "name": "TooDeep",
+                "parent": parent.name,
+                "expected_scene_revision": scene_revision(registry),
+            },
+        )
+    )
+    assert denied.error.code == ErrorCode.SAFETY_DENIED
+    assert bpy.data.collections.get("TooDeep") is None
