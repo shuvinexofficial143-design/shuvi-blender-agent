@@ -4,11 +4,14 @@ from dataclasses import dataclass
 
 from .contracts import Result, Status
 from .errors import AgentError, ErrorCode
-from .inspection import MAX_DETAILS, MAX_SCENE_COLLECTIONS
+from .inspection import MAX_DETAILS, MAX_INSPECTION_WORK, MAX_SCENE_COLLECTIONS
 from .models import ObjectTarget, object_name
 from .safety import SafetyClass, require_revision
 from .tools import Tool
 from .validation import fields, string
+
+
+MAX_COLLECTION_DEPTH = 32
 
 
 def _collection_name(value):
@@ -126,6 +129,38 @@ class CollectionOperations:
         if self.bpy.context.mode != "OBJECT":
             raise AgentError(ErrorCode.SAFETY_DENIED, "Object mode required")
 
+    def _scene_collection_depth(self, collection):
+        root = self.bpy.context.scene.collection
+        if collection == root:
+            return 0
+
+        collections = self.inspector.scene_collections()
+        reverse = {}
+        work = 0
+        for parent in [root, *collections]:
+            for child in parent.children:
+                work += 1
+                if work > MAX_INSPECTION_WORK:
+                    raise AgentError(
+                        ErrorCode.SAFETY_DENIED, "Collection hierarchy work limit exceeded"
+                    )
+                reverse.setdefault(id(child), []).append(parent)
+
+        queue = [(collection, 0)]
+        visited = {id(collection)}
+        while queue:
+            current, depth = queue.pop(0)
+            if depth >= MAX_COLLECTION_DEPTH:
+                continue
+            for parent in reverse.get(id(current), ()):
+                if parent == root:
+                    return depth + 1
+                key = id(parent)
+                if key not in visited:
+                    visited.add(key)
+                    queue.append((parent, depth + 1))
+        return None
+
     def _parents(self, collection):
         parents = []
         scene_root = self.bpy.context.scene.collection
@@ -212,7 +247,10 @@ class CollectionOperations:
         self._editable_object(obj)
         if collection not in obj.users_collection:
             raise AgentError(ErrorCode.NOT_FOUND, "Object is not linked to collection")
-        if len(obj.users_collection) <= 1:
+        remaining = [item for item in obj.users_collection if item != collection]
+        if not remaining or not any(
+            self._scene_collection_depth(item) is not None for item in remaining
+        ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Unlink would orphan object from the scene")
         collection.objects.unlink(obj)
         self.bpy.context.view_layer.update()
@@ -241,6 +279,10 @@ class CollectionOperations:
         destination = self._collection(action.destination)
         self._editable_collection(source)
         self._editable_collection(destination)
+        if self._scene_collection_depth(destination) is None:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Destination collection is not linked to active scene"
+            )
         obj, before = self.inspector.target(action.target)
         self._editable_object(obj)
         if source not in obj.users_collection:
@@ -294,6 +336,13 @@ class CollectionOperations:
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Collection name already exists")
         parent = self._collection(action.parent)
         self._editable_collection(parent)
+        parent_depth = self._scene_collection_depth(parent)
+        if parent_depth is None:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Parent collection is not linked to active scene"
+            )
+        if parent_depth >= MAX_COLLECTION_DEPTH:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Collection hierarchy depth limit reached")
         if len(parent.children) >= MAX_DETAILS:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Parent child-collection limit reached")
         collection = self.bpy.data.collections.new(action.name)
