@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 23 tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 46 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -32,13 +32,14 @@ clients should retain the filter, session ID and revision while continuing a pag
 | --- | --- | --- | --- |
 | system.ping | none | read_only | `ready=true` after a roundtrip |
 | system.capabilities | none | read_only | protocol/session/Blender version and operation catalog |
-| scene.inspect | none | read_only | scene/file/render/frames, counts, up to 64 collection summaries, revision |
+| scene.inspect | none | read_only | scene/file/render/frames, context, cursor, units, pivot, type counts, world presence, revision |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
-| object.create | name, kind, transform, expected_scene_revision | mutation | CUBE/PLANE/EMPTY; actual geometry counts/fingerprint, name/type/transform/membership |
+| object.create | name, kind, transform, expected_scene_revision | mutation | bounded primitive; actual geometry counts/fingerprint, name/type/transform/membership |
 | object.set_transform | target, transform | mutation | actual local transform and unchanged object identity/name |
 | object.duplicate | target, name, transform | mutation | distinct identity/mesh, copied geometry/material slots, transform/membership |
+| object.duplicate_linked | target, name, transform | mutation | distinct object identity with verified shared bounded mesh data |
 | material.create_assign | target, name, base_color, metallic, roughness | mutation | actual Principled shader inputs, material slot and properties |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -127,12 +128,24 @@ Level 1 primitive expansion: `object.create.kind` also accepts `UV_SPHERE`,
 `ICOSPHERE`, `CYLINDER`, `CONE`, `CIRCLE` (filled), `GRID`, `TORUS`.
 See [Level 1 control](LEVEL_1_CONTROL.md) for fixed geometry bounds.
 
-Level 1 additions (mutations require normal policy and fresh target):
-- object.rename: target, name
-- object.set_properties: target, properties (show_name/bounds/wire/all_edges/in_front,
-  display_type, RGBA color, pass_index, three-axis lock_location/rotation/scale, empty display)
-- object.patch_transform: target, transform (nonempty partial location/scale/rotation_euler
-  or unit rotation_quaternion WXYZ; one rotation representation)
-- object.set_visibility: target, visibility (hide_viewport, hide_render, hidden_in_view_layer)
-- selection.inspect: empty payload, read-only
-- selection.set: target or null, selected bool/null, active bool/null, expected_scene_revision
+Level 1 additions (mutations require normal policy and fresh state):
+- `scene.rename`: name, expected_scene_revision.
+- `scene.set_units`: bounded system/scale_length/length_unit patch plus scene revision.
+- `cursor.inspect` / `cursor.set`: read or verify the 3D cursor location.
+- `mode.inspect`: bounded current mode + active-object summary. Mode mutation is deferred.
+- `pivot.inspect` / `pivot.set`: transform pivot with an allowlisted Blender enum.
+- `object.rename`: target, name.
+- `object.set_properties`: allowlisted display/color/pass-index/transform-lock/empty-display
+  group only; no arbitrary property setter.
+- `object.patch_transform`: nonempty partial location/scale/XYZ Euler or unit WXYZ
+  quaternion; omitted channels are preserved.
+- `object.set_visibility`: hide_viewport, hide_render and view-layer hidden state.
+- `selection.inspect` / `selection.set`: bounded selected IDs and active object.
+- `hierarchy.inspect` / `hierarchy.set_parent`: parent/children readback, cycle rejection,
+  unparent via null parent, and optional keep-world.
+- `origin.inspect`: local and world object-origin locations; origin mutation is deferred.
+- `collection.inspect`, `collection.rename`, `collection.link_object`,
+  `collection.unlink_object`, `collection.move_object`, `collection.create_child`:
+  bounded collection management with stale-state guards and orphan prevention.
+- `object.duplicate_linked`: independent object sharing the source mesh datablock, with
+  geometry/material/readback checks and conservative mesh limits.
