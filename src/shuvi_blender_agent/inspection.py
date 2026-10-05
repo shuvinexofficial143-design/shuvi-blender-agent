@@ -11,6 +11,7 @@ from .errors import AgentError, ErrorCode
 from .models import ObjectTarget, PageQuery
 from .object_state import constraints, data_summary, properties
 from .safety import SafetyClass, require_revision
+from .scene_state import cursor_snapshot, unit_snapshot
 from .selection import selection_state
 from .tools import Tool
 from .validation import encode, fields, string
@@ -234,6 +235,8 @@ class BpyInspector:
             "file": self.bpy.data.filepath,
             "context": selection_state(self),
             "scene": scene.name,
+            "cursor": cursor_snapshot(self.bpy),
+            "units": unit_snapshot(scene),
             "frame": scene.frame_current,
             "frame_range": [scene.frame_start, scene.frame_end],
             "camera": self.identity(scene.camera) if scene.camera else None,
@@ -271,6 +274,8 @@ class BpyInspector:
             "file": self.bpy.data.filepath,
             "blender_version": list(self.bpy.app.version),
             "scene": scene.name,
+            "cursor": cursor_snapshot(self.bpy),
+            "units": unit_snapshot(scene),
             "revision": current_revision,
             "object_count": len(objects),
             "collections": [
