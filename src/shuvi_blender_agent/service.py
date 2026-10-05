@@ -13,6 +13,7 @@ from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
 from .safety import SafetyClass, SafetyPolicy
+from .scene_state import SceneStateOperations
 from .selection import SelectionOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
@@ -35,6 +36,7 @@ def create_registry(
         SelectionOperations(objects),
         HierarchyOperations(objects),
         CollectionOperations(objects),
+        SceneStateOperations(objects),
         AppearanceOperations(objects),
         AssetOperations(objects),
         AnimationOperations(objects),
