@@ -9,6 +9,9 @@ description = "Typed, verified Blender control engine for Shuvi"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.scripts]
+shuvi-blender-agent = "shuvi_blender_agent.__main__:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff>=0.9,<1", "build>=1,<2"]
 
