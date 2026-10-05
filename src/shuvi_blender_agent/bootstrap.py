@@ -12,6 +12,7 @@ def main() -> None:
     import bpy
 
     from shuvi_blender_agent.bridge import serve
+    from shuvi_blender_agent.inspection import BpyInspector
     from shuvi_blender_agent.safety import SafetyPolicy
     from shuvi_blender_agent.tools import ToolRegistry, ping_tool
 
@@ -26,8 +27,9 @@ def main() -> None:
         allow_destructive=os.environ.pop("SHUVI_ALLOW_DESTRUCTIVE", "0") == "1",
         allow_file_writes=os.environ.pop("SHUVI_ALLOW_FILE_WRITES", "0") == "1",
     )
+    inspector = BpyInspector(bpy)
     with socket.create_connection(("127.0.0.1", port), timeout=10) as connection:
-        serve(connection, token, ToolRegistry([ping_tool()], policy))
+        serve(connection, token, ToolRegistry([ping_tool(), *inspector.tools()], policy))
 
 
 if __name__ == "__main__":

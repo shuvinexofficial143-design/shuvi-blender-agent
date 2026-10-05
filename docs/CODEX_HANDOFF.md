@@ -3,12 +3,12 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest pushed commit before this checkpoint: a83ab7989ac2d04d456e6ff7cbac4065a4758a4c.
+Latest pushed commit before this checkpoint: 623a6b7981742349b80d72f837ae62e9eb478a14.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-3 initial source layers complete; Phase 4 inspection next.
+Phases 1-4 initial source layers complete; Phase 5 safe objects/transforms next.
 
 ## Completed and verified
 - Fetched actual public remote; empty repository, no prior commits/files to preserve.
@@ -18,16 +18,18 @@ Phases 1-3 initial source layers complete; Phase 4 inspection next.
   probes, deterministic selection, diagnostics, bounds, CLI. macOS/Linux path support.
 - Controlled background launcher, authenticated loopback bridge, bounded frames/deadlines,
   correlated replies, readiness ping, owned-process cleanup and session replay protection.
+- Read-only scene/object inspection, typed bounded queries, object/session identities,
+  metadata revision fingerprints, stale pagination protection and bpy fake-data tests.
 
 ## Status
-Source: foundation, discovery, process/bridge implemented. Unit tests: 47 passing.
+Source: foundation, discovery, bridge and inspection implemented. Unit tests: 57 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
-CI ca54f06 and a83ab79: success (runs 37308733708, 37309549136). This checkpoint CI pending.
+CI foundation/discovery/bridge: success. Latest bridge run 37310526776. Current CI pending.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-bridge.py, process.py, bootstrap.py, test_bridge.py, test_process.py, docs/BRIDGE.md.
-Next: typed scene/object inspection and bpy adapter with fake data tests.
+models.py, inspection.py, bootstrap.py, tests/fake_bpy.py, test_inspection.py.
+Next: operations.py and verification.py, safe creation and exact local transforms.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -48,5 +50,5 @@ Next: typed scene/object inspection and bpy adapter with fake data tests.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Build bounded scene/object inspection, session object IDs and revision fingerprints.
-Test bpy boundary with fakes. Then safe creation/transforms with before/after readback.
+Build safe object creation/local transforms using expected scene/object revisions.
+Read actual state after mutations, compare, return verified only on match. Test failures.
