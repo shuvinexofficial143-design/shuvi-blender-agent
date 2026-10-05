@@ -11,6 +11,8 @@ class FakeMesh:
         self.vertices = []
         self.faces = []
         self.table = table
+        self.library = None
+        self.materials = FakeMaterialLinks()
 
     def from_pydata(self, vertices, edges, faces):
         self.vertices = vertices
@@ -36,9 +38,67 @@ class FakeMeshes(list):
         return next((item for item in self if item.name == name), None)
 
 
+class FakeMaterialLinks(list):
+    def append(self, material):
+        super().append(material)
+        material.users += 1
+
+    def pop(self, index=-1):
+        material = super().pop(index)
+        material.users -= 1
+        return material
+
+
+class FakeMaterials(list):
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def new(self, name):
+        shader = NS(
+            type="BSDF_PRINCIPLED",
+            inputs={
+                "Base Color": NS(default_value=[0.8, 0.8, 0.8, 1]),
+                "Metallic": NS(default_value=0),
+                "Roughness": NS(default_value=0.5),
+            },
+        )
+        material = NS(
+            name=name,
+            users=0,
+            use_nodes=False,
+            diffuse_color=[0.8, 0.8, 0.8, 1],
+            node_tree=NS(nodes=[shader]),
+        )
+        self.append(material)
+        return material
+
+
+class FakeDevices(list):
+    def __init__(self, object_type):
+        super().__init__()
+        self.object_type = object_type
+
+    def new(self, name, light_type=None):
+        data = NS(
+            name=name,
+            object_type=self.object_type,
+            users=0,
+            type=light_type or "PERSP",
+            lens=50,
+            clip_start=0.1,
+            clip_end=1000,
+            energy=100,
+            color=[1, 1, 1],
+        )
+        self.append(data)
+        return data
+
+
 class FakeObjects(list):
     def new(self, name, mesh):
-        obj = FakeObject(name, "MESH" if mesh is not None else "EMPTY")
+        obj = FakeObject(
+            name, getattr(mesh, "object_type", "MESH") if mesh is not None else "EMPTY"
+        )
         obj.data = mesh
         self.append(obj)
         return obj
@@ -90,6 +150,16 @@ class FakeObject:
         self.override_library = None
         self.is_editable = True
         self._data = None
+
+    @property
+    def material_slots(self):
+        if getattr(self, "_data", None) is not None and hasattr(self._data, "materials"):
+            return [NS(material=material) for material in self._data.materials]
+        return self._slots
+
+    @material_slots.setter
+    def material_slots(self, value):
+        self._slots = value
 
     @property
     def data(self):
@@ -152,6 +222,14 @@ def fake_bpy(objects=None):
     )
     return NS(
         context=NS(scene=scene, mode="OBJECT", view_layer=NS(update=lambda: None)),
-        data=NS(filepath="", objects=table, meshes=meshes, collections=[collection]),
+        data=NS(
+            filepath="",
+            objects=table,
+            meshes=meshes,
+            collections=[collection],
+            materials=FakeMaterials(),
+            cameras=FakeDevices("CAMERA"),
+            lights=FakeDevices("LIGHT"),
+        ),
         app=NS(version=(4, 2, 0)),
     )

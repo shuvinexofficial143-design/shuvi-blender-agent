@@ -11,6 +11,7 @@ def main() -> None:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     import bpy
 
+    from shuvi_blender_agent.appearance import AppearanceOperations
     from shuvi_blender_agent.bridge import serve
     from shuvi_blender_agent.inspection import BpyInspector
     from shuvi_blender_agent.operations import ObjectOperations
@@ -30,11 +31,14 @@ def main() -> None:
     )
     inspector = BpyInspector(bpy)
     operations = ObjectOperations(inspector)
+    appearance = AppearanceOperations(operations)
     with socket.create_connection(("127.0.0.1", port), timeout=10) as connection:
         serve(
             connection,
             token,
-            ToolRegistry([ping_tool(), *inspector.tools(), *operations.tools()], policy),
+            ToolRegistry(
+                [ping_tool(), *inspector.tools(), *operations.tools(), *appearance.tools()], policy
+            ),
         )
 
 

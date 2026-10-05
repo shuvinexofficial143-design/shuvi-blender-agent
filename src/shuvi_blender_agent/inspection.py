@@ -135,6 +135,13 @@ class BpyInspector:
                 "file": self.bpy.data.filepath,
                 "scene": scene.name,
                 "frame": scene.frame_current,
+                "camera": self.identity(scene.camera) if scene.camera else None,
+                "render": {
+                    "engine": scene.render.engine,
+                    "resolution_x": scene.render.resolution_x,
+                    "resolution_y": scene.render.resolution_y,
+                    "filepath": scene.render.filepath,
+                },
                 "objects": [(obj["object_id"], obj["revision"]) for obj in snapshots],
             }
         )

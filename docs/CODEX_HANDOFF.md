@@ -3,12 +3,12 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest pushed commit before this checkpoint: 924507e2c7633d61f5d7da592ac5154b79ee36b9.
+Latest pushed commit before this checkpoint: 536ef60db59e50516451a1cc49e6765eaee36aa8.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-5 initial source layers complete; Phase 6 materials/cameras/lights next.
+Phases 1-6 initial bounded source capabilities implemented; Phase 7 next.
 
 ## Completed and verified
 - Fetched actual public remote; empty repository, no prior commits/files to preserve.
@@ -22,16 +22,18 @@ Phases 1-5 initial source layers complete; Phase 6 materials/cameras/lights next
   metadata revision fingerprints, stale pagination protection and bpy fake-data tests.
 - Safe cube/plane/empty creation, local transforms, mesh/empty duplication, actual
   before/after comparison, collision/stale protection and created-data cleanup.
+- Material creation/assignment, perspective camera and four light kinds, actual property
+  verification, conservative shared-data guards and created-data cleanup.
 
 ## Status
-Source: foundation through initial object actions implemented. Unit tests: 71 passing.
+Source: foundation through initial appearance tools implemented. Unit tests: 81 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
 CI foundation/discovery/bridge: success. Latest bridge run 37310526776. Current CI pending.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-models.py, operations.py, verification.py, bootstrap.py, test_operations.py, fake_bpy.py.
-Next: verified typed material/camera/light actions with bounded payloads.
+appearance.py, inspection.py, bootstrap.py, tests/test_appearance.py, fake_bpy.py.
+Next: typed modifiers, collection membership and asset metadata actions.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -52,5 +54,5 @@ Next: verified typed material/camera/light actions with bounded payloads.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Build material creation/assignment and camera/light creation with actual property readback.
+Build bounded modifier addition, collection creation/linking and asset marking with readback.
 Keep destructive deletion deferred until checkpoint/recovery exists. Do not launch Blender.
