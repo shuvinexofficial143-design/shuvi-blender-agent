@@ -3,24 +3,36 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed source/package commit: bbd14094b50ba8d7fa3260c9974a540344cc13f4.
+Latest verified pushed Level 1 source/package commit: d37b3998cba1f515587c7b054481b6a99aa5d42c.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Level 1 active checkpoint
-Latest preceding push: 1e0f86120e12dd6425293d4c2055b9b7aa5f2703 (primitives).
-Added object.rename, object.set_properties, object.patch_transform, object.set_visibility,
-selection.set and selection.inspect; strict host allowlist and readback. Object revisions now
-include selected state, display properties, constraint and data summaries; scene revision
-includes mode, active/selection state and view-layer name. 211 local tests passed, 1 skipped.
-Level 1 source approximately 50%; runtime 0%. Current checkpoint CI pending.
-Next: hierarchy/collections and scene/cursor controls, mode contracts, documentation/package audit.
-Earlier completion below describes the prior source-hardening pass, not Level 1.
+Latest verified source checkpoint: d37b3998cba1f515587c7b054481b6a99aa5d42c.
+All six Linux/Windows Python 3.11/3.12/3.13 CI jobs passed, including package build,
+distribution checks and clean install/import without bpy. 228 tests passed.
+
+Level 1 now includes expanded bounded mesh primitives; rename/display properties; full and
+partial transforms; independent and linked mesh duplication; visibility; selection/active
+state; parent/unparent with cycle rejection; hierarchy and origin inspection; collection
+inspect/rename/link/unlink/move/child creation with orphan and linked-collection guards;
+cursor, scene-name, units, pivot and mode inspection; scene object-type counts/world
+presence; bounded data-block and constraint summaries. Host allowlist currently has 46
+typed tools. Real Blender runtime verification remains 0%.
+
+Level 1 source is approximately 82% against the broad roadmap. Remaining items are mainly
+context-sensitive operations intentionally deferred without real Blender: mode mutation,
+apply transforms, origin mutation, Curve/Text primitive workflows, destructive deletion
+and destructive project switching. Current documentation checkpoints follow the verified
+source commit and should not be treated as runtime evidence.
+
+Next: finish Level 1 documentation/package consistency and keep runtime-sensitive operations
+deferred until explicit Blender authorization.
 
 ## Current phase
-Phases 1-11 initial bounded source capabilities implemented. Source hardening pass complete;
-unit, package and all six CI matrix jobs verified. This checkpoint records the final evidence.
-Phase 12 suite/checklist prepared. Actual Blender acceptance awaits explicit authorization.
+Original phases 1-11 and source hardening are complete. Level 1 broad-control source
+expansion is in final documentation/package-audit work. Phase 12 runtime suite/checklist is
+prepared, but actual Blender acceptance still awaits explicit authorization.
 
 ## Completed and verified
 - Fetched actual remote main at acf13dc and reconciled the prior session's identical local
@@ -86,18 +98,17 @@ Phase 12 suite/checklist prepared. Actual Blender acceptance awaits explicit aut
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 194 passed
-on Linux/Windows CI; locally 193 passed, 1 skipped (symlink creation unsupported by account).
-Lint/format: passing. Current wheel/sdist: built and contents/clean offline install verified.
-CI: bbd14094b50ba8d7fa3260c9974a540344cc13f4 passed all six jobs, including package smoke:
-https://github.com/shuvinexofficial143-design/shuvi-blender-agent/actions/runs/37328700111
-Linux/Windows Python 3.11/3.12/3.13. Every preceding checkpoint this pass also passed.
-This documentation checkpoint's own CI can be resolved in Actions from git log -1.
-Real Blender runtime verification: none. Production ready: no.
+Source: 46 typed host contracts/tools including the Level 1 broad-control expansion.
+Unit/CI tests: 228 passed at d37b3998cba1f515587c7b054481b6a99aa5d42c.
+Lint/format: passing. Wheel/sdist build, distribution contents and clean install/import
+without bpy passed. CI run 37338301840 passed all six Linux/Windows Python 3.11/3.12/3.13
+jobs. Documentation checkpoints after that source commit have their own CI runs.
+Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Source work complete and checkpointed. No unfinished local source work. Real Blender,
-checkpoint reopen/recovery and production acceptance remain future work.
+Level 1 documentation/package consistency and final source audit. No Blender runtime work is
+authorized. Context-sensitive mode/apply/origin/destructive operations remain deliberately
+deferred rather than being simulated as runtime-verified behavior.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -118,8 +129,9 @@ checkpoint reopen/recovery and production acceptance remain future work.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-With later explicit runtime authorization, follow docs/RUNTIME_ACCEPTANCE.md and run the opt-in suite
-in its factory-startup temporary workspace. Rendering needs separate authorization/flag.
-Then add independent checkpoint reopening/recovery acceptance and main Shuvi integration
-acceptance. Preserve source/runtime/CI/production distinctions. Deletion stays deferred.
-Until the user explicitly authorizes runtime: do not install, probe, launch or render Blender.
+Finish Level 1 docs/package audit and stop at the source/runtime boundary for operations that
+cannot be honestly validated without Blender. With later explicit runtime authorization,
+follow docs/RUNTIME_ACCEPTANCE.md in its disposable factory workspace. Rendering needs
+separate authorization/flag. Then validate mode changes, apply/origin workflows, checkpoint
+reopening/recovery and main Shuvi integration. Deletion stays deferred until recovery is
+runtime-verified. Until explicitly authorized: do not install, probe, launch or render Blender.
