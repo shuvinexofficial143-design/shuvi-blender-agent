@@ -5,9 +5,13 @@ from .appearance import CreateDevice, MaterialAssign
 from .assets import AddModifier, CreateCollection, MarkAsset
 from .mesh import CreateMesh, TranslateVertices
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
+from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
 from .safety import SafetyClass
+from .selection import SelectionChange
+from .transform import PatchTransform
 from .validation import fields, string
+from .visibility import SetVisibility
 
 
 def empty(data):
@@ -28,6 +32,12 @@ def builtin_contracts() -> dict:
         "objects.list": (read, PageQuery.parse),
         "collections.list": (read, PageQuery.parse),
         "object.inspect": (read, object_id),
+        "object.rename": (mutation, RenameObject.parse),
+        "object.set_properties": (mutation, SetProperties.parse),
+        "object.set_visibility": (mutation, SetVisibility.parse),
+        "object.patch_transform": (mutation, PatchTransform.parse),
+        "selection.set": (mutation, SelectionChange.parse),
+        "selection.inspect": (read, empty),
         "object.create": (mutation, CreateObject.parse),
         "object.set_transform": (mutation, SetTransform.parse),
         "object.duplicate": (mutation, DuplicateObject.parse),

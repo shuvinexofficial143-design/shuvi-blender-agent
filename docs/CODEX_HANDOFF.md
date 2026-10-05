@@ -8,13 +8,14 @@ The commit containing this file is the current checkpoint; resolve it with git l
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Level 1 active checkpoint
-Expanded direct-data primitives: UV sphere, icosphere, cylinder, cone, filled circle, grid, torus.
-All creation retains scene-revision validation, readback and cleanup. Fixed bounded resolution;
-float32 coordinates avoid digest differences from mesh storage. 200 local tests passed, 1 skipped.
-Latest preceding push: 704b563900746e0ddc5886723b7eb516e2b8382c. CI for this checkpoint pending.
-Next: typed object state, selection, transforms, hierarchy, collections and scene state.
-Level 1 source work ongoing; real runtime remains 0%. Earlier completion below refers to
-the prior source-hardening task, not the new Level 1 expansion.
+Latest preceding push: 1e0f86120e12dd6425293d4c2055b9b7aa5f2703 (primitives).
+Added object.rename, object.set_properties, object.patch_transform, object.set_visibility,
+selection.set and selection.inspect; strict host allowlist and readback. Object revisions now
+include selected state, display properties, constraint and data summaries; scene revision
+includes mode, active/selection state and view-layer name. 211 local tests passed, 1 skipped.
+Level 1 source approximately 50%; runtime 0%. Current checkpoint CI pending.
+Next: hierarchy/collections and scene/cursor controls, mode contracts, documentation/package audit.
+Earlier completion below describes the prior source-hardening pass, not Level 1.
 
 ## Current phase
 Phases 1-11 initial bounded source capabilities implemented. Source hardening pass complete;

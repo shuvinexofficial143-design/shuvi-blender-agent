@@ -60,7 +60,9 @@ def test_capability_catalog_and_typed_client():
     catalog = controller.capabilities()
     assert catalog["object.create"]["enabled"]
     assert not catalog["render.execute"]["enabled"]
-    assert len(catalog) == 23
+    from shuvi_blender_agent.input_contracts import builtin_contracts
+
+    assert set(catalog) == set(builtin_contracts())
     scene = controller.inspect_scene()
     assert scene.data["object_count"] == 2
     snap = controller.list_objects().data["items"][0]

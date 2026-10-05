@@ -188,6 +188,8 @@ class FakeObject:
         self.matrix_world = [[float(row == col) for col in range(4)] for row in range(4)]
         self.hide_viewport = False
         self.hide_render = False
+        self._hidden = False
+        self._selected = False
         self.parent = None
         self.users_collection = []
         self.modifiers = FakeModifiers()
@@ -260,8 +262,17 @@ class FakeObject:
             )
         return True
 
+    def select_get(self):
+        return self._selected
+
+    def select_set(self, value):
+        self._selected = value
+
+    def hide_set(self, value):
+        self._hidden = value
+
     def hide_get(self):
-        return False
+        return self._hidden
 
 
 def fake_bpy(objects=None):
@@ -299,10 +310,15 @@ def fake_bpy(objects=None):
         render=render,
         collection=collection,
     )
+    objects.active = None
     scene.frame_set = lambda frame: setattr(scene, "frame_current", frame)
     scene.cycles = NS(device="CPU", samples=128)
     return NS(
-        context=NS(scene=scene, mode="OBJECT", view_layer=NS(update=lambda: None)),
+        context=NS(
+            scene=scene,
+            mode="OBJECT",
+            view_layer=NS(name="ViewLayer", objects=objects, update=lambda: None),
+        ),
         data=NS(
             filepath="",
             objects=table,

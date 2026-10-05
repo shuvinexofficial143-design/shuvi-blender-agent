@@ -71,7 +71,9 @@ def test_render_configuration_and_verified_mock_output(tmp_path):
     bpy, inspector, registry = setup(tmp_path)
     assert configure(inspector, registry).status == Status.VERIFIED
     camera = FakeObject("Camera", "CAMERA")
-    camera.data = NS(type="PERSP", lens=35, clip_start=0.1, clip_end=100)
+    camera.data = NS(
+        name="CameraData", users=0, type="PERSP", lens=35, clip_start=0.1, clip_end=100
+    )
     bpy.context.scene.objects.link(camera)
     bpy.context.scene.camera = camera
     previous = bpy.context.scene.render.filepath

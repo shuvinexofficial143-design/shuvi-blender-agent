@@ -144,9 +144,10 @@ def test_existing_modifier_stack_is_denied_before_adding():
 
 
 def test_large_mesh_modifier_is_denied_before_evaluation():
-    bpy, _, registry, target = setup()
+    bpy, inspector, registry, target = setup()
     obj = bpy.context.scene.objects[0]
     obj.data.vertices = [None] * 4097
+    target["expected_revision"] = inspector.snapshot(obj)["revision"]
     result = registry.dispatch(
         Request(
             "modifier.add",

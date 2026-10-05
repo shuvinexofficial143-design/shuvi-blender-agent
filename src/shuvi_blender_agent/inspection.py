@@ -9,7 +9,9 @@ from .animation_state import animation_snapshot
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .models import ObjectTarget, PageQuery
+from .object_state import constraints, data_summary, properties
 from .safety import SafetyClass, require_revision
+from .selection import selection_state
 from .tools import Tool
 from .validation import encode, fields, string
 
@@ -117,6 +119,7 @@ class BpyInspector:
         work = len(objects) + len(collections)
         for obj in objects:
             work += min(len(obj.modifiers), MAX_DETAILS)
+            work += min(len(obj.constraints), MAX_DETAILS)
             work += min(len(obj.material_slots), MAX_DETAILS)
             work += min(len(obj.users_collection), MAX_DETAILS)
             try:
@@ -164,6 +167,11 @@ class BpyInspector:
         collections = obj.users_collection
         data = {
             "object_id": self.identity(obj),
+            "selected": bool(obj.select_get()),
+            "properties": properties(obj),
+            "data": data_summary(obj),
+            "constraints": constraints(obj, self),
+            "constraint_count": len(obj.constraints),
             "name": obj.name,
             "type": obj.type,
             "transform": {
@@ -198,7 +206,8 @@ class BpyInspector:
                 "description": obj.asset_data.description if obj.asset_data else None,
             },
             "details_truncated": any(
-                len(items) > MAX_DETAILS for items in (materials, modifiers, collections)
+                len(items) > MAX_DETAILS
+                for items in (materials, modifiers, collections, obj.constraints)
             ),
         }
         if obj.type == "CAMERA":
@@ -223,6 +232,7 @@ class BpyInspector:
         collections = self.scene_collections() if collections is None else collections
         metadata = {
             "file": self.bpy.data.filepath,
+            "context": selection_state(self),
             "scene": scene.name,
             "frame": scene.frame_current,
             "frame_range": [scene.frame_start, scene.frame_end],
@@ -257,6 +267,7 @@ class BpyInspector:
         current_revision = self.scene_revision((self.snapshot(obj) for obj in objects), collections)
         return {
             "session_id": self.session_id,
+            "context": selection_state(self),
             "file": self.bpy.data.filepath,
             "blender_version": list(self.bpy.app.version),
             "scene": scene.name,

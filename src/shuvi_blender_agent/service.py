@@ -7,11 +7,15 @@ from .contracts import Result, Status
 from .files import OutputWorkspace
 from .inspection import BpyInspector
 from .mesh import MeshOperations
+from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
 from .safety import SafetyClass, SafetyPolicy
+from .selection import SelectionOperations
 from .tools import Tool, ToolRegistry, ping_tool
+from .transform import TransformOperations
 from .validation import fields
+from .visibility import VisibilityOperations
 
 
 def create_registry(
@@ -23,6 +27,10 @@ def create_registry(
     adapters = [
         inspector,
         objects,
+        ObjectCore(objects),
+        VisibilityOperations(objects),
+        TransformOperations(objects),
+        SelectionOperations(objects),
         AppearanceOperations(objects),
         AssetOperations(objects),
         AnimationOperations(objects),

@@ -126,3 +126,13 @@ production ready: **no**.
 Level 1 primitive expansion: `object.create.kind` also accepts `UV_SPHERE`,
 `ICOSPHERE`, `CYLINDER`, `CONE`, `CIRCLE` (filled), `GRID`, `TORUS`.
 See [Level 1 control](LEVEL_1_CONTROL.md) for fixed geometry bounds.
+
+Level 1 additions (mutations require normal policy and fresh target):
+- object.rename: target, name
+- object.set_properties: target, properties (show_name/bounds/wire/all_edges/in_front,
+  display_type, RGBA color, pass_index, three-axis lock_location/rotation/scale, empty display)
+- object.patch_transform: target, transform (nonempty partial location/scale/rotation_euler
+  or unit rotation_quaternion WXYZ; one rotation representation)
+- object.set_visibility: target, visibility (hide_viewport, hide_render, hidden_in_view_layer)
+- selection.inspect: empty payload, read-only
+- selection.set: target or null, selected bool/null, active bool/null, expected_scene_revision
