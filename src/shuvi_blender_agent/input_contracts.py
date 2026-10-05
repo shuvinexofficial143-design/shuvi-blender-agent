@@ -3,6 +3,14 @@
 from .animation import FrameRange, InsertKeyframe, SetFrame
 from .appearance import CreateDevice, MaterialAssign
 from .assets import AddModifier, CreateCollection, MarkAsset
+from .collection_ops import (
+    CollectionNameRequest,
+    CollectionObjectChange,
+    CreateChildCollection,
+    MoveObject,
+    RenameCollection,
+)
+from .hierarchy import ParentChange
 from .mesh import CreateMesh, TranslateVertices
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
@@ -38,6 +46,14 @@ def builtin_contracts() -> dict:
         "object.patch_transform": (mutation, PatchTransform.parse),
         "selection.set": (mutation, SelectionChange.parse),
         "selection.inspect": (read, empty),
+        "hierarchy.inspect": (read, object_id),
+        "hierarchy.set_parent": (mutation, ParentChange.parse),
+        "collection.inspect": (read, CollectionNameRequest.parse),
+        "collection.rename": (mutation, RenameCollection.parse),
+        "collection.link_object": (mutation, CollectionObjectChange.parse),
+        "collection.unlink_object": (mutation, CollectionObjectChange.parse),
+        "collection.move_object": (mutation, MoveObject.parse),
+        "collection.create_child": (mutation, CreateChildCollection.parse),
         "object.create": (mutation, CreateObject.parse),
         "object.set_transform": (mutation, SetTransform.parse),
         "object.duplicate": (mutation, DuplicateObject.parse),
