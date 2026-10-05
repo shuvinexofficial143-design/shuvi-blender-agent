@@ -268,6 +268,9 @@ class BpyInspector:
         scene = self.bpy.context.scene
         objects, collections = self.scene_state()
         current_revision = self.scene_revision((self.snapshot(obj) for obj in objects), collections)
+        object_counts_by_type = {}
+        for obj in objects:
+            object_counts_by_type[obj.type] = object_counts_by_type.get(obj.type, 0) + 1
         return {
             "session_id": self.session_id,
             "context": selection_state(self),
@@ -276,8 +279,10 @@ class BpyInspector:
             "scene": scene.name,
             "cursor": cursor_snapshot(self.bpy),
             "units": unit_snapshot(scene),
+            "world_present": getattr(scene, "world", None) is not None,
             "revision": current_revision,
             "object_count": len(objects),
+            "object_counts_by_type": dict(sorted(object_counts_by_type.items())),
             "collections": [
                 {
                     "name": item.name,
