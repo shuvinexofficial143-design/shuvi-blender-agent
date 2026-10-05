@@ -11,6 +11,7 @@ def main() -> None:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     import bpy
 
+    from shuvi_blender_agent.animation import AnimationOperations
     from shuvi_blender_agent.appearance import AppearanceOperations
     from shuvi_blender_agent.assets import AssetOperations
     from shuvi_blender_agent.bridge import serve
@@ -34,6 +35,7 @@ def main() -> None:
     operations = ObjectOperations(inspector)
     appearance = AppearanceOperations(operations)
     assets = AssetOperations(operations)
+    animation = AnimationOperations(operations)
     with socket.create_connection(("127.0.0.1", port), timeout=10) as connection:
         serve(
             connection,
@@ -45,6 +47,7 @@ def main() -> None:
                     *operations.tools(),
                     *appearance.tools(),
                     *assets.tools(),
+                    *animation.tools(),
                 ],
                 policy,
             ),

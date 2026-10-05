@@ -3,12 +3,12 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest pushed commit before this checkpoint: 6f2246b081e4085b991609fff227011e8b104b8d.
+Latest pushed commit before this checkpoint: f20964b74ce43007dc8ab5b046971f9bf6977804.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-7 initial bounded source capabilities implemented; Phase 8 animation next.
+Phases 1-8 initial bounded source capabilities implemented; Phase 9 rendering next.
 
 ## Completed and verified
 - Fetched actual public remote; empty repository, no prior commits/files to preserve.
@@ -26,16 +26,18 @@ Phases 1-7 initial bounded source capabilities implemented; Phase 8 animation ne
   verification, conservative shared-data guards and created-data cleanup.
 - Bounded BEVEL/SUBSURF/SOLIDIFY addition, additive collection creation/object linking,
   local asset marking, metadata readback and creation cleanup. Source distribution includes tests/docs.
+- Frame range/selection and bounded transform keyframes on session-owned actions;
+  legacy/slotted action readback, coordinates/interpolation verification, no overwrites.
 
 ## Status
-Source: foundation through initial asset tools implemented. Unit tests: 88 passing.
+Source: foundation through initial animation tools implemented. Unit tests: 94 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
-CI all prior checkpoints: success. Latest appearance run 37313392710. Current CI pending.
+CI all prior checkpoints: success. Latest assets run 37314216937. Current CI pending.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-assets.py, inspection.py, bootstrap.py, tests/test_assets.py, fake_bpy.py, MANIFEST.in.
-Next: typed frame range/frame selection and bounded animation keyframe tools.
+animation.py, animation_state.py, inspection.py, bootstrap.py, tests/test_animation.py.
+Next: bounded render configuration/output verification, explicit render policy and checkpoint files.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -56,5 +58,6 @@ Next: typed frame range/frame selection and bounded animation keyframe tools.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Build bounded animation tools with actual keyframe readback and version-aware action handling.
+Build rendering source/mock tests with CPU-only bounds, render-disabled default policy,
+confined output paths and file readback verification. Never run a real Blender render.
 Keep destructive deletion deferred until checkpoint/recovery exists. Do not launch Blender.

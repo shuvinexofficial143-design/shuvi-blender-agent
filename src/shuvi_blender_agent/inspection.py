@@ -5,6 +5,7 @@ from hashlib import sha256
 from itertools import islice
 from uuid import uuid4
 
+from .animation_state import animation_snapshot
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .models import ObjectTarget, PageQuery
@@ -106,14 +107,7 @@ class BpyInspector:
                 for slot in islice(materials, MAX_DETAILS)
             ],
             "material_slot_count": len(materials),
-            "animation": {
-                "has_animation_data": obj.animation_data is not None,
-                "action": (
-                    obj.animation_data.action.name
-                    if obj.animation_data and obj.animation_data.action
-                    else None
-                ),
-            },
+            "animation": animation_snapshot(obj),
             "linked": obj.library is not None,
             "asset": {
                 "marked": obj.asset_data is not None,
@@ -146,6 +140,7 @@ class BpyInspector:
                 "file": self.bpy.data.filepath,
                 "scene": scene.name,
                 "frame": scene.frame_current,
+                "frame_range": [scene.frame_start, scene.frame_end],
                 "camera": self.identity(scene.camera) if scene.camera else None,
                 "render": {
                     "engine": scene.render.engine,

@@ -228,6 +228,31 @@ class FakeObject:
     def asset_mark(self):
         self.asset_data = NS(description="")
 
+    def keyframe_insert(self, data_path, frame):
+        if self.animation_data is None:
+            curves = []
+            action = NS(name=self.name + "Action", users=1, fcurves=curves)
+            self.animation_data = NS(action=action, action_slot=None, drivers=[], nla_tracks=[])
+        curves = self.animation_data.action.fcurves
+        for index, value in enumerate(getattr(self, data_path)):
+            curve = next(
+                (
+                    item
+                    for item in curves
+                    if item.data_path == data_path and item.array_index == index
+                ),
+                None,
+            )
+            if curve is None:
+                curve = NS(
+                    data_path=data_path, array_index=index, keyframe_points=[], update=lambda: None
+                )
+                curves.append(curve)
+            curve.keyframe_points.append(
+                NS(co=[float(frame), float(value)], interpolation="BEZIER")
+            )
+        return True
+
     def hide_get(self):
         return False
 
@@ -267,6 +292,7 @@ def fake_bpy(objects=None):
         render=render,
         collection=collection,
     )
+    scene.frame_set = lambda frame: setattr(scene, "frame_current", frame)
     return NS(
         context=NS(scene=scene, mode="OBJECT", view_layer=NS(update=lambda: None)),
         data=NS(
