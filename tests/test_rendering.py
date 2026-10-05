@@ -7,7 +7,7 @@ import pytest
 from fake_bpy import FakeObject, fake_bpy
 
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
-from shuvi_blender_agent.files import OutputWorkspace, filename, verify_png
+from shuvi_blender_agent.files import OutputWorkspace, filename, read_output, verify_png
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.operations import ObjectOperations
 from shuvi_blender_agent.rendering import RenderOperations
@@ -115,7 +115,20 @@ def test_checkpoint_copy_preserves_active_file_and_cannot_overwrite(tmp_path):
     )
 
 
-@pytest.mark.parametrize("name", ["../bad.png", "C:/bad.png", "CON.png", "a:b.png", "bad.png."])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "../bad.png",
+        "C:/bad.png",
+        "CON.png",
+        "a:b.png",
+        "bad.png.",
+        "COM\u00b9.png",
+        "LPT\u00b2.png",
+        "CON .png",
+        "\\\\server\\a.png",
+    ],
+)
 def test_output_names_confined(name):
     with pytest.raises(AgentError):
         filename(name, ".png")
@@ -137,3 +150,97 @@ def test_reservation_cleans_empty_but_preserves_partial(tmp_path):
             path.write_bytes(b"partial")
             raise RuntimeError("interrupted")
     assert (tmp_path / "partial.png").read_bytes() == b"partial"
+
+
+def test_replaced_workspace_is_denied_before_writing(tmp_path):
+    root = tmp_path / "output"
+    root.mkdir()
+    workspace = OutputWorkspace(root)
+    root.rename(tmp_path / "old-output")
+    root.mkdir()
+    with pytest.raises(AgentError) as error:
+        with workspace.reserve("new.blend", ".blend"):
+            pytest.fail("A replaced workspace must not be used")
+    assert error.value.code == ErrorCode.SAFETY_DENIED
+    assert not list(root.iterdir())
+
+
+def test_replaced_reservation_is_not_deleted_by_cleanup(tmp_path):
+    workspace = OutputWorkspace(tmp_path)
+    with workspace.reserve("out.png", ".png") as path:
+        path.rename(tmp_path / "original-reservation")
+        path.touch()
+    assert path.exists()
+    assert (tmp_path / "original-reservation").exists()
+
+
+def test_hard_link_output_is_rejected(tmp_path):
+    import os
+
+    original = tmp_path / "original.blend"
+    original.write_bytes(b"BLENDER-v402" + b"data")
+    linked = tmp_path / "linked.blend"
+    os.link(original, linked)
+    with pytest.raises(AgentError) as error:
+        read_output(linked, "BLEND")
+    assert error.value.code == ErrorCode.VERIFICATION_FAILED
+
+
+def test_symlink_output_is_rejected_when_supported(tmp_path):
+    original = tmp_path / "original.blend"
+    original.write_bytes(b"BLENDER-v402" + b"data")
+    linked = tmp_path / "linked.blend"
+    try:
+        linked.symlink_to(original)
+    except OSError:
+        pytest.skip("Creating symlinks is unavailable under this Windows account")
+    with pytest.raises(AgentError) as error:
+        read_output(linked, "BLEND")
+    assert error.value.code == ErrorCode.VERIFICATION_FAILED
+
+
+def test_large_blend_readback_uses_bounded_chunks(tmp_path, monkeypatch):
+    import os
+
+    path = tmp_path / "large.blend"
+    path.write_bytes(b"BLENDER-v402" + b"x" * 200000)
+    original = os.fdopen
+    reads = []
+
+    class BoundedReader:
+        def __init__(self, stream):
+            self.stream = stream
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.stream.close()
+
+        def fileno(self):
+            return self.stream.fileno()
+
+        def read(self, size):
+            reads.append(size)
+            assert size <= 65536
+            return self.stream.read(size)
+
+    monkeypatch.setattr(os, "fdopen", lambda *args: BoundedReader(original(*args)))
+    result = read_output(path, "BLEND")
+    assert result["bytes"] == path.stat().st_size
+    assert len(reads) > 3
+
+
+def test_png_unknown_critical_chunk_is_denied():
+    raw = png()
+    tag, data = b"ABCD", b""
+    unknown = struct.pack("!I", 0) + tag + data + struct.pack("!I", zlib.crc32(tag + data))
+    with pytest.raises(AgentError):
+        verify_png(raw[:33] + unknown + raw[33:])
+
+
+def test_blend_header_version_must_be_numeric(tmp_path):
+    path = tmp_path / "bad.blend"
+    path.write_bytes(b"BLENDER-vBAD" + b"data")
+    with pytest.raises(AgentError):
+        read_output(path, "BLEND")

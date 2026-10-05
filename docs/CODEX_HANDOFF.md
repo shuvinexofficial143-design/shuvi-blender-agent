@@ -3,7 +3,7 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed commit before this checkpoint: 58bc06a745cfcddb7826699fba292aa45928ef0b.
+Latest verified pushed commit before this checkpoint: 9063c78d113b93fab0753767ab21b4d740e7f8c0.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -49,17 +49,22 @@ Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
 - Bridge verifies loopback peers, denies concurrent calls, bounds serialized replay cache
   to 4 MiB, rejects reused request IDs and caches final deadline results consistently.
   Startup settings/secrets consumed before bpy import; cleanup exit failures structured.
+- Output roots pinned to filesystem identity; replaced directories/linked files denied,
+  reservation cleanup preserves replaced files. BLEND hashing streams 64 KiB chunks;
+  PNG input capped at 4 MiB and unknown critical chunks rejected. Windows reserved
+  superscript device names rejected. One local symlink test skipped (account permission).
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 159 passing.
+Source: 23 registered typed tools and host/orchestration interface. Unit tests: 169 passing,
+1 skipped locally (symlink creation unsupported by account).
 Lint/format: passing. Foundation wheel/sdist: built.
-CI: JSON checkpoint 1fa4191 passed (run 37320583547); later checkpoints pending recheck.
+CI: plan checkpoint 58bc06a passed (run 37322326124); later checkpoints pending recheck.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
 Audit remaining adapters, large-scene inspection, plan preflight, bridge and output safety.
-Next: output workspace reparse/replacement checks and streamed file readback, remaining
-adapter work guards; then documentation/runtime acceptance preparation and distribution.
+Next: finish remaining adapter/discovery work guards; then tool reference, runtime
+acceptance preparation and clean package install/content verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
