@@ -10,6 +10,14 @@ from .tools import Tool
 from .validation import fields, invalid, number, string
 
 UNIT_SYSTEMS = ("NONE", "METRIC", "IMPERIAL")
+PIVOT_POINTS = (
+    "BOUNDING_BOX_CENTER",
+    "CURSOR",
+    "INDIVIDUAL_ORIGINS",
+    "MEDIAN_POINT",
+    "ACTIVE_ELEMENT",
+)
+
 LENGTH_UNITS = (
     "ADAPTIVE",
     "KILOMETERS",
@@ -106,6 +114,23 @@ class SetUnits:
         )
 
 
+@dataclass(frozen=True)
+class SetPivot:
+    pivot: str
+    expected_scene_revision: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(data, {"pivot", "expected_scene_revision"})
+        pivot = data["pivot"]
+        if not isinstance(pivot, str) or pivot not in PIVOT_POINTS:
+            raise invalid("Unsupported transform pivot point")
+        return cls(
+            pivot,
+            string(data["expected_scene_revision"], "expected_scene_revision", limit=64),
+        )
+
+
 class SceneStateOperations:
     def __init__(self, objects):
         self.objects = objects
@@ -154,6 +179,20 @@ class SceneStateOperations:
         expected = before | action.values
         return self.objects._result(req, before, unit_snapshot(scene), expected)
 
+
+    def inspect_pivot(self, req, _):
+        data = {"pivot": self.bpy.context.scene.tool_settings.transform_pivot_point}
+        return Result(req.request_id, req.command_id, Status.SUCCEEDED, data)
+
+    def set_pivot(self, req, action):
+        require_revision(action.expected_scene_revision, self.inspector.summary()["revision"])
+        settings = self.bpy.context.scene.tool_settings
+        before = {"pivot": settings.transform_pivot_point}
+        settings.transform_pivot_point = action.pivot
+        self.bpy.context.view_layer.update()
+        after = {"pivot": settings.transform_pivot_point}
+        return self.objects._result(req, before, after, {"pivot": action.pivot})
+
     def inspect_mode(self, req, _):
         return Result(
             req.request_id,
@@ -172,4 +211,6 @@ class SceneStateOperations:
             Tool("scene.rename", SafetyClass.MUTATION, SceneRename.parse, self.rename_scene),
             Tool("scene.set_units", SafetyClass.MUTATION, SetUnits.parse, self.set_units),
             Tool("mode.inspect", SafetyClass.READ_ONLY, empty, self.inspect_mode),
+            Tool("pivot.inspect", SafetyClass.READ_ONLY, empty, self.inspect_pivot),
+            Tool("pivot.set", SafetyClass.MUTATION, SetPivot.parse, self.set_pivot),
         ]
