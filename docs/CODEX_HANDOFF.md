@@ -3,13 +3,13 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed commit before this checkpoint: c8785669c9a90da1e160bc1afa3366230240b3a0.
+Latest verified pushed source/package commit: bbd14094b50ba8d7fa3260c9974a540344cc13f4.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-11 initial bounded source capabilities implemented. Source hardening pass complete,
-unit/package verification complete; final checkpoint CI verification in progress.
+Phases 1-11 initial bounded source capabilities implemented. Source hardening pass complete;
+unit, package and all six CI matrix jobs verified. This checkpoint records the final evidence.
 Phase 12 suite/checklist prepared. Actual Blender acceptance awaits explicit authorization.
 
 ## Completed and verified
@@ -76,16 +76,18 @@ Phase 12 suite/checklist prepared. Actual Blender acceptance awaits explicit aut
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 193 passing,
-1 skipped locally (symlink creation unsupported by account).
+Source: 23 registered typed tools and host/orchestration interface. Unit tests: 194 passed
+on Linux/Windows CI; locally 193 passed, 1 skipped (symlink creation unsupported by account).
 Lint/format: passing. Current wheel/sdist: built and contents/clean offline install verified.
-CI: c878566 passed all six jobs (run 37327178200); every previous checkpoint this pass passed.
-Current distribution/boundary checkpoint CI will be verified after push.
+CI: bbd14094b50ba8d7fa3260c9974a540344cc13f4 passed all six jobs, including package smoke:
+https://github.com/shuvinexofficial143-design/shuvi-blender-agent/actions/runs/37328700111
+Linux/Windows Python 3.11/3.12/3.13. Every preceding checkpoint this pass also passed.
+This documentation checkpoint's own CI can be resolved in Actions from git log -1.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-Final GitHub checkpoint and CI verification. No unfinished source edits are intentionally
-left local. Real Blender, checkpoint reopen/recovery and production acceptance remain future work.
+Source work complete and checkpointed. No unfinished local source work. Real Blender,
+checkpoint reopen/recovery and production acceptance remain future work.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -106,8 +108,7 @@ left local. Real Blender, checkpoint reopen/recovery and production acceptance r
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Verify the current checkpoint's six CI jobs, including clean distribution smoke. With later
-explicit runtime authorization, follow docs/RUNTIME_ACCEPTANCE.md and run the opt-in suite
+With later explicit runtime authorization, follow docs/RUNTIME_ACCEPTANCE.md and run the opt-in suite
 in its factory-startup temporary workspace. Rendering needs separate authorization/flag.
 Then add independent checkpoint reopening/recovery acceptance and main Shuvi integration
 acceptance. Preserve source/runtime/CI/production distinctions. Deletion stays deferred.
