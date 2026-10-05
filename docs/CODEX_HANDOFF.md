@@ -3,24 +3,24 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 1 source/package commit: d37b3998cba1f515587c7b054481b6a99aa5d42c.
+Latest verified pushed Level 1 source/package commit: 09fc38034e8d82d2dbd9b2e3a15c366de8e61bc0.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Level 1 active checkpoint
-Latest verified source checkpoint: d37b3998cba1f515587c7b054481b6a99aa5d42c.
+Latest verified source checkpoint: 09fc38034e8d82d2dbd9b2e3a15c366de8e61bc0.
 All six Linux/Windows Python 3.11/3.12/3.13 CI jobs passed, including package build,
-distribution checks and clean install/import without bpy. 228 tests passed.
+distribution checks and clean install/import without bpy. 230 tests passed.
 
 Level 1 now includes expanded bounded mesh primitives; rename/display properties; full and
 partial transforms; independent and linked mesh duplication; visibility; selection/active
 state; parent/unparent with cycle rejection; hierarchy and origin inspection; collection
-inspect/rename/link/unlink/move/child creation with orphan and linked-collection guards;
+inspect/rename/link/unlink/move/child creation with orphan, scene-reachability, hierarchy-depth and linked-collection guards;
 cursor, scene-name, units, pivot and mode inspection; scene object-type counts/world
 presence; bounded data-block and constraint summaries. Host allowlist currently has 46
 typed tools. Real Blender runtime verification remains 0%.
 
-Level 1 source is approximately 82% against the broad roadmap. Remaining items are mainly
+Level 1 source is approximately 84% against the broad roadmap. Remaining items are mainly
 context-sensitive operations intentionally deferred without real Blender: mode mutation,
 apply transforms, origin mutation, Curve/Text primitive workflows, destructive deletion
 and destructive project switching. Current documentation checkpoints follow the verified
@@ -99,9 +99,9 @@ prepared, but actual Blender acceptance still awaits explicit authorization.
 
 ## Status
 Source: 46 typed host contracts/tools including the Level 1 broad-control expansion.
-Unit/CI tests: 228 passed at d37b3998cba1f515587c7b054481b6a99aa5d42c.
+Unit/CI tests: 230 passed at 09fc38034e8d82d2dbd9b2e3a15c366de8e61bc0.
 Lint/format: passing. Wheel/sdist build, distribution contents and clean install/import
-without bpy passed. CI run 37338301840 passed all six Linux/Windows Python 3.11/3.12/3.13
+without bpy passed. CI run 37339239729 passed all six Linux/Windows Python 3.11/3.12/3.13
 jobs. Documentation checkpoints after that source commit have their own CI runs.
 Real Blender runtime verification: none (0%). Production ready: no.
 
