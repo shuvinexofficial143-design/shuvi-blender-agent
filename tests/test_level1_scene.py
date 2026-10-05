@@ -132,3 +132,16 @@ def test_mode_inspection_reports_active_type_without_mutating_mode():
     result = registry.dispatch(Request("mode.inspect"))
     assert result.data["active_object_type"] == "MESH"
     assert result.data["active_object_id"] is not None
+
+
+def test_scene_inspection_reports_type_counts_and_world_presence():
+    bpy, registry = setup()
+    scene = registry.dispatch(Request("scene.inspect"))
+    assert scene.status == Status.SUCCEEDED
+    assert scene.data["object_count"] == 2
+    assert scene.data["object_counts_by_type"] == {"MESH": 2}
+    assert scene.data["world_present"] is False
+
+    bpy.context.scene.world = object()
+    scene = registry.dispatch(Request("scene.inspect"))
+    assert scene.data["world_present"] is True
