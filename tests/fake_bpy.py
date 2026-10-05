@@ -293,6 +293,7 @@ def fake_bpy(objects=None):
         collection=collection,
     )
     scene.frame_set = lambda frame: setattr(scene, "frame_current", frame)
+    scene.cycles = NS(device="CPU", samples=128)
     return NS(
         context=NS(scene=scene, mode="OBJECT", view_layer=NS(update=lambda: None)),
         data=NS(

@@ -22,9 +22,14 @@ class LaunchConfig:
     blend_file: Path | None = None
     startup_timeout_ms: int = 15_000
     policy: SafetyPolicy = SafetyPolicy()
+    output_directory: Path | None = None
 
     def __post_init__(self) -> None:
         integer(self.startup_timeout_ms, "startup_timeout_ms", 1, 120_000)
+        if self.output_directory is not None and not Path(self.output_directory).is_dir():
+            raise AgentError(ErrorCode.NOT_FOUND, "Output directory does not exist")
+        if self.policy.allow_file_writes and self.output_directory is None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "File writes require an output directory")
         if not Path(self.executable).is_file():
             raise AgentError(ErrorCode.BLENDER_NOT_FOUND, "Blender executable does not exist")
         if self.blend_file is not None:
@@ -98,6 +103,10 @@ def launch(config: LaunchConfig, *, popen: Callable = subprocess.Popen) -> Blend
                 "SHUVI_ALLOW_MUTATIONS": "1" if config.policy.allow_mutations else "0",
                 "SHUVI_ALLOW_DESTRUCTIVE": "1" if config.policy.allow_destructive else "0",
                 "SHUVI_ALLOW_FILE_WRITES": "1" if config.policy.allow_file_writes else "0",
+                "SHUVI_ALLOW_RENDERING": "1" if config.policy.allow_rendering else "0",
+                "SHUVI_OUTPUT_DIRECTORY": str(Path(config.output_directory).resolve())
+                if config.output_directory is not None
+                else "",
             }
         )
         process = popen(

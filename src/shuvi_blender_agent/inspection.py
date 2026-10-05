@@ -17,6 +17,26 @@ MAX_SCENE_OBJECTS = 10_000
 MAX_DETAILS = 64
 
 
+def render_snapshot(scene) -> dict:
+    render = scene.render
+    cycles = getattr(scene, "cycles", None)
+    return {
+        "engine": render.engine,
+        "resolution_x": render.resolution_x,
+        "resolution_y": render.resolution_y,
+        "resolution_percentage": render.resolution_percentage,
+        "fps": render.fps,
+        "fps_base": render.fps_base,
+        "filepath": render.filepath,
+        "format": render.image_settings.file_format,
+        "color_mode": getattr(render.image_settings, "color_mode", None),
+        "color_depth": getattr(render.image_settings, "color_depth", None),
+        "threads_mode": getattr(render, "threads_mode", None),
+        "threads": getattr(render, "threads", None),
+        "cycles": {"device": cycles.device, "samples": cycles.samples} if cycles else None,
+    }
+
+
 def modifier_snapshot(mod) -> dict:
     keys = {
         "BEVEL": ("width", "segments"),
@@ -142,12 +162,7 @@ class BpyInspector:
                 "frame": scene.frame_current,
                 "frame_range": [scene.frame_start, scene.frame_end],
                 "camera": self.identity(scene.camera) if scene.camera else None,
-                "render": {
-                    "engine": scene.render.engine,
-                    "resolution_x": scene.render.resolution_x,
-                    "resolution_y": scene.render.resolution_y,
-                    "filepath": scene.render.filepath,
-                },
+                "render": render_snapshot(scene),
                 "objects": [(obj["object_id"], obj["revision"]) for obj in snapshots],
                 "collections": [
                     (item.name, len(item.objects), len(item.children))
@@ -160,7 +175,6 @@ class BpyInspector:
         scene = self.bpy.context.scene
         snapshots = [self.snapshot(obj) for obj in self.scene_objects()]
         collections = sorted(self.bpy.data.collections, key=lambda item: item.name)
-        render = scene.render
         return {
             "session_id": self.session_id,
             "file": self.bpy.data.filepath,
@@ -184,16 +198,7 @@ class BpyInspector:
                 "end": scene.frame_end,
                 "current": scene.frame_current,
             },
-            "render": {
-                "engine": render.engine,
-                "resolution_x": render.resolution_x,
-                "resolution_y": render.resolution_y,
-                "resolution_percentage": render.resolution_percentage,
-                "fps": render.fps,
-                "fps_base": render.fps_base,
-                "filepath": render.filepath,
-                "format": render.image_settings.file_format,
-            },
+            "render": render_snapshot(scene),
         }
 
     def page(self, query: PageQuery) -> dict:
