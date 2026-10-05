@@ -163,7 +163,9 @@ class SceneStateOperations:
         )
 
     def tools(self):
-        empty = lambda data: fields(data, set())
+        def empty(data):
+            return fields(data, set())
+
         return [
             Tool("cursor.inspect", SafetyClass.READ_ONLY, empty, self.inspect_cursor),
             Tool("cursor.set", SafetyClass.MUTATION, CursorSet.parse, self.set_cursor),
