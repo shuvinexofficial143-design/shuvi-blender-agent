@@ -22,6 +22,12 @@ are removed; candidates and root children are capped, with a truncation flag. Mi
 configured paths and probe errors are returned as structured issues. Installed=true means
 an executable file candidate exists; it is not proof that Blender can launch.
 
+Each root enumerates at most 4097 entries before sorting. Roots exceeding the configured
+directory work limit (default/maximum 4096) are skipped with directory_work_limit and
+truncated=true, avoiding nondeterministic partial selection. Version capture is capped
+at 64 KiB and oversized output stops only the owned probe child. No runtime probe was
+run during source hardening; tests inject fake process pipes.
+
 Portable paths need --path or --root. Registry, Microsoft Store, Steam libraries, remote
 machines, and running-process attachment are not implemented. No unrelated Blender
 process is controlled or terminated by discovery.

@@ -1,0 +1,278 @@
+"""Future opt-in Blender acceptance in a disposable factory-startup workspace."""
+
+import argparse
+import json
+import time
+from dataclasses import asdict
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from .client import BlenderController
+from .contracts import Request, Status
+from .discovery import BlenderVersion, DiscoveryConfig, discover, probe_version
+from .errors import AgentError, ErrorCode
+from .models import ObjectTarget
+from .plans import Plan, PlanRunner, PlanStep
+from .process import LaunchConfig, launch
+from .safety import SafetyPolicy
+
+
+def run_acceptance(
+    executable: Path,
+    *,
+    runtime_authorized: bool = False,
+    allow_render: bool = False,
+    launcher=launch,
+    version_probe=probe_version,
+) -> dict:
+    if runtime_authorized is not True or type(allow_render) is not bool:
+        raise AgentError(ErrorCode.SAFETY_DENIED, "Explicit runtime authorization is required")
+    started = time.monotonic()
+    report = {
+        "suite_completed": False,
+        "real_runtime_verified": False,
+        "cases": [],
+        "render_requested": allow_render,
+    }
+    session = None
+    workspace_path = None
+    try:
+        installations = discover(DiscoveryConfig(configured_paths=(Path(executable),)))
+        executable = installations.select().executable
+        version = version_probe(executable, 3000)
+        if version < BlenderVersion(4, 2):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Acceptance requires Blender 4.2+")
+        report["version"] = str(version)
+        with TemporaryDirectory(prefix="shuvi-blender-acceptance-") as directory:
+            workspace_path = Path(directory)
+            config = LaunchConfig(
+                executable,
+                blend_file=None,
+                output_directory=workspace_path,
+                policy=SafetyPolicy(
+                    allow_mutations=True, allow_file_writes=True, allow_rendering=allow_render
+                ),
+            )
+            with launcher(config) as session:
+                controller = BlenderController(session.client)
+                controller.capabilities()
+
+                def execute(operation, payload=None):
+                    remaining = int(120_000 - (time.monotonic() - started) * 1000)
+                    if remaining < 1:
+                        raise AgentError(ErrorCode.TIMEOUT, "Acceptance suite deadline exceeded")
+                    request = Request(operation, payload or {}, timeout_ms=min(10_000, remaining))
+                    result = controller.execute(request)
+                    report["cases"].append({"operation": operation, "result": result.to_dict()})
+                    if result.status == Status.FAILED:
+                        raise result.error
+                    return result.data
+
+                def scene_revision():
+                    return execute("scene.inspect")["revision"]
+
+                def target(object_id):
+                    snapshot = execute("object.inspect", {"object_id": object_id})
+                    return asdict(ObjectTarget.from_snapshot(snapshot))
+
+                transform = {"location": [0, 0, 0], "rotation_euler": [0, 0, 0], "scale": [1, 1, 1]}
+                execute("system.ping")
+                capabilities = execute("system.capabilities")
+                if tuple(capabilities["blender_version"]) < (4, 2, 0):
+                    raise AgentError(ErrorCode.SAFETY_DENIED, "Running Blender is below 4.2")
+                execute("objects.list", {"limit": 1})
+                execute("collections.list", {"limit": 1})
+                ids = {}
+                for kind in ("CUBE", "PLANE", "EMPTY"):
+                    data = execute(
+                        "object.create",
+                        {
+                            "name": f"Acceptance{kind}",
+                            "kind": kind,
+                            "transform": transform,
+                            "expected_scene_revision": scene_revision(),
+                        },
+                    )
+                    ids[kind] = data["after"]["object_id"]
+                execute(
+                    "object.duplicate",
+                    {
+                        "target": target(ids["CUBE"]),
+                        "name": "AcceptanceCopy",
+                        "transform": transform,
+                    },
+                )
+                moved = transform | {"location": [1, 2, 3]}
+                execute("object.set_transform", {"target": target(ids["CUBE"]), "transform": moved})
+                execute(
+                    "material.create_assign",
+                    {
+                        "target": target(ids["CUBE"]),
+                        "name": "AcceptanceMaterial",
+                        "base_color": [0.2, 0.4, 0.8, 1],
+                        "metallic": 0,
+                        "roughness": 0.5,
+                    },
+                )
+                for kind in ("CAMERA", "POINT", "SUN", "SPOT", "AREA"):
+                    settings = (
+                        {"lens": 35, "clip_start": 0.1, "clip_end": 100, "make_active": True}
+                        if kind == "CAMERA"
+                        else {"energy": 1, "color": [1, 1, 1]}
+                    )
+                    execute(
+                        "device.create",
+                        {
+                            "name": f"Acceptance{kind}",
+                            "kind": kind,
+                            "settings": settings,
+                            "transform": transform | {"location": [0, 0, 6]},
+                            "expected_scene_revision": scene_revision(),
+                        },
+                    )
+                execute(
+                    "modifier.add",
+                    {
+                        "target": target(ids["CUBE"]),
+                        "name": "AcceptanceBevel",
+                        "kind": "BEVEL",
+                        "settings": {"width": 0.05, "segments": 1},
+                    },
+                )
+                execute(
+                    "collection.create",
+                    {
+                        "name": "AcceptanceCollection",
+                        "target": target(ids["CUBE"]),
+                        "expected_scene_revision": scene_revision(),
+                    },
+                )
+                execute(
+                    "asset.mark",
+                    {"target": target(ids["EMPTY"]), "description": "Disposable acceptance object"},
+                )
+                execute(
+                    "animation.set_range",
+                    {"start": 1, "end": 2, "expected_scene_revision": scene_revision()},
+                )
+                execute(
+                    "animation.set_frame", {"frame": 1, "expected_scene_revision": scene_revision()}
+                )
+                execute(
+                    "animation.insert_keyframe",
+                    {
+                        "target": target(ids["CUBE"]),
+                        "frame": 1,
+                        "transform": moved,
+                        "interpolation": "LINEAR",
+                    },
+                )
+                geometry = {"vertices": [[0, 0, 0], [1, 0, 0], [0, 1, 0]], "faces": [[0, 1, 2]]}
+                mesh = execute(
+                    "mesh.create",
+                    {
+                        "name": "AcceptanceTriangle",
+                        "geometry": geometry,
+                        "transform": transform,
+                        "expected_scene_revision": scene_revision(),
+                    },
+                )
+                mesh_id = mesh["after"]["object"]["object_id"]
+                mesh_state = execute("mesh.inspect", {"object_id": mesh_id})
+                execute(
+                    "mesh.translate_vertices",
+                    {
+                        "target": target(mesh_id),
+                        "indices": [0],
+                        "delta": [0, 0, 0.1],
+                        "expected_geometry_revision": mesh_state["geometry_revision"],
+                    },
+                )
+                execute(
+                    "render.configure",
+                    {
+                        "width": 16,
+                        "height": 16,
+                        "samples": 1,
+                        "expected_scene_revision": scene_revision(),
+                    },
+                )
+                execute(
+                    "file.checkpoint",
+                    {"name": "acceptance.blend", "expected_scene_revision": scene_revision()},
+                )
+                if allow_render:
+                    execute(
+                        "render.execute",
+                        {"name": "acceptance.png", "expected_scene_revision": scene_revision()},
+                    )
+                plan = Plan(
+                    (
+                        PlanStep("ping", Request("system.ping")),
+                        PlanStep("scene", Request("scene.inspect")),
+                    ),
+                    timeout_ms=10_000,
+                )
+                plan_report = PlanRunner(controller).run(plan)
+                report["plan"] = plan_report.to_dict()
+                if not plan_report.completed:
+                    raise AgentError(ErrorCode.EXECUTION_ERROR, "Acceptance plan failed")
+                report["suite_completed"] = True
+    except AgentError as exc:
+        report["error"] = exc.to_dict()
+    except Exception:
+        report["error"] = AgentError(
+            ErrorCode.EXECUTION_ERROR, "Acceptance suite failed; inspect cleanup"
+        ).to_dict()
+    report["cleanup_confirmed"] = (
+        session is not None and session.client.closed and session.process.poll() is not None
+    )
+    report["workspace_removed"] = workspace_path is not None and not workspace_path.exists()
+    report["real_runtime_verified"] = (
+        report["suite_completed"]
+        and report["cleanup_confirmed"]
+        and report["workspace_removed"]
+        and launcher is launch
+        and version_probe is probe_version
+    )
+    return report
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--authorize-runtime", action="store_true")
+    parser.add_argument("--allow-render", action="store_true")
+    parser.add_argument("--executable", type=Path)
+    parser.add_argument("--report", type=Path)
+    args = parser.parse_args(argv)
+    if args.authorize_runtime:
+        if args.executable is None:
+            parser.error("--executable is required for an authorized runtime run")
+        report = run_acceptance(
+            args.executable, runtime_authorized=True, allow_render=args.allow_render
+        )
+    else:
+        report = {
+            "status": "prepared",
+            "real_runtime_verified": False,
+            "message": "No Blender executed. Run only after explicit runtime authorization.",
+        }
+    raw = json.dumps(report, indent=2)
+    if args.report:
+        with args.report.open("x", encoding="utf-8") as stream:
+            stream.write(raw + "\n")
+    print(raw)
+    return (
+        0
+        if report.get("status") == "prepared"
+        or (
+            report["suite_completed"]
+            and report["cleanup_confirmed"]
+            and report["workspace_removed"]
+        )
+        else 1
+    )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

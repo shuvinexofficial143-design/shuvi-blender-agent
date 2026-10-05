@@ -13,6 +13,29 @@ The package imports without Blender. No unrestricted Python execution tool is ex
 Planning, model providers, authentication, billing, and frontend belong to the main Shuvi
 project and are outside this repository.
 
+The execution factory currently registers 23 typed tools. The host client validates its own
+allowlist and safety classes, verifies response correlation/readback and executes bounded
+declarative plans. Scene queries stream revision construction and cap nested work, page
+bytes and metadata. File outputs use exclusive reservations and verified readback.
+
+## Integration and acceptance
+
+- [Tool reference and exact limits](docs/TOOL_REFERENCE.md)
+- [Host client and stable integration interface](docs/CLIENT.md)
+- [Source audit and practical limits](docs/SOURCE_AUDIT.md)
+- [Future Blender 4.2+ acceptance checklist](docs/RUNTIME_ACCEPTANCE.md)
+
+The prepared acceptance module uses a disposable factory-startup project and requires
+explicit runtime authorization. Running it without arguments only reports preparation:
+
+```powershell
+python -m shuvi_blender_agent.runtime_acceptance
+```
+
+Source and fake-data tests are available; real Blender runtime verification remains 0%.
+Production ready: no. Real launch, bpy, render and recovery behavior need the separately
+authorized acceptance procedure. No Blender is installed or launched by package import.
+
 ## Develop
 
 ```powershell

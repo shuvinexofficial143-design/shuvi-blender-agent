@@ -162,6 +162,39 @@ def test_all_execution_tools_match_host_contracts():
         assert contracts[item["name"]][0].value == item["classification"]
 
 
+def test_catalog_metadata_is_exposed_validated_and_independently_copied():
+    _, _, controller = setup()
+    catalog = controller.capabilities()
+    assert catalog["file.checkpoint"]["file_write_permission_required"]
+    assert catalog["render.execute"]["render_permission_required"]
+    assert catalog["object.create"]["verification_required"]
+    assert catalog["object.create"]["runtime_required"]
+    assert not catalog["system.ping"]["runtime_required"]
+    catalog["object.create"]["payload_fields"].append("bad")
+    assert "bad" not in controller.capabilities()["object.create"]["payload_fields"]
+
+
+def test_more_than_256_total_bindings_rejected():
+    steps = [PlanStep("source", Request("system.ping"))]
+    for i in range(17):
+        payload = {f"value{k}": None for k in range(16)}
+        bindings = tuple(Binding("source", ("data", "ready"), (key,)) for key in payload)
+        steps.append(PlanStep(f"step{i}", Request("system.ping", payload), bindings))
+    with pytest.raises(AgentError) as error:
+        Plan(tuple(steps))
+    assert error.value.code == ErrorCode.INVALID_REQUEST
+
+
+def test_plan_aggregate_payload_limit_precedes_execution():
+    with pytest.raises(AgentError):
+        Plan(
+            tuple(
+                PlanStep(f"step{i}", Request("system.ping", {"value": "x" * 40000}))
+                for i in range(32)
+            )
+        )
+
+
 @pytest.mark.parametrize("dest", [("missing",), ("items", "0"), ("items", -1)])
 def test_invalid_destination_is_rejected_before_any_execution(dest):
     with pytest.raises(AgentError):

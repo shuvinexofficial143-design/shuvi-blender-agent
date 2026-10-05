@@ -3,7 +3,7 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed commit before this checkpoint: 427880ae406a19e301ccf5ef01a51f3e89ba3f87.
+Latest verified pushed commit before this checkpoint: 3381adab9ec17e15ee690e301ebba18136da8605.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -60,9 +60,15 @@ Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
 - Discovery bounds directory enumeration before sorting; oversized directories are skipped
   deterministically with diagnostics. Explicit version probes cap captured output at 64 KiB
   using an ordinary pipe reader (no bpy); all tests inject fake process handles.
+- TOOL_REFERENCE.md, RUNTIME_ACCEPTANCE.md and SOURCE_AUDIT.md added; README and existing
+  operation/client/bridge/discovery docs synchronized. Stable capability metadata exposed
+  and validated by the controller, with independent returned copies.
+- runtime_acceptance.py prepared: explicit authorization guard, disposable factory project,
+  all principal tools, bounded plan and separate tiny-render opt-in, cleanup evidence.
+  Harness tested with injected fake sessions only; injected sessions cannot claim real runtime.
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 180 passing,
+Source: 23 registered typed tools and host/orchestration interface. Unit tests: 188 passing,
 1 skipped locally (symlink creation unsupported by account).
 Lint/format: passing. Foundation wheel/sdist: built.
 CI: plan checkpoint 58bc06a passed (run 37322326124); later checkpoints pending recheck.
@@ -70,8 +76,8 @@ Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
 Audit remaining adapters, large-scene inspection, plan preflight, bridge and output safety.
-Next: tool reference, opt-in temporary-workspace runtime acceptance suite (do not run
-against Blender), integration documentation, clean package install/content verification.
+Next: wheel/sdist build/content inspection and clean installed import/CLI smoke; add
+lightweight distribution checks to CI and recheck every pushed CI run. No Blender launch.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.

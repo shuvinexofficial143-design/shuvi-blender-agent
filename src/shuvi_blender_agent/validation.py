@@ -65,7 +65,7 @@ def json_value(value: Any, depth: int = 0, _budget: list[int] | None = None) -> 
         return
     if type(value) is float and math.isfinite(value):
         return
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple)):
         for item in value:
             json_value(item, depth + 1, budget)
         return

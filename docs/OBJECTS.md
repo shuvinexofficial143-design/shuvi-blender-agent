@@ -7,6 +7,7 @@ Tools accept no bpy path, arbitrary property name, code, expression or operator 
 and expected_scene_revision from scene.inspect. Cube is side length 2; plane is a 2×2 XY
 quad. Uses mesh.from_pydata, objects.new and scene.collection.objects.link, avoiding
 operator selection/context dependence. Existing names fail; no automatic .001 renaming.
+Actual primitive geometry counts and coordinate/face fingerprints are verified.
 
 `object.set_transform` requires target and transform. Target has object_id, expected_name,
 expected_revision from a fresh snapshot. Transform requires all three local channel
@@ -17,6 +18,9 @@ constrained, linked, overridden, or noneditable objects are rejected. Object mod
 `object.duplicate` requires target, new name and transform. Only unparented mesh/empty
 objects are supported. Mesh data is copied; materials referenced by the copied mesh may
 remain shared. Actual new identity, scene membership, name/type and transform are checked.
+Copied geometry fingerprints, material slots and separate mesh identity are checked too.
+Copies reject modifiers/shape keys and exceed no more than 4096 vertices, 4096 faces and
+32768 total polygon indices. Truncated inspection cannot authorize a mutation.
 
 Every successful mutation returns verified status with expected/actual comparison and
 before/after snapshots. Numeric comparisons explicitly use absolute tolerance 1e-5 and
@@ -27,6 +31,6 @@ absence before reporting rolled_back. Transform failures include observed state 
 readback is available; they do not silently replay or overwrite later changes. Exceptions
 can leave partial state; inspect and recover using a new revision.
 
-Deletion is deferred until file checkpoint/recovery tooling exists.
+Deletion is deferred until checkpoint reopening/recovery has real runtime verification.
 No Blender runtime tests have occurred; geometry, float precision, duplication semantics,
 cleanup failures and Blender version differences still require authorized acceptance tests.

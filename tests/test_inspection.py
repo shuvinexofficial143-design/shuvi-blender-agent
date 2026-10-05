@@ -183,3 +183,15 @@ def test_foreign_identity_does_not_allocate_scene_identities():
     with pytest.raises(AgentError):
         inspector.resolve("foreign:object")
     assert not inspector._identities
+
+
+def test_truncated_target_cannot_authorize_mutation():
+    obj = FakeObject("Detailed")
+    obj.modifiers = [
+        NS(name=f"M{i}", type="OTHER", show_viewport=True, show_render=True) for i in range(65)
+    ]
+    inspector = BpyInspector(fake_bpy([obj]))
+    snapshot = inspector.snapshot(obj)
+    with pytest.raises(AgentError) as error:
+        inspector.target(ObjectTarget.from_snapshot(snapshot))
+    assert error.value.code == ErrorCode.SAFETY_DENIED

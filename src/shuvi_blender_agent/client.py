@@ -1,6 +1,6 @@
 """Typed importable host facade. Never imports bpy or a model provider."""
 
-import json
+from copy import deepcopy
 from dataclasses import asdict, is_dataclass
 from typing import Protocol
 
@@ -52,11 +52,29 @@ class BlenderController:
                         "enabled": item["enabled"],
                         "classification": classification,
                     }
+                    metadata = {
+                        "verification_required": classification != SafetyClass.READ_ONLY,
+                        "runtime_required": name != "system.ping",
+                        "file_write_permission_required": classification
+                        in (SafetyClass.FILE_WRITE, SafetyClass.RENDER),
+                        "render_permission_required": classification == SafetyClass.RENDER,
+                    }
+                    for key, expected in metadata.items():
+                        if key in item and (type(item[key]) is not bool or item[key] != expected):
+                            raise ValueError("Capability metadata mismatch")
+                    payload_fields = item.get("payload_fields")
+                    if payload_fields is not None:
+                        if not isinstance(payload_fields, list) or len(payload_fields) > 32:
+                            raise ValueError("Invalid payload fields")
+                        payload_fields = [
+                            string(value, "payload field", limit=128) for value in payload_fields
+                        ]
+                    parsed[name].update(metadata | {"payload_fields": payload_fields})
                 self._catalog = parsed
             except (AgentError, ValueError, KeyError, TypeError) as exc:
                 self._catalog = None
                 raise AgentError(ErrorCode.TRANSPORT_ERROR, "Malformed capability catalog") from exc
-        return {name: dict(spec) for name, spec in self._catalog.items()}
+        return deepcopy(self._catalog)
 
     def validate_operation(self, name: str) -> SafetyClass:
         spec = self.capabilities().get(name)
@@ -123,8 +141,7 @@ class BlenderController:
         if not is_dataclass(action) or isinstance(action, type):
             raise AgentError(ErrorCode.INVALID_REQUEST, "Typed action instance required")
         # Dataclass tuples are normalized to JSON arrays; the execution parser revalidates.
-        payload = json.loads(json.dumps(asdict(action), allow_nan=False))
-        return self.execute(Request(operation, payload))
+        return self.execute(Request(operation, asdict(action)))
 
     def inspect_scene(self) -> Result:
         return self.execute(Request("scene.inspect"))
