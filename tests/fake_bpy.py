@@ -127,11 +127,19 @@ class FakeLinks(list):
         return next((obj for obj in self if obj.name == name), None)
 
     def link(self, obj):
-        self.append(obj)
+        if obj not in self:
+            self.append(obj)
         if obj not in self.table:
             self.table.append(obj)
         if self.collection not in obj.users_collection:
             obj.users_collection.append(self.collection)
+
+    def unlink(self, obj):
+        if obj not in self:
+            raise RuntimeError("Object is not linked")
+        self.remove(obj)
+        if self.collection in obj.users_collection:
+            obj.users_collection.remove(self.collection)
 
 
 class FakeModifiers(list):
@@ -149,7 +157,13 @@ class FakeChildren(list):
         return next((item for item in self if item.name == name), None)
 
     def link(self, collection):
-        self.append(collection)
+        if collection not in self:
+            self.append(collection)
+
+    def unlink(self, collection):
+        if collection not in self:
+            raise RuntimeError("Collection is not linked")
+        self.remove(collection)
 
 
 class FakeCollections(list):
