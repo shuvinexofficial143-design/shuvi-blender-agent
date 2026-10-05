@@ -152,3 +152,52 @@ def test_macos_app_bundle(tmp_path):
         which=lambda *a, **kw: None,
     )
     assert report.select().executable == path
+
+
+def test_oversized_directory_is_reported_without_partial_nondeterministic_selection(tmp_path):
+    for i in range(4):
+        executable(tmp_path / f"Blender {i}")
+    report = discover(
+        DiscoveryConfig(search_roots=(tmp_path,), max_directory_entries=3),
+        platform="win32",
+        env={},
+        which=lambda *a, **kw: None,
+    )
+    assert report.truncated
+    assert report.installations == []
+    assert report.issues[0]["code"] == "directory_work_limit"
+
+
+@pytest.mark.parametrize(
+    "output", ["x" * 65537, "Blender " + "9" * 10000 + ".2"], ids=["oversize", "long-number"]
+)
+def test_version_text_is_bounded(output):
+    with pytest.raises(AgentError):
+        BlenderVersion.parse(output)
+
+
+def test_default_version_reader_caps_output_and_stops_owned_fake_process():
+    from io import BytesIO
+
+    from shuvi_blender_agent.discovery import _bounded_version_run
+
+    class FakeProcess:
+        stdout = BytesIO(b"x" * 100000)
+        returncode = 0
+        killed = False
+
+        def poll(self):
+            return 0
+
+        def wait(self, timeout):
+            return 0
+
+        def kill(self):
+            self.killed = True
+
+    process = FakeProcess()
+    with pytest.raises(AgentError) as error:
+        _bounded_version_run(["unused", "--version"], timeout=1, popen=lambda *a, **kw: process)
+    assert error.value.code == ErrorCode.EXECUTION_ERROR
+    assert process.killed
+    assert process.stdout.closed

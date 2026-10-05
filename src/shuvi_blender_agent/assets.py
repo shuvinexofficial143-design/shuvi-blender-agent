@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
+from .inspection import MAX_SCENE_COLLECTIONS
 from .models import ObjectTarget, object_name
 from .operations import ObjectOperations
 from .safety import SafetyClass, require_revision
@@ -84,14 +85,18 @@ class AssetOperations:
     def add_modifier(self, request: Request, action: AddModifier) -> Result:
         obj, before = self.inspector.target(action.target)
         self.objects._editable(obj)
-        if obj.type != "MESH" or len(obj.modifiers) >= 64:
+        if obj.type != "MESH" or len(obj.modifiers):
             raise AgentError(
-                ErrorCode.SAFETY_DENIED, "Editable mesh with fewer than 64 modifiers required"
+                ErrorCode.SAFETY_DENIED, "Editable mesh without an existing modifier stack required"
             )
         if obj.modifiers.get(action.name) is not None:
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Modifier name already exists")
-        if action.kind == "SUBSURF" and len(obj.data.vertices) > 10_000:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Subdivision input exceeds mesh work limit")
+        if (
+            len(obj.data.vertices) > 4096
+            or len(obj.data.polygons) > 4096
+            or sum(len(face.vertices) for face in obj.data.polygons) > 32768
+        ):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Modifier input exceeds mesh work limit")
         modifier = obj.modifiers.new(action.name, action.kind)
         try:
             # Keys come solely from the explicit typed parser above, never user bpy paths.
@@ -126,13 +131,17 @@ class AssetOperations:
         if self.bpy.data.collections.get(action.name) is not None:
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Collection name already exists")
         root = self.bpy.context.scene.collection
-        if len(root.children) >= 64:
+        if len(root.children) >= 64 or len(self.bpy.data.collections) >= MAX_SCENE_COLLECTIONS:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Root collection work limit reached")
         obj = None
         before = None
         if action.target is not None:
             obj, before = self.inspector.target(action.target)
             self.objects._editable(obj)
+            if len(obj.users_collection) >= 64:
+                raise AgentError(
+                    ErrorCode.SAFETY_DENIED, "Object collection relationship limit reached"
+                )
         collection = self.bpy.data.collections.new(action.name)
         try:
             root.children.link(collection)

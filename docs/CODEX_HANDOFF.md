@@ -3,7 +3,7 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed commit before this checkpoint: 9063c78d113b93fab0753767ab21b4d740e7f8c0.
+Latest verified pushed commit before this checkpoint: 427880ae406a19e301ccf5ef01a51f3e89ba3f87.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -53,9 +53,16 @@ Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
   reservation cleanup preserves replaced files. BLEND hashing streams 64 KiB chunks;
   PNG input capped at 4 MiB and unknown critical chunks rejected. Windows reserved
   superscript device names rejected. One local symlink test skipped (account permission).
+- Primitive creation and mesh duplication compare actual geometry fingerprints/counts;
+  duplicate verifies separate mesh and preserved material slots. Oversized/shape-key/
+  modifier-stack duplicates denied before copying. Modifier addition rejects existing stacks
+  and caps source geometry; collection creation caps memberships. Truncated targets denied.
+- Discovery bounds directory enumeration before sorting; oversized directories are skipped
+  deterministically with diagnostics. Explicit version probes cap captured output at 64 KiB
+  using an ordinary pipe reader (no bpy); all tests inject fake process handles.
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 169 passing,
+Source: 23 registered typed tools and host/orchestration interface. Unit tests: 180 passing,
 1 skipped locally (symlink creation unsupported by account).
 Lint/format: passing. Foundation wheel/sdist: built.
 CI: plan checkpoint 58bc06a passed (run 37322326124); later checkpoints pending recheck.
@@ -63,8 +70,8 @@ Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
 Audit remaining adapters, large-scene inspection, plan preflight, bridge and output safety.
-Next: finish remaining adapter/discovery work guards; then tool reference, runtime
-acceptance preparation and clean package install/content verification.
+Next: tool reference, opt-in temporary-workspace runtime acceptance suite (do not run
+against Blender), integration documentation, clean package install/content verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.

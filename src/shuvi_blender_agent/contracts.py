@@ -117,6 +117,11 @@ class Result:
                 "verification",
             },
         )
+        if (
+            type(data["protocol_version"]) is not int
+            or data["protocol_version"] != PROTOCOL_VERSION
+        ):
+            raise AgentError(ErrorCode.PROTOCOL_MISMATCH, "Unsupported protocol version")
         try:
             data["status"] = Status(data["status"])
             if data["error"] is not None:

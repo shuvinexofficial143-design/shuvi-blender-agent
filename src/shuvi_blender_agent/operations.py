@@ -2,7 +2,7 @@
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
-from .inspection import MAX_SCENE_OBJECTS, BpyInspector
+from .inspection import MAX_SCENE_OBJECTS, BpyInspector, revision
 from .models import CreateObject, DuplicateObject, SetTransform, Transform
 from .safety import SafetyClass, require_revision
 from .tools import Tool
@@ -68,6 +68,25 @@ class ObjectOperations:
         after["scene_member"] = self.bpy.context.scene.objects.get(obj.name) == obj
         return after
 
+    @staticmethod
+    def _geometry_summary(mesh):
+        if (
+            len(mesh.vertices) > 4096
+            or len(mesh.polygons) > 4096
+            or sum(len(face.vertices) for face in mesh.polygons) > 32768
+        ):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Mesh copy/readback work limit exceeded")
+        return {
+            "vertex_count": len(mesh.vertices),
+            "face_count": len(mesh.polygons),
+            "revision": revision(
+                {
+                    "vertices": [[float(value) for value in vertex.co] for vertex in mesh.vertices],
+                    "faces": [list(face.vertices) for face in mesh.polygons],
+                }
+            ),
+        }
+
     def set_transform(self, request: Request, action: SetTransform) -> Result:
         obj, before = self.inspector.target(action.target)
         self._editable(obj)
@@ -123,6 +142,19 @@ class ObjectOperations:
                 "scene_member": True,
                 "transform": action.transform.to_dict() | {"rotation_mode": "XYZ"},
             }
+            if mesh is not None:
+                actual_geometry = self._geometry_summary(mesh)
+                after["geometry"] = actual_geometry
+                expected["geometry"] = {
+                    "vertex_count": len(vertices),
+                    "face_count": len(faces),
+                    "revision": revision(
+                        {
+                            "vertices": [[float(value) for value in vertex] for vertex in vertices],
+                            "faces": [list(face) for face in faces],
+                        }
+                    ),
+                }
             result = self._result(request, None, after, expected)
             if result.status == Status.FAILED:
                 self._remove_created(obj, mesh)
@@ -151,8 +183,22 @@ class ObjectOperations:
             raise AgentError(
                 ErrorCode.SAFETY_DENIED, "Only unparented mesh/empty duplicates supported"
             )
+        if original.data is not None and (
+            len(original.data.vertices) > 4096
+            or len(original.data.polygons) > 4096
+            or sum(len(face.vertices) for face in original.data.polygons) > 32768
+            or original.data.shape_keys is not None
+            or len(original.modifiers)
+            or len(original.material_slots) > 64
+        ):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Duplicate exceeds supported mesh work bounds"
+            )
         obj = None
         mesh = None
+        original_geometry = (
+            self._geometry_summary(original.data) if original.data is not None else None
+        )
         try:
             obj = original.copy()
             obj.name = action.name
@@ -168,7 +214,13 @@ class ObjectOperations:
                 "type": before["type"],
                 "scene_member": True,
                 "transform": action.transform.to_dict() | {"rotation_mode": "XYZ"},
+                "materials": before["materials"],
             }
+            if mesh is not None:
+                after["geometry"] = self._geometry_summary(mesh)
+                after["mesh_shared"] = mesh == original.data
+                expected["geometry"] = original_geometry
+                expected["mesh_shared"] = False
             result = self._result(request, before, after, expected)
             if after["object_id"] == before["object_id"]:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Duplicate identity did not change")

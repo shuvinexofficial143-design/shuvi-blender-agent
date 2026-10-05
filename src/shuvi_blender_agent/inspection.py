@@ -352,6 +352,8 @@ class BpyInspector:
         if obj.name != target.expected_name:
             raise AgentError(ErrorCode.STALE_STATE, "Object name changed since inspection")
         require_revision(target.expected_revision, snapshot["revision"])
+        if snapshot["details_truncated"] or snapshot["animation"]["details_truncated"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Mutation target inspection is truncated")
         return obj, snapshot
 
     def tools(self) -> list[Tool]:

@@ -171,3 +171,11 @@ def test_initial_registry_has_same_bound_as_registration():
     ]
     with pytest.raises(ValueError):
         ToolRegistry(tools)
+
+
+def test_result_protocol_mismatch_is_explicit():
+    data = Result("request", "command", Status.SUCCEEDED).to_dict()
+    data["protocol_version"] = 2
+    with pytest.raises(AgentError) as error:
+        Result.from_bytes(json.dumps(data).encode())
+    assert error.value.code == ErrorCode.PROTOCOL_MISMATCH

@@ -7,7 +7,9 @@ import subprocess
 import sys
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from itertools import islice
 from pathlib import Path
+from threading import Event, Thread
 
 from .errors import AgentError, ErrorCode
 from .validation import integer, string
@@ -21,7 +23,11 @@ class BlenderVersion:
 
     @classmethod
     def parse(cls, output: str) -> "BlenderVersion":
-        match = re.search(r"(?m)^Blender (\d+)\.(\d+)(?:\.(\d+))?(?:\s|$)", output)
+        if not isinstance(output, str) or len(output) > 65536:
+            raise AgentError(ErrorCode.EXECUTION_ERROR, "Version response exceeds bounds")
+        match = re.search(
+            r"(?m)^Blender ([0-9]{1,4})\.([0-9]{1,4})(?:\.([0-9]{1,4}))?(?:\s|$)", output
+        )
         if match is None:
             raise AgentError(ErrorCode.EXECUTION_ERROR, "Not a Blender version response")
         return cls(int(match[1]), int(match[2]), int(match[3] or 0))
@@ -51,10 +57,12 @@ class DiscoveryConfig:
     search_roots: tuple[Path, ...] = ()
     max_candidates: int = 256
     version_timeout_ms: int = 3000
+    max_directory_entries: int = 4096
 
     def __post_init__(self) -> None:
         integer(self.max_candidates, "max_candidates", 1, 256)
         integer(self.version_timeout_ms, "version_timeout_ms", 1, 10_000)
+        integer(self.max_directory_entries, "max_directory_entries", 1, 4096)
         if len(self.configured_paths) > 32 or len(self.search_roots) > 32:
             raise ValueError("At most 32 configured paths/search roots")
 
@@ -94,8 +102,52 @@ class DiscoveryReport:
         }
 
 
+def _bounded_version_run(args, *, timeout, popen=subprocess.Popen, **kwargs):
+    process = popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        shell=False,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    )
+    output = bytearray()
+    oversized = Event()
+    read_failed = Event()
+
+    def read():
+        try:
+            while chunk := process.stdout.read(4096):
+                if len(output) + len(chunk) > 65536:
+                    oversized.set()
+                    process.kill()
+                    break
+                output.extend(chunk)
+        except OSError:
+            read_failed.set()
+
+    worker = Thread(target=read, daemon=True)
+    worker.start()
+    try:
+        process.wait(timeout=timeout)
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=2)
+        worker.join(timeout=2)
+        if not worker.is_alive():
+            process.stdout.close()
+    if oversized.is_set() or read_failed.is_set() or worker.is_alive():
+        raise AgentError(
+            ErrorCode.EXECUTION_ERROR, "Version response exceeds bounds or is unreadable"
+        )
+    try:
+        return subprocess.CompletedProcess(args, process.returncode, bytes(output).decode("utf-8"))
+    except UnicodeError as exc:
+        raise AgentError(ErrorCode.EXECUTION_ERROR, "Invalid version response encoding") from exc
+
+
 def probe_version(
-    executable: Path, timeout_ms: int = 3000, *, run: Callable = subprocess.run
+    executable: Path, timeout_ms: int = 3000, *, run: Callable = _bounded_version_run
 ) -> BlenderVersion:
     """Explicit lightweight subprocess probe; never invoked by discovery unless requested."""
     integer(timeout_ms, "timeout_ms", 1, 10_000)
@@ -158,7 +210,12 @@ def discover(
             continue
         try:
             # Sorting yields a reproducible cap; no recursive filesystem crawl.
-            children = sorted(root.iterdir(), key=lambda child: child.name.casefold())
+            children = list(islice(root.iterdir(), config.max_directory_entries + 1))
+            if len(children) > config.max_directory_entries:
+                report.truncated = True
+                report.issues.append({"path": str(root), "code": "directory_work_limit"})
+                continue
+            children.sort(key=lambda child: child.name.casefold())
             if len(children) > config.max_candidates:
                 report.truncated = True
             for child in children[: config.max_candidates]:

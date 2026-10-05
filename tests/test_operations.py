@@ -16,6 +16,74 @@ def setup():
     return bpy, inspector, registry
 
 
+def test_primitive_geometry_mismatch_is_cleaned_up():
+    bpy, inspector, registry = setup()
+    scene_revision = inspector.summary()["revision"]
+
+    def corrupt():
+        bpy.data.objects.get("New").data.vertices[0].co = [99, 99, 99]
+
+    bpy.context.view_layer.update = corrupt
+    result = registry.dispatch(
+        Request(
+            "object.create",
+            {
+                "name": "New",
+                "kind": "CUBE",
+                "transform": transform(),
+                "expected_scene_revision": scene_revision,
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"]
+    assert bpy.data.objects.get("New") is None
+    assert len(bpy.data.meshes) == 2
+
+
+def test_duplicate_geometry_mismatch_is_cleaned_up():
+    bpy, inspector, registry = setup()
+    original = bpy.context.scene.objects[0]
+    original.data.from_pydata([[0, 0, 0], [1, 0, 0], [0, 1, 0]], [], [[0, 1, 2]])
+    before = inspector.snapshot(original)
+
+    def corrupt():
+        bpy.data.objects.get("Copy").data.vertices[0].co = [9, 9, 9]
+
+    bpy.context.view_layer.update = corrupt
+    result = registry.dispatch(
+        Request(
+            "object.duplicate",
+            {
+                "target": target(before),
+                "name": "Copy",
+                "transform": transform(),
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert bpy.data.objects.get("Copy") is None
+    assert original.data.vertices[0].co == [0, 0, 0]
+
+
+def test_oversized_mesh_duplicate_is_denied_before_copy():
+    bpy, inspector, registry = setup()
+    original = bpy.context.scene.objects[0]
+    original.data.vertices = [None] * 4097
+    result = registry.dispatch(
+        Request(
+            "object.duplicate",
+            {
+                "target": target(inspector.snapshot(original)),
+                "name": "Copy",
+                "transform": transform(),
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert bpy.data.objects.get("Copy") is None
+
+
 def transform():
     return {"location": [1.5, -2, 3], "rotation_euler": [0.1, 0.2, 0.3], "scale": [1, 2, -1]}
 

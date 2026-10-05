@@ -121,3 +121,62 @@ def test_asset_mark_readback_and_no_replacement():
         ).error.code
         == ErrorCode.AMBIGUOUS_TARGET
     )
+
+
+def test_existing_modifier_stack_is_denied_before_adding():
+    bpy, inspector, registry, target = setup()
+    obj = bpy.context.scene.objects[0]
+    obj.modifiers.new("Existing", "SUBSURF")
+    target["expected_revision"] = inspector.snapshot(obj)["revision"]
+    result = registry.dispatch(
+        Request(
+            "modifier.add",
+            {
+                "target": target,
+                "name": "Next",
+                "kind": "SUBSURF",
+                "settings": {"levels": 2, "render_levels": 2},
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert len(obj.modifiers) == 1
+
+
+def test_large_mesh_modifier_is_denied_before_evaluation():
+    bpy, _, registry, target = setup()
+    obj = bpy.context.scene.objects[0]
+    obj.data.vertices = [None] * 4097
+    result = registry.dispatch(
+        Request(
+            "modifier.add",
+            {
+                "target": target,
+                "name": "Next",
+                "kind": "BEVEL",
+                "settings": {"width": 1, "segments": 8},
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert not obj.modifiers
+
+
+def test_collection_creation_does_not_exceed_object_relationship_bounds():
+    bpy, inspector, registry, target = setup()
+    obj = bpy.context.scene.objects[0]
+    for i in range(63):
+        obj.users_collection.append(bpy.data.collections.new(f"Group{i}"))
+    target["expected_revision"] = inspector.snapshot(obj)["revision"]
+    result = registry.dispatch(
+        Request(
+            "collection.create",
+            {
+                "name": "Next",
+                "target": target,
+                "expected_scene_revision": inspector.summary()["revision"],
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert bpy.data.collections.get("Next") is None
