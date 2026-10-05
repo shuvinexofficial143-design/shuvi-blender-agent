@@ -60,6 +60,22 @@ class HierarchyOperations:
             current = current.parent
         raise AgentError(ErrorCode.SAFETY_DENIED, "Hierarchy depth exceeds safety limit")
 
+
+    def inspect_origin(self, req, object_id):
+        obj = self.inspector.resolve(object_id)
+        matrix = obj.matrix_world
+        data = {
+            "object_id": self.inspector.identity(obj),
+            "local_location": [float(value) for value in obj.location],
+            "world_location": [
+                float(matrix[0][3]),
+                float(matrix[1][3]),
+                float(matrix[2][3]),
+            ],
+            "parent_id": self.inspector.identity(obj.parent) if obj.parent else None,
+        }
+        return Result(req.request_id, req.command_id, Status.SUCCEEDED, data)
+
     def inspect(self, req, object_id):
         obj = self.inspector.resolve(object_id)
         children = [item for item in self.inspector.scene_objects() if item.parent == obj]
@@ -109,6 +125,7 @@ class HierarchyOperations:
     def tools(self):
         return [
             Tool("hierarchy.inspect", SafetyClass.READ_ONLY, _parse_object_id, self.inspect),
+            Tool("origin.inspect", SafetyClass.READ_ONLY, _parse_object_id, self.inspect_origin),
             Tool(
                 "hierarchy.set_parent",
                 SafetyClass.MUTATION,
