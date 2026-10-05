@@ -179,7 +179,6 @@ class SceneStateOperations:
         expected = before | action.values
         return self.objects._result(req, before, unit_snapshot(scene), expected)
 
-
     def inspect_pivot(self, req, _):
         data = {"pivot": self.bpy.context.scene.tool_settings.transform_pivot_point}
         return Result(req.request_id, req.command_id, Status.SUCCEEDED, data)
