@@ -63,6 +63,7 @@ def builtin_contracts() -> dict:
         "object.create": (mutation, CreateObject.parse),
         "object.set_transform": (mutation, SetTransform.parse),
         "object.duplicate": (mutation, DuplicateObject.parse),
+        "object.duplicate_linked": (mutation, DuplicateObject.parse),
         "material.create_assign": (mutation, MaterialAssign.parse),
         "device.create": (mutation, CreateDevice.parse),
         "modifier.add": (mutation, AddModifier.parse),
