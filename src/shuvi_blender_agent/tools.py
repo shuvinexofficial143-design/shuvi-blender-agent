@@ -100,6 +100,10 @@ class ToolRegistry:
                     "enabled": enabled,
                     "payload_fields": payload_fields,
                     "verification_required": tool.classification != SafetyClass.READ_ONLY,
+                    "runtime_required": tool.name != "system.ping",
+                    "file_write_permission_required": tool.classification
+                    in (SafetyClass.FILE_WRITE, SafetyClass.RENDER),
+                    "render_permission_required": tool.classification == SafetyClass.RENDER,
                 }
             )
         return result

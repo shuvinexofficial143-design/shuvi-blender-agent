@@ -3,7 +3,7 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed commit before this checkpoint: 1fa419193e3bbf1794197b7d97021938cd2cd88c.
+Latest verified pushed commit before this checkpoint: 78d6324e571752eed6af4788aa05a5737e1c1e05.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -42,16 +42,20 @@ Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
+- Host payload/safety allowlist mirrors all 23 registered tools; remote catalog cannot
+  downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
+  total binding/result budgets enforced, unbound payloads preflight, deadlines include
+  capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 135 passing.
+Source: 23 registered typed tools and host/orchestration interface. Unit tests: 145 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
-CI all prior checkpoints: success. Latest assets run 37314216937. Current CI pending.
+CI: JSON checkpoint 1fa4191 passed (run 37320583547); later checkpoints pending recheck.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
 Audit remaining adapters, large-scene inspection, plan preflight, bridge and output safety.
-Next: plan destination preflight/deadline/partial failure and bridge/output hardening.
+Next: bridge aggregate replay memory/duplicate IDs/framing and output file race protections.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.

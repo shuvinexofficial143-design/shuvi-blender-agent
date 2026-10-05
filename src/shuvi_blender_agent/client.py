@@ -6,8 +6,10 @@ from typing import Protocol
 
 from .contracts import Request, Result, Status, failure
 from .errors import AgentError, ErrorCode
+from .input_contracts import builtin_contracts
 from .models import CreateObject, ObjectTarget, PageQuery, SetTransform, Transform
 from .safety import SafetyClass
+from .validation import integer, string
 from .verification import compare
 
 
@@ -20,9 +22,9 @@ class BlenderController:
         self.transport = transport
         self._catalog: dict | None = None
 
-    def capabilities(self) -> dict:
+    def capabilities(self, *, timeout_ms: int = 10_000) -> dict:
         if self._catalog is None:
-            request = Request("system.capabilities")
+            request = Request("system.capabilities", timeout_ms=timeout_ms)
             result = self.transport.call(request)
             self._correlate(request, result)
             if result.status != Status.SUCCEEDED:
@@ -33,18 +35,25 @@ class BlenderController:
                 catalog = result.data["operations"]
                 if not isinstance(catalog, list) or not 1 <= len(catalog) <= 128:
                     raise ValueError("Invalid catalog")
-                self._catalog = {}
+                parsed = {}
+                contracts = builtin_contracts()
+                integer(result.data["protocol_version"], "protocol_version", 1, 1)
+                string(result.data["session_id"], "session_id", limit=128)
                 for item in catalog:
+                    name = string(item["name"], "capability name", limit=80)
                     if type(item["enabled"]) is not bool:
                         raise ValueError("Invalid capability permission")
                     classification = SafetyClass(item["classification"])
-                    if item["name"] in self._catalog:
+                    if name in parsed or name not in contracts:
                         raise ValueError("Duplicate capability")
-                    self._catalog[item["name"]] = {
+                    if classification != contracts[name][0]:
+                        raise ValueError("Capability safety class mismatch")
+                    parsed[name] = {
                         "enabled": item["enabled"],
                         "classification": classification,
                     }
-            except (ValueError, KeyError, TypeError) as exc:
+                self._catalog = parsed
+            except (AgentError, ValueError, KeyError, TypeError) as exc:
                 self._catalog = None
                 raise AgentError(ErrorCode.TRANSPORT_ERROR, "Malformed capability catalog") from exc
         return {name: dict(spec) for name, spec in self._catalog.items()}
@@ -66,8 +75,21 @@ class BlenderController:
     def execute(self, request: Request) -> Result:
         request = Request.from_bytes(request.to_bytes())
         classification = self.validate_operation(request.operation)
-        result = self.transport.call(request)
-        self._correlate(request, result)
+        try:
+            self.validate_payload(request)
+        except AgentError as exc:
+            return failure(request, exc)
+        try:
+            result = self.transport.call(request)
+            self._correlate(request, result)
+        except AgentError as exc:
+            return failure(request, exc, data={"outcome": "unknown", "inspect_before_retry": True})
+        except Exception:
+            return failure(
+                request,
+                AgentError(ErrorCode.TRANSPORT_ERROR, "Transport failed"),
+                data={"outcome": "unknown", "inspect_before_retry": True},
+            )
         if classification != SafetyClass.READ_ONLY and result.status != Status.FAILED:
             evidence = result.verification
             if (
@@ -87,6 +109,15 @@ class BlenderController:
                     data=result.data,
                 )
         return result
+
+    def validate_payload(self, request: Request) -> None:
+        contract = builtin_contracts().get(request.operation)
+        if contract is None:
+            raise AgentError(ErrorCode.UNSUPPORTED_OPERATION, "Unknown host payload contract")
+        contract[1](request.payload)
+
+    def list_collections(self, query: PageQuery | None = None) -> Result:
+        return self.submit("collections.list", query or PageQuery())
 
     def submit(self, operation: str, action) -> Result:
         if not is_dataclass(action) or isinstance(action, type):

@@ -143,5 +143,141 @@ def test_unverified_mutation_response_rejected_by_controller():
     _, transport, controller = setup()
     controller.capabilities()
     transport.call = lambda req: Result(req.request_id, req.command_id, Status.SUCCEEDED)
-    result = controller.execute(Request("object.create", {}))
+    result = controller.execute(
+        Request(
+            "object.create",
+            {**plan().steps[1].request.payload, "expected_scene_revision": "revision"},
+        )
+    )
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
+
+
+def test_all_execution_tools_match_host_contracts():
+    from shuvi_blender_agent.input_contracts import builtin_contracts
+
+    _, transport, _ = setup()
+    contracts = builtin_contracts()
+    assert set(contracts) == {item["name"] for item in transport.registry.catalog()}
+    for item in transport.registry.catalog():
+        assert contracts[item["name"]][0].value == item["classification"]
+
+
+@pytest.mark.parametrize("dest", [("missing",), ("items", "0"), ("items", -1)])
+def test_invalid_destination_is_rejected_before_any_execution(dest):
+    with pytest.raises(AgentError):
+        Plan(
+            (
+                PlanStep("first", Request("system.ping")),
+                PlanStep(
+                    "next",
+                    Request("object.inspect", {"items": [None]}),
+                    (Binding("first", ("data", "ready"), dest),),
+                ),
+            )
+        )
+
+
+def test_overlapping_destinations_and_request_id_reuse_rejected():
+    with pytest.raises(AgentError):
+        Plan(
+            (
+                PlanStep("first", Request("system.ping")),
+                PlanStep(
+                    "next",
+                    Request("object.inspect", {"target": {"name": None}}),
+                    (
+                        Binding("first", ("data", "ready"), ("target",)),
+                        Binding("first", ("data", "ready"), ("target", "name")),
+                    ),
+                ),
+            )
+        )
+    with pytest.raises(AgentError):
+        Plan(
+            (
+                PlanStep("a", Request("system.ping", request_id="same")),
+                PlanStep("b", Request("system.ping", request_id="same")),
+            )
+        )
+
+
+def test_unbound_bad_payload_preflight_prevents_earlier_execution():
+    _, transport, controller = setup()
+    with pytest.raises(AgentError):
+        PlanRunner(controller).run(
+            Plan(
+                (
+                    PlanStep("first", Request("scene.inspect")),
+                    PlanStep("bad", Request("object.create", {})),
+                )
+            )
+        )
+    assert transport.calls == ["system.capabilities"]
+
+
+def test_transport_failure_keeps_partial_report_and_unknown_outcome():
+    bpy, transport, controller = setup()
+    original = transport.call
+
+    def disconnect(request):
+        if request.operation == "object.create":
+            original(request)
+            raise AgentError(ErrorCode.TRANSPORT_ERROR, "Bridge disconnected")
+        return original(request)
+
+    transport.call = disconnect
+    source = plan()
+    report = PlanRunner(controller).run(source)
+    assert bpy.data.objects.get("New") is not None
+    assert not report.completed
+    assert report.unexecuted_steps == ("inspect",)
+    assert report.to_dict()["outcome_unknown"]
+    assert report.results["create"].request_id == source.steps[1].request.request_id
+    assert report.results["create"].command_id == source.steps[1].request.command_id
+    assert report.results["create"].error.code == ErrorCode.TRANSPORT_ERROR
+
+
+def test_total_deadline_includes_capabilities_and_stops_before_dispatch(monkeypatch):
+    _, transport, controller = setup()
+    ticks = iter([0.0, 1.0])
+    monkeypatch.setattr("shuvi_blender_agent.plans.time.monotonic", lambda: next(ticks))
+    report = PlanRunner(controller).run(
+        Plan((PlanStep("ping", Request("system.ping")),), timeout_ms=1)
+    )
+    assert not report.completed
+    assert report.results["ping"].error.code == ErrorCode.TIMEOUT
+    assert transport.calls == ["system.capabilities"]
+
+
+def test_plan_result_budget_stops_before_another_dispatch(monkeypatch):
+    _, transport, controller = setup()
+    monkeypatch.setattr("shuvi_blender_agent.plans.MAX_PLAN_RESULT_BYTES", 1_048_576)
+    report = PlanRunner(controller).run(
+        Plan(
+            (
+                PlanStep("a", Request("system.ping")),
+                PlanStep("b", Request("system.ping")),
+            )
+        )
+    )
+    assert not report.completed
+    assert report.results["b"].error.code == ErrorCode.SAFETY_DENIED
+    assert transport.calls.count("system.ping") == 1
+
+
+def test_catalog_cannot_downgrade_mutation_classification():
+    _, transport, controller = setup()
+    original = transport.call
+
+    def downgrade(request):
+        result = original(request)
+        for item in result.data["operations"]:
+            if item["name"] == "object.create":
+                item["classification"] = "read_only"
+        return result
+
+    transport.call = downgrade
+    with pytest.raises(AgentError) as error:
+        controller.capabilities()
+    assert error.value.code == ErrorCode.TRANSPORT_ERROR
+    assert controller._catalog is None

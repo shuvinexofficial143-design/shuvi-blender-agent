@@ -7,7 +7,9 @@ from dataclasses import dataclass, field, replace
 from .client import BlenderController
 from .contracts import Request, Result, Status, failure
 from .errors import AgentError, ErrorCode
-from .validation import encode, fields, integer, invalid, string
+from .validation import MAX_MESSAGE_BYTES, encode, fields, integer, invalid, string
+
+MAX_PLAN_RESULT_BYTES = 4 * MAX_MESSAGE_BYTES
 
 
 def path(value) -> tuple:
@@ -84,15 +86,32 @@ class Plan:
             raise invalid("Plan requires 1..32 steps")
         seen = set()
         command_ids = set()
+        request_ids = set()
+        bindings = 0
         for step in self.steps:
             if not isinstance(step, PlanStep) or step.name in seen:
                 raise invalid("Plan step names must be unique")
             if step.request.command_id in command_ids:
                 raise invalid("Plan command IDs must be unique")
+            if step.request.request_id in request_ids:
+                raise invalid("Plan request IDs must be unique")
             if any(binding.source_step not in seen for binding in step.bindings):
                 raise invalid("References must point to an earlier step")
             seen.add(step.name)
             command_ids.add(step.request.command_id)
+            request_ids.add(step.request.request_id)
+            bindings += len(step.bindings)
+            destinations = [binding.target_path for binding in step.bindings]
+            for index, destination in enumerate(destinations):
+                read_path(step.request.payload, destination)
+                for other in destinations[:index]:
+                    if (
+                        destination[: len(other)] == other
+                        or other[: len(destination)] == destination
+                    ):
+                        raise invalid("Binding destinations must not overlap")
+        if bindings > 256:
+            raise invalid("Plan exceeds 256 total bindings")
         encode(self.to_dict())
 
     def to_dict(self):
@@ -111,6 +130,7 @@ class Plan:
     @classmethod
     def from_dict(cls, data):
         fields(data, {"steps"}, {"timeout_ms"})
+        encode(data)
         if not isinstance(data["steps"], list) or not 1 <= len(data["steps"]) <= 32:
             raise invalid("Plan requires 1..32 steps")
         steps = []
@@ -133,11 +153,16 @@ class Plan:
 class PlanReport:
     completed: bool
     results: dict[str, Result] = field(default_factory=dict)
+    unexecuted_steps: tuple[str, ...] = ()
 
     def to_dict(self):
         return {
             "completed": self.completed,
             "results": {name: result.to_dict() for name, result in self.results.items()},
+            "unexecuted_steps": list(self.unexecuted_steps),
+            "outcome_unknown": any(
+                result.data.get("outcome") == "unknown" for result in self.results.values()
+            ),
         }
 
 
@@ -148,16 +173,24 @@ class PlanRunner:
     def run(self, plan: Plan) -> PlanReport:
         plan = Plan.from_dict(plan.to_dict())
         started = time.monotonic()
+        self.controller.capabilities(timeout_ms=min(plan.timeout_ms, 10_000))
         # Reject unavailable/denied operation names before executing any plan step.
         for step in plan.steps:
             self.controller.validate_operation(step.request.operation)
+            if not step.bindings:
+                self.controller.validate_payload(step.request)
         results = {}
-        for step in plan.steps:
+        result_bytes = 0
+        for index, step in enumerate(plan.steps):
             request = step.request
             try:
                 remaining = int(plan.timeout_ms - (time.monotonic() - started) * 1000)
                 if remaining < 1:
                     raise AgentError(ErrorCode.TIMEOUT, "Plan deadline exceeded before dispatch")
+                if result_bytes + MAX_MESSAGE_BYTES > MAX_PLAN_RESULT_BYTES:
+                    raise AgentError(
+                        ErrorCode.SAFETY_DENIED, "Plan result budget exhausted before dispatch"
+                    )
                 payload = copy.deepcopy(request.payload)
                 for binding in step.bindings:
                     value = read_path(results[binding.source_step].to_dict(), binding.source_path)
@@ -165,6 +198,7 @@ class PlanRunner:
                     if len(binding.target_path) > 1:
                         # Read returns a copy, so traverse the destination separately.
                         for key in binding.target_path[:-1]:
+                            read_path(parent, (key,))
                             parent = parent[key]
                     final = binding.target_path[-1]
                     read_path(parent, (final,))
@@ -173,11 +207,22 @@ class PlanRunner:
                     request, payload=payload, timeout_ms=min(request.timeout_ms, remaining)
                 )
                 result = self.controller.execute(request)
+                if (
+                    time.monotonic() - started
+                ) * 1000 >= plan.timeout_ms and result.status != Status.FAILED:
+                    result = failure(
+                        request,
+                        AgentError(ErrorCode.TIMEOUT, "Plan deadline exceeded after response"),
+                        data={"outcome": "known", "completed_status": result.status.value},
+                    )
             except AgentError as exc:
                 result = failure(request, exc)
             except (IndexError, KeyError, TypeError):
                 result = failure(request, invalid("Invalid destination reference path"))
             results[step.name] = result
+            result_bytes += len(result.to_bytes())
             if result.status == Status.FAILED:
-                return PlanReport(False, results)
+                return PlanReport(
+                    False, results, tuple(item.name for item in plan.steps[index + 1 :])
+                )
         return PlanReport(True, results)
