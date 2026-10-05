@@ -82,3 +82,57 @@ class PageQuery:
             obj_type,
             revision,
         )
+
+
+def object_name(value) -> str:
+    name = string(value, "name", limit=63)
+    if len(name.encode("utf-8")) > 63:
+        raise invalid("Object name exceeds 63 UTF-8 bytes")
+    return name
+
+
+@dataclass(frozen=True)
+class CreateObject:
+    name: str
+    kind: str
+    transform: Transform
+    expected_scene_revision: str
+
+    @classmethod
+    def parse(cls, data: dict) -> "CreateObject":
+        fields(data, {"name", "kind", "transform", "expected_scene_revision"})
+        if data["kind"] not in ("CUBE", "PLANE", "EMPTY"):
+            raise invalid("kind must be CUBE, PLANE or EMPTY")
+        return cls(
+            object_name(data["name"]),
+            data["kind"],
+            Transform.parse(data["transform"]),
+            string(data["expected_scene_revision"], "expected_scene_revision", limit=64),
+        )
+
+
+@dataclass(frozen=True)
+class SetTransform:
+    target: ObjectTarget
+    transform: Transform
+
+    @classmethod
+    def parse(cls, data: dict) -> "SetTransform":
+        fields(data, {"target", "transform"})
+        return cls(ObjectTarget.parse(data["target"]), Transform.parse(data["transform"]))
+
+
+@dataclass(frozen=True)
+class DuplicateObject:
+    target: ObjectTarget
+    name: str
+    transform: Transform
+
+    @classmethod
+    def parse(cls, data: dict) -> "DuplicateObject":
+        fields(data, {"target", "name", "transform"})
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            object_name(data["name"]),
+            Transform.parse(data["transform"]),
+        )

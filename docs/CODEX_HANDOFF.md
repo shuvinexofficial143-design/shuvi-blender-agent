@@ -3,12 +3,12 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest pushed commit before this checkpoint: 623a6b7981742349b80d72f837ae62e9eb478a14.
+Latest pushed commit before this checkpoint: 924507e2c7633d61f5d7da592ac5154b79ee36b9.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-4 initial source layers complete; Phase 5 safe objects/transforms next.
+Phases 1-5 initial source layers complete; Phase 6 materials/cameras/lights next.
 
 ## Completed and verified
 - Fetched actual public remote; empty repository, no prior commits/files to preserve.
@@ -20,16 +20,18 @@ Phases 1-4 initial source layers complete; Phase 5 safe objects/transforms next.
   correlated replies, readiness ping, owned-process cleanup and session replay protection.
 - Read-only scene/object inspection, typed bounded queries, object/session identities,
   metadata revision fingerprints, stale pagination protection and bpy fake-data tests.
+- Safe cube/plane/empty creation, local transforms, mesh/empty duplication, actual
+  before/after comparison, collision/stale protection and created-data cleanup.
 
 ## Status
-Source: foundation, discovery, bridge and inspection implemented. Unit tests: 57 passing.
+Source: foundation through initial object actions implemented. Unit tests: 71 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
 CI foundation/discovery/bridge: success. Latest bridge run 37310526776. Current CI pending.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-models.py, inspection.py, bootstrap.py, tests/fake_bpy.py, test_inspection.py.
-Next: operations.py and verification.py, safe creation and exact local transforms.
+models.py, operations.py, verification.py, bootstrap.py, test_operations.py, fake_bpy.py.
+Next: verified typed material/camera/light actions with bounded payloads.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -50,5 +52,5 @@ Next: operations.py and verification.py, safe creation and exact local transform
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Build safe object creation/local transforms using expected scene/object revisions.
-Read actual state after mutations, compare, return verified only on match. Test failures.
+Build material creation/assignment and camera/light creation with actual property readback.
+Keep destructive deletion deferred until checkpoint/recovery exists. Do not launch Blender.
