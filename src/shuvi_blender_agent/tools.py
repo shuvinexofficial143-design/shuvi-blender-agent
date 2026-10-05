@@ -1,0 +1,55 @@
+"""Explicit allowlist: a tool couples a typed parser with a classified executor."""
+
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
+
+from .contracts import Request, Result, Status, failure
+from .errors import AgentError, ErrorCode
+from .safety import SafetyClass, SafetyPolicy
+from .validation import fields
+
+
+@dataclass(frozen=True)
+class Tool:
+    name: str
+    classification: SafetyClass
+    parse: Callable[[dict], Any]
+    execute: Callable[[Request, Any], Result]
+
+
+class ToolRegistry:
+    def __init__(self, tools: list[Tool], policy: SafetyPolicy | None = None):
+        self.policy = policy or SafetyPolicy()
+        self._tools = {tool.name: tool for tool in tools}
+        if len(self._tools) != len(tools):
+            raise ValueError("Duplicate tool names")
+
+    def dispatch(self, request: Request) -> Result:
+        try:
+            # Revalidate even when a caller mutated a dict inside the frozen envelope.
+            request = Request.from_bytes(request.to_bytes())
+            tool = self._tools.get(request.operation)
+            if tool is None:
+                raise AgentError(ErrorCode.UNSUPPORTED_OPERATION, "Operation is not allowlisted")
+            self.policy.check(tool.classification)
+            payload = tool.parse(request.payload)
+            result = tool.execute(request, payload)
+            if (result.request_id, result.command_id) != (request.request_id, request.command_id):
+                raise AgentError(ErrorCode.EXECUTION_ERROR, "Executor returned uncorrelated result")
+            if tool.classification != SafetyClass.READ_ONLY and result.status == Status.SUCCEEDED:
+                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Mutation lacks verified readback")
+            Result.from_bytes(result.to_bytes())
+            return result
+        except AgentError as exc:
+            return failure(request, exc)
+        except Exception:
+            # Never send internal tracebacks or arbitrary exception strings over the bridge.
+            return failure(request, AgentError(ErrorCode.EXECUTION_ERROR, "Executor failed"))
+
+
+def ping_tool() -> Tool:
+    def execute(request: Request, _: dict) -> Result:
+        return Result(request.request_id, request.command_id, Status.SUCCEEDED, {"ready": True})
+
+    return Tool("system.ping", SafetyClass.READ_ONLY, lambda data: fields(data, set()), execute)
