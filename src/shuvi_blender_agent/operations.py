@@ -213,6 +213,58 @@ class ObjectOperations:
             self._remove_created(obj, mesh)
             raise
 
+    def duplicate_linked(self, request: Request, action: DuplicateObject) -> Result:
+        original, before = self.inspector.target(action.target)
+        self._editable(original)
+        self._free_name(action.name)
+        if original.type != "MESH" or original.parent is not None or original.data is None:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Linked duplicate requires an unparented mesh object"
+            )
+        if (
+            len(original.data.vertices) > 4096
+            or len(original.data.polygons) > 4096
+            or sum(len(face.vertices) for face in original.data.polygons) > 32768
+            or original.data.shape_keys is not None
+            or len(original.modifiers)
+            or len(original.material_slots) > 64
+        ):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Linked duplicate exceeds supported mesh work bounds"
+            )
+
+        original_geometry = self._geometry_summary(original.data)
+        obj = None
+        try:
+            obj = original.copy()
+            obj.name = action.name
+            obj.data = original.data
+            self.bpy.context.scene.collection.objects.link(obj)
+            self._transform(obj, action.transform)
+            self.bpy.context.view_layer.update()
+            after = self._readback(obj)
+            after["geometry"] = self._geometry_summary(obj.data)
+            after["mesh_shared"] = obj.data == original.data
+            expected = {
+                "name": action.name,
+                "type": "MESH",
+                "scene_member": True,
+                "transform": action.transform.to_dict() | {"rotation_mode": "XYZ"},
+                "materials": before["materials"],
+                "geometry": original_geometry,
+                "mesh_shared": True,
+            }
+            result = self._result(request, before, after, expected)
+            if after["object_id"] == before["object_id"]:
+                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Duplicate identity did not change")
+            if result.status == Status.FAILED:
+                self._remove_created(obj, None)
+                result.data["rolled_back"] = True
+            return result
+        except Exception:
+            self._remove_created(obj, None)
+            raise
+
     def tools(self) -> list[Tool]:
         return [
             Tool("object.create", SafetyClass.MUTATION, CreateObject.parse, self.create),
@@ -220,4 +272,10 @@ class ObjectOperations:
                 "object.set_transform", SafetyClass.MUTATION, SetTransform.parse, self.set_transform
             ),
             Tool("object.duplicate", SafetyClass.MUTATION, DuplicateObject.parse, self.duplicate),
+            Tool(
+                "object.duplicate_linked",
+                SafetyClass.MUTATION,
+                DuplicateObject.parse,
+                self.duplicate_linked,
+            ),
         ]
