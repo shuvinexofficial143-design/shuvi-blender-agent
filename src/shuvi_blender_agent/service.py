@@ -1,10 +1,12 @@
 """One factory for Blender execution and fake-adapter integration tests."""
 
 from .animation import AnimationOperations
+from .collection_ops import CollectionOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
 from .contracts import Result, Status
 from .files import OutputWorkspace
+from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .mesh import MeshOperations
 from .object_core import ObjectCore
@@ -31,6 +33,8 @@ def create_registry(
         VisibilityOperations(objects),
         TransformOperations(objects),
         SelectionOperations(objects),
+        HierarchyOperations(objects),
+        CollectionOperations(objects),
         AppearanceOperations(objects),
         AssetOperations(objects),
         AnimationOperations(objects),
