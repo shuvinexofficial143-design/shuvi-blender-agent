@@ -221,3 +221,35 @@ def test_origin_inspection_reports_local_and_world_locations():
     assert result.status == Status.SUCCEEDED
     assert result.data["local_location"] == [1.0, 2.0, 3.0]
     assert result.data["world_location"] == [4.0, 5.0, 6.0]
+
+
+def test_linked_collection_mutations_are_denied():
+    bpy, registry = setup()
+    create_collection(registry, "External")
+    collection = bpy.data.collections.get("External")
+    collection.library = object()
+    item = snapshots(registry)["Cube"]
+
+    renamed = registry.dispatch(
+        Request(
+            "collection.rename",
+            {
+                "name": "External",
+                "new_name": "Changed",
+                "expected_scene_revision": scene_revision(registry),
+            },
+        )
+    )
+    assert renamed.error.code == ErrorCode.SAFETY_DENIED
+
+    linked = registry.dispatch(
+        Request(
+            "collection.link_object",
+            {
+                "collection": "External",
+                "target": target(item),
+                "expected_scene_revision": scene_revision(registry),
+            },
+        )
+    )
+    assert linked.error.code == ErrorCode.SAFETY_DENIED
