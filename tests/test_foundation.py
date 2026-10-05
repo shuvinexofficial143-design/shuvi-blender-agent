@@ -179,3 +179,55 @@ def test_result_protocol_mismatch_is_explicit():
     with pytest.raises(AgentError) as error:
         Result.from_bytes(json.dumps(data).encode())
     assert error.value.code == ErrorCode.PROTOCOL_MISMATCH
+
+
+def test_invalid_executor_public_error_is_sanitized():
+    def execute(req, payload):
+        raise AgentError("bad_code", "secret", retryable="yes")
+
+    result = ToolRegistry(
+        [Tool("read", SafetyClass.READ_ONLY, lambda data: data, execute)]
+    ).dispatch(Request("read"))
+    assert result.error.code == ErrorCode.EXECUTION_ERROR
+    assert "secret" not in result.error.message
+    with pytest.raises(AgentError):
+        Result.from_bytes(
+            json.dumps(
+                {
+                    **Result(
+                        "r", "c", Status.FAILED, error=AgentError(ErrorCode.TIMEOUT, "timeout")
+                    ).to_dict(),
+                    "error": {"code": "timeout", "message": "x" * 513, "retryable": False},
+                }
+            ).encode()
+        )
+
+
+def test_registry_response_does_not_alias_executor_state():
+    data = {"values": [1]}
+    tool = Tool(
+        "read",
+        SafetyClass.READ_ONLY,
+        lambda p: p,
+        lambda req, p: Result(req.request_id, req.command_id, Status.SUCCEEDED, data),
+    )
+    result = ToolRegistry([tool]).dispatch(Request("read"))
+    data["values"].append(2)
+    assert result.data == {"values": [1]}
+
+
+def test_mutation_exception_reports_unknown_outcome_without_retry():
+    state = []
+
+    def mutate(req, payload):
+        state.append("partial mutation")
+        raise RuntimeError("secret")
+
+    request = Request("mutate")
+    tool = Tool("mutate", SafetyClass.MUTATION, lambda p: p, mutate)
+    result = ToolRegistry([tool], SafetyPolicy(allow_mutations=True)).dispatch(request)
+    assert result.error.code == ErrorCode.EXECUTION_ERROR
+    assert result.data == {"outcome": "unknown", "inspect_before_retry": True}
+    assert result.request_id == request.request_id
+    assert result.command_id == request.command_id
+    assert state == ["partial mutation"]

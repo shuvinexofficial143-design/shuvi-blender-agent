@@ -39,6 +39,8 @@ class ToolRegistry:
             raise ValueError("Duplicate tool names")
 
     def dispatch(self, request: Request) -> Result:
+        dispatched = False
+        tool = None
         try:
             # Revalidate even when a caller mutated a dict inside the frozen envelope.
             request = Request.from_bytes(request.to_bytes())
@@ -47,7 +49,9 @@ class ToolRegistry:
                 raise AgentError(ErrorCode.UNSUPPORTED_OPERATION, "Operation is not allowlisted")
             self.policy.check(tool.classification)
             payload = tool.parse(request.payload)
+            dispatched = True
             result = tool.execute(request, payload)
+            result = Result.from_bytes(result.to_bytes())
             if (result.request_id, result.command_id) != (request.request_id, request.command_id):
                 raise AgentError(ErrorCode.EXECUTION_ERROR, "Executor returned uncorrelated result")
             if tool.classification != SafetyClass.READ_ONLY and result.status != Status.FAILED:
@@ -63,10 +67,19 @@ class ToolRegistry:
                     raise AgentError(
                         ErrorCode.VERIFICATION_FAILED, "Mutation lacks matching actual readback"
                     )
-            Result.from_bytes(result.to_bytes())
             return result
         except AgentError as exc:
-            return failure(request, exc)
+            uncertain = (
+                dispatched
+                and tool.classification != SafetyClass.READ_ONLY
+                and exc.code
+                in (ErrorCode.EXECUTION_ERROR, ErrorCode.TIMEOUT, ErrorCode.VERIFICATION_FAILED)
+            )
+            return failure(
+                request,
+                exc,
+                data={"outcome": "unknown", "inspect_before_retry": True} if uncertain else None,
+            )
         except Exception:
             # Never send internal tracebacks or arbitrary exception strings over the bridge.
             return failure(
@@ -74,6 +87,9 @@ class ToolRegistry:
                 AgentError(
                     ErrorCode.EXECUTION_ERROR, "Executor failed; inspect state before retry"
                 ),
+                data={"outcome": "unknown", "inspect_before_retry": True}
+                if dispatched and tool.classification != SafetyClass.READ_ONLY
+                else None,
             )
 
     def register(self, tool: Tool) -> None:

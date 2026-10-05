@@ -3,16 +3,18 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed commit before this checkpoint: 3381adab9ec17e15ee690e301ebba18136da8605.
+Latest verified pushed commit before this checkpoint: c8785669c9a90da1e160bc1afa3366230240b3a0.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-11 initial bounded source capabilities implemented. Source hardening in progress.
-Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
+Phases 1-11 initial bounded source capabilities implemented. Source hardening pass complete,
+unit/package verification complete; final checkpoint CI verification in progress.
+Phase 12 suite/checklist prepared. Actual Blender acceptance awaits explicit authorization.
 
 ## Completed and verified
-- Fetched actual public remote; empty repository, no prior commits/files to preserve.
+- Fetched actual remote main at acf13dc and reconciled the prior session's identical local
+  client/plan files without discarding work. Checked latest main before every checkpoint.
 - GitHub connector write permission confirmed. Local CLI has no GitHub credentials.
 - No Blender installation, launch, render, or bpy runtime test performed.
 - Windows-first discovery: configured paths, PATH, standard directories, opt-in version
@@ -66,18 +68,24 @@ Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
 - runtime_acceptance.py prepared: explicit authorization guard, disposable factory project,
   all principal tools, bounded plan and separate tiny-render opt-in, cleanup evidence.
   Harness tested with injected fake sessions only; injected sessions cannot claim real runtime.
+- Final response boundaries clone validated result data before comparison/return, bound
+  structured public errors, sanitize capability exceptions, and flag partial mutation
+  exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
+- Wheel/sdist built from source; all 27 package modules, bootstrap, docs/tests/scripts/CI
+  verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
+  CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 188 passing,
+Source: 23 registered typed tools and host/orchestration interface. Unit tests: 193 passing,
 1 skipped locally (symlink creation unsupported by account).
-Lint/format: passing. Foundation wheel/sdist: built.
-CI: plan checkpoint 58bc06a passed (run 37322326124); later checkpoints pending recheck.
+Lint/format: passing. Current wheel/sdist: built and contents/clean offline install verified.
+CI: c878566 passed all six jobs (run 37327178200); every previous checkpoint this pass passed.
+Current distribution/boundary checkpoint CI will be verified after push.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-Audit remaining adapters, large-scene inspection, plan preflight, bridge and output safety.
-Next: wheel/sdist build/content inspection and clean installed import/CLI smoke; add
-lightweight distribution checks to CI and recheck every pushed CI run. No Blender launch.
+Final GitHub checkpoint and CI verification. No unfinished source edits are intentionally
+left local. Real Blender, checkpoint reopen/recovery and production acceptance remain future work.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -98,8 +106,9 @@ lightweight distribution checks to CI and recheck every pushed CI run. No Blende
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Complete source hardening and package/CI verification; update README/tool reference and
-runtime acceptance checklist. Do not install/launch Blender. Phase 13 final integration
-acceptance follows authorized runtime testing; the source client contract is available now.
-Deletion stays deferred until runtime-verified checkpoint recovery. Never launch Blender.
-Keep destructive deletion deferred until checkpoint/recovery exists. Do not launch Blender.
+Verify the current checkpoint's six CI jobs, including clean distribution smoke. With later
+explicit runtime authorization, follow docs/RUNTIME_ACCEPTANCE.md and run the opt-in suite
+in its factory-startup temporary workspace. Rendering needs separate authorization/flag.
+Then add independent checkpoint reopening/recovery acceptance and main Shuvi integration
+acceptance. Preserve source/runtime/CI/production distinctions. Deletion stays deferred.
+Until the user explicitly authorizes runtime: do not install, probe, launch or render Blender.

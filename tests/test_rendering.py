@@ -239,6 +239,16 @@ def test_png_unknown_critical_chunk_is_denied():
         verify_png(raw[:33] + unknown + raw[33:])
 
 
+def test_png_bad_palette_or_reserved_bit_is_denied():
+    raw = png()
+    for tag, data in ((b"PLTE", b"x"), (b"abct", b"text")):
+        chunk = (
+            struct.pack("!I", len(data)) + tag + data + struct.pack("!I", zlib.crc32(tag + data))
+        )
+        with pytest.raises(AgentError):
+            verify_png(raw[:33] + chunk + raw[33:])
+
+
 def test_blend_header_version_must_be_numeric(tmp_path):
     path = tmp_path / "bad.blend"
     path.write_bytes(b"BLENDER-vBAD" + b"data")

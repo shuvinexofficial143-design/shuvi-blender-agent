@@ -161,17 +161,21 @@ def verify_png(raw: bytes) -> dict:
     def fail():
         raise AgentError(ErrorCode.VERIFICATION_FAILED, "Invalid or unsupported PNG output")
 
-    if raw[:8] != b"\x89PNG\r\n\x1a\n":
+    if len(raw) > MAX_PNG_BYTES or raw[:8] != b"\x89PNG\r\n\x1a\n":
         fail()
     offset = 8
     header = None
     compressed = bytearray()
     ended = False
     idat_ended = False
+    idat_started = False
+    palette_seen = False
     while offset + 12 <= len(raw):
         length = struct.unpack("!I", raw[offset : offset + 4])[0]
         tag = raw[offset + 4 : offset + 8]
         if not all(65 <= char <= 90 or 97 <= char <= 122 for char in tag):
+            fail()
+        if tag[2] >= 97:
             fail()
         if tag[0] < 97 and tag not in (b"IHDR", b"PLTE", b"IDAT", b"IEND"):
             fail()
@@ -192,8 +196,13 @@ def verify_png(raw: bytes) -> dict:
             if idat_ended:
                 fail()
             compressed.extend(data)
-        elif compressed:
+            idat_started = True
+        elif idat_started:
             idat_ended = True
+        if tag == b"PLTE":
+            if palette_seen or idat_started or not 3 <= length <= 768 or length % 3:
+                fail()
+            palette_seen = True
         if tag == b"IEND":
             if length != 0 or end != len(raw):
                 fail()

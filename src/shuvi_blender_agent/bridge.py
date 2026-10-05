@@ -182,7 +182,10 @@ class CommandSession:
             result = failure(
                 request,
                 AgentError(ErrorCode.TIMEOUT, "Execution exceeded deadline; inspect state"),
-                data={"outcome": "known", "completed_status": result.status.value},
+                data={
+                    "outcome": result.data.get("outcome", "known"),
+                    "completed_status": result.status.value,
+                },
             )
         raw = result.to_bytes()
         self._cache[request.command_id] = raw

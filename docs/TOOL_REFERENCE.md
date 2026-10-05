@@ -110,6 +110,8 @@ Errors/exceptions can leave partial state. Failed verification never authorizes 
 Codes: invalid_request, unsupported_operation, protocol_mismatch, not_found,
 ambiguous_target, stale_state, safety_denied, timeout, transport_error, execution_error,
 verification_failed, blender_not_found. No traceback or arbitrary exception text is sent.
+Error messages are nonempty, valid Unicode and at most 512 characters. Mutation exceptions
+after dispatch report outcome=unknown and require inspection before retry.
 
 Catalog entries expose name, classification, enabled, payload_fields (null for custom
 parsers), verification_required, runtime_required, file_write_permission_required and

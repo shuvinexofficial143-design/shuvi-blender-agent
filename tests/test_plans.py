@@ -314,3 +314,16 @@ def test_catalog_cannot_downgrade_mutation_classification():
         controller.capabilities()
     assert error.value.code == ErrorCode.TRANSPORT_ERROR
     assert controller._catalog is None
+
+
+def test_capability_transport_exception_is_structured_and_sanitized():
+    _, transport, controller = setup()
+
+    def crash(request):
+        raise RuntimeError("secret")
+
+    transport.call = crash
+    with pytest.raises(AgentError) as error:
+        controller.capabilities()
+    assert error.value.code == ErrorCode.TRANSPORT_ERROR
+    assert "secret" not in error.value.message

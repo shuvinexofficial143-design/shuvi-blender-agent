@@ -22,6 +22,18 @@ class AgentError(Exception):
     """Predictable public failure. Retryability never grants automatic mutation retries."""
 
     def __init__(self, code: ErrorCode, message: str, *, retryable: bool = False):
+        if (
+            not isinstance(code, ErrorCode)
+            or not isinstance(message, str)
+            or not 1 <= len(message) <= 512
+            or "\x00" in message
+            or type(retryable) is not bool
+        ):
+            raise ValueError("Invalid public error")
+        try:
+            message.encode("utf-8")
+        except UnicodeError as exc:
+            raise ValueError("Invalid public error encoding") from exc
         super().__init__(message)
         self.code = code
         self.message = message

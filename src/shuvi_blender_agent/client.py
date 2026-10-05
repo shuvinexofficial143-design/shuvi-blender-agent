@@ -25,8 +25,13 @@ class BlenderController:
     def capabilities(self, *, timeout_ms: int = 10_000) -> dict:
         if self._catalog is None:
             request = Request("system.capabilities", timeout_ms=timeout_ms)
-            result = self.transport.call(request)
-            self._correlate(request, result)
+            try:
+                result = self.transport.call(request)
+                result = self._correlate(request, result)
+            except AgentError:
+                raise
+            except Exception as exc:
+                raise AgentError(ErrorCode.TRANSPORT_ERROR, "Capability transport failed") from exc
             if result.status != Status.SUCCEEDED:
                 raise result.error or AgentError(
                     ErrorCode.TRANSPORT_ERROR, "Capabilities unavailable"
@@ -85,10 +90,11 @@ class BlenderController:
         return spec["classification"]
 
     @staticmethod
-    def _correlate(request: Request, result: Result) -> None:
-        Result.from_bytes(result.to_bytes())
+    def _correlate(request: Request, result: Result) -> Result:
+        result = Result.from_bytes(result.to_bytes())
         if (request.request_id, request.command_id) != (result.request_id, result.command_id):
             raise AgentError(ErrorCode.TRANSPORT_ERROR, "Response correlation failed")
+        return result
 
     def execute(self, request: Request) -> Result:
         request = Request.from_bytes(request.to_bytes())
@@ -99,7 +105,7 @@ class BlenderController:
             return failure(request, exc)
         try:
             result = self.transport.call(request)
-            self._correlate(request, result)
+            result = self._correlate(request, result)
         except AgentError as exc:
             return failure(request, exc, data={"outcome": "unknown", "inspect_before_retry": True})
         except Exception:

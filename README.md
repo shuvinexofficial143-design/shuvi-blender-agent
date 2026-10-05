@@ -44,6 +44,8 @@ python -m venv .venv
 .venv\Scripts\python -m pytest
 .venv\Scripts\python -m ruff check .
 .venv\Scripts\python -m ruff format --check .
+.venv\Scripts\python -m build
+.venv\Scripts\python scripts/check_distribution.py
 ```
 
 Read [architecture](docs/ARCHITECTURE.md) and [handoff](docs/CODEX_HANDOFF.md) before
