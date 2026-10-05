@@ -55,6 +55,7 @@ def builtin_contracts() -> dict:
         "selection.set": (mutation, SelectionChange.parse),
         "selection.inspect": (read, empty),
         "hierarchy.inspect": (read, object_id),
+        "origin.inspect": (read, object_id),
         "hierarchy.set_parent": (mutation, ParentChange.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
