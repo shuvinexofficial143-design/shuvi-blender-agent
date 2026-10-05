@@ -1,9 +1,9 @@
 """One factory for Blender execution and fake-adapter integration tests."""
 
 from .animation import AnimationOperations
-from .collection_ops import CollectionOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
+from .collection_ops import CollectionOperations
 from .contracts import Result, Status
 from .files import OutputWorkspace
 from .hierarchy import HierarchyOperations
