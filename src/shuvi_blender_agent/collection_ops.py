@@ -110,9 +110,10 @@ class CollectionOperations:
         return item
 
     def _editable_collection(self, collection):
-        if getattr(collection, "library", None) is not None or getattr(
-            collection, "override_library", None
-        ) is not None:
+        if (
+            getattr(collection, "library", None) is not None
+            or getattr(collection, "override_library", None) is not None
+        ):
             raise AgentError(
                 ErrorCode.SAFETY_DENIED, "Linked/overridden collection cannot be modified"
             )
