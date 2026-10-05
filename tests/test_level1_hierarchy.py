@@ -180,7 +180,8 @@ def test_child_collection_inspection_and_rename():
         )
     )
     assert result.status == Status.VERIFIED
-    assert registry.dispatch(Request("collection.inspect", {"name": "Child2"})).status == Status.SUCCEEDED
+    inspected = registry.dispatch(Request("collection.inspect", {"name": "Child2"}))
+    assert inspected.status == Status.SUCCEEDED
 
 
 def test_collection_mutations_reject_stale_scene_revision():
