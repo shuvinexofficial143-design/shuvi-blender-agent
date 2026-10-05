@@ -246,9 +246,11 @@ class CollectionOperations:
             "destination_linked": destination in obj.users_collection,
             "collection_count": len(obj.users_collection),
         }
-        expected_count = before["collection_count"] if not destination_preexisting else before[
-            "collection_count"
-        ] - 1
+        expected_count = (
+            before["collection_count"]
+            if not destination_preexisting
+            else before["collection_count"] - 1
+        )
         result = self.objects._result(
             req,
             before,
