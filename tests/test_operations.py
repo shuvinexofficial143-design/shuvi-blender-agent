@@ -255,3 +255,58 @@ def test_verification_accounts_for_floats_but_rejects_wrong_types():
     assert not compare({"value": 1}, {"value": True}).matched
     assert not compare({"value": [1, 2]}, {"value": [1]}).matched
     assert not compare({"value": 1}, {"value": 2}).matched
+
+
+def test_linked_duplicate_shares_mesh_but_not_object_identity():
+    bpy, inspector, registry = setup()
+    original = bpy.context.scene.objects[0]
+    snapshot = inspector.snapshot(original)
+    result = registry.dispatch(
+        Request(
+            "object.duplicate_linked",
+            {
+                "target": target(snapshot),
+                "name": "LinkedCopy",
+                "transform": transform(),
+            },
+        )
+    )
+    assert result.status == Status.VERIFIED
+    duplicate = bpy.data.objects.get("LinkedCopy")
+    assert duplicate is not original
+    assert duplicate.data is original.data
+    assert result.data["after"]["mesh_shared"] is True
+    assert result.data["after"]["object_id"] != snapshot["object_id"]
+
+
+def test_linked_duplicate_rejects_non_mesh_and_modifier_stack():
+    bpy, inspector, registry = setup()
+    empty = bpy.data.objects.new("Empty", None)
+    bpy.context.scene.collection.objects.link(empty)
+    empty_snapshot = inspector.snapshot(empty)
+    result = registry.dispatch(
+        Request(
+            "object.duplicate_linked",
+            {
+                "target": target(empty_snapshot),
+                "name": "BadLinked",
+                "transform": transform(),
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+
+    mesh = bpy.data.objects.get("Cube")
+    mesh.modifiers.new("Existing", "SUBSURF")
+    mesh_snapshot = inspector.snapshot(mesh)
+    result = registry.dispatch(
+        Request(
+            "object.duplicate_linked",
+            {
+                "target": target(mesh_snapshot),
+                "name": "BadMeshLinked",
+                "transform": transform(),
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
