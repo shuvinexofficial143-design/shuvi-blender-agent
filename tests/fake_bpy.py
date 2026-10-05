@@ -102,6 +102,15 @@ class FakeDevices(list):
 
 
 class FakeObjects(list):
+    def link(self, obj):
+        if obj not in self:
+            self.append(obj)
+        collection = getattr(self, "default_collection", None)
+        if collection is not None and collection not in obj.users_collection:
+            if obj not in collection.objects:
+                collection.objects.append(obj)
+            obj.users_collection.append(collection)
+
     def new(self, name, mesh):
         obj = FakeObject(
             name, getattr(mesh, "object_type", "MESH") if mesh is not None else "EMPTY"
@@ -312,11 +321,12 @@ def fake_bpy(objects=None):
     collections = FakeCollections([collection])
     collections.objects = table
     objects.collection = collection
+    table.default_collection = collection
     for obj in objects:
         obj.users_collection = [collection]
     scene = NS(
         name="Scene",
-        objects=objects,
+        objects=table,
         camera=None,
         frame_start=1,
         frame_end=250,
@@ -326,14 +336,14 @@ def fake_bpy(objects=None):
         cursor=NS(location=[0.0, 0.0, 0.0]),
         unit_settings=NS(system="NONE", scale_length=1.0, length_unit="ADAPTIVE"),
     )
-    objects.active = None
+    table.active = None
     scene.frame_set = lambda frame: setattr(scene, "frame_current", frame)
     scene.cycles = NS(device="CPU", samples=128)
     return NS(
         context=NS(
             scene=scene,
             mode="OBJECT",
-            view_layer=NS(name="ViewLayer", objects=objects, update=lambda: None),
+            view_layer=NS(name="ViewLayer", objects=table, update=lambda: None),
         ),
         data=NS(
             filepath="",
