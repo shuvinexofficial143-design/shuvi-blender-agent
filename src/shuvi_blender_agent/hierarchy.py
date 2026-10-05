@@ -60,7 +60,6 @@ class HierarchyOperations:
             current = current.parent
         raise AgentError(ErrorCode.SAFETY_DENIED, "Hierarchy depth exceeds safety limit")
 
-
     def inspect_origin(self, req, object_id):
         obj = self.inspector.resolve(object_id)
         matrix = obj.matrix_world
