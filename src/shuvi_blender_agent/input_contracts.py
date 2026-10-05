@@ -16,7 +16,7 @@ from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
 from .safety import SafetyClass
-from .scene_state import CursorSet, SceneRename, SetUnits
+from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .selection import SelectionChange
 from .transform import PatchTransform
 from .validation import fields, string
@@ -43,6 +43,8 @@ def builtin_contracts() -> dict:
         "cursor.inspect": (read, empty),
         "cursor.set": (mutation, CursorSet.parse),
         "mode.inspect": (read, empty),
+        "pivot.inspect": (read, empty),
+        "pivot.set": (mutation, SetPivot.parse),
         "objects.list": (read, PageQuery.parse),
         "collections.list": (read, PageQuery.parse),
         "object.inspect": (read, object_id),
