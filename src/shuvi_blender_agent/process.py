@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .bridge import BlenderClient, authenticate
-from .contracts import Request
+from .contracts import Request, Status
 from .errors import AgentError, ErrorCode
 from .safety import SafetyPolicy
 from .validation import integer
@@ -60,12 +60,22 @@ def stop_owned_process(process) -> None:
     try:
         process.wait(timeout=1)
     except subprocess.TimeoutExpired:
-        process.terminate()
+        try:
+            process.terminate()
+        except ProcessLookupError:
+            return
         try:
             process.wait(timeout=2)
         except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait(timeout=2)
+            try:
+                process.kill()
+                process.wait(timeout=2)
+            except ProcessLookupError:
+                return
+            except subprocess.TimeoutExpired as exc:
+                raise AgentError(
+                    ErrorCode.EXECUTION_ERROR, "Owned child exit could not be confirmed"
+                ) from exc
 
 
 class BlenderSession:
@@ -138,7 +148,7 @@ def launch(config: LaunchConfig, *, popen: Callable = subprocess.Popen) -> Blend
                 timeout_ms=max(1, min(120_000, int((deadline - time.monotonic()) * 1000))),
             )
         )
-        if ping.error is not None or ping.data.get("ready") is not True:
+        if ping.status != Status.SUCCEEDED or ping.data.get("ready") is not True:
             raise AgentError(ErrorCode.EXECUTION_ERROR, "Blender bridge readiness failed")
         return BlenderSession(process, client)
     except AgentError:
@@ -153,5 +163,11 @@ def launch(config: LaunchConfig, *, popen: Callable = subprocess.Popen) -> Blend
         if process is not None:
             stop_owned_process(process)
         raise AgentError(ErrorCode.TRANSPORT_ERROR, "Cannot start Blender bridge") from exc
+    except Exception as exc:
+        if connection is not None:
+            connection.close()
+        if process is not None:
+            stop_owned_process(process)
+        raise AgentError(ErrorCode.EXECUTION_ERROR, "Blender startup failed") from exc
     finally:
         listener.close()

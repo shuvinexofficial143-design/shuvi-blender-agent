@@ -132,3 +132,56 @@ def test_startup_timeout_stops_owned_child(tmp_path):
         launch(LaunchConfig(executable, startup_timeout_ms=10), popen=lambda *a, **k: FakeProcess())
     assert error.value.code == ErrorCode.TIMEOUT
     assert events == ["cleanup"]
+
+
+@pytest.mark.parametrize("port", ["0", "65536", "x", "9" * 10000])
+def test_bootstrap_configuration_is_consumed_on_validation_failure(port):
+    from shuvi_blender_agent.bootstrap import read_environment
+
+    environment = {
+        "SHUVI_BRIDGE_TOKEN": "a" * 64,
+        "SHUVI_BRIDGE_PORT": port,
+        "SHUVI_ALLOW_MUTATIONS": "1",
+        "SHUVI_OUTPUT_DIRECTORY": "secret-path",
+    }
+    with pytest.raises(RuntimeError):
+        read_environment(environment)
+    assert not environment
+
+
+def test_bootstrap_environment_parses_policy_without_importing_bpy():
+    import sys
+
+    from shuvi_blender_agent.bootstrap import read_environment
+
+    environment = {
+        "SHUVI_BRIDGE_TOKEN": "b" * 64,
+        "SHUVI_BRIDGE_PORT": "12345",
+        "SHUVI_ALLOW_MUTATIONS": "1",
+        "KEEP": "value",
+    }
+    token, port, policy, output = read_environment(environment)
+    assert (token, port, output) == ("b" * 64, 12345, "")
+    assert policy.allow_mutations
+    assert environment == {"KEEP": "value"}
+    assert "bpy" not in sys.modules
+
+
+def test_final_child_kill_timeout_is_a_structured_error():
+    class UnstoppableProcess:
+        def poll(self):
+            return None
+
+        def wait(self, timeout):
+            raise subprocess.TimeoutExpired("secret", timeout)
+
+        def terminate(self):
+            pass
+
+        def kill(self):
+            pass
+
+    with pytest.raises(AgentError) as error:
+        stop_owned_process(UnstoppableProcess())
+    assert error.value.code == ErrorCode.EXECUTION_ERROR
+    assert "secret" not in error.value.message

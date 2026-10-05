@@ -3,7 +3,7 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed commit before this checkpoint: 78d6324e571752eed6af4788aa05a5737e1c1e05.
+Latest verified pushed commit before this checkpoint: 58bc06a745cfcddb7826699fba292aa45928ef0b.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -46,16 +46,20 @@ Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
+- Bridge verifies loopback peers, denies concurrent calls, bounds serialized replay cache
+  to 4 MiB, rejects reused request IDs and caches final deadline results consistently.
+  Startup settings/secrets consumed before bpy import; cleanup exit failures structured.
 
 ## Status
-Source: 23 registered typed tools and host/orchestration interface. Unit tests: 145 passing.
+Source: 23 registered typed tools and host/orchestration interface. Unit tests: 159 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
 CI: JSON checkpoint 1fa4191 passed (run 37320583547); later checkpoints pending recheck.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
 Audit remaining adapters, large-scene inspection, plan preflight, bridge and output safety.
-Next: bridge aggregate replay memory/duplicate IDs/framing and output file race protections.
+Next: output workspace reparse/replacement checks and streamed file readback, remaining
+adapter work guards; then documentation/runtime acceptance preparation and distribution.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.

@@ -133,3 +133,97 @@ def test_replay_is_bounded_and_never_executes_twice():
     assert session.execute(first).error.code == ErrorCode.SAFETY_DENIED
     assert session.execute(Request("read")).error.code == ErrorCode.SAFETY_DENIED
     assert len(calls) == 2
+
+
+@pytest.mark.parametrize("packet", [b"\x00\x00", struct.pack("!I", 20) + b"short"])
+def test_truncated_frames_have_structured_disconnect(packet):
+    left, right = socket.socketpair()
+    try:
+        right.sendall(packet)
+        right.close()
+        with pytest.raises(AgentError) as error:
+            receive_frame(left, time.monotonic() + 1)
+        assert error.value.code == ErrorCode.TRANSPORT_ERROR
+    finally:
+        left.close()
+        right.close()
+
+
+def test_unicode_token_is_rejected_without_typeerror():
+    left, right = socket.socketpair()
+    try:
+        send_frame(right, encode({"protocol_version": 1, "token": "\u2603"}), time.monotonic() + 1)
+        with pytest.raises(AgentError) as error:
+            authenticate(left, "secret", time.monotonic() + 1)
+        assert error.value.code == ErrorCode.SAFETY_DENIED
+    finally:
+        left.close()
+        right.close()
+
+
+def test_replay_memory_budget_eviction_never_reexecutes():
+    registry = ToolRegistry([ping_tool()])
+    session = CommandSession(registry, cache_size=2, max_cache_bytes=300)
+    first = Request("system.ping")
+    session.execute(first)
+    session.execute(Request("system.ping"))
+    assert session._cache_bytes <= 300
+    assert session.execute(first).error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_request_id_cannot_be_reused_for_a_new_command():
+    session = CommandSession(ToolRegistry([ping_tool()]))
+    session.execute(Request("system.ping", request_id="same"))
+    result = session.execute(Request("system.ping", request_id="same"))
+    assert result.error.code == ErrorCode.INVALID_REQUEST
+    assert len(session._seen) == 1
+
+
+def test_deadline_result_is_cached_consistently(monkeypatch):
+    session = CommandSession(ToolRegistry([ping_tool()]))
+    ticks = iter([0.0, 1.0])
+    monkeypatch.setattr("shuvi_blender_agent.bridge.time.monotonic", lambda: next(ticks))
+    request = Request("system.ping", timeout_ms=1)
+    result = session.execute(request)
+    assert result.error.code == ErrorCode.TIMEOUT
+    assert result.data == {"outcome": "known", "completed_status": "succeeded"}
+    assert session.execute(request).to_dict() == result.to_dict()
+
+
+def test_concurrent_call_does_not_corrupt_the_active_request():
+    left, right = socket.socketpair()
+    client = BlenderClient(left)
+    request = Request("system.ping")
+    results = []
+    worker = threading.Thread(target=lambda: results.append(client.call(request)))
+    try:
+        worker.start()
+        received = Request.from_bytes(receive_frame(right, time.monotonic() + 2))
+        assert received == request
+        with pytest.raises(AgentError) as error:
+            client.call(Request("system.ping"))
+        assert error.value.code == ErrorCode.SAFETY_DENIED
+        assert not client.closed
+        send_frame(
+            right,
+            Result(request.request_id, request.command_id, Status.SUCCEEDED).to_bytes(),
+            time.monotonic() + 2,
+        )
+        worker.join(timeout=2)
+        assert len(results) == 1
+    finally:
+        client.close()
+        right.close()
+        worker.join(timeout=2)
+
+
+def test_non_loopback_peer_is_rejected():
+    class RemoteSocket:
+        family = socket.AF_INET
+
+        def getpeername(self):
+            return ("192.0.2.1", 12345)
+
+    with pytest.raises(AgentError) as error:
+        BlenderClient(RemoteSocket())
+    assert error.value.code == ErrorCode.SAFETY_DENIED
