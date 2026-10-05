@@ -6,7 +6,7 @@ import pytest
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Result, Status
 from shuvi_blender_agent.safety import SafetyClass, SafetyPolicy, require_revision
 from shuvi_blender_agent.tools import Tool, ToolRegistry, ping_tool
-from shuvi_blender_agent.validation import MAX_MESSAGE_BYTES, decode
+from shuvi_blender_agent.validation import MAX_MESSAGE_BYTES, decode, encode, number, string
 
 
 def test_import_has_no_blender_dependency():
@@ -120,3 +120,54 @@ def test_success_invariants():
     error = AgentError(ErrorCode.TIMEOUT, "Timed out")
     original = Result("r", "c", Status.FAILED, error=error)
     assert Result.from_bytes(original.to_bytes()).error.code == ErrorCode.TIMEOUT
+
+
+def test_oversized_numbers_and_unicode_are_structured_errors():
+    with pytest.raises(AgentError):
+        number(10**1000, "coordinate", -1_000_000, 1_000_000)
+    with pytest.raises(AgentError):
+        string("\ud800", "name")
+    with pytest.raises(AgentError):
+        Request("system.ping", {"value": 2**65})
+
+
+def test_json_work_and_serialized_size_limits():
+    for payload in ({"items": [None] * 65_536}, {"text": "\u2603" * 200_000}):
+        with pytest.raises(AgentError):
+            encode(payload)
+    cyclic = {}
+    cyclic["self"] = cyclic
+    with pytest.raises(AgentError):
+        encode(cyclic)
+    with pytest.raises(AgentError):
+        decode(b'{"value":"\\ud800"}')
+
+
+@pytest.mark.parametrize(
+    "evidence",
+    [
+        {"matched": True},
+        {"matched": True, "expected": {}, "actual": {}},
+        {"matched": True, "expected": {"location": [1, 2, 3]}, "actual": {"location": [9, 2, 3]}},
+    ],
+)
+def test_claimed_verification_requires_matching_nonempty_evidence(evidence):
+    tool = Tool(
+        "edit",
+        SafetyClass.MUTATION,
+        lambda data: data,
+        lambda req, _: Result(
+            req.request_id, req.command_id, Status.VERIFIED, verification=evidence
+        ),
+    )
+    result = ToolRegistry([tool], SafetyPolicy(allow_mutations=True)).dispatch(Request("edit"))
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+
+
+def test_initial_registry_has_same_bound_as_registration():
+    tools = [
+        Tool(f"tool{i}", SafetyClass.READ_ONLY, lambda data: data, lambda req, data: None)
+        for i in range(129)
+    ]
+    with pytest.raises(ValueError):
+        ToolRegistry(tools)

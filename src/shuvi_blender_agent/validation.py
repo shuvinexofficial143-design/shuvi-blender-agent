@@ -7,6 +7,7 @@ from typing import Any
 from .errors import AgentError, ErrorCode
 
 MAX_MESSAGE_BYTES = 1_048_576
+MAX_JSON_NODES = 65_536
 
 
 def invalid(message: str) -> AgentError:
@@ -25,6 +26,10 @@ def fields(data: Any, required: set[str], optional: set[str] | None = None) -> d
 def string(value: Any, name: str, *, limit: int = 256) -> str:
     if not isinstance(value, str) or not 1 <= len(value) <= limit or "\x00" in value:
         raise invalid(f"{name} must be a nonempty string of at most {limit} characters")
+    try:
+        value.encode("utf-8")
+    except UnicodeError as exc:
+        raise invalid(f"{name} must contain valid Unicode") from exc
     return value
 
 
@@ -35,25 +40,39 @@ def integer(value: Any, name: str, low: int, high: int) -> int:
 
 
 def number(value: Any, name: str, low: float, high: float) -> float:
-    if type(value) not in (int, float) or not math.isfinite(value) or not low <= value <= high:
+    if type(value) not in (int, float) or not low <= value <= high or not math.isfinite(value):
         raise invalid(f"{name} must be a finite number in [{low}, {high}]")
     return float(value)
 
 
-def json_value(value: Any, depth: int = 0) -> None:
+def json_value(value: Any, depth: int = 0, _budget: list[int] | None = None) -> None:
+    budget = [MAX_JSON_NODES] if _budget is None else _budget
+    budget[0] -= 1
+    if budget[0] < 0:
+        raise invalid("JSON node count exceeds work limit")
     if depth > 32:
         raise invalid("JSON nesting exceeds 32 levels")
-    if value is None or type(value) in (str, bool, int):
+    if type(value) is str:
+        if len(value) > MAX_MESSAGE_BYTES:
+            raise invalid("JSON string exceeds size limit")
+        string(value, "JSON string", limit=MAX_MESSAGE_BYTES) if value else None
+        return
+    if type(value) is int:
+        if value.bit_length() > 64:
+            raise invalid("JSON integer exceeds 64-bit limit")
+        return
+    if value is None or type(value) is bool:
         return
     if type(value) is float and math.isfinite(value):
         return
     if isinstance(value, list):
         for item in value:
-            json_value(item, depth + 1)
+            json_value(item, depth + 1, budget)
         return
     if isinstance(value, dict) and all(isinstance(key, str) for key in value):
-        for item in value.values():
-            json_value(item, depth + 1)
+        for key, item in value.items():
+            json_value(key, depth + 1, budget)
+            json_value(item, depth + 1, budget)
         return
     raise invalid("Value must be finite JSON data with string keys")
 
@@ -61,19 +80,22 @@ def json_value(value: Any, depth: int = 0) -> None:
 def encode(data: dict) -> bytes:
     json_value(data)
     try:
-        raw = json.dumps(data, allow_nan=False, separators=(",", ":")).encode("utf-8")
+        raw = bytearray()
+        encoder = json.JSONEncoder(allow_nan=False, separators=(",", ":"))
+        for chunk in encoder.iterencode(data):
+            raw.extend(chunk.encode("utf-8"))
+            if len(raw) > MAX_MESSAGE_BYTES:
+                raise invalid("Message exceeds size limit")
     except (ValueError, UnicodeError) as exc:
         raise invalid("Invalid JSON data") from exc
-    if len(raw) > MAX_MESSAGE_BYTES:
-        raise invalid("Message exceeds size limit")
-    return raw
+    return bytes(raw)
 
 
 def _unique_pairs(pairs: list[tuple[str, Any]]) -> dict:
     result = {}
     for key, value in pairs:
         if key in result:
-            raise invalid(f"Duplicate JSON field: {key}")
+            raise invalid("Duplicate JSON field")
         result[key] = value
     return result
 

@@ -74,6 +74,7 @@ class BlenderController:
                 result.status != Status.VERIFIED
                 or not isinstance(evidence, dict)
                 or not isinstance(evidence.get("expected"), dict)
+                or not evidence["expected"]
                 or not isinstance(evidence.get("actual"), dict)
                 or not compare(evidence["expected"], evidence["actual"]).matched
             ):

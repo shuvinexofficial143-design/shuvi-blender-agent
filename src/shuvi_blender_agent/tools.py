@@ -9,6 +9,7 @@ from .contracts import Request, Result, Status, failure
 from .errors import AgentError, ErrorCode
 from .safety import SafetyClass, SafetyPolicy
 from .validation import fields, string
+from .verification import compare
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,8 @@ class Tool:
 class ToolRegistry:
     def __init__(self, tools: list[Tool], policy: SafetyPolicy | None = None):
         self.policy = policy or SafetyPolicy()
+        if len(tools) > 128:
+            raise ValueError("Registry limit exceeded")
         self._tools = {tool.name: tool for tool in tools}
         if len(self._tools) != len(tools):
             raise ValueError("Duplicate tool names")
@@ -47,8 +50,19 @@ class ToolRegistry:
             result = tool.execute(request, payload)
             if (result.request_id, result.command_id) != (request.request_id, request.command_id):
                 raise AgentError(ErrorCode.EXECUTION_ERROR, "Executor returned uncorrelated result")
-            if tool.classification != SafetyClass.READ_ONLY and result.status == Status.SUCCEEDED:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Mutation lacks verified readback")
+            if tool.classification != SafetyClass.READ_ONLY and result.status != Status.FAILED:
+                evidence = result.verification
+                if (
+                    result.status != Status.VERIFIED
+                    or not isinstance(evidence, dict)
+                    or not isinstance(evidence.get("expected"), dict)
+                    or not evidence["expected"]
+                    or not isinstance(evidence.get("actual"), dict)
+                    or not compare(evidence["expected"], evidence["actual"]).matched
+                ):
+                    raise AgentError(
+                        ErrorCode.VERIFICATION_FAILED, "Mutation lacks matching actual readback"
+                    )
             Result.from_bytes(result.to_bytes())
             return result
         except AgentError as exc:

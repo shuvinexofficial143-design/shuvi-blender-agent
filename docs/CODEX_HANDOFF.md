@@ -3,7 +3,7 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest pushed commit before this checkpoint: c70dcab45ef7ce963f7eefd9493b8b4bcee40178.
+Latest verified pushed commit before this checkpoint: acf13dc577300aae460f8347e84165b66b7b48dd.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -35,16 +35,19 @@ Phase 12 actual Blender acceptance is awaiting explicit runtime authorization.
   strict work limits, prevalidated indices and actual geometry comparison.
 - Capability catalog, typed host controller, shared execution factory, bounded declarative
   plans with earlier-result bindings, deadline/preflight/fail-fast behavior and no Python eval.
+- Source audit checkpoint: bounded JSON node count/64-bit integers/streamed encoding,
+  structured rejection of invalid Unicode and oversized numeric inputs, nonempty matching
+  mutation evidence enforced at registry and host boundaries, initial registry work cap.
 
 ## Status
-Source: 22 registered typed tools and host/orchestration interface. Unit tests: 122 passing.
+Source: 22 registered typed tools and host/orchestration interface. Unit tests: 128 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
 CI all prior checkpoints: success. Latest assets run 37314216937. Current CI pending.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-client.py, plans.py, service.py, tools.py, bootstrap.py, tests/test_plans.py.
-Next: audit bounds, improve large-scene inspection cost, validate distribution and CI.
+Audit remaining adapters, large-scene inspection, plan preflight, bridge and output safety.
+Next: stream scene revision construction and bound collection/nested animation work.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
