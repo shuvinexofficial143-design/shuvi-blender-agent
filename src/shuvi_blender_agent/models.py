@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from .primitives import KINDS
 from .validation import fields, integer, invalid, number, string
 
 
@@ -116,8 +117,8 @@ class CreateObject:
     @classmethod
     def parse(cls, data: dict) -> "CreateObject":
         fields(data, {"name", "kind", "transform", "expected_scene_revision"})
-        if data["kind"] not in ("CUBE", "PLANE", "EMPTY"):
-            raise invalid("kind must be CUBE, PLANE or EMPTY")
+        if data["kind"] not in KINDS:
+            raise invalid("Unsupported primitive kind")
         return cls(
             object_name(data["name"]),
             data["kind"],

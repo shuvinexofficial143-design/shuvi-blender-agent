@@ -122,3 +122,7 @@ state at execution. Normal host imports have no bpy dependency.
 See [client contract](CLIENT.md), [source audit](SOURCE_AUDIT.md) and
 [future runtime acceptance](RUNTIME_ACCEPTANCE.md). Runtime verification remains **0%**;
 production ready: **no**.
+
+Level 1 primitive expansion: `object.create.kind` also accepts `UV_SPHERE`,
+`ICOSPHERE`, `CYLINDER`, `CONE`, `CIRCLE` (filled), `GRID`, `TORUS`.
+See [Level 1 control](LEVEL_1_CONTROL.md) for fixed geometry bounds.

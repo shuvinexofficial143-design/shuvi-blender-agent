@@ -4,6 +4,7 @@ from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .inspection import MAX_SCENE_OBJECTS, BpyInspector, revision
 from .models import CreateObject, DuplicateObject, SetTransform, Transform
+from .primitives import geometry
 from .safety import SafetyClass, require_revision
 from .tools import Tool
 from .verification import compare
@@ -108,27 +109,7 @@ class ObjectOperations:
         try:
             if action.kind != "EMPTY":
                 mesh = self.bpy.data.meshes.new(action.name + "Mesh")
-                vertices = [(-1, -1, 0), (1, -1, 0), (1, 1, 0), (-1, 1, 0)]
-                faces = [(0, 1, 2, 3)]
-                if action.kind == "CUBE":
-                    vertices = [
-                        (-1, -1, -1),
-                        (1, -1, -1),
-                        (1, 1, -1),
-                        (-1, 1, -1),
-                        (-1, -1, 1),
-                        (1, -1, 1),
-                        (1, 1, 1),
-                        (-1, 1, 1),
-                    ]
-                    faces = [
-                        (0, 3, 2, 1),
-                        (4, 5, 6, 7),
-                        (0, 1, 5, 4),
-                        (1, 2, 6, 5),
-                        (2, 3, 7, 6),
-                        (3, 0, 4, 7),
-                    ]
+                vertices, faces = geometry(action.kind)
                 mesh.from_pydata(vertices, [], faces)
                 mesh.update()
             obj = self.bpy.data.objects.new(action.name, mesh)

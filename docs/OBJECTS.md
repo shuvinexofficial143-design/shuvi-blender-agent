@@ -34,3 +34,7 @@ can leave partial state; inspect and recover using a new revision.
 Deletion is deferred until checkpoint reopening/recovery has real runtime verification.
 No Blender runtime tests have occurred; geometry, float precision, duplication semantics,
 cleanup failures and Blender version differences still require authorized acceptance tests.
+
+Level 1 primitive expansion: `object.create.kind` also accepts `UV_SPHERE`,
+`ICOSPHERE`, `CYLINDER`, `CONE`, `CIRCLE` (filled), `GRID`, `TORUS`.
+See [Level 1 control](LEVEL_1_CONTROL.md) for fixed geometry bounds.
