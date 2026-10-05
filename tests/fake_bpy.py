@@ -323,6 +323,8 @@ def fake_bpy(objects=None):
         frame_current=1,
         render=render,
         collection=collection,
+        cursor=NS(location=[0.0, 0.0, 0.0]),
+        unit_settings=NS(system="NONE", scale_length=1.0, length_unit="ADAPTIVE"),
     )
     objects.active = None
     scene.frame_set = lambda frame: setattr(scene, "frame_current", frame)
