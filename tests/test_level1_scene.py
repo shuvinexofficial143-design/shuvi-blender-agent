@@ -145,3 +145,29 @@ def test_scene_inspection_reports_type_counts_and_world_presence():
     bpy.context.scene.world = object()
     scene = registry.dispatch(Request("scene.inspect"))
     assert scene.data["world_present"] is True
+
+
+def test_transform_pivot_inspection_and_verified_mutation():
+    _, registry = setup()
+    before_revision = revision(registry)
+    inspected = registry.dispatch(Request("pivot.inspect"))
+    assert inspected.status == Status.SUCCEEDED
+    assert inspected.data["pivot"] == "MEDIAN_POINT"
+
+    result = registry.dispatch(
+        Request(
+            "pivot.set",
+            {"pivot": "CURSOR", "expected_scene_revision": before_revision},
+        )
+    )
+    assert result.status == Status.VERIFIED
+    assert result.data["after"]["pivot"] == "CURSOR"
+    assert revision(registry) != before_revision
+
+    invalid = registry.dispatch(
+        Request(
+            "pivot.set",
+            {"pivot": "RANDOM_POINT", "expected_scene_revision": revision(registry)},
+        )
+    )
+    assert invalid.error.code == ErrorCode.INVALID_REQUEST
