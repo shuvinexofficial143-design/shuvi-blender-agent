@@ -109,6 +109,14 @@ class CollectionOperations:
             raise AgentError(ErrorCode.NOT_FOUND, "Collection not found")
         return item
 
+    def _editable_collection(self, collection):
+        if getattr(collection, "library", None) is not None or getattr(
+            collection, "override_library", None
+        ) is not None:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Linked/overridden collection cannot be modified"
+            )
+
     def _editable_object(self, obj):
         if obj.library is not None or obj.override_library is not None or not obj.is_editable:
             raise AgentError(
@@ -155,6 +163,7 @@ class CollectionOperations:
     def rename(self, req, action):
         require_revision(action.expected_scene_revision, self.inspector.summary()["revision"])
         collection = self._collection(action.name)
+        self._editable_collection(collection)
         existing = self.bpy.data.collections.get(action.new_name)
         if existing is not None and existing != collection:
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Collection name already exists")
@@ -166,6 +175,7 @@ class CollectionOperations:
     def link_object(self, req, action):
         require_revision(action.expected_scene_revision, self.inspector.summary()["revision"])
         collection = self._collection(action.collection)
+        self._editable_collection(collection)
         obj, before = self.inspector.target(action.target)
         self._editable_object(obj)
         if collection in obj.users_collection:
@@ -196,6 +206,7 @@ class CollectionOperations:
     def unlink_object(self, req, action):
         require_revision(action.expected_scene_revision, self.inspector.summary()["revision"])
         collection = self._collection(action.collection)
+        self._editable_collection(collection)
         obj, before = self.inspector.target(action.target)
         self._editable_object(obj)
         if collection not in obj.users_collection:
@@ -227,6 +238,8 @@ class CollectionOperations:
         require_revision(action.expected_scene_revision, self.inspector.summary()["revision"])
         source = self._collection(action.source)
         destination = self._collection(action.destination)
+        self._editable_collection(source)
+        self._editable_collection(destination)
         obj, before = self.inspector.target(action.target)
         self._editable_object(obj)
         if source not in obj.users_collection:
@@ -279,6 +292,7 @@ class CollectionOperations:
         if self.bpy.data.collections.get(action.name) is not None:
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Collection name already exists")
         parent = self._collection(action.parent)
+        self._editable_collection(parent)
         if len(parent.children) >= MAX_DETAILS:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Parent child-collection limit reached")
         collection = self.bpy.data.collections.new(action.name)
