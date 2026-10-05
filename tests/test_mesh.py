@@ -110,3 +110,22 @@ def test_out_of_bounds_vertex_does_not_partially_mutate():
     )
     assert result.error.code == ErrorCode.INVALID_REQUEST
     assert obj.data.vertices[0].co == [0, 0, 0]
+
+
+def test_oversized_polygon_is_rejected_before_allocating_indices():
+    from types import SimpleNamespace
+
+    bpy, _, operations, _ = setup()
+
+    class OversizedIndices:
+        def __len__(self):
+            return 32769
+
+        def __iter__(self):
+            pytest.fail("Oversized indices must not be materialized")
+
+    obj = bpy.context.scene.objects[0]
+    obj.data.polygons = [SimpleNamespace(vertices=OversizedIndices())]
+    with pytest.raises(AgentError) as error:
+        operations.snapshot(obj)
+    assert error.value.code == ErrorCode.SAFETY_DENIED

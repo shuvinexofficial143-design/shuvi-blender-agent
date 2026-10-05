@@ -112,6 +112,8 @@ class AnimationOperations:
                 or len(ad.nla_tracks)
             ):
                 raise AgentError(ErrorCode.SAFETY_DENIED, "Unsafe animation target")
+        if before["animation"]["details_truncated"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Animation inspection is truncated")
         curves = action_curves(obj)
         frames = {float(point.co[0]) for curve in curves for point in curve.keyframe_points}
         if action.frame in frames:

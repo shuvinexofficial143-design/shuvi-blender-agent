@@ -98,10 +98,10 @@ class MeshOperations:
         mesh = obj.data
         if len(mesh.vertices) > 4096 or len(mesh.polygons) > 4096:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Geometry inspection work limit exceeded")
+        if sum(len(face.vertices) for face in mesh.polygons) > 32768:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Geometry loop work limit exceeded")
         vertices = [list(vertex.co) for vertex in mesh.vertices]
         faces = [list(face.vertices) for face in mesh.polygons]
-        if sum(len(face) for face in faces) > 32768:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Geometry loop work limit exceeded")
         geometry = {"vertices": vertices, "faces": faces}
         return geometry | {
             "geometry_revision": revision(geometry),

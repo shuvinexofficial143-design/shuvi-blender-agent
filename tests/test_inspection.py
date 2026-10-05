@@ -89,3 +89,97 @@ def test_transform_contract_and_scene_work_limit():
     bpy = fake_bpy([FakeObject("obj")] * 10001)
     with pytest.raises(AgentError):
         BpyInspector(bpy).summary()
+
+
+def test_collection_pages_are_sorted_bounded_and_revision_protected():
+    bpy = fake_bpy()
+    for name in ("Z", "A", "M"):
+        bpy.data.collections.new(name)
+    inspector = BpyInspector(bpy)
+    first = inspector.collection_page(PageQuery(limit=2))
+    assert [item["name"] for item in first["items"]] == ["A", "Collection"]
+    assert first["total"] == 4
+    second = inspector.collection_page(
+        PageQuery(offset=2, limit=2, expected_revision=first["revision"])
+    )
+    assert second["next_offset"] is None
+    with pytest.raises(AgentError):
+        inspector.collection_page(PageQuery(offset=2))
+    # Replacing a relationship with the same count still invalidates the revision.
+    collection = bpy.data.collections.get("A")
+    collection.children.append(bpy.data.collections.get("Z"))
+    revision_before = inspector.summary()["revision"]
+    collection.children[0] = bpy.data.collections.get("M")
+    with pytest.raises(AgentError) as error:
+        inspector.collection_page(PageQuery(expected_revision=revision_before))
+    assert error.value.code == ErrorCode.STALE_STATE
+
+
+def test_scene_and_nested_metadata_work_limits_before_traversal():
+    bpy = fake_bpy()
+    bpy.data.collections = [NS(name="Unused")] * 10_001
+    with pytest.raises(AgentError) as error:
+        BpyInspector(bpy).summary()
+    assert error.value.code == ErrorCode.SAFETY_DENIED
+    bpy = fake_bpy()
+    bpy.data.collections[0].children = [None] * 100_001
+    with pytest.raises(AgentError) as error:
+        BpyInspector(bpy).summary()
+    assert error.value.code == ErrorCode.SAFETY_DENIED
+
+
+def test_oversized_scene_strings_and_page_bytes_are_denied(monkeypatch):
+    bpy = fake_bpy()
+    bpy.context.scene.objects[0].asset_data = NS(description="x" * 1001)
+    with pytest.raises(AgentError) as error:
+        BpyInspector(bpy).page(PageQuery())
+    assert error.value.code == ErrorCode.SAFETY_DENIED
+    bpy.context.scene.objects[0].asset_data = None
+    monkeypatch.setattr("shuvi_blender_agent.inspection.MAX_PAGE_BYTES", 10)
+    with pytest.raises(AgentError) as error:
+        BpyInspector(bpy).page(PageQuery())
+    assert error.value.code == ErrorCode.SAFETY_DENIED
+
+
+def test_summary_does_not_retain_all_object_snapshots():
+    inspector = BpyInspector(fake_bpy([FakeObject(f"Object{i}") for i in range(200)]))
+    snapshot = inspector.snapshot
+    alive = peak = 0
+
+    class CountedSnapshot(dict):
+        def __init__(self, data):
+            nonlocal alive, peak
+            super().__init__(data)
+            alive += 1
+            peak = max(peak, alive)
+
+        def __del__(self):
+            nonlocal alive
+            alive -= 1
+
+    inspector.snapshot = lambda obj: CountedSnapshot(snapshot(obj))
+    assert inspector.summary()["object_count"] == 200
+    assert peak <= 2
+
+
+def test_animation_readback_has_a_total_point_budget():
+    obj = FakeObject("Animated")
+    curves = [
+        NS(
+            data_path="location",
+            array_index=i,
+            keyframe_points=[NS(co=[float(k), 0.0], interpolation="LINEAR") for k in range(256)],
+        )
+        for i in range(64)
+    ]
+    obj.animation_data = NS(action=NS(name="Action", fcurves=curves))
+    data = BpyInspector(fake_bpy([obj])).snapshot(obj)["animation"]
+    assert sum(len(channel["points"]) for channel in data["channels"]) == 1024
+    assert data["details_truncated"]
+
+
+def test_foreign_identity_does_not_allocate_scene_identities():
+    inspector = BpyInspector(fake_bpy())
+    with pytest.raises(AgentError):
+        inspector.resolve("foreign:object")
+    assert not inspector._identities

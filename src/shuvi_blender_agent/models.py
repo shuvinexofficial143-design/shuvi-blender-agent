@@ -88,6 +88,8 @@ class PageQuery:
         revision = data.get("expected_revision")
         if revision is not None:
             revision = string(revision, "expected_revision", limit=64)
+        if data.get("offset", 0) != 0 and revision is None:
+            raise invalid("Continuation pages require expected_revision")
         return cls(
             integer(data.get("offset", 0), "offset", 0, 10_000),
             integer(data.get("limit", 25), "limit", 1, 100),

@@ -60,7 +60,7 @@ def test_capability_catalog_and_typed_client():
     catalog = controller.capabilities()
     assert catalog["object.create"]["enabled"]
     assert not catalog["render.execute"]["enabled"]
-    assert len(catalog) == 22
+    assert len(catalog) == 23
     scene = controller.inspect_scene()
     assert scene.data["object_count"] == 2
     snap = controller.list_objects().data["items"][0]

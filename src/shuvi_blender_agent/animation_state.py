@@ -40,9 +40,11 @@ def animation_snapshot(obj) -> dict:
         return result
     if len(curves) > 64:
         result["details_truncated"] = True
+    remaining = 1024
     for curve in islice(curves, 64):
         points = curve.keyframe_points
-        if len(points) > 256:
+        count = min(remaining, 256)
+        if len(points) > count:
             result["details_truncated"] = True
         result["channels"].append(
             {
@@ -51,8 +53,9 @@ def animation_snapshot(obj) -> dict:
                 "point_count": len(points),
                 "points": [
                     {"co": list(point.co), "interpolation": point.interpolation}
-                    for point in islice(points, 256)
+                    for point in islice(points, count)
                 ],
             }
         )
+        remaining -= min(len(points), count)
     return result
