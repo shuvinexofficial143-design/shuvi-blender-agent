@@ -16,6 +16,21 @@ MAX_SCENE_OBJECTS = 10_000
 MAX_DETAILS = 64
 
 
+def modifier_snapshot(mod) -> dict:
+    keys = {
+        "BEVEL": ("width", "segments"),
+        "SUBSURF": ("levels", "render_levels"),
+        "SOLIDIFY": ("thickness",),
+    }.get(mod.type, ())
+    return {
+        "name": mod.name,
+        "type": mod.type,
+        "show_viewport": bool(mod.show_viewport),
+        "show_render": bool(mod.show_render),
+        "settings": {key: getattr(mod, key, None) for key in keys},
+    }
+
+
 def revision(data: dict) -> str:
     return sha256(
         json.dumps(data, sort_keys=True, allow_nan=False, separators=(",", ":")).encode()
@@ -84,15 +99,7 @@ class BpyInspector:
             "parent_id": self.identity(obj.parent) if obj.parent else None,
             "collections": [collection.name for collection in collections[:MAX_DETAILS]],
             "collection_count": len(collections),
-            "modifiers": [
-                {
-                    "name": mod.name,
-                    "type": mod.type,
-                    "show_viewport": bool(mod.show_viewport),
-                    "show_render": bool(mod.show_render),
-                }
-                for mod in islice(modifiers, MAX_DETAILS)
-            ],
+            "modifiers": [modifier_snapshot(mod) for mod in islice(modifiers, MAX_DETAILS)],
             "modifier_count": len(modifiers),
             "materials": [
                 slot.material.name if slot.material else None
@@ -108,6 +115,10 @@ class BpyInspector:
                 ),
             },
             "linked": obj.library is not None,
+            "asset": {
+                "marked": obj.asset_data is not None,
+                "description": obj.asset_data.description if obj.asset_data else None,
+            },
             "details_truncated": any(
                 len(items) > MAX_DETAILS for items in (materials, modifiers, collections)
             ),
@@ -143,6 +154,10 @@ class BpyInspector:
                     "filepath": scene.render.filepath,
                 },
                 "objects": [(obj["object_id"], obj["revision"]) for obj in snapshots],
+                "collections": [
+                    (item.name, len(item.objects), len(item.children))
+                    for item in sorted(self.bpy.data.collections, key=lambda item: item.name)
+                ],
             }
         )
 

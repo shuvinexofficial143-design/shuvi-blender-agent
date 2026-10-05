@@ -3,12 +3,12 @@
 Updated: 2026-10-05. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest pushed commit before this checkpoint: 536ef60db59e50516451a1cc49e6765eaee36aa8.
+Latest pushed commit before this checkpoint: 6f2246b081e4085b991609fff227011e8b104b8d.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Current phase
-Phases 1-6 initial bounded source capabilities implemented; Phase 7 next.
+Phases 1-7 initial bounded source capabilities implemented; Phase 8 animation next.
 
 ## Completed and verified
 - Fetched actual public remote; empty repository, no prior commits/files to preserve.
@@ -24,16 +24,18 @@ Phases 1-6 initial bounded source capabilities implemented; Phase 7 next.
   before/after comparison, collision/stale protection and created-data cleanup.
 - Material creation/assignment, perspective camera and four light kinds, actual property
   verification, conservative shared-data guards and created-data cleanup.
+- Bounded BEVEL/SUBSURF/SOLIDIFY addition, additive collection creation/object linking,
+  local asset marking, metadata readback and creation cleanup. Source distribution includes tests/docs.
 
 ## Status
-Source: foundation through initial appearance tools implemented. Unit tests: 81 passing.
+Source: foundation through initial asset tools implemented. Unit tests: 88 passing.
 Lint/format: passing. Foundation wheel/sdist: built.
-CI foundation/discovery/bridge: success. Latest bridge run 37310526776. Current CI pending.
+CI all prior checkpoints: success. Latest appearance run 37313392710. Current CI pending.
 Real Blender runtime verification: none. Production ready: no.
 
 ## Active work
-appearance.py, inspection.py, bootstrap.py, tests/test_appearance.py, fake_bpy.py.
-Next: typed modifiers, collection membership and asset metadata actions.
+assets.py, inspection.py, bootstrap.py, tests/test_assets.py, fake_bpy.py, MANIFEST.in.
+Next: typed frame range/frame selection and bounded animation keyframe tools.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -54,5 +56,5 @@ Next: typed modifiers, collection membership and asset metadata actions.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Build bounded modifier addition, collection creation/linking and asset marking with readback.
+Build bounded animation tools with actual keyframe readback and version-aware action handling.
 Keep destructive deletion deferred until checkpoint/recovery exists. Do not launch Blender.

@@ -123,7 +123,48 @@ class FakeLinks(list):
         self.append(obj)
         if obj not in self.table:
             self.table.append(obj)
-        obj.users_collection = [self.collection]
+        if self.collection not in obj.users_collection:
+            obj.users_collection.append(self.collection)
+
+
+class FakeModifiers(list):
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def new(self, name, modifier_type):
+        modifier = NS(name=name, type=modifier_type, show_viewport=True, show_render=True)
+        self.append(modifier)
+        return modifier
+
+
+class FakeChildren(list):
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def link(self, collection):
+        self.append(collection)
+
+
+class FakeCollections(list):
+    def new(self, name):
+        links = FakeLinks()
+        links.table = self.objects
+        collection = NS(name=name, objects=links, children=FakeChildren())
+        links.collection = collection
+        self.append(collection)
+        return collection
+
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def remove(self, collection):
+        super().remove(collection)
+        for item in self:
+            if collection in item.children:
+                item.children.remove(collection)
+        for obj in collection.objects:
+            if collection in obj.users_collection:
+                obj.users_collection.remove(collection)
 
 
 class FakeObject:
@@ -142,13 +183,14 @@ class FakeObject:
         self.hide_render = False
         self.parent = None
         self.users_collection = []
-        self.modifiers = []
+        self.modifiers = FakeModifiers()
         self.material_slots = []
         self.animation_data = None
         self.library = None
         self.constraints = []
         self.override_library = None
         self.is_editable = True
+        self.asset_data = None
         self._data = None
 
     @property
@@ -183,6 +225,9 @@ class FakeObject:
     def as_pointer(self):
         return id(self)
 
+    def asset_mark(self):
+        self.asset_data = NS(description="")
+
     def hide_get(self):
         return False
 
@@ -206,7 +251,9 @@ def fake_bpy(objects=None):
         filepath="//render",
         image_settings=NS(file_format="PNG"),
     )
-    collection = NS(name="Collection", objects=objects, children=[])
+    collection = NS(name="Collection", objects=objects, children=FakeChildren())
+    collections = FakeCollections([collection])
+    collections.objects = table
     objects.collection = collection
     for obj in objects:
         obj.users_collection = [collection]
@@ -226,7 +273,7 @@ def fake_bpy(objects=None):
             filepath="",
             objects=table,
             meshes=meshes,
-            collections=[collection],
+            collections=collections,
             materials=FakeMaterials(),
             cameras=FakeDevices("CAMERA"),
             lights=FakeDevices("LIGHT"),
