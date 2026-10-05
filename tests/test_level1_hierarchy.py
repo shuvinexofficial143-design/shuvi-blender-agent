@@ -207,3 +207,17 @@ def test_collection_mutations_reject_stale_scene_revision():
         )
     )
     assert result.error.code == ErrorCode.STALE_STATE
+
+
+def test_origin_inspection_reports_local_and_world_locations():
+    bpy, registry = setup()
+    obj = bpy.data.objects.get("Cube")
+    obj.location = [1.0, 2.0, 3.0]
+    obj.matrix_world[0][3] = 4.0
+    obj.matrix_world[1][3] = 5.0
+    obj.matrix_world[2][3] = 6.0
+    item = snapshots(registry)["Cube"]
+    result = registry.dispatch(Request("origin.inspect", {"object_id": item["object_id"]}))
+    assert result.status == Status.SUCCEEDED
+    assert result.data["local_location"] == [1.0, 2.0, 3.0]
+    assert result.data["world_location"] == [4.0, 5.0, 6.0]
