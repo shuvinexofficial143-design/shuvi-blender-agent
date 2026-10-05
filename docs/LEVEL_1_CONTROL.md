@@ -16,8 +16,8 @@ compatibility.
 | Visibility controls | yes | yes | yes | no | viewport/render/view-layer separated |
 | Selection + active object | yes | yes | yes | no | bounded Object-mode state |
 | Parent/unparent + children inspection | yes | yes | yes | no | cycle rejection; keep-world option |
-| Collection inspect/rename/link/unlink/move | yes | yes | pending latest checkpoint | no | orphan prevention |
-| Child collection creation | yes | yes | pending latest checkpoint | no | bounded hierarchy |
+| Collection inspect/rename/link/unlink/move | yes | yes | yes | no | orphan + scene-reachability protection |
+| Child collection creation | yes | yes | yes | no | bounded hierarchy depth |
 | Cursor inspect/set | yes | yes | yes | no | location only |
 | Scene rename + unit settings | yes | yes | yes | no | active context scene only |
 | Scene type counts/world presence | yes | yes | yes | no | bounded scene summary |
