@@ -10,7 +10,6 @@ from .safety import SafetyClass, require_revision
 from .tools import Tool
 from .validation import fields, string
 
-
 MAX_COLLECTION_DEPTH = 32
 
 
