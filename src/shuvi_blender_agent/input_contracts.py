@@ -16,6 +16,7 @@ from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
 from .safety import SafetyClass
+from .scene_state import CursorSet, SceneRename, SetUnits
 from .selection import SelectionChange
 from .transform import PatchTransform
 from .validation import fields, string
@@ -37,6 +38,11 @@ def builtin_contracts() -> dict:
         "system.ping": (read, empty),
         "system.capabilities": (read, empty),
         "scene.inspect": (read, empty),
+        "scene.rename": (mutation, SceneRename.parse),
+        "scene.set_units": (mutation, SetUnits.parse),
+        "cursor.inspect": (read, empty),
+        "cursor.set": (mutation, CursorSet.parse),
+        "mode.inspect": (read, empty),
         "objects.list": (read, PageQuery.parse),
         "collections.list": (read, PageQuery.parse),
         "object.inspect": (read, object_id),
