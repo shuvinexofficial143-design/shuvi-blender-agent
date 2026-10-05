@@ -323,7 +323,12 @@ class CollectionOperations:
                 CollectionObjectChange.parse,
                 self.unlink_object,
             ),
-            Tool("collection.move_object", SafetyClass.MUTATION, MoveObject.parse, self.move_object),
+            Tool(
+                "collection.move_object",
+                SafetyClass.MUTATION,
+                MoveObject.parse,
+                self.move_object,
+            ),
             Tool(
                 "collection.create_child",
                 SafetyClass.MUTATION,
