@@ -46,6 +46,19 @@ class ObjectTarget:
     expected_revision: str
 
     @classmethod
+    def from_snapshot(cls, snapshot: dict) -> "ObjectTarget":
+        try:
+            return cls.parse(
+                {
+                    "object_id": snapshot["object_id"],
+                    "expected_name": snapshot["name"],
+                    "expected_revision": snapshot["revision"],
+                }
+            )
+        except KeyError as exc:
+            raise invalid("Object snapshot lacks target fields") from exc
+
+    @classmethod
     def parse(cls, data: dict) -> "ObjectTarget":
         fields(data, {"object_id", "expected_name", "expected_revision"})
         return cls(

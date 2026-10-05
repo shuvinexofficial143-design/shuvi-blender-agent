@@ -1,13 +1,14 @@
 """Explicit allowlist: a tool couples a typed parser with a classified executor."""
 
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, is_dataclass
+from dataclasses import fields as model_fields
 from typing import Any
 
 from .contracts import Request, Result, Status, failure
 from .errors import AgentError, ErrorCode
 from .safety import SafetyClass, SafetyPolicy
-from .validation import fields
+from .validation import fields, string
 
 
 @dataclass(frozen=True)
@@ -16,6 +17,15 @@ class Tool:
     classification: SafetyClass
     parse: Callable[[dict], Any]
     execute: Callable[[Request, Any], Result]
+
+    def __post_init__(self):
+        string(self.name, "tool name", limit=80)
+        if (
+            not isinstance(self.classification, SafetyClass)
+            or not callable(self.parse)
+            or not callable(self.execute)
+        ):
+            raise ValueError("A tool requires a known classification, parser and executor")
 
 
 class ToolRegistry:
@@ -45,7 +55,40 @@ class ToolRegistry:
             return failure(request, exc)
         except Exception:
             # Never send internal tracebacks or arbitrary exception strings over the bridge.
-            return failure(request, AgentError(ErrorCode.EXECUTION_ERROR, "Executor failed"))
+            return failure(
+                request,
+                AgentError(
+                    ErrorCode.EXECUTION_ERROR, "Executor failed; inspect state before retry"
+                ),
+            )
+
+    def register(self, tool: Tool) -> None:
+        if tool.name in self._tools or len(self._tools) >= 128:
+            raise ValueError("Duplicate tool or registry limit exceeded")
+        self._tools[tool.name] = tool
+
+    def catalog(self) -> list[dict]:
+        result = []
+        for tool in sorted(self._tools.values(), key=lambda tool: tool.name):
+            enabled = True
+            try:
+                self.policy.check(tool.classification)
+            except AgentError:
+                enabled = False
+            model = getattr(tool.parse, "__self__", None)
+            payload_fields = (
+                [item.name for item in model_fields(model)] if is_dataclass(model) else None
+            )
+            result.append(
+                {
+                    "name": tool.name,
+                    "classification": tool.classification.value,
+                    "enabled": enabled,
+                    "payload_fields": payload_fields,
+                    "verification_required": tool.classification != SafetyClass.READ_ONLY,
+                }
+            )
+        return result
 
 
 def ping_tool() -> Tool:
