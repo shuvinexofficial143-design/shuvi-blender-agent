@@ -41,6 +41,7 @@ from .rendering import FileAction, RenderConfig
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .sculpting import SculptBrush, SculptSmooth
+from .sculpting_brushes import SculptCrease, SculptFlatten, SculptGrab, SculptNormalizedBrush
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
@@ -116,6 +117,11 @@ def builtin_contracts() -> dict:
         "sculpt.inspect": (read, object_id),
         "sculpt.brush_displace": (mutation, SculptBrush.parse),
         "sculpt.brush_smooth": (mutation, SculptSmooth.parse),
+        "sculpt.brush_inflate": (mutation, SculptNormalizedBrush.parse),
+        "sculpt.brush_flatten": (mutation, SculptFlatten.parse),
+        "sculpt.brush_pinch": (mutation, SculptNormalizedBrush.parse),
+        "sculpt.brush_grab": (mutation, SculptGrab.parse),
+        "sculpt.brush_crease": (mutation, SculptCrease.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),
