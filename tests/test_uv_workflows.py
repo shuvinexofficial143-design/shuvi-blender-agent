@@ -261,9 +261,7 @@ def test_island_transform_verification_failure_restores_coordinates():
         original_update()
 
     obj.data.update = corrupt_first_update
-    result = registry.dispatch(
-        Request("uv.island_transform", island_payload(inspector, uv, obj))
-    )
+    result = registry.dispatch(Request("uv.island_transform", island_payload(inspector, uv, obj)))
     assert result.status == Status.FAILED
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
     assert result.data["rolled_back"] is True
