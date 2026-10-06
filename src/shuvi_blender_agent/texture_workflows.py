@@ -270,11 +270,15 @@ class TextureWorkflowOperations(MaterialNodeOperations):
         return mesh, layer, self.uv._layer_face_uvs(mesh, layer, loop_count)
 
     @staticmethod
-    def _udim_tile(uv):
-        u, v = floor(float(uv[0])), floor(float(uv[1]))
-        if not (0 <= u <= 9 and 0 <= v <= 99):
+    def _tile_axis(low, high, maximum):
+        if low < 0 or high < 0:
             return None
-        return 1001 + u + 10 * v
+        epsilon = 1e-9
+        lower = floor(low + epsilon)
+        upper = floor(high - epsilon) if high - low > epsilon else floor(high + epsilon)
+        if lower != upper or not 0 <= lower <= maximum:
+            return None
+        return lower
 
     def _udim_data(self, obj, layer_name):
         _, _, face_uvs = self._uv_layer(obj, layer_name)
@@ -283,18 +287,20 @@ class TextureWorkflowOperations(MaterialNodeOperations):
         invalid_faces = []
         tiles = set()
         for face_index, uvs in enumerate(face_uvs):
-            current = {self._udim_tile(uv) for uv in uvs}
-            if None in current:
-                invalid_faces.append(face_index)
-                current.discard(None)
-            if len(current) > 1:
-                split_faces.append(face_index)
-            if len(current) == 1:
-                tile = next(iter(current))
-                tiles.add(tile)
-                face_tiles.append({"face_index": face_index, "tile": tile})
+            minimum = [min(float(uv[axis]) for uv in uvs) for axis in range(2)]
+            maximum = [max(float(uv[axis]) for uv in uvs) for axis in range(2)]
+            tile_u = self._tile_axis(minimum[0], maximum[0], 9)
+            tile_v = self._tile_axis(minimum[1], maximum[1], 99)
+            tile = None
+            if tile_u is None or tile_v is None:
+                if any(value < 0 for value in minimum) or maximum[0] > 10 or maximum[1] > 100:
+                    invalid_faces.append(face_index)
+                else:
+                    split_faces.append(face_index)
             else:
-                face_tiles.append({"face_index": face_index, "tile": None})
+                tile = 1001 + tile_u + 10 * tile_v
+                tiles.add(tile)
+            face_tiles.append({"face_index": face_index, "tile": tile})
         if len(tiles) > MAX_UDIM_TILES:
             raise AgentError(ErrorCode.SAFETY_DENIED, "UDIM tile work limit exceeded")
         return {
