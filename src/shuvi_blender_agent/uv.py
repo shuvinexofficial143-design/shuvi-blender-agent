@@ -134,23 +134,6 @@ def _same_uv(a, b):
 
 
 @dataclass(frozen=True)
-class SeamPreview:
-    object_id: str
-    edge_indices: tuple[int, ...]
-
-    @classmethod
-    def parse(cls, data):
-        fields(data, {"object_id", "edge_indices"})
-        indices = data["edge_indices"]
-        if not isinstance(indices, list) or not 1 <= len(indices) <= MAX_SEAM_SELECTION:
-            raise invalid(f"edge_indices requires 1..{MAX_SEAM_SELECTION} indices")
-        parsed = tuple(integer(value, "edge_index", 0, MAX_MESH_EDGES - 1) for value in indices)
-        if len(set(parsed)) != len(parsed):
-            raise invalid("edge_indices must be unique")
-        return cls(string(data["object_id"], "object_id", limit=128), parsed)
-
-
-@dataclass(frozen=True)
 class SeamSet:
     target: ObjectTarget
     expected_geometry_revision: str
@@ -387,30 +370,6 @@ class UVOperations:
         data = self.snapshot(self.inspector.resolve(object_id))
         return Result(request.request_id, request.command_id, Status.SUCCEEDED, data)
 
-    def seam_preview(self, request: Request, action: SeamPreview):
-        data = self.snapshot(self.inspector.resolve(action.object_id))
-        if any(index >= data["edge_count"] for index in action.edge_indices):
-            raise invalid("Seam edge index does not exist")
-        return Result(
-            request.request_id,
-            request.command_id,
-            Status.SUCCEEDED,
-            {
-                "object_id": data["object_id"],
-                "geometry_revision": data["geometry_revision"],
-                "uv_revision": data["uv_revision"],
-                "edges": [
-                    {
-                        "edge_index": index,
-                        "vertices": data["edge_vertex_pairs"][index],
-                        "seam": data["seam_flags"][index],
-                    }
-                    for index in action.edge_indices
-                ],
-                "execution_status": "PREVIEW_ONLY",
-            },
-        )
-
     def _editable_seam_mesh(self, action: SeamSet):
         obj, object_before = self.inspector.target(action.target)
         self.objects._editable(obj)
@@ -497,6 +456,5 @@ class UVOperations:
 
         return [
             Tool("uv.inspect", SafetyClass.READ_ONLY, parse_id, self.inspect),
-            Tool("uv.seam_preview", SafetyClass.READ_ONLY, SeamPreview.parse, self.seam_preview),
             Tool("uv.seam_set", SafetyClass.MUTATION, SeamSet.parse, self.seam_set),
         ]
