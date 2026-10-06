@@ -74,11 +74,15 @@ def modifier_snapshot(mod) -> dict:
         "SUBSURF": ("levels", "render_levels"),
         "SOLIDIFY": ("thickness",),
         "BOOLEAN": ("operation", "solver"),
+        "SHRINKWRAP": ("wrap_method", "wrap_mode", "offset"),
     }.get(mod.type, ())
     settings = {key: getattr(mod, key, None) for key in keys}
     if mod.type == "BOOLEAN":
         cutter = getattr(mod, "object", None)
         settings["cutter_name"] = cutter.name if cutter is not None else None
+    elif mod.type == "SHRINKWRAP":
+        target = getattr(mod, "target", None)
+        settings["target_name"] = target.name if target is not None else None
     return {
         "name": mod.name,
         "type": mod.type,
