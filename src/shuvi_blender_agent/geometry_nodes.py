@@ -398,7 +398,7 @@ class GeometryNodeOperations:
                 "Geometry Nodes datablocks are unavailable",
             )
         if table.get(action.group_name) is not None:
-            raise AgentError(ErrorCode.COLLISION, "Geometry Nodes group name already exists")
+            raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Geometry Nodes group name already exists")
         group = None
         try:
             group = table.new(action.group_name, "GeometryNodeTree")
@@ -442,7 +442,7 @@ class GeometryNodeOperations:
         before = self._snapshot(group)
         require_revision(action.expected_group_revision, before["group_revision"])
         if group.nodes.get(action.node_name) is not None:
-            raise AgentError(ErrorCode.COLLISION, "Geometry node name already exists")
+            raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Geometry node name already exists")
         if len(group.nodes) >= MAX_GEOMETRY_NODES:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Geometry node work limit reached")
 
