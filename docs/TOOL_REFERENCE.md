@@ -82,6 +82,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.field_preview | workflow, prefix, parameters | read_only | deterministic source-only INDEX/POSITION/NORMAL → named-attribute workflow plan with attribute metadata and field_workflow_revision |
 | geometry_nodes.field_apply | group_name, expected_group_revision, workflow, prefix, parameters | mutation | build one exact bounded field-to-Store-Named-Attribute graph in an empty local GeometryNodeTree with verified rollback |
 | geometry_nodes.field_clear | group_name, expected_group_revision, workflow, prefix, parameters | mutation | clear only an exact managed field workflow graph and rebuild it on known verification failure |
+| geometry_nodes.scatter_preview | recipe, prefix, parameters | read_only | deterministic source-only CUBE_SCATTER / ICO_SPHERE_SCATTER plan with bounded point resolution, estimated instance count and scatter_revision |
+| geometry_nodes.scatter_apply | group_name, expected_group_revision, recipe, prefix, parameters | mutation | build one exact bounded Instance on Points graph in an empty local GeometryNodeTree with verified rollback |
+| geometry_nodes.scatter_clear | group_name, expected_group_revision, recipe, prefix, parameters | mutation | clear only an exact managed scatter graph and rebuild it on known verification failure |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -924,3 +927,37 @@ Current Level 3 source progress: **100%**.
 - These checks are source/fake-bpy evidence only; they do not prove real Blender attribute
   storage, field evaluation, generated mesh data layers, dependency-graph behavior or render
   output.
+
+
+### Level 5 milestone 7 limits
+
+- `geometry_nodes.scatter_preview` supports exactly `CUBE_SCATTER` and
+  `ICO_SPHERE_SCATTER`.
+- Both recipes use one bounded Mesh Cube as the point source. Per-axis point resolution is
+  limited to 2..20 and a deterministic cube-surface point estimate is computed before any
+  mutation. Requests above **2048 estimated instances** are rejected.
+- Scatter source extent is bounded to 0.001..1000 on each axis. Rotation is bounded to
+  ±2π and instance scale to 0.001..100 on each axis.
+- CUBE_SCATTER uses a bounded Mesh Cube instance template with 2..8 vertices per axis.
+  ICO_SPHERE_SCATTER uses a bounded Ico Sphere template with subdivisions 1..3.
+- The graph is fixed: point mesh → Instance on Points Points; template mesh → Instance;
+  Instance on Points Instances → Group Output Geometry.
+- Selection is fixed true, Pick Instance false and Instance Index zero. No random selection,
+  unbounded density field, external object, collection, asset-library or material reference is
+  accepted.
+- Instances remain unrealized. Preview reports `estimated_instance_count`,
+  `maximum_instance_count=2048`, `instances_realized=false`,
+  `external_asset_references=false` and `collection_references=false`.
+- Apply requires a fresh group revision, an entirely empty local GeometryNodeTree and at most
+  one current group user. Existing or shared graphs fail closed.
+- Apply verification compares exact interface, node names/types/locations, bounded defaults and
+  exact link topology. Known mismatch removes the complete scatter graph/interface and verifies
+  restoration of the original empty group revision.
+- Clear requires the current graph to exactly match the requested scatter recipe/prefix/
+  parameters. Any changed transform, resolution, template default, link, interface or foreign
+  node causes refusal rather than partial deletion.
+- Known clear verification failure rebuilds the exact scatter graph and verifies restoration of
+  the original group revision.
+- The factory now exposes **174 typed tools** under the existing bounded **176-tool** cap.
+- Fake-bpy/CI prove source graph intent only; they do not prove real Blender instance count,
+  instance placement, geometry evaluation, viewport behavior, memory/GPU cost or render output.
