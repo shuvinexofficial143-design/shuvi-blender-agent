@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 116 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 124 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -117,6 +117,14 @@ clients should retain the filter, session ID and revision while continuing a pag
 | character.face_landmark_fit | object_id, front_direction, max_normalized_distance | read_only | nearest-vertex facial candidate mapping with explicit review threshold |
 | character.face_region_plan | object_id, front_direction | read_only | six deterministic head/face sculpt-region centers and radii |
 | character.face_symmetry_audit | object_id, front_direction, tolerance | read_only | local-X candidate landmark symmetry and centerline drift audit |
+| character.body_region_plan | object_id, preset | read_only | fit preset to mesh bounds and emit 17 torso/limb/hand/foot sculpt planning regions |
+| character.limb_guide | preset, height, origin, side, limb_kind | read_only | side-aware ARM/LEG landmark reference with shoulder/elbow/wrist/hand or hip/knee/ankle/foot |
+| character.extremity_guide | kind, side, anchor, length | read_only | explicit HAND or FOOT landmark reference including digit/toe tips |
+| character.body_symmetry_audit | object_id, tolerance | read_only | bounded local-X base-mesh symmetry partner audit with unmatched/collision evidence |
+| character.sculpt_qa | object_id, symmetry_tolerance | read_only | aggregate structural sculpt-readiness + body symmetry QA with deterministic qa revision |
+| character.sculpt_recipe_preview | recipe, intensity | read_only | allowlisted BODY/FACE/HAND_FOOT sculpt workflow preview using existing typed tools |
+| character.sculpt_recovery_snapshot | object_id, vertex_indices | read_only | bounded 1..512 vertex coordinate-patch snapshot plus topology revision |
+| character.sculpt_recovery_restore | target, expected_geometry_revision, expected_topology_revision, entries | mutation | verified 1..512 coordinate-patch restore with topology-drift denial and rollback |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -439,7 +447,7 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 
 ## Level 3 sculpting foundation
 
-Current Level 3 source progress: **70%**.
+Current Level 3 source progress: **90%**.
 
 ### Level 3 milestone 1 limits
 
@@ -547,3 +555,28 @@ Current Level 3 source progress: **70%**.
   symmetry analysis.
 - All milestone 6–7 tools are read-only and expose no arbitrary Python or unrestricted Blender
   operator execution. Real Blender sculpt/evaluated-geometry behavior remains runtime-unverified.
+
+
+### Level 3 milestones 8–9 limits
+
+- `character.body_region_plan` derives 17 planning-only body regions from current local mesh
+  bounds plus ADULT_NEUTRAL/HEROIC/STYLIZED preset references. It does not mutate geometry.
+- `character.limb_guide` emits four side-aware landmarks for ARM or LEG plus a reference
+  thickness. `character.extremity_guide` emits seven HAND or five FOOT reference landmarks
+  from explicit local anchor/length.
+- `character.body_symmetry_audit` uses local X only, caller tolerance 1e-6..100 and the
+  bounded spatial-grid partner matcher. It reports unmatched positive/negative vertices and
+  duplicate partner collisions; it is coordinate QA, not perceptual/anatomical symmetry.
+- `character.sculpt_qa` combines bounded sculpt structural diagnostics and local-X symmetry.
+  PASS/REVIEW/BLOCKED is a source-side structural classification only.
+- `character.sculpt_recipe_preview` supports BODY_PRIMARY_FORMS, FACE_PRIMARY_FORMS and
+  HAND_FOOT_REFINEMENT at intensity 0.05..1.0. It previews ordered existing typed tools and
+  never auto-executes mutations.
+- `character.sculpt_recovery_snapshot` accepts 1..512 unique vertex indices and returns their
+  current coordinates plus a topology revision derived from current vertex count/faces.
+- `character.sculpt_recovery_restore` requires fresh object/geometry state, exact matching
+  topology revision, editable local unshared base mesh and no shape keys/modifier stack.
+  It restores at most 512 explicit coordinates, verifies full indexed geometry and uses the
+  ordinary sculpt coordinate rollback path if verification fails.
+- These helpers do not expose arbitrary Python or unrestricted Blender operators. Real Blender
+  Sculpt Mode/PBVH/Multires/Dyntopo behavior remains runtime-unverified.
