@@ -1,7 +1,7 @@
 """Host-side allowlist of payload parsers and safety classes; no bpy import."""
 
 from .animation import FrameRange, InsertKeyframe, SetFrame
-from .appearance import CreateDevice, MaterialAssign
+from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
 from .collection_ops import (
     CollectionNameRequest,
@@ -74,6 +74,7 @@ def builtin_contracts() -> dict:
         "object.duplicate_linked": (mutation, DuplicateObject.parse),
         "material.create_assign": (mutation, MaterialAssign.parse),
         "device.create": (mutation, CreateDevice.parse),
+        "device.update": (mutation, UpdateDevice.parse),
         "modifier.add": (mutation, AddModifier.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
