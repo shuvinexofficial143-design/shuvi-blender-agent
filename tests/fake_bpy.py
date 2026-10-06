@@ -165,33 +165,152 @@ class FakeMaterialLinks(list):
         return material
 
 
+class FakeSocket:
+    def __init__(self, node, name, default_value=None):
+        self.node = node
+        self.name = name
+        self.default_value = copy.deepcopy(default_value)
+
+
+class FakeSockets(dict):
+    def __iter__(self):
+        return iter(self.values())
+
+
+class FakeNode:
+    def __init__(self, node_type, name=None):
+        self.type = node_type
+        self.name = name or node_type
+        self.label = ""
+        self.image = None
+        self.blend_type = "MIX"
+        self.inputs = FakeSockets()
+        self.outputs = FakeSockets()
+        self._init_sockets()
+
+    def _socket(self, table, name, value=None):
+        table[name] = FakeSocket(self, name, value)
+
+    def _init_sockets(self):
+        if self.type == "BSDF_PRINCIPLED":
+            for name, value in (
+                ("Base Color", [0.8, 0.8, 0.8, 1.0]),
+                ("Metallic", 0.0),
+                ("Roughness", 0.5),
+                ("Transmission Weight", 0.0),
+                ("Emission Color", [0.0, 0.0, 0.0, 1.0]),
+                ("Emission Strength", 0.0),
+                ("Alpha", 1.0),
+                ("Normal", [0.0, 0.0, 0.0]),
+            ):
+                self._socket(self.inputs, name, value)
+            self._socket(self.outputs, "BSDF")
+        elif self.type == "OUTPUT_MATERIAL":
+            self._socket(self.inputs, "Surface")
+        elif self.type == "TEX_IMAGE":
+            self._socket(self.outputs, "Color")
+            self._socket(self.outputs, "Alpha")
+        elif self.type == "NORMAL_MAP":
+            self._socket(self.inputs, "Strength", 1.0)
+            self._socket(self.inputs, "Color", [0.5, 0.5, 1.0, 1.0])
+            self._socket(self.outputs, "Normal")
+        elif self.type == "BUMP":
+            self._socket(self.inputs, "Strength", 1.0)
+            self._socket(self.inputs, "Distance", 0.1)
+            self._socket(self.inputs, "Height", 0.0)
+            self._socket(self.inputs, "Normal", [0.0, 0.0, 0.0])
+            self._socket(self.outputs, "Normal")
+
+
+class FakeNodes(list):
+    TYPES = {
+        "ShaderNodeBsdfPrincipled": ("BSDF_PRINCIPLED", "Principled BSDF"),
+        "ShaderNodeOutputMaterial": ("OUTPUT_MATERIAL", "Material Output"),
+        "ShaderNodeTexImage": ("TEX_IMAGE", "Image Texture"),
+        "ShaderNodeNormalMap": ("NORMAL_MAP", "Normal Map"),
+        "ShaderNodeBump": ("BUMP", "Bump"),
+    }
+
+    def new(self, node_type):
+        kind, name = self.TYPES[node_type]
+        node = FakeNode(kind, name)
+        self.append(node)
+        return node
+
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def remove(self, node):
+        tree = getattr(self, "tree", None)
+        if tree is not None:
+            for link in list(tree.links):
+                if link.from_node is node or link.to_node is node:
+                    tree.links.remove(link)
+        super().remove(node)
+
+
+class FakeNodeLinks(list):
+    def new(self, from_socket, to_socket):
+        link = NS(
+            from_node=from_socket.node,
+            from_socket=from_socket,
+            to_node=to_socket.node,
+            to_socket=to_socket,
+        )
+        self.append(link)
+        return link
+
+
+class FakeNodeTree:
+    def __init__(self):
+        self.nodes = FakeNodes()
+        self.links = FakeNodeLinks()
+        self.nodes.tree = self
+        shader = self.nodes.new("ShaderNodeBsdfPrincipled")
+        output = self.nodes.new("ShaderNodeOutputMaterial")
+        self.links.new(shader.outputs["BSDF"], output.inputs["Surface"])
+
+
+class FakeImages(list):
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def new(self, name, width=1, height=1):
+        image = NS(
+            name=name,
+            users=0,
+            size=[width, height],
+            library=None,
+            colorspace_settings=NS(name="sRGB"),
+        )
+        self.append(image)
+        return image
+
+
 class FakeMaterials(list):
     def get(self, name):
         return next((item for item in self if item.name == name), None)
 
     def new(self, name):
-        shader = NS(
-            type="BSDF_PRINCIPLED",
-            inputs={
-                "Base Color": NS(default_value=[0.8, 0.8, 0.8, 1]),
-                "Metallic": NS(default_value=0),
-                "Roughness": NS(default_value=0.5),
-            },
-        )
         material = NS(
             name=name,
             users=0,
+            library=None,
             use_nodes=False,
             diffuse_color=[0.8, 0.8, 0.8, 1],
-            node_tree=NS(nodes=[shader]),
+            node_tree=FakeNodeTree(),
         )
 
         def duplicate():
             clone = self.new(material.name + "Copy")
             clone.use_nodes = material.use_nodes
             clone.diffuse_color = copy.deepcopy(material.diffuse_color)
-            source_shader = material.node_tree.nodes[0]
-            target_shader = clone.node_tree.nodes[0]
+            source_shader = next(
+                node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED"
+            )
+            target_shader = next(
+                node for node in clone.node_tree.nodes if node.type == "BSDF_PRINCIPLED"
+            )
             for key, value in source_shader.inputs.items():
                 target_shader.inputs[key].default_value = copy.deepcopy(value.default_value)
             return clone
@@ -479,6 +598,7 @@ def fake_bpy(objects=None):
             curves=curves,
             collections=collections,
             materials=FakeMaterials(),
+            images=FakeImages(),
             cameras=FakeDevices("CAMERA"),
             lights=FakeDevices("LIGHT"),
         ),
