@@ -125,8 +125,7 @@ class GeometryAcceptanceOperations:
                     "PASS"
                     if families == EXPECTED_FAMILIES
                     and all(
-                        item["operations"] == ["preview", "apply", "clear"]
-                        for item in descriptors
+                        item["operations"] == ["preview", "apply", "clear"] for item in descriptors
                     )
                     else "BLOCKED"
                 ),
@@ -143,8 +142,7 @@ class GeometryAcceptanceOperations:
                 "name": "BOUNDED_GRAPH_PLAN",
                 "status": (
                     "PASS"
-                    if len(nodes) <= MAX_GEOMETRY_NODES
-                    and len(links) <= MAX_GEOMETRY_LINKS
+                    if len(nodes) <= MAX_GEOMETRY_NODES and len(links) <= MAX_GEOMETRY_LINKS
                     else "BLOCKED"
                 ),
             },
@@ -164,9 +162,7 @@ class GeometryAcceptanceOperations:
     def preview(self, request: Request, action: GeometryWorkflowPreview):
         evidence = self._evidence(action)
         checks = self._checks(action, evidence)
-        source_status = (
-            "READY" if all(item["status"] == "PASS" for item in checks) else "BLOCKED"
-        )
+        source_status = "READY" if all(item["status"] == "PASS" for item in checks) else "BLOCKED"
         stages = [
             {
                 "stage": 1,
@@ -190,8 +186,7 @@ class GeometryAcceptanceOperations:
                 "stage": 4,
                 "operation": "geometry_nodes.group_create",
                 "purpose": (
-                    "create a fresh empty local GeometryNodeTree only when execution "
-                    "is authorized"
+                    "create a fresh empty local GeometryNodeTree only when execution is authorized"
                 ),
                 "mutation": True,
             },
@@ -199,8 +194,7 @@ class GeometryAcceptanceOperations:
                 "stage": 5,
                 "operation": "geometry_nodes.recipe_apply",
                 "purpose": (
-                    "apply only with a fresh expected group revision and existing "
-                    "family bounds"
+                    "apply only with a fresh expected group revision and existing family bounds"
                 ),
                 "mutation": True,
             },
