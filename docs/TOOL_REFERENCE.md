@@ -56,6 +56,16 @@ clients should retain the filter, session ID and revision while continuing a pag
 | material.principled_set | material_name, expected_shader_revision, settings | mutation | typed Principled/Normal Map/Bump settings with unmanaged-link protection and verified managed-graph recovery |
 | material.pbr_texture_assign | material_name, expected_shader_revision, channel, image_name | mutation | bind existing local image to allowlisted PBR channel with enforced color-space semantics and bounded wiring |
 | material.pbr_texture_clear | material_name, expected_shader_revision, channel | mutation | remove only one Shuvi-managed PBR texture node/link set with verified recovery |
+| texture.image_inspect | image_name | read_only | bounded existing local image metadata, tiled/packed summary and image_revision without exposing filepath |
+| texture.udim_plan | object_id, uv_layer_name | read_only | source-only per-face UDIM tile planning with split/out-of-range diagnostics |
+| texture.channel_qa | material_name | read_only | managed PBR image/colorspace/link and normal-chain QA with PASS/REVIEW/BLOCKED |
+| texture.bake_prep | object_id, material_name, uv_layer_name, channels, texture_size | read_only | source-only UV/material/channel/UDIM bake readiness; never executes bake |
+| texture.consistency_qa | material_name | read_only | managed image size/reuse/channel consistency diagnostics |
+| texture.recovery_snapshot | material_name | read_only | bounded Shuvi-managed Principled/auxiliary/PBR state plus recovery revision |
+| texture.recovery_restore | material_name, expected_shader_revision, recovery_revision, state | mutation | rebuild verified managed Level 4 material state with rollback to immediate pre-call state |
+| texture.asset_qa | object_id, material_name, uv_layer_name | read_only | aggregate Level 4 UV/material/texture structural QA |
+| texture.workflow_preview | object_id, material_name, uv_layer_name | read_only | fixed ten-stage non-mutating Level 4 workflow composition |
+| texture.level4_acceptance | object_id, material_name, uv_layer_name | read_only | eight-check source/fake-adapter Level 4 acceptance with runtime-required boundary |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -722,3 +732,35 @@ Current Level 3 source progress: **100%**.
 - No arbitrary Python, unrestricted shader-node creation, filesystem image loading or generic
   Blender material operator surface is exposed. Real Blender shader/PBR runtime behavior
   remains unverified.
+
+
+### Level 4 milestones 9–10 limits
+
+- `texture.image_inspect` reads one existing local image datablock and returns only bounded
+  metadata: dimensions, colorspace, source/tiled state, up to 256 tile numbers, packed state,
+  filepath-presence boolean and an image revision. It does not expose or load a filesystem path.
+- `texture.udim_plan` is source-only. It maps bounded face UV extents onto standard 10-column
+  UDIM numbering from 1001, keeps exact tile-boundary faces deterministic, and reports faces
+  that span tiles or leave the supported range. It never claims real Blender UDIM behavior.
+- `texture.channel_qa` validates the seven Shuvi-managed PBR channels for image existence,
+  expected colorspace, direct/helper link integrity and the managed Normal Map/Bump chain.
+  Missing optional channels are ABSENT; structurally broken managed channels are BLOCKED.
+- `texture.consistency_qa` reports invalid image sizes as blockers and mixed resolutions or
+  cross-channel image reuse as review advisories.
+- `texture.bake_prep` validates material assignment, UV degeneracy/overlap, supported UDIM
+  placement and managed channel health for 1..7 requested channels at texture size 16..32768.
+  It is explicitly source-only and never invokes a Blender bake operator.
+- `texture.recovery_snapshot` captures only supported Principled values, managed Normal/Bump
+  values and seven managed texture image names. It does not serialize arbitrary nodes.
+- `texture.recovery_restore` requires fresh shader state and a recovery revision matching the
+  validated bounded state. It rebuilds only Shuvi-managed graph content, validates referenced
+  local images/colorspaces, reads back the recovery revision and verifies rollback on failure.
+- `texture.asset_qa`, `texture.workflow_preview` and `texture.level4_acceptance` combine
+  bounded UV/material/texture evidence. Workflow preview never auto-mutates. Final source
+  acceptance is explicitly fake/source scoped, requires later runtime acceptance, and cannot
+  mark production readiness.
+- The acceptance harness exposes Level 4 cases only behind both `--authorize-runtime` and the
+  separate `--allow-level4-textures` opt-in. Injected fake-session CI is not real runtime.
+- The factory now exposes **155 typed tools** under the centralized **160-tool** hard cap.
+- No arbitrary Python, generic node editor, unrestricted bpy/material operator, external image
+  loader, real bake execution or hidden production/runtime claim is introduced.
