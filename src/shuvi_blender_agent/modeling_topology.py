@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from .contracts import Request
 from .errors import AgentError, ErrorCode
-from .modeling import MAX_EDGES, MAX_FACE_VERTICES, MAX_FACES, MAX_VERTICES
+from .modeling import MAX_EDGES, MAX_FACE_VERTICES, MAX_VERTICES
 from .modeling_region import ModelingRegionOperations
 from .models import ObjectTarget, vector3
 from .safety import SafetyClass
