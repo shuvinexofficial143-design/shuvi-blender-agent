@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 2 source/package commit: 80224b4d57dd4d6d5dce8e0bdc2d35419db5e4f0.
+Latest verified pushed Level 2 source/package commit: 85c5872f75605de247edce25cea69c4fa90f8759.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -33,38 +33,44 @@ Next: no additional Level 1 source feature is required. The next phase is real B
 acceptance and then integration into main Shuvi, only after explicit authorization.
 
 ## Level 2 active checkpoint
-Latest verified Level 2 source checkpoint: 80224b4d57dd4d6d5dce8e0bdc2d35419db5e4f0.
-CI run 37418633342 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **360 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **49 package modules**.
+Latest verified Level 2 source checkpoint: 85c5872f75605de247edce25cea69c4fa90f8759.
+CI run 37419984678 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **371 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **50 package modules**.
 
-Level 2 Professional Modeling is now **90% source complete** (Milestones 1-9 of 10).
-Milestone 9 adds:
-- `modifier.stack_diagnose`: bounded stack type/order/reference/visibility diagnostics,
-  deterministic warning codes, complexity score and diagnostic revision.
-- `modifier.stack_compose`: transactional 1..8-entry typed BEVEL/SUBSURF/SOLIDIFY
-  composition with collision/capacity preflight, full ordered-stack verification and
-  reverse-order rollback on failure.
-- `modifier.recipe_preview`: deterministic no-mutation expansion of the allowlisted
-  PANEL_SHELL, SUBDIV_BEVEL and HARD_SURFACE_TRIPLE recipes with exact parameter schemas.
-- `modifier.recipe_apply`: atomic application of those recipes to a fresh stack using
-  deterministic prefixed names, capacity/collision checks and full-stack rollback.
+Level 2 Professional Modeling is now **100% source complete** against the current ten-milestone
+roadmap. Milestone 10 adds:
+- `modeling.qa_inspect`: aggregate bounded structural QA across geometry, repair, shading,
+  retopology and modifier-stack state with blocker/advisory codes and a fresh `qa_revision`.
+- `modeling.workflow_preview`: no-mutation preview for CLEAN_BASE_MESH and
+  CLEAN_ORIENT_BASE_MESH, including initial triggered steps and explicit re-evaluation
+  semantics after each mutation.
+- `modeling.workflow_apply`: transactional composition of existing verified repair/orientation
+  tools with fresh object/geometry/QA state, final QA invariants, complete initial
+  geometry+smoothing capture and verified full-workflow recovery on later failure.
+- runtime acceptance now has a separate `--allow-level2-modeling` opt-in that exercises a
+  disposable Level 2 repair/QA/workflow/modifier-recipe path. The injected fake-session path
+  is CI-tested but does not count as Blender runtime verification.
 
-Generic composition deliberately excludes BOOLEAN/SHRINKWRAP because they require explicit
-external object references; their dedicated typed tools remain the safe path. Recipe/compose
-workflows do not evaluate or apply modifier geometry and do not open arbitrary modifier
-classes/properties or Python/operator execution.
+Known-failure recovery returns `rolled_back=true` / `recovery_verified=true` only after the
+initial indexed geometry and per-face smoothing are read back successfully. Recovery failure
+escalates to verification failure rather than claiming a known safe outcome. Existing metadata
+guards remain active: the repair workflow does not silently discard shape keys, modifiers,
+materials, UV/color layers or vertex groups.
 
-The factory now exposes **88 typed tools**. Level 1 remains source-complete at 100%.
-No Blender install, launch, bpy runtime test or render was performed; runtime verification
-for both levels remains 0%.
+The factory now exposes **91 typed tools**. Level 1 source remains 100% complete and the
+current Level 2 source roadmap is also 100% complete.
+No Blender install, launch, bpy runtime test or render was performed; real Blender runtime
+verification for both levels remains 0%.
 
-Milestone 10 is next: modeling QA, recovery, acceptance and workflow composition.
+There is no additional required Level 2 source milestone in the current roadmap. Next choices
+are separately authorized real Blender 4.2+ acceptance, integration into main Shuvi, or
+starting the separately scoped Level 3 work.
 
 ## Current phase
-Level 1 source is complete at 100%. Level 2 Professional Modeling is at **90% source
-completion** (Milestones 1-9 of 10 complete). Real Blender runtime acceptance remains
-prepared but unexecuted because no usable Blender runtime/server is currently available.
+Level 1 source is complete at 100%. The current Level 2 Professional Modeling source roadmap
+is also **100% complete** (Milestones 1-10 of 10 complete). Real Blender runtime acceptance
+remains prepared but unexecuted because no usable Blender runtime/server is currently available.
 
 ## Completed and verified
 - Fetched actual remote main at acf13dc and reconciled the prior session's identical local
@@ -98,7 +104,7 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 88 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 91 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -125,21 +131,22 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 49 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 50 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 88 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
-**90%**. Verified Level 2 source checkpoint: 80224b4d57dd4d6d5dce8e0bdc2d35419db5e4f0.
-CI run 37418633342 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 360 tests,
-lint/format, package build, 49-module distribution audit and clean install/import without bpy.
+Source: 91 typed host contracts/tools. Level 1 source: **100%**. Current Level 2 modeling
+source roadmap: **100%**. Verified Level 2 source checkpoint:
+85c5872f75605de247edce25cea69c4fa90f8759. CI run 37419984678 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 371 tests, lint/format, package build,
+50-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 2 Milestone 9 is complete, bringing Level 2 source to 90%. No Blender runtime work is
-available. The next slice should begin Milestone 10 only when requested; do not count fake-bpy/
-CI evidence as real Blender runtime verification.
+The current Level 2 source roadmap is complete at 100%. No Blender runtime work has been
+performed. Do not add another Level 2 percentage slice unless the roadmap is explicitly
+expanded; keep fake-bpy/CI evidence separate from real Blender runtime verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -160,11 +167,10 @@ CI evidence as real Blender runtime verification.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-When the user asks to continue Level 2, begin Milestone 10: modeling QA, recovery, acceptance
-and workflow composition. Add bounded end-to-end modeling QA summaries, safe workflow recipes
-that compose existing typed modeling tools, stronger failure/recovery evidence, and Level 2
-runtime-acceptance coverage without falsely claiming Blender execution. Keep all actions
-typed/allowlisted, preserve fresh revision/readback requirements and avoid arbitrary Python or
-generic operator execution. Keep Level 2 runtime verification at 0% until a real Blender 4.2+
-environment is explicitly available. Do not install, probe, launch or render Blender in the
-meantime.
+No additional Level 2 source milestone is required by the current roadmap. If the user
+authorizes real Blender testing later, run the prepared disposable Blender 4.2+ acceptance
+suite, using `--allow-level2-modeling` only when that modeling runtime coverage is explicitly
+authorized; record exact Blender/OS/Python evidence and keep runtime claims separate from source
+completion. Otherwise the next development phase should be explicitly chosen (for example
+integration into main Shuvi or Level 3 Sculpting + Character Modeling). Do not install, probe,
+launch or render Blender without explicit authorization.
