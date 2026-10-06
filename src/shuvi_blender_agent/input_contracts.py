@@ -12,6 +12,7 @@ from .collection_ops import (
 )
 from .hierarchy import ParentChange
 from .mesh import CreateMesh, TranslateVertices
+from .mesh_transform import MeshTransformAction
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
@@ -85,4 +86,6 @@ def builtin_contracts() -> dict:
         "mesh.inspect": (read, object_id),
         "mesh.create": (mutation, CreateMesh.parse),
         "mesh.translate_vertices": (mutation, TranslateVertices.parse),
+        "mesh.apply_object_transform": (mutation, MeshTransformAction.parse),
+        "origin.to_centroid": (mutation, MeshTransformAction.parse),
     }
