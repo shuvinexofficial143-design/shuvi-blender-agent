@@ -512,6 +512,25 @@ class GeometryNodeOperations:
                 )
         return output, input_socket, exact
 
+    @staticmethod
+    def _would_create_cycle(group, source, target):
+        pending = [target]
+        visited = set()
+        while pending:
+            node = pending.pop()
+            marker = id(node)
+            if marker in visited:
+                continue
+            visited.add(marker)
+            if node is source:
+                return True
+            pending.extend(
+                link.to_node
+                for link in group.links
+                if link.from_node is node
+            )
+        return False
+
     def _restore_link_row(self, group, row):
         source = group.nodes.get(row["from_node"])
         target = group.nodes.get(row["to_node"])
@@ -868,6 +887,11 @@ class GeometryNodeOperations:
             action,
             require_available_input=True,
         )
+        if self._would_create_cycle(group, output.node, input_socket.node):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Geometry link would create a dependency cycle",
+            )
         link = group.links.new(output, input_socket)
         after = self._snapshot(group)
         identity = self._link_from_action(action)
