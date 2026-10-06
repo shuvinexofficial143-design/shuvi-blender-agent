@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 99 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 102 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -100,6 +100,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | sculpt.brush_pinch | target, expected_geometry_revision, center, radius, strength, falloff | mutation | signed tangent-plane pinch/expand around brush center |
 | sculpt.brush_grab | target, expected_geometry_revision, center, radius, delta, falloff | mutation | explicit local-space weighted grab translation without normal dependency |
 | sculpt.brush_crease | target, expected_geometry_revision, center, radius, pinch, depth, falloff | mutation | combined tangent pinch plus normal indentation crease foundation |
+| sculpt.region_preview | object_id, center, radius, falloff, axis, side, symmetry, plane_epsilon, require_symmetry_pairs, mask | read_only | bounded side-aware radial region preview with sparse mask weights and symmetry partner evidence |
+| sculpt.brush_displace_controlled | target, expected_geometry_revision, center, radius, falloff, axis, side, symmetry, plane_epsilon, require_symmetry_pairs, mask, strength | mutation | masked/side-filtered normal displacement with optional mirrored local-axis deformation |
+| sculpt.brush_grab_controlled | target, expected_geometry_revision, center, radius, falloff, axis, side, symmetry, plane_epsilon, require_symmetry_pairs, mask, delta | mutation | masked/side-filtered explicit grab with optional mirrored local-axis delta |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -422,7 +425,7 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 
 ## Level 3 sculpting foundation
 
-Current Level 3 source progress: **20%**.
+Current Level 3 source progress: **30%**.
 
 ### Level 3 milestone 1 limits
 
@@ -464,3 +467,24 @@ Current Level 3 source progress: **20%**.
   state, local unshared base-mesh guard, full indexed-geometry readback and coordinate rollback.
 - These algorithms are deterministic base-mesh foundations only; they do not claim Blender
   interactive Sculpt Mode brush equivalence or runtime verification.
+
+
+### Level 3 milestone 3 limits
+
+- `sculpt.region_preview` accepts NONE/X/Y/Z axis controls, BOTH/POSITIVE/NEGATIVE side
+  filtering, a bounded symmetry epsilon, strict optional pair requirement and up to 512 unique
+  sparse mask entries. Mask value 0 means unmasked; 1 means fully protected.
+- Symmetry requires X/Y/Z plus exactly one source side. Partner lookup mirrors source
+  coordinates in object-local space, searches a bounded spatial grid and caps candidate checks
+  at 1,000,000.
+- If both sides of a symmetry pair have explicit mask values, the maximum mask value is used
+  as the pair's effective protection so mirrored deformation cannot bypass the more-protected
+  side.
+- The complete changed set, including mirrored partners, is capped at 512 vertices.
+- `sculpt.brush_displace_controlled` mirrors deformation deltas across the chosen local axis;
+  self-paired symmetry-plane vertices are constrained back onto that plane.
+- `sculpt.brush_grab_controlled` applies explicit local delta with the same mask/side layer;
+  when mirrored, only the selected axis component changes sign.
+- These are stateless request-side mask and symmetry controls. They do not create or read
+  Blender Sculpt Mask/Face Set layers and do not claim Blender Sculpt Mode symmetry
+  equivalence.
