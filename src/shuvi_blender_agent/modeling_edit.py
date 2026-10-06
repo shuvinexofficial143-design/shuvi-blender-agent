@@ -231,17 +231,13 @@ class ModelingEditOperations:
             if any(index >= len(topology["edges"]) for index in action.indices):
                 raise invalid("Edge index does not exist")
             affected = {
-                vertex
-                for edge_index in action.indices
-                for vertex in topology["edges"][edge_index]
+                vertex for edge_index in action.indices for vertex in topology["edges"][edge_index]
             }
         else:
             if any(index >= len(before["faces"]) for index in action.indices):
                 raise invalid("Face index does not exist")
             affected = {
-                vertex
-                for face_index in action.indices
-                for vertex in before["faces"][face_index]
+                vertex for face_index in action.indices for vertex in before["faces"][face_index]
             }
 
         expected = {
