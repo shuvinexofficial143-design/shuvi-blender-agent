@@ -4,7 +4,9 @@ from .animation import AnimationOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
 from .character_blockout import CharacterBlockoutOperations
+from .character_body import CharacterBodyOperations
 from .character_face import CharacterFaceOperations
+from .character_sculpt_workflow import CharacterSculptWorkflowOperations
 from .collection_ops import CollectionOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
@@ -58,7 +60,9 @@ def create_registry(
         HierarchyOperations(objects),
         CollectionOperations(objects),
         CharacterBlockoutOperations(objects),
+        CharacterBodyOperations(objects),
         CharacterFaceOperations(objects),
+        CharacterSculptWorkflowOperations(objects),
         SceneStateOperations(objects),
         ModeOperations(objects),
         ShapeOperations(objects),
