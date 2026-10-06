@@ -28,7 +28,6 @@ from .geometry_scatter import (
     ScatterPreview,
 )
 from .inspection import revision
-from .models import object_name
 from .operations import ObjectOperations
 from .safety import SafetyClass
 from .tools import Tool
