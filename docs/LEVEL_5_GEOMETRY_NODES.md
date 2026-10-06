@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **80%**.
+Current Level 5 source progress: **90%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -24,7 +24,7 @@ Production ready: **No**.
 | 6 | Attribute / field workflows | complete |
 | 7 | Procedural scatter systems | complete |
 | 8 | Procedural architecture / environment | complete |
-| 9 | Geometry Nodes recipe library | pending |
+| 9 | Geometry Nodes recipe library | complete |
 | 10 | Geometry Nodes QA / recovery / acceptance | pending |
 
 ## Milestone 1 — 10% complete
@@ -650,9 +650,109 @@ Fake-bpy/CI establish deterministic source graph intent only. They do not prove 
 architecture dimensions, overlap, manifoldness, modifier output, dependency-graph behavior,
 viewport output, memory/GPU cost or rendering.
 
+## Milestone 9 — 90% complete
+
+Milestone 9 adds a static versioned managed-recipe library over the already-supported Level 5
+recipe families. It does not add a new generic graph builder.
+
+### `geometry_nodes.recipe_catalog`
+
+The catalog exposes exactly 10 fixed recipe IDs:
+
+- `primitive.cube`
+- `primitive.ico_sphere`
+- `primitive.twin_cube`
+- `field.index_attribute`
+- `field.position_attribute`
+- `field.normal_attribute`
+- `scatter.cube`
+- `scatter.ico_sphere`
+- `architecture.modular_wall`
+- `architecture.block_grid`
+
+Every descriptor contains:
+
+- explicit recipe ID
+- family and underlying family recipe/workflow value
+- `recipe_version=1`
+- `library_version=1`
+- minimum Blender version `4.2`
+- compatibility marker `SOURCE_VALIDATED_RUNTIME_UNVERIFIED`
+- supported operations: preview/apply/clear
+- bounded parameter schema summary
+- `source_only=true`
+- `real_runtime_verified=false`
+
+Descriptors are sorted by recipe ID. The complete catalog also carries a deterministic
+`catalog_revision`.
+
+### `geometry_nodes.recipe_preview`
+
+Preview accepts only a known `recipe_id`, prefix and parameters. The library maps that ID to
+one existing family implementation and invokes that family's own typed parser. The family
+parser remains authoritative for all bounds and normalization.
+
+The library then calls the existing family preview operation and wraps the unchanged family
+result with versioned recipe metadata.
+
+This means the library does not duplicate:
+
+- primitive graph planning
+- field/attribute validation
+- scatter instance-count bounds
+- architecture module-count bounds
+
+### `geometry_nodes.recipe_apply`
+
+Apply accepts:
+
+- known recipe ID
+- group name
+- fresh expected group revision
+- prefix
+- family parameters
+
+Parsing is delegated to the existing bounded family mutation parser before execution. Mutation
+then runs through that family's existing apply implementation, preserving:
+
+- fresh-tree checks
+- empty-tree requirement
+- shared-group refusal
+- exact source readback
+- structured verification evidence
+- existing rollback/recovery behavior
+
+The library preserves the underlying verified/failed status and verification evidence and adds
+only the recipe metadata wrapper.
+
+### `geometry_nodes.recipe_clear`
+
+Clear routes through the matching existing family clear implementation. Therefore each family
+still requires an exact current managed graph match before destructive cleanup and retains its
+verified rebuild/recovery behavior.
+
+### Safety and coverage
+
+Unknown recipe IDs fail before routing. No runtime recipe registration, dynamic import, file
+recipe loading, arbitrary node ID, generic graph payload or remote recipe source exists.
+
+Source tests:
+
+- verify deterministic/versioned catalog output
+- compare recipe-library previews against direct family previews
+- execute verified apply→clear round trips for all 10 recipe IDs
+- confirm stale group revision protection is preserved
+- reject invalid recipe IDs and unsafe family parameters
+
+The host-contract aliases for Geometry Nodes recipe parsers are intentionally distinct from the
+pre-existing modeling recipe parser names, preventing import shadowing.
+
+Milestone 9 adds four typed operations, taking the factory from 177 to **181 typed tools**.
+The centralized registry/client cap remains **184**.
+
 ## Safety boundary
 
-Milestones 1-8 do **not** expose:
+Milestones 1-9 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
@@ -666,36 +766,36 @@ Milestones 1-8 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 80% source checkpoint
+## Verified 90% source checkpoint
 
-Source/test checkpoint: `f14a111329b6815f9f96286e956d1db2a5762a4d`.
+Source/test checkpoint: `fa39708164ce1c60eb93bf1b7593db75898e7e59`.
 
-CI run `37495296260` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37497060691` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **659 tests**
+- **687 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **72 package modules**
+- **73 package modules**
 
-Factory typed tools: **177**.
+Factory typed tools: **181**.
 Current registry/catalog hard maximum: **184**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **80%** (Milestones 1-8 of 10).
+Level 5 source: **90%** (Milestones 1-9 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 9 — Geometry Nodes recipe library — is the next source task, but it must not start
-without explicit user permission.
+Milestone 10 — Level 5 acceptance / recovery hardening — is the next source task, but it must
+not start without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime
 acceptance without separate explicit runtime authorization.

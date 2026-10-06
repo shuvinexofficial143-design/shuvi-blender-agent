@@ -37,6 +37,10 @@ from .geometry_nodes import (
     GeometryTreeInspect,
 )
 from .geometry_primitives import PrimitiveApply, PrimitiveClear, PrimitivePreview
+from .geometry_recipe_library import RecipeApply as GeometryRecipeApply
+from .geometry_recipe_library import RecipeCatalog as GeometryRecipeCatalog
+from .geometry_recipe_library import RecipeClear as GeometryRecipeClear
+from .geometry_recipe_library import RecipePreview as GeometryRecipePreview
 from .geometry_scatter import ScatterApply, ScatterClear, ScatterPreview
 from .hierarchy import ParentChange
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
@@ -169,6 +173,10 @@ def builtin_contracts() -> dict:
         "geometry_nodes.architecture_preview": (read, ArchitecturePreview.parse),
         "geometry_nodes.architecture_apply": (mutation, ArchitectureApply.parse),
         "geometry_nodes.architecture_clear": (mutation, ArchitectureClear.parse),
+        "geometry_nodes.recipe_catalog": (read, GeometryRecipeCatalog.parse),
+        "geometry_nodes.recipe_preview": (read, GeometryRecipePreview.parse),
+        "geometry_nodes.recipe_apply": (mutation, GeometryRecipeApply.parse),
+        "geometry_nodes.recipe_clear": (mutation, GeometryRecipeClear.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),
