@@ -4,7 +4,7 @@
 
 | Level | Status |
 | --- | --- |
-| Source implemented | 23 bounded typed tools, host client, declarative plans and acceptance harness |
+| Source implemented | 55 bounded typed tools; Level 1 source roadmap complete, host client, declarative plans and acceptance harness |
 | Unit tested | Source contracts, fake bpy adapters, Python sockets and injected owned process handles |
 | CI tested | Linux/Windows, Python 3.11/3.12/3.13; status recorded in CODEX_HANDOFF.md |
 | Real Blender runtime tested | No; 0% |
@@ -19,7 +19,7 @@ performed. Passing fake tests does not establish Blender API compatibility.
 Only run these commands after the user explicitly authorizes real runtime testing.
 No-argument invocation is safe preparation: it prints a prepared status and exits without
 executing Blender. The actual suite requires both --authorize-runtime and an executable.
-Rendering is a separate --allow-render opt-in. Do not install Blender automatically.
+Rendering is a separate --allow-render opt-in. Destructive delete/checkpoint-reopen cases are a separate --allow-destructive opt-in. Do not install Blender automatically.
 
 ```powershell
 # Safe preparation only; no Blender execution.
@@ -55,9 +55,15 @@ deadline; stop only the owned child, retain/report failure, and inspect cleanup 
 - [ ] Perspective camera and POINT/SUN/SPOT/AREA lights verify requested properties.
 - [ ] Single bounded BEVEL modifier verifies settings; collection adds membership safely.
 - [ ] Local asset mark, frame range/selection and nine transform keyframes verify.
+- [ ] Curve/Text creation and bounded shape readback verify.
+- [ ] Selected/active mesh enters Edit mode and returns to Object mode with verified context.
+- [ ] Camera/light bounded update readback verifies.
 - [ ] Triangle creation, inspection and explicit vertex translation verify geometry.
+- [ ] Origin-to-centroid and complete object-transform bake verify resulting geometry/object state.
 - [ ] CPU render configuration is 16x16, one sample, one thread, PNG/RGBA/8-bit.
 - [ ] Checkpoint file has bounded size/hash/header and does not change active source path.
+- [ ] When separately authorized for destructive cases, object deletion verifies absence and
+  reopening the confined checkpoint replaces the project and rotates the session identity.
 - [ ] When separately authorized, one tiny render verifies PNG structure/dimensions/hash.
 - [ ] A small declarative plan succeeds with correlated results.
 - [ ] Session closes; owned child has exited; temporary workspace is removed.
