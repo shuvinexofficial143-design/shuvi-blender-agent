@@ -23,6 +23,7 @@ def run_acceptance(
     runtime_authorized: bool = False,
     allow_render: bool = False,
     allow_destructive: bool = False,
+    allow_level2_modeling: bool = False,
     launcher=launch,
     version_probe=probe_version,
 ) -> dict:
@@ -30,6 +31,7 @@ def run_acceptance(
         runtime_authorized is not True
         or type(allow_render) is not bool
         or type(allow_destructive) is not bool
+        or type(allow_level2_modeling) is not bool
     ):
         raise AgentError(ErrorCode.SAFETY_DENIED, "Explicit runtime authorization is required")
     started = time.monotonic()
@@ -39,6 +41,7 @@ def run_acceptance(
         "cases": [],
         "render_requested": allow_render,
         "destructive_requested": allow_destructive,
+        "level2_modeling_requested": allow_level2_modeling,
     }
     session = None
     workspace_path = None
@@ -278,6 +281,96 @@ def run_acceptance(
                         "expected_geometry_revision": mesh_state["geometry_revision"],
                     },
                 )
+                if allow_level2_modeling:
+                    level2_geometry = {
+                        "vertices": [
+                            [0, 0, 0],
+                            [1, 0, 0],
+                            [1, 1, 0],
+                            [0, 1, 0],
+                            [0.0001, 0, 0],
+                            [9, 9, 9],
+                        ],
+                        "faces": [[4, 1, 2, 3], [3, 2, 1, 4]],
+                    }
+                    level2_mesh = execute(
+                        "mesh.create",
+                        {
+                            "name": "AcceptanceLevel2Repair",
+                            "geometry": level2_geometry,
+                            "transform": transform,
+                            "expected_scene_revision": scene_revision(),
+                        },
+                    )
+                    level2_id = level2_mesh["after"]["object"]["object_id"]
+                    level2_state = execute("mesh.inspect", {"object_id": level2_id})
+                    execute("mesh.topology_inspect", {"object_id": level2_id})
+                    execute("mesh.shading_inspect", {"object_id": level2_id})
+                    execute("mesh.retopology_inspect", {"object_id": level2_id})
+                    qa = execute(
+                        "modeling.qa_inspect",
+                        {
+                            "object_id": level2_id,
+                            "distance": 0.001,
+                            "area_epsilon": 0,
+                        },
+                    )
+                    execute(
+                        "modeling.workflow_preview",
+                        {
+                            "object_id": level2_id,
+                            "workflow": "CLEAN_BASE_MESH",
+                            "distance": 0.001,
+                            "area_epsilon": 0,
+                        },
+                    )
+                    execute(
+                        "modeling.workflow_apply",
+                        {
+                            "target": target(level2_id),
+                            "expected_geometry_revision": level2_state["geometry_revision"],
+                            "expected_qa_revision": qa["qa_revision"],
+                            "workflow": "CLEAN_BASE_MESH",
+                            "distance": 0.001,
+                            "area_epsilon": 0,
+                        },
+                    )
+                    execute(
+                        "modeling.qa_inspect",
+                        {
+                            "object_id": level2_id,
+                            "distance": 0.001,
+                            "area_epsilon": 0,
+                        },
+                    )
+                    stack = execute("modifier.stack_inspect", {"object_id": level2_id})
+                    execute(
+                        "modifier.recipe_preview",
+                        {
+                            "recipe": "PANEL_SHELL",
+                            "prefix": "AcceptanceL2",
+                            "parameters": {
+                                "thickness": 0.05,
+                                "width": 0.02,
+                                "segments": 2,
+                            },
+                        },
+                    )
+                    execute(
+                        "modifier.recipe_apply",
+                        {
+                            "target": target(level2_id),
+                            "expected_stack_revision": stack["stack_revision"],
+                            "recipe": "PANEL_SHELL",
+                            "prefix": "AcceptanceL2",
+                            "parameters": {
+                                "thickness": 0.05,
+                                "width": 0.02,
+                                "segments": 2,
+                            },
+                        },
+                    )
+                    execute("modifier.stack_diagnose", {"object_id": level2_id})
                 execute(
                     "render.configure",
                     {
@@ -348,6 +441,7 @@ def main(argv=None):
     parser.add_argument("--authorize-runtime", action="store_true")
     parser.add_argument("--allow-render", action="store_true")
     parser.add_argument("--allow-destructive", action="store_true")
+    parser.add_argument("--allow-level2-modeling", action="store_true")
     parser.add_argument("--executable", type=Path)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
@@ -359,6 +453,7 @@ def main(argv=None):
             runtime_authorized=True,
             allow_render=args.allow_render,
             allow_destructive=args.allow_destructive,
+            allow_level2_modeling=args.allow_level2_modeling,
         )
     else:
         report = {
