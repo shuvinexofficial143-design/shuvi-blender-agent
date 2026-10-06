@@ -15,6 +15,7 @@ from .files import OutputWorkspace
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .mesh import MeshOperations
+from .material_slots import MaterialSlotOperations
 from .mesh_transform import MeshTransformOperations
 from .mode_ops import ModeOperations
 from .modeling import ModelingOperations
@@ -42,6 +43,7 @@ from .shape_ops import ShapeOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
 from .uv import UVOperations
+from .uv_packing import UVPackingOperations
 from .uv_workflows import UVWorkflowOperations
 from .validation import fields
 from .visibility import VisibilityOperations
@@ -71,6 +73,7 @@ def create_registry(
         ModeOperations(objects),
         ShapeOperations(objects),
         AppearanceOperations(objects),
+        MaterialSlotOperations(objects),
         AssetOperations(objects),
         AnimationOperations(objects),
         RenderOperations(objects, policy, workspace),
@@ -93,6 +96,7 @@ def create_registry(
         SculptRemeshPlanningOperations(objects),
         UVOperations(objects),
         UVWorkflowOperations(objects),
+        UVPackingOperations(objects),
         DestructiveOperations(objects, policy, workspace),
     ]
     registry = ToolRegistry(
