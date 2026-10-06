@@ -4,7 +4,14 @@ from .animation import FrameRange, InsertKeyframe, SetFrame
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
 from .character_blockout import BlockoutPlan, LandmarkFit, ProportionGuide
+from .character_body import BodyRegionPlan, BodySymmetryAudit, ExtremityGuide, LimbGuide
 from .character_face import FaceFit, FaceGuide, FaceRegions, FaceSymmetryAudit
+from .character_sculpt_workflow import (
+    CharacterSculptQA,
+    RecoveryRestore,
+    RecoverySnapshot,
+    SculptRecipePreview,
+)
 from .collection_ops import (
     CollectionNameRequest,
     CollectionObjectChange,
@@ -76,6 +83,14 @@ def builtin_contracts() -> dict:
         "character.face_landmark_fit": (read, FaceFit.parse),
         "character.face_region_plan": (read, FaceRegions.parse),
         "character.face_symmetry_audit": (read, FaceSymmetryAudit.parse),
+        "character.body_region_plan": (read, BodyRegionPlan.parse),
+        "character.limb_guide": (read, LimbGuide.parse),
+        "character.extremity_guide": (read, ExtremityGuide.parse),
+        "character.body_symmetry_audit": (read, BodySymmetryAudit.parse),
+        "character.sculpt_qa": (read, CharacterSculptQA.parse),
+        "character.sculpt_recipe_preview": (read, SculptRecipePreview.parse),
+        "character.sculpt_recovery_snapshot": (read, RecoverySnapshot.parse),
+        "character.sculpt_recovery_restore": (mutation, RecoveryRestore.parse),
         "scene.rename": (mutation, SceneRename.parse),
         "scene.set_units": (mutation, SetUnits.parse),
         "cursor.inspect": (read, empty),
