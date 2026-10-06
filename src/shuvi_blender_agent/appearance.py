@@ -181,7 +181,13 @@ class AppearanceOperations:
                 raise AgentError(ErrorCode.SAFETY_DENIED, "Camera settings required")
             before_data = dict(before["camera"])
             final = dict(before_data)
-            final.update({key: value for key, value in action.settings.items() if key != "make_active"})
+            final.update(
+                {
+                    key: value
+                    for key, value in action.settings.items()
+                    if key != "make_active"
+                }
+            )
             if final["clip_end"] <= final["clip_start"]:
                 raise AgentError(ErrorCode.INVALID_REQUEST, "clip_end must exceed clip_start")
             desired_active = (
