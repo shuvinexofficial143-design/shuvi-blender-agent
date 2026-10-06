@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **50%**.
+Current Level 2 source progress: **60%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -17,7 +17,7 @@ Real Blender runtime verification for Level 2: **0%**.
 | 3 | Region extrusion, inset and bevel modeling | complete |
 | 4 | Loop-cut/subdivide/bridge/fill workflows | complete |
 | 5 | Normals, smoothing and shading/topology diagnostics | complete |
-| 6 | Hard-surface boolean workflow and stronger modifier modeling controls | pending |
+| 6 | Hard-surface boolean workflow and stronger modifier modeling controls | complete |
 | 7 | Topology cleanup and repair helpers | pending |
 | 8 | Retopology and shrinkwrap-oriented helpers | pending |
 | 9 | Advanced modeling modifier stack workflows | pending |
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **50% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **60% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -289,7 +289,7 @@ Milestone 4 inherits the topology-rebuild safety boundary from Milestones 2-3:
 
 No arbitrary bmesh, Python or unrestricted Blender operator execution is exposed.
 
-Milestone 5 is complete. Milestone 6 is next: hard-surface boolean workflow and stronger modifier modeling controls.
+Milestone 5 is complete. Milestone 6 is complete. Milestone 7 is next: topology cleanup and repair helpers.
 
 
 ## Milestone 5 — 50% complete
@@ -358,3 +358,90 @@ rebuild and included in verification.
 - verification mismatch triggers bounded rollback for smoothing/winding mutations
 
 Milestone 6 is next: hard-surface boolean workflow and stronger modifier modeling controls.
+
+
+## Milestone 6 — 60% complete
+
+Milestone 6 adds a typed, bounded hard-surface modifier-stack workflow without exposing arbitrary
+modifier properties or Python/operator execution.
+
+### `modifier.stack_inspect`
+
+Returns a bounded ordered modifier stack plus a separate `stack_revision`.
+
+For supported hard-surface modifiers it reads back:
+
+- BEVEL: width and segments
+- SUBSURF: viewport/render levels
+- SOLIDIFY: thickness
+- BOOLEAN: operation, solver and referenced cutter object identity/name
+- viewport/render visibility for every stack entry
+
+The stack is capped at 16 modifiers. Unknown modifier types may be listed conservatively but
+their arbitrary settings are not exposed.
+
+### `modifier.stack_add`
+
+Appends one typed BEVEL, SUBSURF or SOLIDIFY modifier to an existing bounded stack.
+
+Unlike the older Level 1 `modifier.add` safety slice, this tool intentionally permits a
+multi-modifier hard-surface stack. It requires a fresh ObjectTarget plus fresh
+`stack_revision`, rejects duplicate names/full stacks, and verifies the complete ordered
+stack after addition. Verification failure removes the created modifier.
+
+### `modifier.boolean_add`
+
+Creates a non-destructive BOOLEAN modifier referencing an explicit fresh cutter ObjectTarget.
+
+Supported operations:
+
+- DIFFERENCE
+- UNION
+- INTERSECT
+
+Supported solvers:
+
+- EXACT
+- FAST
+
+Target and cutter must be distinct editable local mesh objects inside normal bounded geometry
+limits. The tool verifies the cutter object identity/name, operation, solver and ordered stack
+readback. This milestone creates/configures Boolean modifiers but deliberately does **not**
+apply/evaluate the Boolean into permanent topology, because real Blender solver output still
+requires runtime acceptance.
+
+### `modifier.update`
+
+Applies a nonempty typed patch to one existing supported modifier.
+
+Allowlisted patches:
+
+- BEVEL: width, segments
+- SUBSURF: levels, render_levels
+- SOLIDIFY: thickness
+- BOOLEAN: operation, solver
+- all supported kinds: show_viewport, show_render
+
+The request includes expected modifier type and fresh stack revision. A type change/stale stack
+fails before mutation. Verification mismatch restores the captured patched properties.
+
+### `modifier.move`
+
+Moves one named modifier to an explicit index inside the current bounded stack.
+
+The complete ordered stack is read back and compared after the move. Verification failure
+moves the modifier back to its prior index.
+
+### Shared Milestone 6 boundary
+
+- maximum 16 stack entries
+- fresh object + stack state for mutations
+- editable local mesh targets with bounded base geometry
+- shape-key meshes are denied for new hard-surface modifier work
+- Boolean cutter must be a different explicit mesh object
+- no arbitrary modifier type/property paths
+- no generic modifier-apply operator
+- no claim that fake-bpy/CI verifies Blender Boolean solver geometry
+- failed source-level readback verification performs bounded rollback of the changed stack state
+
+Milestone 7 is next: bounded topology cleanup and repair helpers.
