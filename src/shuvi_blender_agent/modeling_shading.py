@@ -155,12 +155,8 @@ class ModelingShadingOperations(ModelingRegionOperations):
 
         referenced = {index for face in faces for index in face}
         isolated = [index for index in range(len(vertices)) if index not in referenced]
-        degenerate = [
-            index for index, data in enumerate(face_data) if data["degenerate"]
-        ]
-        ambiguous = [
-            index for index, data in enumerate(face_data) if data["normal_ambiguous"]
-        ]
+        degenerate = [index for index, data in enumerate(face_data) if data["degenerate"]]
+        ambiguous = [index for index, data in enumerate(face_data) if data["normal_ambiguous"]]
         state = {
             "geometry_revision": geometry["geometry_revision"],
             "object_id": geometry["object_id"],
