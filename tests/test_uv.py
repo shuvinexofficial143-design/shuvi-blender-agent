@@ -118,22 +118,16 @@ def test_uv_island_count_uses_shared_geometry_and_uv_continuity():
     assert uv.snapshot(obj)["layers"][0]["island_count"] == 2
 
 
-def test_seam_preview_is_read_only_and_edge_explicit():
+def test_uv_inspect_is_read_only_seam_preview_surface():
     bpy, inspector, uv, registry = setup()
     obj = bpy.data.objects.get("Cube")
     quad(obj)
 
-    result = registry.dispatch(
-        Request(
-            "uv.seam_preview",
-            {"object_id": inspector.identity(obj), "edge_indices": [0, 2]},
-        )
-    )
+    result = registry.dispatch(Request("uv.inspect", {"object_id": inspector.identity(obj)}))
     assert result.status == Status.SUCCEEDED
-    assert result.data["execution_status"] == "PREVIEW_ONLY"
-    assert [item["edge_index"] for item in result.data["edges"]] == [0, 2]
-    assert all(item["seam"] is False for item in result.data["edges"])
-    assert uv.snapshot(obj)["seam_edge_indices"] == []
+    assert result.data["seam_edge_indices"] == []
+    assert result.data["seam_vertex_pairs"] == []
+    assert result.data["seam_flags"] == [False, False, False, False]
 
 
 def test_seam_set_marks_and_clears_with_full_readback():
@@ -171,8 +165,8 @@ def test_seam_set_rejects_shared_mesh_data():
     bpy, inspector, uv, registry = setup()
     obj = bpy.data.objects.get("Cube")
     quad(obj)
-    payload = seam_payload(inspector, uv, obj, [0], True)
     obj.data.users = 2
+    payload = seam_payload(inspector, uv, obj, [0], True)
 
     result = registry.dispatch(Request("uv.seam_set", payload))
     assert result.error.code == ErrorCode.SAFETY_DENIED
