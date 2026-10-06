@@ -363,7 +363,7 @@ class GeometryNodeOperations:
         if len(location) != 2:
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Node location readback is invalid")
         nested = getattr(node, "node_tree", None)
-        return {
+        row = {
             "name": str(node.name),
             "label": str(getattr(node, "label", "")),
             "node_type": self._node_alias(node),
@@ -374,6 +374,12 @@ class GeometryNodeOperations:
             "outputs": self._socket_rows(group, node, node.outputs, "OUTPUT"),
             "nested_group": str(nested.name) if nested is not None else None,
         }
+        if row["bl_idname"] == "GeometryNodeStoreNamedAttribute":
+            row["field_settings"] = {
+                "data_type": str(getattr(node, "data_type", "")),
+                "domain": str(getattr(node, "domain", "")),
+            }
+        return row
 
     def _snapshot(self, group):
         nodes = [self._node_row(group, node) for node in group.nodes]

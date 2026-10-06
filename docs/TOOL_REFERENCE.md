@@ -79,6 +79,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.primitive_preview | recipe, prefix, parameters | read_only | deterministic source-only CUBE / ICO_SPHERE / TWIN_CUBE graph plan with output/interface intent and primitive_revision |
 | geometry_nodes.primitive_apply | group_name, expected_group_revision, recipe, prefix, parameters | mutation | apply one exact bounded primitive recipe to an empty local GeometryNodeTree with internal Group Output/interface and verified rollback |
 | geometry_nodes.primitive_clear | group_name, expected_group_revision, recipe, prefix, parameters | mutation | clear only a graph that exactly matches the requested primitive recipe and rebuild it on known verification failure |
+| geometry_nodes.field_preview | workflow, prefix, parameters | read_only | deterministic source-only INDEX/POSITION/NORMAL → named-attribute workflow plan with attribute metadata and field_workflow_revision |
+| geometry_nodes.field_apply | group_name, expected_group_revision, workflow, prefix, parameters | mutation | build one exact bounded field-to-Store-Named-Attribute graph in an empty local GeometryNodeTree with verified rollback |
+| geometry_nodes.field_clear | group_name, expected_group_revision, workflow, prefix, parameters | mutation | clear only an exact managed field workflow graph and rebuild it on known verification failure |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -890,3 +893,34 @@ Current Level 3 source progress: **100%**.
 - The factory now exposes **168 typed tools**, exactly matching the current **168-tool** hard
   registry/client cap. Milestone 6 must deliberately raise the bounded cap before adding any
   new typed operations; no generic executor may be used to bypass the limit.
+
+
+### Level 5 milestone 6 limits
+
+- `geometry_nodes.field_preview` supports exactly three typed workflows:
+  `INDEX_ATTRIBUTE`, `POSITION_ATTRIBUTE`, and `NORMAL_ATTRIBUTE`.
+- Each workflow starts with one bounded Mesh Cube source and routes exactly one built-in field
+  into one internal Store Named Attribute node before Group Output.
+- Attribute names are collision-conservative: they must begin with `shuvi_`, include a
+  non-empty suffix, contain only ASCII letters/digits/underscore, and fit within 48 UTF-8 bytes.
+- `INDEX_ATTRIBUTE` stores the Index field as `INT` on the `POINT` domain.
+  `POSITION_ATTRIBUTE` and `NORMAL_ATTRIBUTE` store vector fields as `FLOAT_VECTOR` on
+  the `POINT` domain.
+- The Store Named Attribute node is internal to the managed workflow; generic node creation
+  still does not expose arbitrary Store Named Attribute property mutation.
+- Geometry-node inspection now reports bounded `field_settings` for Store Named Attribute
+  nodes: exact `data_type` and `domain`. Those settings participate in the group revision.
+- Apply requires a fresh group revision, a completely empty local GeometryNodeTree and at most
+  one group user. Shared procedural assets fail closed.
+- Apply verification compares exact output interface, node names/types/locations, selected
+  default values, Store Named Attribute settings and link topology.
+- Clear first requires the current graph to exactly match the requested workflow, prefix and
+  parameters. Any changed domain, data type, attribute name, default, link or foreign node
+  causes refusal instead of partial deletion.
+- Known apply failures restore the original empty group revision. Known clear failures rebuild
+  the exact workflow and verify restoration of the original group revision.
+- The registry/client cap is deliberately raised from **168 to 176** for this milestone.
+  The factory now exposes **171 typed tools**, remaining below the bounded hard cap.
+- These checks are source/fake-bpy evidence only; they do not prove real Blender attribute
+  storage, field evaluation, generated mesh data layers, dependency-graph behavior or render
+  output.

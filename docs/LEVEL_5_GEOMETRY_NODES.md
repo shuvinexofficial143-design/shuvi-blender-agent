@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **50%**.
+Current Level 5 source progress: **60%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -21,7 +21,7 @@ Production ready: **No**.
 | 3 | Typed node linking | complete |
 | 4 | Modifier + node-group binding | complete |
 | 5 | Procedural modeling primitives | complete |
-| 6 | Attribute / field workflows | pending |
+| 6 | Attribute / field workflows | complete |
 | 7 | Procedural scatter systems | pending |
 | 8 | Procedural architecture / environment | pending |
 | 9 | Geometry Nodes recipe library | pending |
@@ -365,9 +365,98 @@ The source recipes establish deterministic graph/output intent only. Fake-bpy an
 prove real Blender Geometry Nodes modifier evaluation, generated topology, dependency-graph
 updates, viewport behavior or render output.
 
+## Milestone 6 — 60% complete
+
+Milestone 6 adds deterministic bounded field-to-attribute workflows without exposing a generic
+field graph or arbitrary Store Named Attribute property editor.
+
+### `geometry_nodes.field_preview`
+
+Preview supports exactly three workflows:
+
+- `INDEX_ATTRIBUTE`
+- `POSITION_ATTRIBUTE`
+- `NORMAL_ATTRIBUTE`
+
+Every workflow uses one bounded Mesh Cube source, one built-in field source, one internal
+Store Named Attribute node and one internal Group Output.
+
+The workflow metadata is fixed:
+
+- INDEX_ATTRIBUTE → Index field → INT attribute on POINT domain
+- POSITION_ATTRIBUTE → Position field → FLOAT_VECTOR attribute on POINT domain
+- NORMAL_ATTRIBUTE → Normal field → FLOAT_VECTOR attribute on POINT domain
+
+Attribute names must:
+
+- start with `shuvi_`
+- contain a non-empty suffix
+- use only ASCII letters, digits and underscore
+- remain within 48 UTF-8 bytes
+
+The preview returns deterministic node names/locations, exact links, exact managed attribute
+metadata, one Geometry output interface intent, `source_only=true`,
+`real_runtime_verified=false`, and a deterministic `field_workflow_revision`.
+
+### `geometry_nodes.field_apply`
+
+Apply requires:
+
+- existing local GeometryNodeTree
+- fresh `expected_group_revision`
+- completely empty node tree
+- no existing links or interface sockets
+- at most one current node-group user
+- one supported workflow and bounded parameter set
+
+Apply creates exactly:
+
+- one Mesh Cube node
+- one allowlisted built-in field node (Index, Position, or Normal)
+- one internal `GeometryNodeStoreNamedAttribute`
+- one internal `NodeGroupOutput`
+- one Geometry output interface socket
+- three deterministic links
+
+The Store Named Attribute node's `data_type` and `domain` are set internally from the
+workflow definition. Callers cannot provide arbitrary values for those properties.
+
+Geometry-node inspection now reports `field_settings` for Store Named Attribute nodes,
+including exact `data_type` and `domain`. Those settings are included in the node-group
+revision, so field-setting changes become stale-state-visible.
+
+Apply verification compares:
+
+- exact interface
+- exact node names/types/locations
+- selected typed default values
+- exact Store Named Attribute data type/domain
+- exact link topology
+
+Known verification failure removes all workflow nodes/interface and verifies restoration of the
+original empty group revision.
+
+### `geometry_nodes.field_clear`
+
+Clear first requires the current graph to exactly match the requested workflow, prefix and
+parameters. Any changed attribute name, data type, domain, default value, link, interface,
+extra node or foreign node fails closed.
+
+Successful clear verifies a completely empty group. Known verification failure rebuilds the
+exact workflow and verifies restoration of the original group revision.
+
+### Bounds and runtime boundary
+
+The centralized registry/client cap is deliberately raised from **168 to 176**. Milestone 6
+adds three typed operations, taking the factory from 168 to **171 typed tools**.
+
+The source/fake-bpy evidence proves only deterministic graph intent and readback. It does not
+prove real Blender field evaluation, attribute storage on generated geometry, domain behavior,
+modifier evaluation, dependency-graph updates, viewport output or rendering.
+
 ## Safety boundary
 
-Milestones 1-5 do **not** expose:
+Milestones 1-6 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
@@ -381,40 +470,36 @@ Milestones 1-5 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 50% source checkpoint
+## Verified 60% source checkpoint
 
-Source/test checkpoint: `a69b60a5ab160ff56da2f761f8aded03dc443762`.
+Source/test checkpoint: `6f02087b402c6a737af80f7cae879f4d5962a956`.
 
-CI run `37466175923` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37487992573` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **601 tests**
+- **620 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **69 package modules**
+- **70 package modules**
 
-Factory typed tools: **168**.
-Current registry/catalog hard maximum: **168**.
+Factory typed tools: **171**.
+Current registry/catalog hard maximum: **176**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **50%** (Milestones 1-5 of 10).
+Level 5 source: **60%** (Milestones 1-6 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 6 — attribute / field workflows — is the next source task, but it must not start
+Milestone 7 — procedural scatter systems — is the next source task, but it must not start
 without explicit user permission.
-
-The factory now exactly reaches the current 168-tool hard cap. Before Milestone 6 registers
-new tools, the cap must be deliberately and boundedly increased with registry/client tests kept
-in sync. Do not bypass the cap with a generic executor.
 
 Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime
 acceptance without separate explicit runtime authorization.
