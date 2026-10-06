@@ -38,7 +38,7 @@ class BlenderController:
                 )
             try:
                 catalog = result.data["operations"]
-                if not isinstance(catalog, list) or not 1 <= len(catalog) <= 128:
+                if not isinstance(catalog, list) or not 1 <= len(catalog) <= 192:
                     raise ValueError("Invalid catalog")
                 parsed = {}
                 contracts = builtin_contracts()
