@@ -11,8 +11,8 @@ from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .mesh import MeshOperations
 from .mesh_transform import MeshTransformOperations
-from .modeling import ModelingOperations
 from .mode_ops import ModeOperations
+from .modeling import ModelingOperations
 from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
