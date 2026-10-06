@@ -1,5 +1,5 @@
-import pytest
 from fake_bpy import fake_bpy
+import pytest
 
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
 from shuvi_blender_agent.geometry_recipe_library import (
