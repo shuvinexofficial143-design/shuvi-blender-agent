@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **90%**.
+Current Level 5 source progress: **100%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -25,7 +25,7 @@ Production ready: **No**.
 | 7 | Procedural scatter systems | complete |
 | 8 | Procedural architecture / environment | complete |
 | 9 | Geometry Nodes recipe library | complete |
-| 10 | Geometry Nodes QA / recovery / acceptance | pending |
+| 10 | Geometry Nodes QA / recovery / acceptance | complete |
 
 ## Milestone 1 — 10% complete
 
@@ -750,9 +750,67 @@ pre-existing modeling recipe parser names, preventing import shadowing.
 Milestone 9 adds four typed operations, taking the factory from 177 to **181 typed tools**.
 The centralized registry/client cap remains **184**.
 
+## Milestone 10 — 100% complete
+
+Milestone 10 adds bounded source-side QA, recovery consistency and final Level 5 acceptance
+reporting without executing Blender or introducing another mutation surface.
+
+### `geometry_nodes.workflow_preview`
+
+The workflow preview accepts one existing managed `recipe_id`, prefix and bounded family
+parameter set. Parsing delegates to the Milestone 9 recipe parser, so the underlying primitive,
+field, scatter or architecture constraints remain authoritative.
+
+The fixed nine-stage workflow covers:
+
+1. fixed versioned recipe catalog
+2. direct managed-family preview
+3. recipe-library preview equivalence
+4. fresh empty GeometryNodeTree creation only when separately executed
+5. managed recipe apply with fresh group revision
+6. exact tree readback
+7. stale-state / cross-family / foreign-state negative gates
+8. exact managed recipe clear plus verified recovery requirement
+9. final `geometry_nodes.level5_acceptance` report
+
+The preview itself is read-only and never executes mutation stages automatically.
+
+### `geometry_nodes.level5_acceptance`
+
+The final acceptance report evaluates seven source/fake-bpy checks:
+
+- fixed deterministic catalog of exactly 10 recipe IDs
+- recipe/library version and compatibility metadata
+- static routing across exactly primitive, field, scatter and architecture families
+- selected recipe catalog membership
+- direct-family preview equivalence with the recipe-library wrapper
+- graph plan staying inside the existing 64-node / 128-link source work bounds
+- explicit `source_only=true` / `real_runtime_verified=false` boundary
+
+A passing report sets `source_level_complete_when_passed=5` and keeps
+`production_ready=false`.
+
+### Acceptance hardening
+
+Milestone 10 source tests additionally verify:
+
+- all 10 managed recipe IDs pass the final acceptance report
+- representative recipes from all four families preserve stale-revision refusal
+- recipe-library apply verification failures preserve verified family rollback to the exact
+  original empty group revision
+- cross-family parameter payloads fail closed during typed parsing
+- factory/host capability contracts remain synchronized
+- factory tool count remains bounded at 183 under the hard maximum of 184
+
+No arbitrary graph executor, dynamic recipe registration, arbitrary Python or unrestricted bpy
+surface is added.
+
+Milestone 10 adds two read-only tools, taking the factory from 181 to **183 typed tools**.
+The centralized registry/client cap remains **184**.
+
 ## Safety boundary
 
-Milestones 1-9 do **not** expose:
+Milestones 1-10 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
@@ -766,36 +824,35 @@ Milestones 1-9 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 90% source checkpoint
+## Verified 100% source checkpoint
 
-Source/test checkpoint: `fa39708164ce1c60eb93bf1b7593db75898e7e59`.
+Source/test checkpoint: `8b1f51facf2b523c3c220236e0a8dbe15e28cdcf`.
 
-CI run `37497060691` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37501230888` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **687 tests**
+- **711 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **73 package modules**
+- **74 package modules**
 
-Factory typed tools: **181**.
+Factory typed tools: **183**.
 Current registry/catalog hard maximum: **184**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **90%** (Milestones 1-9 of 10).
+Level 5 source: **100%** (Milestones 1-10 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 10 — Level 5 acceptance / recovery hardening — is the next source task, but it must
-not start without explicit user permission.
+Level 5 source work is complete at 100%. Stop here.
 
-Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime
-acceptance without separate explicit runtime authorization.
+Do not begin Level 6 Rigging automatically. Do not install, probe, launch or render Blender and
+do not execute real Geometry Nodes runtime acceptance without separate explicit user permission.
