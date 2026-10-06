@@ -189,13 +189,19 @@ class GeometryAcceptanceOperations:
             {
                 "stage": 4,
                 "operation": "geometry_nodes.group_create",
-                "purpose": (\n                    "create a fresh empty local GeometryNodeTree only when execution "\n                    "is authorized"\n                ),
+                "purpose": (
+                    "create a fresh empty local GeometryNodeTree only when execution "
+                    "is authorized"
+                ),
                 "mutation": True,
             },
             {
                 "stage": 5,
                 "operation": "geometry_nodes.recipe_apply",
-                "purpose": (\n                    "apply only with a fresh expected group revision and existing "\n                    "family bounds"\n                ),
+                "purpose": (
+                    "apply only with a fresh expected group revision and existing "
+                    "family bounds"
+                ),
                 "mutation": True,
             },
             {
@@ -207,7 +213,10 @@ class GeometryAcceptanceOperations:
             {
                 "stage": 7,
                 "operation": "stale/cross-family negative gates",
-                "purpose": (\n                    "fail closed on stale state, mismatched family parameters and "\n                    "foreign graph state"\n                ),
+                "purpose": (
+                    "fail closed on stale state, mismatched family parameters and "
+                    "foreign graph state"
+                ),
                 "mutation": False,
             },
             {
