@@ -139,9 +139,7 @@ def test_channel_qa_passes_valid_managed_texture_and_detects_broken_link():
     image = make_image(bpy, "Base", "sRGB")
     assert assign(registry, texture, material, "BASE_COLOR", image).status == Status.VERIFIED
 
-    clean = registry.dispatch(
-        Request("texture.channel_qa", {"material_name": material.name})
-    )
+    clean = registry.dispatch(Request("texture.channel_qa", {"material_name": material.name}))
     assert clean.status == Status.SUCCEEDED
     assert clean.data["status"] == "PASS"
     base = next(item for item in clean.data["checks"] if item["channel"] == "BASE_COLOR")
@@ -152,9 +150,7 @@ def test_channel_qa_passes_valid_managed_texture_and_detects_broken_link():
         if link.from_node is node:
             material.node_tree.links.remove(link)
 
-    broken = registry.dispatch(
-        Request("texture.channel_qa", {"material_name": material.name})
-    )
+    broken = registry.dispatch(Request("texture.channel_qa", {"material_name": material.name}))
     assert broken.data["status"] == "BLOCKED"
     assert "BASE_COLOR:BROKEN_CHANNEL_LINK" in broken.data["blockers"]
 
@@ -166,9 +162,7 @@ def test_consistency_qa_reports_mixed_texture_resolutions_without_false_block():
     assert assign(registry, texture, material, "BASE_COLOR", base).status == Status.VERIFIED
     assert assign(registry, texture, material, "ROUGHNESS", rough).status == Status.VERIFIED
 
-    result = registry.dispatch(
-        Request("texture.consistency_qa", {"material_name": material.name})
-    )
+    result = registry.dispatch(Request("texture.consistency_qa", {"material_name": material.name}))
     assert result.status == Status.SUCCEEDED
     assert result.data["status"] == "REVIEW"
     assert result.data["resolution_mismatch"] is True
@@ -227,9 +221,7 @@ def test_recovery_snapshot_and_restore_return_to_exact_managed_state():
     assert assign(registry, texture, material, "BASE_COLOR", base).status == Status.VERIFIED
     assert assign(registry, texture, material, "NORMAL", normal).status == Status.VERIFIED
 
-    snap = registry.dispatch(
-        Request("texture.recovery_snapshot", {"material_name": material.name})
-    )
+    snap = registry.dispatch(Request("texture.recovery_snapshot", {"material_name": material.name}))
     assert snap.status == Status.SUCCEEDED
     original_revision = snap.data["shader_revision"]
 
@@ -262,9 +254,7 @@ def test_recovery_snapshot_and_restore_return_to_exact_managed_state():
 
 def test_recovery_restore_rejects_stale_shader_revision():
     bpy, inspector, texture, registry, obj, material = setup()
-    snap = registry.dispatch(
-        Request("texture.recovery_snapshot", {"material_name": material.name})
-    )
+    snap = registry.dispatch(Request("texture.recovery_snapshot", {"material_name": material.name}))
     shader = next(node for node in material.node_tree.nodes if node.type == "BSDF_PRINCIPLED")
     shader.inputs["Roughness"].default_value = 0.2
 
@@ -362,15 +352,18 @@ def test_level4_acceptance_reviews_asset_without_managed_texture():
                         "height_strength": None,
                         "height_distance": None,
                     },
-                    "textures": {channel: None for channel in (
-                        "BASE_COLOR",
-                        "ROUGHNESS",
-                        "METALLIC",
-                        "NORMAL",
-                        "HEIGHT",
-                        "AO",
-                        "ALPHA",
-                    )},
+                    "textures": {
+                        channel: None
+                        for channel in (
+                            "BASE_COLOR",
+                            "ROUGHNESS",
+                            "METALLIC",
+                            "NORMAL",
+                            "HEIGHT",
+                            "AO",
+                            "ALPHA",
+                        )
+                    },
                 },
             },
         ),
