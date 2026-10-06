@@ -40,6 +40,7 @@ from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
+from .sculpting import SculptBrush, SculptSmooth
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
