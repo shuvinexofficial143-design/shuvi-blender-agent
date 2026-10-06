@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **70%**.
+Current Level 2 source progress: **80%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -19,7 +19,7 @@ Real Blender runtime verification for Level 2: **0%**.
 | 5 | Normals, smoothing and shading/topology diagnostics | complete |
 | 6 | Hard-surface boolean workflow and stronger modifier modeling controls | complete |
 | 7 | Topology cleanup and repair helpers | complete |
-| 8 | Retopology and shrinkwrap-oriented helpers | pending |
+| 8 | Retopology and shrinkwrap-oriented helpers | complete |
 | 9 | Advanced modeling modifier stack workflows | pending |
 | 10 | Modeling QA, recovery, acceptance and workflow composition | pending |
 
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **70% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **80% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -444,7 +444,7 @@ moves the modifier back to its prior index.
 - no claim that fake-bpy/CI verifies Blender Boolean solver geometry
 - failed source-level readback verification performs bounded rollback of the changed stack state
 
-Milestone 7 is complete. Milestone 8 is next: retopology and shrinkwrap-oriented helpers.
+Milestone 7 is complete. Milestone 8 is complete. Milestone 9 is next: advanced modeling modifier stack workflows.
 
 
 ## Milestone 7 — 70% complete
@@ -525,3 +525,67 @@ The repair diagnostic is source/base-mesh analysis. It does not claim evaluated 
 custom-data-layer or real Blender mesh-validation equivalence.
 
 Milestone 8 is next: retopology and shrinkwrap-oriented helpers.
+
+
+## Milestone 8 — 80% complete
+
+Milestone 8 adds bounded retopology diagnostics, direct source-to-surface projection, a relax
+helper and a typed non-destructive Shrinkwrap workflow.
+
+### `mesh.retopology_inspect`
+
+Reports base-mesh retopology indicators: complete bounded vertex valence and histogram,
+boundary vertices, isolated vertices, interior non-4-valence poles, triangle/quad/ngon face
+indices, quad ratio and the existing edge/boundary/non-manifold diagnostics.
+
+### `mesh.retopology_projection_inspect`
+
+Previews nearest-surface projection for 1..128 explicit source vertices against a different
+target mesh. It converts unparented XYZ source/target base geometry into world space,
+triangulates target triangles/quads, computes exact nearest triangle points, and reports target
+face/triangle, point, winding normal and distance. Work is capped at 1,000,000
+source-vertex × target-triangle comparisons.
+
+Target ngons, target shape keys and target modifier stacks are rejected because this source
+milestone does not claim evaluated surface equivalence.
+
+### `mesh.retopology_project`
+
+Projects 1..128 explicit source vertices to the nearest target triangle and optionally offsets
+them along the target triangle's world-space winding normal. It requires fresh source/target
+ObjectTargets and geometry revisions. Every requested vertex must be inside max_distance before
+any source coordinate changes. Complete source geometry is read back; verification failure
+restores the captured coordinates.
+
+### `mesh.retopology_relax`
+
+Runs bounded synchronous one-ring relaxation on 1..128 explicit vertices with factor
+0.001..1.0, 1..8 iterations and optional boundary preservation. Unselected vertices and faces
+remain unchanged.
+
+### `modifier.shrinkwrap_add`
+
+Adds one typed non-destructive SHRINKWRAP modifier with explicit target identity.
+
+Supported methods:
+- NEAREST_SURFACEPOINT
+- NEAREST_VERTEX
+
+Supported wrap modes:
+- ON_SURFACE
+- ABOVE_SURFACE
+
+Offset is bounded to -100..100. Existing `modifier.update` also supports typed Shrinkwrap
+method, mode, offset and viewport/render visibility patches.
+
+### Shared Milestone 8 boundary
+
+- source/target direct projection objects must be unparented XYZ objects with nonzero scale
+- direct projection uses base triangle/quad geometry, not evaluated modifier output
+- source direct-projection mesh must be editable/unshared and have no shape keys/modifiers
+- no unrestricted Python or operator execution
+- direct geometry mutation verifies the complete bounded source mesh and rolls back on mismatch
+- Shrinkwrap creation verifies complete ordered modifier-stack state
+- fake-bpy/CI evidence does not count as real Blender Shrinkwrap/depsgraph verification
+
+Milestone 9 is next: advanced modeling modifier stack workflows.
