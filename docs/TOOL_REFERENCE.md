@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 91 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 94 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -92,6 +92,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | modeling.qa_inspect | object_id, distance, area_epsilon | read_only | aggregate structural modeling QA across repair/shading/retopology/modifier state plus qa_revision |
 | modeling.workflow_preview | object_id, workflow, distance, area_epsilon | read_only | no-mutation preview of allowlisted repair workflow triggers and workflow revision |
 | modeling.workflow_apply | target, expected_geometry_revision, expected_qa_revision, workflow, distance, area_epsilon | mutation | transactional verified repair composition with full initial-geometry/smoothing recovery evidence |
+| sculpt.inspect | object_id | read_only | bounded base-mesh sculpt readiness, valence, boundary, degenerate-face and vertex-normal diagnostics |
+| sculpt.brush_displace | target, expected_geometry_revision, center, radius, strength, falloff | mutation | radial area-weighted-normal displacement with ≤512 affected vertices and coordinate rollback |
+| sculpt.brush_smooth | target, expected_geometry_revision, center, radius, strength, falloff, iterations, preserve_boundary | mutation | bounded synchronous radial one-ring smoothing with optional boundary preservation and rollback |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -410,3 +413,29 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
   vertex-group data are never silently discarded by the workflow.
 - The current Level 2 source roadmap is 100% complete. Real Blender runtime verification
   remains 0% until the separately authorized acceptance suite is actually executed.
+
+
+## Level 3 sculpting foundation
+
+Current Level 3 source progress: **10%**.
+
+### Level 3 milestone 1 limits
+
+- `sculpt.inspect` derives base-mesh sculpt-readiness signals from bounded indexed geometry:
+  boundary vertices, non-manifold edges, degenerate faces, unresolved accumulated vertex
+  normals and min/max/average vertex valence. The readiness flag is structural only and does
+  not claim Blender Sculpt Mode/PBVH readiness.
+- `sculpt.brush_displace` uses a local-space radial center, radius, signed strength and
+  LINEAR/SMOOTH falloff. At most 512 selected vertices may be affected. Each valid selected
+  vertex moves along its deterministic area-weighted base-mesh normal by
+  `strength × falloff_weight`.
+- `sculpt.brush_smooth` accepts strength 0.001..1.0 and 1..8 iterations. It performs
+  synchronous one-ring averaging on the radial selection and can preserve boundary vertices.
+- Sculpt foundation mutations require a fresh ObjectTarget and geometry revision, Object
+  mode, editable local unshared base mesh, and no shape keys/modifier stack. They preserve
+  topology and verify the complete bounded geometry after mutation.
+- Verification failure restores all changed vertex coordinates and reads the mesh again through
+  the ordinary bounded snapshot path.
+- These are source-side deterministic sculpt-like base-mesh deformation tools. They do not
+  invoke Blender's interactive Sculpt Mode brush engine, PBVH, Dyntopo, Multires, masks or
+  face sets. Real Blender Level 3 runtime verification remains 0%.
