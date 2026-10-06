@@ -15,6 +15,7 @@ from .mode_ops import ModeOperations
 from .modeling import ModelingOperations
 from .modeling_edit import ModelingEditOperations
 from .modeling_region import ModelingRegionOperations
+from .modeling_topology import ModelingTopologyOperations
 from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
@@ -55,6 +56,7 @@ def create_registry(
         ModelingOperations(objects),
         ModelingEditOperations(objects),
         ModelingRegionOperations(objects),
+        ModelingTopologyOperations(objects),
         DestructiveOperations(objects, policy, workspace),
     ]
     registry = ToolRegistry(
