@@ -260,9 +260,7 @@ class MaterialNodeOperations:
                 "image_name": image_name,
                 "colorspace": colorspace,
                 "expected_colorspace": expected_space,
-                "wired": any(
-                    link.from_node is node for link in tree.links
-                )
+                "wired": any(link.from_node is node for link in tree.links)
                 if node is not None
                 else False,
             }
