@@ -40,9 +40,7 @@ def test_mode_set_mesh_edit_and_return_to_object():
 
     bpy.ops = NS(object=NS(mode_set=mode_set))
     active_id = registry.dispatch(Request("selection.inspect")).data["active_object_id"]
-    before = registry.dispatch(
-        Request("object.inspect", {"object_id": active_id})
-    ).data
+    before = registry.dispatch(Request("object.inspect", {"object_id": active_id})).data
     result = registry.dispatch(
         Request(
             "mode.set",
@@ -128,9 +126,7 @@ def test_object_delete_is_destructive_verified_and_policy_gated():
     assert denied.dispatch(Request("object.delete", payload)).error.code == ErrorCode.SAFETY_DENIED
 
     bpy = fake_bpy()
-    registry = create_registry(
-        bpy, SafetyPolicy(allow_mutations=True, allow_destructive=True)
-    )
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True, allow_destructive=True))
     snap = first_snapshot(registry)
     payload = {
         "target": target(snap),
