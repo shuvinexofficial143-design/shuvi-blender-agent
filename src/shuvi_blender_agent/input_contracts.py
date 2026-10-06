@@ -17,6 +17,7 @@ from .mesh_transform import MeshTransformAction
 from .mode_ops import ModeChange
 from .modeling import ExtrudeFace
 from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
+from .modeling_hardsurface import BooleanAdd, ModifierMove, ModifierUpdate, StackAdd
 from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
 from .modeling_shading import OrientFaces, SetFaceSmoothing
 from .modeling_topology import (
@@ -90,6 +91,11 @@ def builtin_contracts() -> dict:
         "device.create": (mutation, CreateDevice.parse),
         "device.update": (mutation, UpdateDevice.parse),
         "modifier.add": (mutation, AddModifier.parse),
+        "modifier.stack_inspect": (read, object_id),
+        "modifier.stack_add": (mutation, StackAdd.parse),
+        "modifier.boolean_add": (mutation, BooleanAdd.parse),
+        "modifier.update": (mutation, ModifierUpdate.parse),
+        "modifier.move": (mutation, ModifierMove.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),
