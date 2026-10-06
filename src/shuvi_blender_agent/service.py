@@ -16,6 +16,7 @@ from .modeling import ModelingOperations
 from .modeling_edit import ModelingEditOperations
 from .modeling_hardsurface import HardSurfaceOperations
 from .modeling_modifier_workflows import ModelingModifierWorkflowOperations
+from .modeling_qa import ModelingQAOperations
 from .modeling_region import ModelingRegionOperations
 from .modeling_repair import ModelingRepairOperations
 from .modeling_retopology import ModelingRetopologyOperations
@@ -62,6 +63,7 @@ def create_registry(
         ModelingEditOperations(objects),
         HardSurfaceOperations(objects),
         ModelingModifierWorkflowOperations(objects),
+        ModelingQAOperations(objects),
         ModelingRegionOperations(objects),
         ModelingRepairOperations(objects),
         ModelingRetopologyOperations(objects),
