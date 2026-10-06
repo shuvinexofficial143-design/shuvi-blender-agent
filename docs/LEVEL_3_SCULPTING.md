@@ -4,7 +4,7 @@ Level 3 starts after the completed Level 1 control and Level 2 professional-mode
 roadmaps. It is intentionally split into ten source milestones so source implementation,
 fake-bpy/CI evidence and real Blender runtime behavior remain separate.
 
-Current Level 3 source progress: **10%**.
+Current Level 3 source progress: **20%**.
 
 Real Blender runtime verification for Level 3: **0%**.
 
@@ -13,7 +13,7 @@ Real Blender runtime verification for Level 3: **0%**.
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | 1 | Sculpt mesh diagnostics + radial displace/smooth foundation | complete |
-| 2 | Expanded brush deformation set: inflate/flatten/pinch/grab/crease foundations | pending |
+| 2 | Expanded brush deformation set: inflate/flatten/pinch/grab/crease foundations | complete |
 | 3 | Mask/region weighting, symmetry and side-aware sculpt controls | pending |
 | 4 | Multires/subdivision sculpt workflow and level controls | pending |
 | 5 | Remesh/voxel-density planning and surface-preservation helpers | pending |
@@ -106,7 +106,91 @@ without pretending they prove Blender's real sculpt runtime behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **10%**.
+Level 3 source: **20%**.
 Level 3 real Blender runtime verification: **0%**.
 
-Milestone 2 is next: expanded bounded sculpt brush deformation foundations.
+Milestone 2 is complete. Milestone 3 is next: mask/region weighting, symmetry and side-aware sculpt controls.
+
+
+## Milestone 2 — 20% complete
+
+Milestone 2 expands the deterministic base-mesh sculpt surface with five additional bounded
+brush foundations. These remain source-side geometry operations rather than calls into
+Blender's interactive Sculpt Mode brush engine.
+
+### `sculpt.brush_inflate`
+
+Uses the same bounded radial selection and area-weighted base-mesh vertex normals as the
+Milestone 1 displacement foundation, but treats strength as a normalized brush amount in
+-1..1. The actual local-space normal displacement scale is
+`radius × 0.25 × strength`, then multiplied by per-vertex falloff.
+
+Positive strength inflates; negative strength deflates.
+
+### `sculpt.brush_flatten`
+
+Builds one deterministic local tangent plane from the selected base-mesh region:
+
+- brush normal = normalized falloff-weighted sum of valid selected vertex normals
+- plane origin = falloff-weighted centroid of selected vertices
+
+Each selected vertex moves toward that plane along the resolved brush normal by
+`signed_distance × strength × falloff_weight`. Strength is bounded to 0.001..1.0.
+
+If a stable regional normal cannot be resolved, the request is rejected without mutation.
+
+### `sculpt.brush_pinch`
+
+Resolves the same deterministic local brush normal, projects each selected vertex's radial
+vector into the local tangent plane, then moves it toward or away from the brush center.
+
+Strength is signed and bounded to -1..1:
+
+- positive = pinch inward
+- negative = expand outward
+
+This is a tangent-plane source foundation; it does not claim equivalence to Blender's
+interactive Pinch brush implementation.
+
+### `sculpt.brush_grab`
+
+Moves every positively weighted selected vertex by an explicit local-space `delta` multiplied
+by radial falloff. Delta components are bounded to ±1000 Blender units and zero delta is
+rejected.
+
+Grab does not require a valid surface normal, but it retains the same fresh target/geometry
+guards, 512-vertex brush cap, complete readback and rollback behavior.
+
+### `sculpt.brush_crease`
+
+Combines two deterministic components around the resolved regional brush normal:
+
+- tangent-plane pinch toward the brush center, `pinch` 0..1
+- indentation opposite the resolved brush normal, `depth` 0..100 Blender units
+
+At least one component must be nonzero. Both components are multiplied by per-vertex radial
+falloff.
+
+### Shared Milestone 2 safety/verification boundary
+
+All five tools:
+
+- use explicit fresh ObjectTarget + geometry revision
+- require Object mode and editable local unshared base mesh
+- reject shape keys and modifier stacks
+- use LINEAR or SMOOTH radial falloff
+- affect at most 512 vertices
+- preserve topology
+- verify the complete bounded indexed geometry after mutation
+- restore all changed vertex coordinates on verification mismatch
+- expose no arbitrary Python and no unrestricted Blender operators
+
+The regional normal/plane math is deterministic source-side geometry math. It does not prove
+PBVH, Dyntopo, Multires, mask, face-set or interactive Sculpt Mode behavior.
+
+Level 1 source: **100%**.
+Level 2 source: **100%**.
+Level 3 source: **20%**.
+Level 3 real Blender runtime verification: **0%**.
+
+Milestone 3 is next: mask/region weighting, symmetry and side-aware sculpt controls.
