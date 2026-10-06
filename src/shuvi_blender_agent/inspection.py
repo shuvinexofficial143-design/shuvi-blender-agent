@@ -97,6 +97,12 @@ class BpyInspector:
         self.session_id = str(uuid4())
         self._identities: dict[int, tuple[str, object]] = {}
 
+    def reset_session(self) -> str:
+        """Invalidate all object IDs after a project-wide context replacement."""
+        self.session_id = str(uuid4())
+        self._identities.clear()
+        return self.session_id
+
     def scene_objects(self) -> list:
         objects = self.bpy.context.scene.objects
         if len(objects) > MAX_SCENE_OBJECTS:
