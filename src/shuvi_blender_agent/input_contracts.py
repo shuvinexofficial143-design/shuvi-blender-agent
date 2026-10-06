@@ -59,6 +59,7 @@ from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
 from .uv import SeamSet
+from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
 from .validation import fields, string
 from .visibility import SetVisibility
 
@@ -165,6 +166,9 @@ def builtin_contracts() -> dict:
         "sculpt.surface_anchor_plan": (read, SurfaceAnchors.parse),
         "uv.inspect": (read, object_id),
         "uv.seam_set": (mutation, SeamSet.parse),
+        "uv.unwrap_plan": (read, UVUnwrapPlan.parse),
+        "uv.unwrap_apply": (mutation, UVUnwrapApply.parse),
+        "uv.island_transform": (mutation, UVIslandTransform.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),

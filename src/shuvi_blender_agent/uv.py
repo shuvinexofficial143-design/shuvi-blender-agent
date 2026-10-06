@@ -230,9 +230,9 @@ class UVOperations:
         return result
 
     @staticmethod
-    def _island_count(faces, face_uvs):
+    def _islands(faces, face_uvs):
         if not faces:
-            return 0
+            return []
         edge_users = {}
         face_maps = []
         for face_index, face in enumerate(faces):
@@ -255,20 +255,26 @@ class UVOperations:
                 adjacency[first].add(second)
                 adjacency[second].add(first)
 
-        seen, islands = set(), 0
+        seen, islands = set(), []
         for start in range(len(faces)):
             if start in seen:
                 continue
-            islands += 1
+            group = []
             stack = [start]
             seen.add(start)
             while stack:
                 current = stack.pop()
-                for neighbor in adjacency[current]:
+                group.append(current)
+                for neighbor in sorted(adjacency[current], reverse=True):
                     if neighbor not in seen:
                         seen.add(neighbor)
                         stack.append(neighbor)
+            islands.append(sorted(group))
         return islands
+
+    @classmethod
+    def _island_count(cls, faces, face_uvs):
+        return len(cls._islands(faces, face_uvs))
 
     def _layer_summary(self, geometry, mesh, layer, active_name, expected_loops):
         face_uvs = self._layer_face_uvs(mesh, layer, expected_loops)
@@ -314,6 +320,7 @@ class UVOperations:
             ],
             "overlap_face_pairs": overlaps,
             "overlap_pairs_truncated": truncated,
+            "islands": self._islands(faces, face_uvs),
             "island_count": self._island_count(faces, face_uvs),
             "stretch_outlier_face_indices": [
                 index

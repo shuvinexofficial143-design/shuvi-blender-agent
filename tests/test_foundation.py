@@ -5,7 +5,7 @@ import pytest
 
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Result, Status
 from shuvi_blender_agent.safety import SafetyClass, SafetyPolicy, require_revision
-from shuvi_blender_agent.tools import Tool, ToolRegistry, ping_tool
+from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS, Tool, ToolRegistry, ping_tool
 from shuvi_blender_agent.validation import MAX_MESSAGE_BYTES, decode, encode, number, string
 
 
@@ -167,7 +167,7 @@ def test_claimed_verification_requires_matching_nonempty_evidence(evidence):
 def test_initial_registry_has_same_bound_as_registration():
     tools = [
         Tool(f"tool{i}", SafetyClass.READ_ONLY, lambda data: data, lambda req, data: None)
-        for i in range(129)
+        for i in range(MAX_REGISTERED_TOOLS + 1)
     ]
     with pytest.raises(ValueError):
         ToolRegistry(tools)
