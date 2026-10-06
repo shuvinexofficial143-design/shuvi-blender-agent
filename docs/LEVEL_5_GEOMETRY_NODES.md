@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **40%**.
+Current Level 5 source progress: **50%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -20,7 +20,7 @@ Production ready: **No**.
 | 2 | Typed node creation | complete |
 | 3 | Typed node linking | complete |
 | 4 | Modifier + node-group binding | complete |
-| 5 | Procedural modeling primitives | pending |
+| 5 | Procedural modeling primitives | complete |
 | 6 | Attribute / field workflows | pending |
 | 7 | Procedural scatter systems | pending |
 | 8 | Procedural architecture / environment | pending |
@@ -275,16 +275,104 @@ verified before recovery is claimed.
 Milestone 4 adds three typed operations, taking the factory from 162 to **165 typed tools**.
 The centralized registry/client maximum remains **168**.
 
+## Milestone 5 — 50% complete
+
+Milestone 5 adds deterministic procedural primitive recipes that can create a complete
+source-side Geometry Nodes graph with an explicit Geometry output interface.
+
+### `geometry_nodes.primitive_preview`
+
+Preview is read-only and supports exactly three recipes:
+
+- `CUBE`
+- `ICO_SPHERE`
+- `TWIN_CUBE`
+
+Every preview returns:
+
+- normalized bounded parameters
+- deterministic node names and editor locations
+- exact typed default values
+- exact link topology
+- one Geometry output interface specification
+- one internal Group Output target
+- deterministic `primitive_revision`
+- `source_only=true`
+- `real_runtime_verified=false`
+
+`CUBE` exposes bounded size plus a uniform vertex count 2..64.
+`ICO_SPHERE` exposes radius and subdivisions 1..5.
+`TWIN_CUBE` exposes bounded size, vertex count and a ±1000 translation offset for the
+second cube.
+
+### `geometry_nodes.primitive_apply`
+
+Apply requires:
+
+- existing local GeometryNodeTree
+- fresh `expected_group_revision`
+- an entirely empty node tree
+- no existing links or interface sockets
+- at most one current node-group user
+- one supported recipe/prefix/parameter set
+
+The empty-tree requirement prevents recipe application from silently overwriting or merging
+with foreign graphs.
+
+Apply creates:
+
+- one Geometry output interface socket through the bounded Blender node-group interface API
+- one internal `NodeGroupOutput` node
+- only existing allowlisted Geometry Nodes for the selected recipe
+- deterministic node names, locations and typed defaults
+- exact source-side links ending at Group Output → Geometry
+
+The internal Group Output is not added to the public generic node-type allowlist, so callers
+cannot request arbitrary Group Output creation through `geometry_nodes.node_add`.
+
+Verification compares the complete bounded source intent:
+
+- interface name/direction/socket type
+- exact node names/types/locations
+- exact non-null input defaults
+- exact link endpoints/socket names
+
+Known verification failure removes all created recipe nodes plus the output interface and
+verifies restoration of the original empty group revision.
+
+### `geometry_nodes.primitive_clear`
+
+Clear requires the current tree to exactly match the requested recipe, prefix and parameters
+before any mutation occurs. A changed default, extra/foreign node, altered link, interface
+change or different recipe fails closed.
+
+Successful clear removes only the exact recipe graph and its one managed Geometry output
+interface, then verifies:
+
+- zero nodes
+- zero links
+- empty interface
+
+Known clear verification failure rebuilds the exact recipe and verifies the original
+group revision before recovery is claimed.
+
+### Bounds and runtime boundary
+
+Milestone 5 adds three typed operations, taking the factory from 165 to **168 typed tools**.
+This exactly reaches the current **168-tool** registry/client hard cap.
+
+The source recipes establish deterministic graph/output intent only. Fake-bpy and CI do not
+prove real Blender Geometry Nodes modifier evaluation, generated topology, dependency-graph
+updates, viewport behavior or render output.
+
 ## Safety boundary
 
-Milestones 1-4 do **not** expose:
+Milestones 1-5 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
 - generic node property mutation
-- node-group interface mutation
 - unrestricted object/collection/material references
-- procedural recipe execution
 - simulation zones
 - repeat zones
 - real Geometry Nodes evaluation
@@ -293,36 +381,40 @@ Milestones 1-4 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 40% source checkpoint
+## Verified 50% source checkpoint
 
-Source/test checkpoint: `1589455b115abb06e76187b0f2fa0652ffbf2b0d`.
+Source/test checkpoint: `a69b60a5ab160ff56da2f761f8aded03dc443762`.
 
-CI run `37463352670` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37466175923` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **582 tests**
+- **601 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **68 package modules**
+- **69 package modules**
 
-Factory typed tools: **165**.
+Factory typed tools: **168**.
 Current registry/catalog hard maximum: **168**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **40%** (Milestones 1-4 of 10).
+Level 5 source: **50%** (Milestones 1-5 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 5 — procedural modeling primitives — is the next source task, but it must not start
+Milestone 6 — attribute / field workflows — is the next source task, but it must not start
 without explicit user permission.
+
+The factory now exactly reaches the current 168-tool hard cap. Before Milestone 6 registers
+new tools, the cap must be deliberately and boundedly increased with registry/client tests kept
+in sync. Do not bypass the cap with a generic executor.
 
 Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime
 acceptance without separate explicit runtime authorization.

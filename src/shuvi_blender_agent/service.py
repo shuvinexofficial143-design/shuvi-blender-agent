@@ -14,6 +14,7 @@ from .destructive import DestructiveOperations
 from .files import OutputWorkspace
 from .geometry_binding import GeometryBindingOperations
 from .geometry_nodes import GeometryNodeOperations
+from .geometry_primitives import ProceduralPrimitiveOperations
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .material_nodes import MaterialNodeOperations
@@ -69,6 +70,7 @@ def create_registry(
         HierarchyOperations(objects),
         GeometryNodeOperations(objects),
         GeometryBindingOperations(objects),
+        ProceduralPrimitiveOperations(objects),
         CollectionOperations(objects),
         CharacterAcceptanceOperations(objects),
         CharacterBlockoutOperations(objects),
