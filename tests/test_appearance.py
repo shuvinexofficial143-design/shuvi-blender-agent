@@ -128,7 +128,6 @@ def test_invalid_device_and_material_bounds():
         MaterialAssign.parse(payload)
 
 
-
 def target(snapshot):
     return {
         "object_id": snapshot["object_id"],
@@ -139,9 +138,7 @@ def target(snapshot):
 
 def test_camera_and_light_updates_verified():
     bpy, inspector, registry = setup()
-    camera_result = registry.dispatch(
-        Request("device.create", device_payload(inspector, "CAMERA"))
-    )
+    camera_result = registry.dispatch(Request("device.create", device_payload(inspector, "CAMERA")))
     assert camera_result.status == Status.VERIFIED
     camera = bpy.data.objects.get("Device")
     camera_snapshot = inspector.snapshot(camera)
