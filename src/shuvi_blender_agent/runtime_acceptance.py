@@ -25,6 +25,7 @@ def run_acceptance(
     allow_destructive: bool = False,
     allow_level2_modeling: bool = False,
     allow_level3_character: bool = False,
+    allow_level4_textures: bool = False,
     launcher=launch,
     version_probe=probe_version,
 ) -> dict:
@@ -34,6 +35,7 @@ def run_acceptance(
         or type(allow_destructive) is not bool
         or type(allow_level2_modeling) is not bool
         or type(allow_level3_character) is not bool
+        or type(allow_level4_textures) is not bool
     ):
         raise AgentError(ErrorCode.SAFETY_DENIED, "Explicit runtime authorization is required")
     started = time.monotonic()
@@ -45,6 +47,7 @@ def run_acceptance(
         "destructive_requested": allow_destructive,
         "level2_modeling_requested": allow_level2_modeling,
         "level3_character_requested": allow_level3_character,
+        "level4_textures_requested": allow_level4_textures,
     }
     session = None
     workspace_path = None
@@ -512,6 +515,123 @@ def run_acceptance(
                     }
                     execute("character.workflow_preview", workflow_payload)
                     execute("character.level3_acceptance", workflow_payload)
+                if allow_level4_textures:
+                    level4_id = ids["PLANE"]
+                    execute(
+                        "material.create_assign",
+                        {
+                            "target": target(level4_id),
+                            "name": "AcceptanceLevel4Material",
+                            "base_color": [0.7, 0.4, 0.2, 1],
+                            "metallic": 0.1,
+                            "roughness": 0.6,
+                        },
+                    )
+                    uv_state = execute("uv.inspect", {"object_id": level4_id})
+                    execute(
+                        "uv.unwrap_apply",
+                        {
+                            "target": target(level4_id),
+                            "expected_geometry_revision": uv_state["geometry_revision"],
+                            "expected_uv_revision": uv_state["uv_revision"],
+                            "layer_name": "AcceptanceUV",
+                            "projection": "XY",
+                        },
+                    )
+                    uv_state = execute("uv.inspect", {"object_id": level4_id})
+                    execute(
+                        "uv.pack_plan",
+                        {
+                            "object_id": level4_id,
+                            "layer_name": "AcceptanceUV",
+                            "margin": 0.02,
+                        },
+                    )
+                    execute(
+                        "uv.pack_apply",
+                        {
+                            "target": target(level4_id),
+                            "expected_geometry_revision": uv_state["geometry_revision"],
+                            "expected_uv_revision": uv_state["uv_revision"],
+                            "layer_name": "AcceptanceUV",
+                            "margin": 0.02,
+                        },
+                    )
+                    execute(
+                        "uv.texel_density_inspect",
+                        {
+                            "object_id": level4_id,
+                            "layer_name": "AcceptanceUV",
+                            "texture_size": 64,
+                        },
+                    )
+                    execute(
+                        "uv.texel_density_plan",
+                        {
+                            "object_id": level4_id,
+                            "layer_name": "AcceptanceUV",
+                            "texture_size": 64,
+                            "target_density": 64,
+                        },
+                    )
+                    execute("material.slots_inspect", {"object_id": level4_id})
+                    shader = execute(
+                        "material.shader_inspect",
+                        {"material_name": "AcceptanceLevel4Material"},
+                    )
+                    recovery = execute(
+                        "texture.recovery_snapshot",
+                        {"material_name": "AcceptanceLevel4Material"},
+                    )
+                    execute(
+                        "material.principled_set",
+                        {
+                            "material_name": "AcceptanceLevel4Material",
+                            "expected_shader_revision": shader["shader_revision"],
+                            "settings": {"roughness": 0.4},
+                        },
+                    )
+                    changed_shader = execute(
+                        "material.shader_inspect",
+                        {"material_name": "AcceptanceLevel4Material"},
+                    )
+                    execute(
+                        "texture.recovery_restore",
+                        {
+                            "material_name": "AcceptanceLevel4Material",
+                            "expected_shader_revision": changed_shader["shader_revision"],
+                            "recovery_revision": recovery["recovery_revision"],
+                            "state": recovery["state"],
+                        },
+                    )
+                    texture_scope = {
+                        "object_id": level4_id,
+                        "material_name": "AcceptanceLevel4Material",
+                        "uv_layer_name": "AcceptanceUV",
+                    }
+                    execute("texture.udim_plan", {
+                        "object_id": level4_id,
+                        "uv_layer_name": "AcceptanceUV",
+                    })
+                    execute(
+                        "texture.channel_qa",
+                        {"material_name": "AcceptanceLevel4Material"},
+                    )
+                    execute(
+                        "texture.consistency_qa",
+                        {"material_name": "AcceptanceLevel4Material"},
+                    )
+                    execute(
+                        "texture.bake_prep",
+                        {
+                            **texture_scope,
+                            "channels": ["BASE_COLOR"],
+                            "texture_size": 64,
+                        },
+                    )
+                    execute("texture.asset_qa", texture_scope)
+                    execute("texture.workflow_preview", texture_scope)
+                    execute("texture.level4_acceptance", texture_scope)
                 execute(
                     "render.configure",
                     {
@@ -584,6 +704,7 @@ def main(argv=None):
     parser.add_argument("--allow-destructive", action="store_true")
     parser.add_argument("--allow-level2-modeling", action="store_true")
     parser.add_argument("--allow-level3-character", action="store_true")
+    parser.add_argument("--allow-level4-textures", action="store_true")
     parser.add_argument("--executable", type=Path)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
@@ -597,6 +718,7 @@ def main(argv=None):
             allow_destructive=args.allow_destructive,
             allow_level2_modeling=args.allow_level2_modeling,
             allow_level3_character=args.allow_level3_character,
+            allow_level4_textures=args.allow_level4_textures,
         )
     else:
         report = {
