@@ -340,7 +340,7 @@ def test_node_remove_verifies_absence_and_preserves_other_nodes():
     assert {item["name"] for item in after["nodes"]} == {"Position"}
 
 
-def test_node_remove_refuses_linked_node_until_typed_link_recovery_exists():
+def test_node_remove_supports_preexisting_link_with_typed_recovery_available():
     bpy, operations, registry = setup()
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
@@ -361,8 +361,9 @@ def test_node_remove_refuses_linked_node_until_typed_link_recovery_exists():
             },
         )
     )
-    assert result.error.code == ErrorCode.SAFETY_DENIED
-    assert inspect(registry)["group_revision"] == before["group_revision"]
+    assert result.status == Status.VERIFIED
+    assert result.data["after"]["node_count"] == before["node_count"] - 1
+    assert result.data["after"]["link_count"] == 0
 
 
 def test_node_remove_verification_failure_recreates_original_node():
