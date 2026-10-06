@@ -4,7 +4,7 @@
 
 | Level | Status |
 | --- | --- |
-| Source implemented | 91 bounded typed tools; Level 1 and current Level 2 source roadmaps complete, host client, declarative plans and acceptance harness |
+| Source implemented | 126 bounded typed tools; Level 1, Level 2 and Level 3 source roadmaps complete, host client, declarative plans and acceptance harness |
 | Unit tested | Source contracts, fake bpy adapters, Python sockets and injected owned process handles |
 | CI tested | Linux/Windows, Python 3.11/3.12/3.13; status recorded in CODEX_HANDOFF.md |
 | Real Blender runtime tested | No; 0% |
@@ -19,7 +19,7 @@ performed. Passing fake tests does not establish Blender API compatibility.
 Only run these commands after the user explicitly authorizes real runtime testing.
 No-argument invocation is safe preparation: it prints a prepared status and exits without
 executing Blender. The actual suite requires both --authorize-runtime and an executable.
-Rendering is a separate --allow-render opt-in. Destructive delete/checkpoint-reopen cases are a separate --allow-destructive opt-in. Level 2 professional-modeling acceptance cases are a separate --allow-level2-modeling opt-in. Do not install Blender automatically.
+Rendering is a separate --allow-render opt-in. Destructive delete/checkpoint-reopen cases are a separate --allow-destructive opt-in. Level 2 professional-modeling acceptance cases are a separate --allow-level2-modeling opt-in. Level 3 sculpting/character acceptance cases are a separate --allow-level3-character opt-in. Do not install Blender automatically.
 
 ```powershell
 # Safe preparation only; no Blender execution.
@@ -39,6 +39,11 @@ python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-ren
 python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-level2-modeling `
   --executable "C:\Program Files\Blender Foundation\Blender 4.2\blender.exe" `
   --report acceptance-4.2-level2.json
+
+# Future Level 3 character acceptance: separately opt into sculpt/character cases.
+python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-level3-character `
+  --executable "C:\Program Files\Blender Foundation\Blender 4.2\blender.exe" `
+  --report acceptance-4.2-level3.json
 ```
 
 The suite uses factory startup, no existing .blend input, disabled auto-execution and a
@@ -73,6 +78,10 @@ deadline; stop only the owned child, retain/report failure, and inspect cleanup 
 - [ ] When separately authorized for Level 2 modeling, a disposable repair mesh exercises
   topology/shading/retopology inspection, aggregate modeling QA, workflow preview/apply,
   modifier recipe preview/apply and final stack diagnostics with verified readback.
+- [ ] When separately authorized for Level 3 character acceptance, a disposable symmetric
+  character mesh exercises sculpt inspection, body/face guides and audits, structural sculpt
+  QA, recipe preview, bounded recovery snapshot, one controlled mirrored grab, verified
+  recovery restore, end-to-end workflow preview and final Level 3 source acceptance surface.
 - [ ] A small declarative plan succeeds with correlated results.
 - [ ] Session closes; owned child has exited; temporary workspace is removed.
 
@@ -116,3 +125,20 @@ Until that exact path is run using the real launcher and real Blender 4.2+ execu
 explicit authorization, Level 2 real-runtime verification remains 0%. Fake sessions, CI and
 source readback algorithms are not substitutes for Blender dependency-graph, modifier,
 Shrinkwrap or mesh-runtime acceptance.
+
+
+## Level 3 acceptance boundary
+
+The `--allow-level3-character` path is prepared in source and covered only by injected
+fake-session CI. It creates a disposable closed symmetric character test mesh and exercises
+bounded Level 3 planning, QA, symmetry, one controlled mutation, verified coordinate recovery,
+workflow composition and source acceptance.
+
+This path does not auto-enable rendering, destructive project replacement or unrestricted
+operators. It remains behind the same explicit `--authorize-runtime` requirement plus the
+separate Level 3 opt-in.
+
+Until that exact path is run using the default real launcher and a real Blender 4.2+
+executable after explicit authorization, Level 3 real-runtime verification remains 0%.
+Source completion, fake bpy tests, fake sessions and CI are not substitutes for Blender PBVH,
+Sculpt Mode, Multires, Dyntopo, evaluated geometry or dependency-graph acceptance.
