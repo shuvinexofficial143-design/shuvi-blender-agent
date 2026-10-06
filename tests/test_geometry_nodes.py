@@ -7,6 +7,7 @@ from fake_bpy import FakeNode, fake_bpy
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
 from shuvi_blender_agent.geometry_nodes import (
     GeometryGroupCreate,
+    GeometryLinkChange,
     GeometryNodeAdd,
     GeometryNodeOperations,
     GeometryNodeRemove,
@@ -55,7 +56,7 @@ def add_node(registry, node_type, node_name, group_name="Procedural", location=N
 def test_factory_stays_within_bounded_registry_cap():
     bpy = fake_bpy()
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 160
+    assert len(registry.catalog()) == 162
     assert MAX_REGISTERED_TOOLS == 168
     assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
 
