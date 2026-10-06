@@ -21,6 +21,13 @@ from .collection_ops import (
     RenameCollection,
 )
 from .destructive import DeleteObject
+from .geometry_nodes import (
+    GeometryGroupCreate,
+    GeometryNodeAdd,
+    GeometryNodeRemove,
+    GeometryNodeSetInput,
+    GeometryTreeInspect,
+)
 from .hierarchy import ParentChange
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
@@ -130,6 +137,11 @@ def builtin_contracts() -> dict:
         "hierarchy.inspect": (read, object_id),
         "origin.inspect": (read, object_id),
         "hierarchy.set_parent": (mutation, ParentChange.parse),
+        "geometry_nodes.tree_inspect": (read, GeometryTreeInspect.parse),
+        "geometry_nodes.group_create": (mutation, GeometryGroupCreate.parse),
+        "geometry_nodes.node_add": (mutation, GeometryNodeAdd.parse),
+        "geometry_nodes.node_remove": (mutation, GeometryNodeRemove.parse),
+        "geometry_nodes.node_set_input": (mutation, GeometryNodeSetInput.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),
