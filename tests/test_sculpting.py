@@ -111,7 +111,6 @@ def test_displace_brush_moves_vertices_along_area_weighted_normals():
     assert after["affected_vertex_count"] == 4
     assert all(vertex[2] == pytest.approx(expected_z) for vertex in after["vertices"])
     assert after["faces"] == before["faces"]
-    assert all(float(index) if False else True for index in range(4))
 
 
 def test_displace_negative_strength_lowers_surface():
