@@ -4,7 +4,7 @@ Level 3 starts after the completed Level 1 control and Level 2 professional-mode
 roadmaps. It is intentionally split into ten source milestones so source implementation,
 fake-bpy/CI evidence and real Blender runtime behavior remain separate.
 
-Current Level 3 source progress: **90%**.
+Current Level 3 source progress: **100%**.
 
 Real Blender runtime verification for Level 3: **0%**.
 
@@ -21,7 +21,7 @@ Real Blender runtime verification for Level 3: **0%**.
 | 7 | Head/face character-modeling helpers and facial landmark workflows | complete |
 | 8 | Torso/limb/hands/feet character-modeling helpers and symmetry workflows | complete |
 | 9 | Character sculpt QA, recovery and reusable sculpt workflow recipes | complete |
-| 10 | Level 3 acceptance, end-to-end character workflow composition and handoff | pending |
+| 10 | Level 3 acceptance, end-to-end character workflow composition and handoff | complete |
 
 ## Milestone 1 — 10% complete
 
@@ -106,10 +106,10 @@ without pretending they prove Blender's real sculpt runtime behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **90%**.
+Level 3 source: **100%**.
 Level 3 real Blender runtime verification: **0%**.
 
-Milestone 2 is complete. Milestone 3 is complete. Milestones 4 and 5 are complete. Milestones 6 and 7 are complete. Milestones 8 and 9 are complete. Milestone 10 is next: Level 3 acceptance, end-to-end character workflow composition and handoff.
+Milestone 2 is complete. Milestone 3 is complete. Milestones 4 and 5 are complete. Milestones 6 and 7 are complete. Milestones 8 and 9 are complete. Milestone 10 is complete. Level 3 source roadmap is complete at 100%; real Blender runtime verification remains separate and unexecuted.
 
 
 ## Milestone 2 — 20% complete
@@ -190,7 +190,7 @@ PBVH, Dyntopo, Multires, mask, face-set or interactive Sculpt Mode behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **90%**.
+Level 3 source: **100%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 3 is next: mask/region weighting, symmetry and side-aware sculpt controls.
@@ -274,7 +274,7 @@ runtime equivalence.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **90%**.
+Level 3 source: **100%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 4 is next: Multires/subdivision sculpt workflow and level controls.
@@ -384,7 +384,7 @@ so future runtime acceptance must compare spatial/surface proximity rather than 
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **90%**.
+Level 3 source: **100%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 6 is next: character blockout and proportion/landmark guides.
@@ -524,7 +524,7 @@ This is a candidate-vertex audit only; it is not a perceptual face-symmetry scor
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **90%**.
+Level 3 source: **100%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 8 is next: torso/limb/hands/feet character-modeling helpers and symmetry workflows.
@@ -686,7 +686,111 @@ are restored by the ordinary sculpt coordinate rollback path.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **90%**.
+Level 3 source: **100%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 10 is next: Level 3 acceptance, end-to-end character workflow composition and handoff.
+
+
+## Milestone 10 — 100% complete
+
+Milestone 10 closes the Level 3 source roadmap with bounded end-to-end workflow composition,
+explicit source acceptance gates and a separately opt-in future real-Blender acceptance path.
+
+### `character.workflow_preview`
+
+Builds a deterministic 12-stage character workflow around the existing Level 3 tools without
+automatically executing mutations.
+
+The workflow composes:
+
+1. body landmark candidate fitting
+2. body-region planning
+3. facial landmark candidate fitting
+4. facial-region planning
+5. facial symmetry review
+6. structural character sculpt QA
+7. bounded recovery snapshot before a mutation group
+8. allowlisted sculpt recipe preview
+9. typed recipe mutations with fresh state per mutation
+10. post-mutation QA
+11. bounded recovery restore only when explicitly requested
+12. final Level 3 source acceptance
+
+The preview also aggregates current evidence from body/face fitting, character sculpt QA,
+recipe preview and surface baseline. It reports a source gate of `READY`, `REVIEW` or
+`BLOCKED`, but never claims runtime verification.
+
+Important workflow invariants:
+
+- mutation tools are never auto-executed by the preview
+- each future mutation must use fresh object/geometry state
+- a bounded recovery snapshot is required before a mutation group in the recommended flow
+- recovery itself remains explicit and bounded
+- the preview is planning/composition only
+
+### `character.level3_acceptance`
+
+Aggregates eight bounded source-side acceptance checks:
+
+- body landmark candidates
+- body region plan
+- face landmark fit
+- face region plan
+- face symmetry
+- structural sculpt QA
+- allowlisted recipe preview
+- surface baseline
+
+The result contains:
+
+- per-check PASS/REVIEW/BLOCKED evidence
+- source blockers/advisories
+- overall `source_acceptance_status`
+- deterministic `acceptance_revision`
+- explicit source scope `LEVEL_3_SOURCE_AND_FAKE_ADAPTER_ACCEPTANCE_ONLY`
+- `runtime_acceptance_required=true`
+- `real_runtime_verified=false`
+- `production_ready=false`
+
+A source acceptance result is deliberately not equivalent to Blender runtime or production
+acceptance.
+
+### Future real-Blender Level 3 acceptance preparation
+
+The existing isolated runtime acceptance harness now has a separate
+`--allow-level3-character` opt-in.
+
+When explicitly authorized in the future, that path will create a disposable symmetric
+character test mesh and exercise bounded Level 3 operations including:
+
+- sculpt inspection
+- proportion/blockout/body/face planning
+- body and facial symmetry audits
+- structural sculpt QA and recipe preview
+- bounded recovery snapshot
+- one controlled symmetric grab mutation
+- verified coordinate recovery restore
+- end-to-end workflow preview
+- final Level 3 source acceptance surface
+
+This harness path is covered by injected fake-session CI, but that does **not** count as real
+Blender runtime verification. No Blender install, version probe, launch, render or bpy runtime
+execution was performed while completing Level 3.
+
+## Level 3 completion boundary
+
+Level 1 source: **100%**.
+Level 2 source: **100%**.
+Level 3 source: **100%**.
+
+Level 3 automated source/fake-adapter tests: **445 passed** at the final source checkpoint.
+Factory typed tools: **126**.
+Package modules: **60**.
+
+Level 3 real Blender runtime verification: **0%**.
+Production ready: **No**.
+
+The next work should not silently extend the Level 3 source roadmap. Valid next phases are a
+separately defined Level 4 roadmap, main Shuvi integration, or explicitly authorized real
+Blender 4.2+ acceptance.
