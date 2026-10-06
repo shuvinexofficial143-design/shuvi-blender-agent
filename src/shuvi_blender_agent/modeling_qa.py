@@ -113,24 +113,18 @@ class ModelingQAOperations:
         shading = self.shading.shading_snapshot(obj)
         topology = topology_from_faces(repair["faces"])
         users, _, _, _ = _edge_orientation_diagnostics(repair["faces"])
-        high_degree = [
-            list(edge) for edge in sorted(users) if len(users[edge]) > 2
-        ]
+        high_degree = [list(edge) for edge in sorted(users) if len(users[edge]) > 2]
         valence = [0] * len(repair["vertices"])
         for a, b in topology["edges"]:
             valence[a] += 1
             valence[b] += 1
-        boundary_vertices = {
-            index for edge in topology["boundary_edges"] for index in edge
-        }
+        boundary_vertices = {index for edge in topology["boundary_edges"] for index in edge}
         interior_poles = [
             index
             for index, value in enumerate(valence)
             if index not in boundary_vertices and value not in (0, 4)
         ]
-        triangles = [
-            index for index, face in enumerate(repair["faces"]) if len(face) == 3
-        ]
+        triangles = [index for index, face in enumerate(repair["faces"]) if len(face) == 3]
         quads = [index for index, face in enumerate(repair["faces"]) if len(face) == 4]
         ngons = [index for index, face in enumerate(repair["faces"]) if len(face) > 4]
 
@@ -192,9 +186,7 @@ class ModelingQAOperations:
             "quad_ratio": len(quads) / len(repair["faces"]) if repair["faces"] else 0.0,
             "interior_pole_vertex_indices": interior_poles,
             "near_duplicate_vertex_groups": repair["near_duplicate_vertex_groups"],
-            "near_duplicate_vertex_group_count": repair[
-                "near_duplicate_vertex_group_count"
-            ],
+            "near_duplicate_vertex_group_count": repair["near_duplicate_vertex_group_count"],
             "duplicate_face_groups": repair["duplicate_face_groups"],
             "duplicate_face_group_count": repair["duplicate_face_group_count"],
             "degenerate_face_indices": repair["degenerate_face_indices"],
@@ -211,16 +203,10 @@ class ModelingQAOperations:
             "modifier_diagnostics": {
                 "count": modifiers["count"],
                 "type_counts": modifiers["type_counts"],
-                "unsupported_modifier_indices": modifiers[
-                    "unsupported_modifier_indices"
-                ],
+                "unsupported_modifier_indices": modifiers["unsupported_modifier_indices"],
                 "missing_reference_indices": modifiers["missing_reference_indices"],
-                "subsurf_before_bevel_pairs": modifiers[
-                    "subsurf_before_bevel_pairs"
-                ],
-                "disabled_viewport_indices": modifiers[
-                    "disabled_viewport_indices"
-                ],
+                "subsurf_before_bevel_pairs": modifiers["subsurf_before_bevel_pairs"],
+                "disabled_viewport_indices": modifiers["disabled_viewport_indices"],
                 "disabled_render_indices": modifiers["disabled_render_indices"],
                 "complexity_score": modifiers["complexity_score"],
             },
