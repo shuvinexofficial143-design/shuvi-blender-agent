@@ -6,7 +6,7 @@ from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.mesh import MeshOperations
 from shuvi_blender_agent.operations import ObjectOperations
 from shuvi_blender_agent.safety import SafetyPolicy
-from shuvi_blender_agent.sculpting import SculptBrush, SculptSmooth, SculptingOperations
+from shuvi_blender_agent.sculpting import SculptBrush, SculptingOperations, SculptSmooth
 from shuvi_blender_agent.tools import ToolRegistry
 
 
