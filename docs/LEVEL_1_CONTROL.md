@@ -1,7 +1,7 @@
 # Level 1 control
 
-Level 1 broad source-side Blender control is now approximately **94% implemented** against
-the current roadmap. Real Blender runtime verification remains **0%** because Blender has
+Level 1 broad source-side Blender control is now **100% implemented** against the current
+Level 1 roadmap. Real Blender runtime verification remains **0%** because Blender has
 not been installed, probed, launched or rendered in this source-only pass. Source tests use
 explicit fake-bpy fixtures and do not claim runtime compatibility.
 
@@ -26,10 +26,12 @@ explicit fake-bpy fixtures and do not claim runtime compatibility.
 | Scene type counts/world presence | yes | yes | yes | no | bounded scene summary |
 | Transform pivot inspect/set | yes | yes | yes | no | allowlisted pivot enum |
 | Camera/light create + bounded update | yes | yes | yes | no | type-specific settings |
-| Mode inspection | yes | yes | yes | no | mode mutation requires runtime validation |
+| Mode inspection | yes | yes | yes | no | |
+| Bounded mode mutation | yes | yes | yes | no | typed Object/Edit/Sculpt/Pose/Paint transitions |
 | Data-block + constraint summaries | yes | yes | yes | no | read-only and bounded |
-| Edit/Sculpt/Pose/Paint mode mutation | no | no | no | no | runtime/context-sensitive |
-| Destructive deletion | no | no | no | no | deferred until recovery is runtime-verified |
+| Edit/Sculpt/Pose/Paint mode mutation | yes | yes | yes | no | active/selected compatible target required |
+| Destructive object deletion | yes | yes | yes | no | separate destructive policy required |
+| Confined checkpoint reopening/project switch | yes | yes | yes | no | workspace-only, destructive policy required |
 
 ## Source design
 
@@ -84,13 +86,28 @@ current mode, world presence, active/selected context, object counts by type, ca
 state and file metadata. Cameras/lights can be created and updated through bounded,
 type-specific settings with readback verification and rollback on verification failure.
 
-## Remaining Level 1 source boundary
+## Final Level 1 source boundary
 
-The main unimplemented source capability is mode mutation (Edit/Sculpt/Pose/Paint and related
-context transitions), which depends heavily on real Blender context and should not be faked
-as verified behavior. Destructive deletion/project switching also remain deferred until
-checkpoint reopening/recovery has real runtime acceptance.
+`mode.set` now provides an allowlisted subset of Blender context transitions. It requires
+a fresh scene revision plus a fresh target, and the target must already be selected, active,
+editable and compatible with the requested mode. Non-Object modes are entered only from
+Object mode; returning to Object mode is supported from the Level 1 mode set. The operation
+uses Blender's mode operator only behind this typed allowlist and verifies the resulting
+context mode/active object.
 
-Source-side completion is not production readiness. Blender 4.2+ runtime behavior still
-requires the opt-in acceptance suite in `docs/RUNTIME_ACCEPTANCE.md`. Until explicit
-authorization, do not install, probe, launch or render Blender.
+`object.delete` is explicitly classified destructive, requires both mutation and destructive
+policy permission, requires Object mode plus a fresh scene/object state, rejects linked,
+overridden, read-only objects and parents with children, clears active-camera/active-object
+references when applicable, and verifies that the object is absent from both the data table
+and active scene.
+
+`file.open_checkpoint` is also destructive. It can open only a verified regular `.blend`
+inside the configured confined OutputWorkspace; arbitrary paths are not accepted. After a
+successful project replacement the inspector rotates the session ID and invalidates all old
+object IDs before fresh scene readback. This completes the source-side project switching and
+recovery surface without claiming that fake-bpy tests prove real Blender reopening semantics.
+
+**Level 1 source implementation is complete at 100% for the current roadmap.** This does not
+mean Blender runtime verification or production readiness is complete. Blender 4.2+ runtime
+behavior still requires the opt-in acceptance suite in `docs/RUNTIME_ACCEPTANCE.md`.
+Until explicit authorization, do not install, probe, launch or render Blender.
