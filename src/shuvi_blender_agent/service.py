@@ -11,6 +11,7 @@ from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .mesh import MeshOperations
 from .mesh_transform import MeshTransformOperations
+from .modeling import ModelingOperations
 from .mode_ops import ModeOperations
 from .object_core import ObjectCore
 from .operations import ObjectOperations
@@ -49,6 +50,7 @@ def create_registry(
         RenderOperations(objects, policy, workspace),
         MeshOperations(objects),
         MeshTransformOperations(objects),
+        ModelingOperations(objects),
         DestructiveOperations(objects, policy, workspace),
     ]
     registry = ToolRegistry(
