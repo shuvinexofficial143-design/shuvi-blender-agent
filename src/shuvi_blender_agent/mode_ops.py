@@ -109,9 +109,7 @@ class ModeOperations:
             )
 
         expected_mode = (
-            "OBJECT"
-            if action.mode == "OBJECT"
-            else CONTEXT_MODE[(obj.type, action.mode)]
+            "OBJECT" if action.mode == "OBJECT" else CONTEXT_MODE[(obj.type, action.mode)]
         )
         if before["mode"] == expected_mode:
             return self.objects._result(
