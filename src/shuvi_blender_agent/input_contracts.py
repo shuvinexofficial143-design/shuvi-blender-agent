@@ -17,6 +17,7 @@ from .mesh_transform import MeshTransformAction
 from .mode_ops import ModeChange
 from .modeling import ExtrudeFace
 from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
+from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
@@ -99,6 +100,9 @@ def builtin_contracts() -> dict:
         "mesh.transform_elements": (mutation, TransformElements.parse),
         "mesh.merge_vertices": (mutation, MergeVertices.parse),
         "mesh.dissolve_edge": (mutation, DissolveEdge.parse),
+        "mesh.extrude_region": (mutation, ExtrudeRegion.parse),
+        "mesh.inset_face": (mutation, InsetFace.parse),
+        "mesh.bevel_boundary_edge": (mutation, BevelBoundaryEdge.parse),
         "mesh.apply_object_transform": (mutation, MeshTransformAction.parse),
         "origin.to_centroid": (mutation, MeshTransformAction.parse),
     }
