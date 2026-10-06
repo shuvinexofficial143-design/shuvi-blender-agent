@@ -59,13 +59,9 @@ def target_quad(obj, z=0.0):
 
 def test_closest_point_triangle_handles_face_edge_and_vertex_regions():
     a, b, c = (0.0, 0.0, 0.0), (2.0, 0.0, 0.0), (0.0, 2.0, 0.0)
-    assert _closest_point_triangle((0.5, 0.5, 2.0), a, b, c) == pytest.approx(
-        (0.5, 0.5, 0.0)
-    )
+    assert _closest_point_triangle((0.5, 0.5, 2.0), a, b, c) == pytest.approx((0.5, 0.5, 0.0))
     assert _closest_point_triangle((3.0, -1.0, 0.0), a, b, c) == pytest.approx(b)
-    assert _closest_point_triangle((1.5, 1.5, 0.0), a, b, c) == pytest.approx(
-        (1.0, 1.0, 0.0)
-    )
+    assert _closest_point_triangle((1.5, 1.5, 0.0), a, b, c) == pytest.approx((1.0, 1.0, 0.0))
 
 
 def test_retopology_inspect_reports_quad_ratio_valence_boundary_and_poles():
