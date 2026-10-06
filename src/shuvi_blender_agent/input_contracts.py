@@ -18,6 +18,12 @@ from .mode_ops import ModeChange
 from .modeling import ExtrudeFace
 from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
 from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
+from .modeling_topology import (
+    BridgeBoundaryLoops,
+    FillBoundaryLoop,
+    LoopCutQuadStrip,
+    SubdivideEdge,
+)
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
@@ -103,6 +109,10 @@ def builtin_contracts() -> dict:
         "mesh.extrude_region": (mutation, ExtrudeRegion.parse),
         "mesh.inset_face": (mutation, InsetFace.parse),
         "mesh.bevel_boundary_edge": (mutation, BevelBoundaryEdge.parse),
+        "mesh.subdivide_edge": (mutation, SubdivideEdge.parse),
+        "mesh.loop_cut_quad_strip": (mutation, LoopCutQuadStrip.parse),
+        "mesh.bridge_boundary_loops": (mutation, BridgeBoundaryLoops.parse),
+        "mesh.fill_boundary_loop": (mutation, FillBoundaryLoop.parse),
         "mesh.apply_object_transform": (mutation, MeshTransformAction.parse),
         "origin.to_centroid": (mutation, MeshTransformAction.parse),
     }
