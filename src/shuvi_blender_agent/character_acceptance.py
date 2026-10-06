@@ -283,29 +283,19 @@ class CharacterAcceptanceOperations:
         checks = [
             {
                 "name": "BODY_LANDMARK_CANDIDATES",
-                "status": (
-                    "PASS"
-                    if evidence["landmark_fit"]["landmark_count"] > 0
-                    else "BLOCKED"
-                ),
+                "status": ("PASS" if evidence["landmark_fit"]["landmark_count"] > 0 else "BLOCKED"),
             },
             {
                 "name": "BODY_REGION_PLAN",
-                "status": (
-                    "PASS" if evidence["body_regions"]["region_count"] == 17 else "BLOCKED"
-                ),
+                "status": ("PASS" if evidence["body_regions"]["region_count"] == 17 else "BLOCKED"),
             },
             {
                 "name": "FACE_LANDMARK_FIT",
-                "status": (
-                    "PASS" if evidence["face_fit"]["rejected_count"] == 0 else "REVIEW"
-                ),
+                "status": ("PASS" if evidence["face_fit"]["rejected_count"] == 0 else "REVIEW"),
             },
             {
                 "name": "FACE_REGION_PLAN",
-                "status": (
-                    "PASS" if evidence["face_regions"]["region_count"] == 6 else "BLOCKED"
-                ),
+                "status": ("PASS" if evidence["face_regions"]["region_count"] == 6 else "BLOCKED"),
             },
             {
                 "name": "FACE_SYMMETRY",
