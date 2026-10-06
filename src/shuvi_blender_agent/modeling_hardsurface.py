@@ -51,6 +51,7 @@ def _patch_settings(kind, settings):
         "SUBSURF": {"levels", "render_levels"} | common,
         "SOLIDIFY": {"thickness"} | common,
         "BOOLEAN": {"operation", "solver"} | common,
+        "SHRINKWRAP": {"offset", "wrap_method", "wrap_mode"} | common,
     }.get(kind)
     if allowed is None:
         raise invalid("Unsupported modifier type")
@@ -75,6 +76,19 @@ def _patch_settings(kind, settings):
             if not isinstance(value, str) or value not in BOOLEAN_SOLVERS:
                 raise invalid("solver must be EXACT or FAST")
             parsed[key] = value
+        elif key == "wrap_method":
+            if not isinstance(value, str) or value not in (
+                "NEAREST_SURFACEPOINT",
+                "NEAREST_VERTEX",
+            ):
+                raise invalid("wrap_method must be NEAREST_SURFACEPOINT or NEAREST_VERTEX")
+            parsed[key] = value
+        elif key == "wrap_mode":
+            if not isinstance(value, str) or value not in ("ON_SURFACE", "ABOVE_SURFACE"):
+                raise invalid("wrap_mode must be ON_SURFACE or ABOVE_SURFACE")
+            parsed[key] = value
+        elif key == "offset":
+            parsed[key] = number(value, key, -100, 100)
     return parsed
 
 
@@ -233,6 +247,15 @@ class HardSurfaceOperations:
                 "solver": getattr(modifier, "solver", None),
                 "cutter_object_id": self.inspector.identity(cutter) if cutter else None,
                 "cutter_name": cutter.name if cutter else None,
+            }
+        elif modifier.type == "SHRINKWRAP":
+            target = getattr(modifier, "target", None)
+            data["settings"] = {
+                "wrap_method": getattr(modifier, "wrap_method", None),
+                "wrap_mode": getattr(modifier, "wrap_mode", None),
+                "offset": float(getattr(modifier, "offset", 0.0)),
+                "target_object_id": self.inspector.identity(target) if target else None,
+                "target_name": target.name if target else None,
             }
         return data
 
