@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from .character_blockout import PRESETS, _guide, _preset
+from .character_blockout import _guide, _preset
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .mesh import MeshOperations
@@ -317,7 +317,10 @@ class CharacterBodyOperations:
                 {"name": "ANKLE", "position": [x, y, z]},
                 {"name": "HEEL", "position": [x, y + length * 0.28, z - length * 0.10]},
                 {"name": "BALL", "position": [x, y - length * 0.55, z - length * 0.16]},
-                {"name": "BIG_TOE", "position": [x + sign * length * 0.16, y - length, z - length * 0.12]},
+                {
+                    "name": "BIG_TOE",
+                    "position": [x + sign * length * 0.16, y - length, z - length * 0.12],
+                },
                 {
                     "name": "LITTLE_TOE",
                     "position": [x - sign * length * 0.16, y - length * 0.88, z - length * 0.12],
