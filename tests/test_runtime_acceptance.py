@@ -28,13 +28,14 @@ def test_default_cli_only_reports_preparation(capsys):
 
 
 @pytest.mark.parametrize(
-    "allow_render,allow_destructive,allow_level2_modeling,allow_level3_character",
+    "allow_render,allow_destructive,allow_level2_modeling,allow_level3_character,allow_level4_textures",
     [
-        (False, False, False, False),
-        (True, False, False, False),
-        (False, True, False, False),
-        (False, False, True, False),
-        (False, False, False, True),
+        (False, False, False, False, False),
+        (True, False, False, False, False),
+        (False, True, False, False, False),
+        (False, False, True, False, False),
+        (False, False, False, True, False),
+        (False, False, False, False, True),
     ],
 )
 def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
@@ -43,6 +44,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
     allow_destructive,
     allow_level2_modeling,
     allow_level3_character,
+    allow_level4_textures,
 ):
     executable = tmp_path / "fake-blender.exe"
     executable.touch()
@@ -114,6 +116,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         allow_destructive=allow_destructive,
         allow_level2_modeling=allow_level2_modeling,
         allow_level3_character=allow_level3_character,
+        allow_level4_textures=allow_level4_textures,
         launcher=launcher,
         version_probe=lambda *args: BlenderVersion(4, 2),
     )
@@ -127,6 +130,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
     assert ("file.open_checkpoint" in operations) == allow_destructive
     assert report["level2_modeling_requested"] is allow_level2_modeling
     assert report["level3_character_requested"] is allow_level3_character
+    assert report["level4_textures_requested"] is allow_level4_textures
     assert {
         "mode.set",
         "curve.create",
@@ -170,5 +174,26 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         "character.level3_acceptance",
     }
     assert level3_operations.issubset(operations) is allow_level3_character
+    level4_operations = {
+        "uv.inspect",
+        "uv.unwrap_apply",
+        "uv.pack_plan",
+        "uv.pack_apply",
+        "uv.texel_density_inspect",
+        "uv.texel_density_plan",
+        "material.slots_inspect",
+        "material.shader_inspect",
+        "material.principled_set",
+        "texture.recovery_snapshot",
+        "texture.recovery_restore",
+        "texture.udim_plan",
+        "texture.channel_qa",
+        "texture.consistency_qa",
+        "texture.bake_prep",
+        "texture.asset_qa",
+        "texture.workflow_preview",
+        "texture.level4_acceptance",
+    }
+    assert level4_operations.issubset(operations) is allow_level4_textures
     assert sessions[0].client.closed
     assert not configurations[0].output_directory.exists()
