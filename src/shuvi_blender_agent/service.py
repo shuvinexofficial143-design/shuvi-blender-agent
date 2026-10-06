@@ -3,9 +3,9 @@
 from .animation import AnimationOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
-from .collection_ops import CollectionOperations
 from .character_blockout import CharacterBlockoutOperations
 from .character_face import CharacterFaceOperations
+from .collection_ops import CollectionOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
 from .files import OutputWorkspace
