@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **60%**.
+Current Level 5 source progress: **70%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -22,7 +22,7 @@ Production ready: **No**.
 | 4 | Modifier + node-group binding | complete |
 | 5 | Procedural modeling primitives | complete |
 | 6 | Attribute / field workflows | complete |
-| 7 | Procedural scatter systems | pending |
+| 7 | Procedural scatter systems | complete |
 | 8 | Procedural architecture / environment | pending |
 | 9 | Geometry Nodes recipe library | pending |
 | 10 | Geometry Nodes QA / recovery / acceptance | pending |
@@ -454,9 +454,110 @@ The source/fake-bpy evidence proves only deterministic graph intent and readback
 prove real Blender field evaluation, attribute storage on generated geometry, domain behavior,
 modifier evaluation, dependency-graph updates, viewport output or rendering.
 
+## Milestone 7 — 70% complete
+
+Milestone 7 adds deterministic bounded Instance on Points scatter systems without exposing
+external asset references, collection-driven scatter or unbounded density fields.
+
+### `geometry_nodes.scatter_preview`
+
+Preview supports exactly two recipes:
+
+- `CUBE_SCATTER`
+- `ICO_SPHERE_SCATTER`
+
+Both recipes use a bounded Mesh Cube as the point source. Point resolution is supplied as
+three integer counts, each limited to 2..20.
+
+Before any mutation, Shuvi computes the cube-surface point estimate:
+
+`x*y*z - max(x-2,0)*max(y-2,0)*max(z-2,0)`
+
+Requests above **2048 estimated instances** fail before graph creation.
+
+Other parameter bounds:
+
+- point-source size: 0.001..1000 per axis
+- scatter rotation: ±2π per axis
+- instance scale: 0.001..100 per axis
+- CUBE_SCATTER instance vertices: 2..8 per axis
+- ICO_SPHERE_SCATTER subdivisions: 1..3
+
+Preview reports the deterministic node/link plan plus:
+
+- estimated instance count
+- maximum instance count = 2048
+- instances_realized = false
+- external_asset_references = false
+- collection_references = false
+- source_only = true
+- real_runtime_verified = false
+- deterministic `scatter_revision`
+
+### `geometry_nodes.scatter_apply`
+
+Apply requires:
+
+- existing local GeometryNodeTree
+- fresh expected group revision
+- completely empty node tree
+- no existing links or interface sockets
+- at most one current node-group user
+- one supported bounded scatter recipe
+
+The fixed graph contains exactly:
+
+- one Mesh Cube point-source node
+- one Mesh Cube or Mesh Ico Sphere instance-template node
+- one Instance on Points node
+- one internal Group Output
+- one Geometry output interface
+- three links
+
+The link topology is fixed:
+
+- point source Mesh → Instance on Points Points
+- instance template Mesh → Instance on Points Instance
+- Instance on Points Instances → Group Output Geometry
+
+Instance-on-points defaults are also fixed/bounded:
+
+- Selection = true
+- Pick Instance = false
+- Instance Index = 0
+- caller-supplied bounded rotation
+- caller-supplied bounded scale
+
+No external object, collection, asset-library, material or arbitrary node reference is
+accepted. Instances are intentionally left unrealized.
+
+Successful source readback verifies exact interface, node names/types/locations, selected
+defaults and link topology. Known mismatch removes the complete managed scatter graph and
+interface, then verifies restoration of the original empty group revision.
+
+### `geometry_nodes.scatter_clear`
+
+Clear requires the current group to exactly match the requested recipe, prefix and parameters
+before mutation. Changed point resolution, point extent, instance shape/settings, rotation,
+scale, link topology, interface or any foreign node causes a fail-closed refusal.
+
+Successful clear verifies zero nodes, zero links and an empty interface.
+
+Known clear verification failure rebuilds the exact managed scatter graph and verifies the
+original group revision before recovery is claimed.
+
+### Bounds and runtime boundary
+
+Milestone 7 adds three typed operations, taking the factory from 171 to **174 typed tools**.
+The centralized registry/client cap remains **176**.
+
+Fake-bpy/CI establish deterministic source graph intent and bounds only. They do not prove real
+Blender instance placement/count, Geometry Nodes evaluation, dependency-graph behavior,
+viewport output, memory/GPU load or render results.
+
 ## Safety boundary
 
-Milestones 1-6 do **not** expose:
+Milestones 1-7 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
@@ -470,36 +571,36 @@ Milestones 1-6 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 60% source checkpoint
+## Verified 70% source checkpoint
 
-Source/test checkpoint: `6f02087b402c6a737af80f7cae879f4d5962a956`.
+Source/test checkpoint: `1965fd5c5fa1df0fa18ddc1b47c2ea6352a1ad53`.
 
-CI run `37487992573` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37493156276` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **620 tests**
+- **638 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **70 package modules**
+- **71 package modules**
 
-Factory typed tools: **171**.
+Factory typed tools: **174**.
 Current registry/catalog hard maximum: **176**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **60%** (Milestones 1-6 of 10).
+Level 5 source: **70%** (Milestones 1-7 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 7 — procedural scatter systems — is the next source task, but it must not start
-without explicit user permission.
+Milestone 8 — procedural architecture / environment — is the next source task, but it must not
+start without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime
 acceptance without separate explicit runtime authorization.
