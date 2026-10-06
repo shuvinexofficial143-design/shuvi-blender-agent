@@ -21,6 +21,11 @@ from .collection_ops import (
     RenameCollection,
 )
 from .destructive import DeleteObject
+from .geometry_binding import (
+    GeometryModifierBind,
+    GeometryModifierInspect,
+    GeometryModifierRemove,
+)
 from .geometry_nodes import (
     GeometryGroupCreate,
     GeometryLinkChange,
@@ -145,6 +150,9 @@ def builtin_contracts() -> dict:
         "geometry_nodes.node_set_input": (mutation, GeometryNodeSetInput.parse),
         "geometry_nodes.link_add": (mutation, GeometryLinkChange.parse),
         "geometry_nodes.link_remove": (mutation, GeometryLinkChange.parse),
+        "geometry_nodes.modifier_inspect": (read, GeometryModifierInspect.parse),
+        "geometry_nodes.modifier_bind": (mutation, GeometryModifierBind.parse),
+        "geometry_nodes.modifier_remove": (mutation, GeometryModifierRemove.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),
