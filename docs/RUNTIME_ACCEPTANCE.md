@@ -4,7 +4,7 @@
 
 | Level | Status |
 | --- | --- |
-| Source implemented | 55 bounded typed tools; Level 1 source roadmap complete, host client, declarative plans and acceptance harness |
+| Source implemented | 91 bounded typed tools; Level 1 and current Level 2 source roadmaps complete, host client, declarative plans and acceptance harness |
 | Unit tested | Source contracts, fake bpy adapters, Python sockets and injected owned process handles |
 | CI tested | Linux/Windows, Python 3.11/3.12/3.13; status recorded in CODEX_HANDOFF.md |
 | Real Blender runtime tested | No; 0% |
@@ -19,7 +19,7 @@ performed. Passing fake tests does not establish Blender API compatibility.
 Only run these commands after the user explicitly authorizes real runtime testing.
 No-argument invocation is safe preparation: it prints a prepared status and exits without
 executing Blender. The actual suite requires both --authorize-runtime and an executable.
-Rendering is a separate --allow-render opt-in. Destructive delete/checkpoint-reopen cases are a separate --allow-destructive opt-in. Do not install Blender automatically.
+Rendering is a separate --allow-render opt-in. Destructive delete/checkpoint-reopen cases are a separate --allow-destructive opt-in. Level 2 professional-modeling acceptance cases are a separate --allow-level2-modeling opt-in. Do not install Blender automatically.
 
 ```powershell
 # Safe preparation only; no Blender execution.
@@ -34,6 +34,11 @@ python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime `
 python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-render `
   --executable "C:\Program Files\Blender Foundation\Blender 4.2\blender.exe" `
   --report acceptance-4.2-render.json
+
+# Future Level 2 modeling acceptance: separately opt into modeling mutation cases.
+python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-level2-modeling `
+  --executable "C:\Program Files\Blender Foundation\Blender 4.2\blender.exe" `
+  --report acceptance-4.2-level2.json
 ```
 
 The suite uses factory startup, no existing .blend input, disabled auto-execution and a
@@ -65,6 +70,9 @@ deadline; stop only the owned child, retain/report failure, and inspect cleanup 
 - [ ] When separately authorized for destructive cases, object deletion verifies absence and
   reopening the confined checkpoint replaces the project and rotates the session identity.
 - [ ] When separately authorized, one tiny render verifies PNG structure/dimensions/hash.
+- [ ] When separately authorized for Level 2 modeling, a disposable repair mesh exercises
+  topology/shading/retopology inspection, aggregate modeling QA, workflow preview/apply,
+  modifier recipe preview/apply and final stack diagnostics with verified readback.
 - [ ] A small declarative plan succeeds with correlated results.
 - [ ] Session closes; owned child has exited; temporary workspace is removed.
 
@@ -94,3 +102,17 @@ Keep raw sanitized JSON reports outside the disposable workspace. Record each ca
 pass/fail/skipped with reason; a skipped case is not a pass. The harness marks real_runtime_verified
 only for its real default launcher/probe with completed suite and confirmed cleanup; injected
 unit sessions cannot mark it true. A successful smoke suite does not grant production readiness.
+
+
+## Level 2 acceptance boundary
+
+The `--allow-level2-modeling` path is prepared in source and covered by injected fake-session
+tests only. It creates a disposable bounded mesh with controlled repair candidates, inspects
+Level 2 topology/shading/retopology state, runs `modeling.qa_inspect`, previews and applies
+`CLEAN_BASE_MESH`, then applies a small typed modifier recipe and diagnoses the resulting
+stack.
+
+Until that exact path is run using the real launcher and real Blender 4.2+ executable after
+explicit authorization, Level 2 real-runtime verification remains 0%. Fake sessions, CI and
+source readback algorithms are not substitutes for Blender dependency-graph, modifier,
+Shrinkwrap or mesh-runtime acceptance.
