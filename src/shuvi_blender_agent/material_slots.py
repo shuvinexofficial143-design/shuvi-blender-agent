@@ -120,9 +120,7 @@ class MaterialFaceAssign:
         values = data["face_indices"]
         if not isinstance(values, list) or not 1 <= len(values) <= MAX_MATERIAL_FACES:
             raise invalid(f"face_indices requires 1..{MAX_MATERIAL_FACES} indices")
-        indices = tuple(
-            integer(value, "face_index", 0, MAX_MATERIAL_FACES - 1) for value in values
-        )
+        indices = tuple(integer(value, "face_index", 0, MAX_MATERIAL_FACES - 1) for value in values)
         if len(set(indices)) != len(indices):
             raise invalid("face_indices must be unique")
         return cls(
@@ -153,8 +151,7 @@ class MaterialSlotOperations:
         if slots and any(index < 0 or index >= len(slots) for index in face_indices):
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Face material index is out of bounds")
         users = [
-            sum(index == slot_index for index in face_indices)
-            for slot_index in range(len(slots))
+            sum(index == slot_index for index in face_indices) for slot_index in range(len(slots))
         ]
         material_revision = revision(
             {
