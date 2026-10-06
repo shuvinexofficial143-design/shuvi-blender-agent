@@ -312,9 +312,7 @@ def test_milestone7_contract_validation():
         "expected_revision": "x" * 64,
     }
     with pytest.raises(AgentError):
-        RepairInspect.parse(
-            {"object_id": "id", "distance": 0, "area_epsilon": 0}
-        )
+        RepairInspect.parse({"object_id": "id", "distance": 0, "area_epsilon": 0})
     with pytest.raises(AgentError):
         MergeByDistance.parse(
             {
