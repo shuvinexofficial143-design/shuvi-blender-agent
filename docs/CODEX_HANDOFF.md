@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 5 source/test commit: 1965fd5c5fa1df0fa18ddc1b47c2ea6352a1ad53.
+Latest verified pushed Level 5 source/test commit: f14a111329b6815f9f96286e956d1db2a5762a4d.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -147,56 +147,56 @@ silently create Milestone 11. Next scope must be explicitly selected as Level 5 
 integration into main Shuvi, or separately authorized real Blender 4.2+ Level 4 acceptance.
 
 ## Level 5 active checkpoint
-Latest verified Level 5 source/test checkpoint: 1965fd5c5fa1df0fa18ddc1b47c2ea6352a1ad53.
-CI run 37493156276 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **638 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **71 package modules**.
+Latest verified Level 5 source/test checkpoint: f14a111329b6815f9f96286e956d1db2a5762a4d.
+CI run 37495296260 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **659 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **72 package modules**.
 
-Level 5 Geometry Nodes is now **70% source complete** (Milestones 1-7 of 10).
+Level 5 Geometry Nodes is now **80% source complete** (Milestones 1-8 of 10).
 
-Milestones 1-6 remain the bounded GeometryNodeTree inspection, typed node creation/default
-editing, typed link/recovery, NODES modifier binding, procedural primitives and attribute/field
-workflow foundation documented in LEVEL_5_GEOMETRY_NODES.md.
+Milestones 1-7 remain the bounded GeometryNodeTree inspection, typed node creation/default
+editing, typed link/recovery, NODES modifier binding, procedural primitives, attribute/field
+workflows and scatter systems documented in LEVEL_5_GEOMETRY_NODES.md.
 
-Milestone 7 adds:
-- `geometry_nodes.scatter_preview`: deterministic source-only plans for exactly CUBE_SCATTER
-  and ICO_SPHERE_SCATTER.
-- a bounded Mesh Cube point source with per-axis resolution 2..20. Shuvi computes a
-  deterministic cube-surface point estimate before mutation and rejects requests above 2048
-  estimated instances.
-- bounded point-source size, rotation and instance scale; Cube templates use 2..8 vertices per
-  axis and Ico Sphere templates use subdivisions 1..3.
-- a fixed graph: point Mesh → Instance on Points Points; template Mesh → Instance; Instances →
-  Group Output Geometry.
-- Selection is fixed true, Pick Instance false and Instance Index zero. No external object,
-  collection, asset-library or material references are accepted; instances remain unrealized.
-- `geometry_nodes.scatter_apply`: fresh group revision, completely empty local tree and
+Milestone 8 adds:
+- `geometry_nodes.architecture_preview`: deterministic source-only plans for exactly
+  MODULAR_WALL and BLOCK_GRID.
+- MODULAR_WALL repeats bounded cube modules along X with module size 0.001..1000, count 1..16,
+  gap 0..1000 and base offset within ±1000.
+- BLOCK_GRID repeats bounded cubes on an XY grid with per-axis counts 1..6 and a hard total
+  module limit of 24. Size, gaps and base offset are independently bounded.
+- every module uses one Mesh Cube plus one Transform Geometry; all transformed outputs feed one
+  Join Geometry multi-input socket and then one Group Output.
+- cube vertex counts are fixed at 2 per axis; transform rotation is fixed zero and scale fixed
+  one. No external object, collection, asset-library or material references are accepted.
+- worst-case BLOCK_GRID uses 24 modules and exactly 50 nodes, staying under the existing
+  64-node Geometry Nodes source work limit.
+- `geometry_nodes.architecture_apply`: fresh group revision, completely empty local tree and
   at-most-one-user guard. It verifies exact interface, node names/types/locations, selected
-  defaults and link topology.
-- known apply verification failure removes the full managed scatter graph/interface and verifies
-  restoration of the original empty group revision.
-- `geometry_nodes.scatter_clear`: requires an exact current recipe/prefix/parameter match;
-  changed resolution, template settings, transform defaults, links/interfaces or foreign nodes
-  fail closed. Known clear failure rebuilds the exact scatter graph and verifies the original
-  group revision.
+  defaults and complete link topology.
+- known apply verification failure removes the full managed architecture graph/interface and
+  verifies restoration of the original empty group revision.
+- `geometry_nodes.architecture_clear`: requires an exact current recipe/prefix/parameter
+  match; changed size/spacing/translation/links/interfaces or foreign nodes fail closed. Known
+  clear failure rebuilds the exact architecture graph and verifies the original group revision.
 
-Milestone 7 adds three typed tools, taking the factory from 171 to **174 tools** under the
-existing bounded **176-tool** registry/client cap. No generic scatter graph executor,
-collection/object picker, arbitrary density field or Python surface was introduced.
+The centralized registry/client hard cap was deliberately raised from **176 to 184**.
+Milestone 8 adds three typed operations, taking the factory to **177 tools**. No generic
+architecture graph executor, unrestricted repetition surface or Python execution was added.
 
 Level 1 source is 100%, Level 2 source is 100%, Level 3 source is 100%, Level 4 source is
-100%, and Level 5 source is 70%. No Blender install/probe/launch, bpy runtime test, real
-Geometry Nodes scatter evaluation, render or GPU-heavy action was performed. Level 5 real
-Blender runtime verification remains 0% and production readiness remains No.
+100%, and Level 5 source is 80%. No Blender install/probe/launch, bpy runtime test, real
+Geometry Nodes architecture evaluation, render or GPU-heavy action was performed. Level 5
+real Blender runtime verification remains 0% and production readiness remains No.
 
-Milestone 8 — procedural architecture / environment — is next, but must not start without
-explicit user permission.
+Milestone 9 — Geometry Nodes recipe library — is next, but must not start without explicit
+user permission.
 
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
 Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
 Level 4 UV / Texture / Materials source is **100% complete** (Milestones 1-10 of 10).
-Level 5 Geometry Nodes source is **70% complete** (Milestones 1-7 of 10).
+Level 5 Geometry Nodes source is **80% complete** (Milestones 1-8 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted pending explicit authorization.
 
 ## Completed and verified
@@ -231,7 +231,7 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 174 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 177 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -258,22 +258,22 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 71 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 72 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 174 typed host contracts/tools under the bounded 176-tool cap. Level 1 source: **100%**.
+Source: 177 typed host contracts/tools under the bounded 184-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
-Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **70%**
-(Milestones 1-7 of 10). Verified Level 5 source/test checkpoint:
-1965fd5c5fa1df0fa18ddc1b47c2ea6352a1ad53. CI run 37493156276 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 638 tests, lint/format, package build,
-71-module distribution audit and clean install/import without bpy.
+Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **80%**
+(Milestones 1-8 of 10). Verified Level 5 source/test checkpoint:
+f14a111329b6815f9f96286e956d1db2a5762a4d. CI run 37495296260 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 659 tests, lint/format, package build,
+72-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 5 Milestones 1-7 are complete at 70%. Stop here. Do not begin Milestone 8 without
+Level 5 Milestones 1-8 are complete at 80%. Stop here. Do not begin Milestone 9 without
 explicit user permission. Keep source/fake evidence separate from real Blender runtime
 verification.
 
@@ -293,14 +293,15 @@ verification.
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed 70% source checkpoint. The registry/client cap remains bounded at 176
-with 174 tools registered. Heavy Blender runtime actions still require separate user
+None for the completed 80% source checkpoint. The registry/client cap is deliberately bounded
+at 184 with 177 tools registered. Heavy Blender runtime actions still require separate user
 authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 5, start only Milestone 8:
-procedural architecture / environment. Keep recipes typed and bounded, compose only allowlisted
-Geometry Nodes, require fresh tree state, bound repetition/count/size inputs, avoid unrestricted
-object/collection/material/asset references, verify exact source readback and preserve
-rollback/recovery evidence. Do not start Milestone 9 automatically. Do not install, probe,
-launch, render or execute Blender runtime acceptance unless the user separately authorizes it.
+Wait for explicit user permission. If the user asks to continue Level 5, start only Milestone 9:
+Geometry Nodes recipe library. Build a bounded catalog over already-supported managed recipe
+families rather than exposing arbitrary graph execution. Require explicit typed recipe IDs and
+bounded parameter schemas, deterministic preview metadata, compatibility/version markers,
+fresh tree state for mutation, exact source readback and verified recovery. Do not start
+Milestone 10 automatically. Do not install, probe, launch, render or execute Blender runtime
+acceptance unless the user separately authorizes it.
