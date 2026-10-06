@@ -442,7 +442,9 @@ class HardSurfaceOperations:
                 {"count": before["count"], "items": expected_items},
             )
             if result.status == Status.FAILED:
-                current = next(index for index, item in enumerate(obj.modifiers) if item == modifier)
+                current = next(
+                    index for index, item in enumerate(obj.modifiers) if item == modifier
+                )
                 obj.modifiers.move(current, old_index)
                 self.bpy.context.view_layer.update()
                 result.data["rolled_back"] = True
