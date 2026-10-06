@@ -168,11 +168,8 @@ def test_controlled_grab_mirrors_axis_component():
     for left, right in ((0, 1), (3, 2)):
         assert after["vertices"][left][0] < before["vertices"][left][0]
         assert after["vertices"][right][0] > before["vertices"][right][0]
-        assert (
-            after["vertices"][left][1] - before["vertices"][left][1]
-            == pytest.approx(
-                after["vertices"][right][1] - before["vertices"][right][1]
-            )
+        assert after["vertices"][left][1] - before["vertices"][left][1] == pytest.approx(
+            after["vertices"][right][1] - before["vertices"][right][1]
         )
 
 
@@ -333,9 +330,7 @@ def test_milestone3_contract_validation():
         RegionPreview.parse({"object_id": "id"} | base | {"axis": "NONE"})
     with pytest.raises(AgentError):
         RegionPreview.parse(
-            {"object_id": "id"}
-            | base
-            | {"symmetry": False, "require_symmetry_pairs": True}
+            {"object_id": "id"} | base | {"symmetry": False, "require_symmetry_pairs": True}
         )
     with pytest.raises(AgentError):
         RegionPreview.parse(
