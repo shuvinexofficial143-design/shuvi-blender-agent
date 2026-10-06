@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 79 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 84 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -80,6 +80,11 @@ clients should retain the filter, session ID and revision while continuing a pag
 | mesh.merge_by_distance | target, expected_geometry_revision, distance | mutation | deterministic proximity merge, index compaction and collapsed/duplicate face cleanup |
 | mesh.cleanup_faces | target, expected_geometry_revision, area_epsilon, remove_duplicate_faces | mutation | bounded degenerate/duplicate face removal with smooth-state preservation |
 | mesh.remove_loose_vertices | target, expected_geometry_revision | mutation | compact unreferenced vertices while preserving polygon order and smoothing |
+| mesh.retopology_inspect | object_id | read_only | bounded valence, pole, boundary, tri/quad/ngon and quad-ratio diagnostics |
+| mesh.retopology_projection_inspect | source_id, target_id, vertex_indices, max_distance | read_only | bounded nearest target triangle points/normals/distances for explicit source vertices |
+| mesh.retopology_project | source, target, expected_source_geometry_revision, expected_target_geometry_revision, vertex_indices, max_distance, offset | mutation | verified nearest-surface base-mesh projection with normal offset and coordinate rollback |
+| mesh.retopology_relax | target, expected_geometry_revision, vertex_indices, factor, iterations, preserve_boundary | mutation | bounded synchronous one-ring relax with optional boundary preservation |
+| modifier.shrinkwrap_add | source, target, expected_stack_revision, name, wrap_method, wrap_mode, offset | mutation | verified typed non-destructive Shrinkwrap modifier with explicit target identity |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -215,7 +220,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **70%**.
+Current Level 2 source progress: **80%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -337,3 +342,22 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
   polygon indices, preserves per-face smooth state and rejects a no-op.
 - All Milestone 7 mutations retain the no-material/UV/color/vertex-group metadata guard and
   deny shape keys/modifiers; failed verification restores captured geometry and smoothing.
+
+
+### Level 2 milestone 8 limits
+
+- `mesh.retopology_inspect` reports vertex valence, boundary vertices, isolated vertices,
+  interior non-4-valence poles, tri/quad/ngon face partitions and quad ratio.
+- Projection preview/mutation accepts 1..128 unique source vertices and caps
+  source-vertex × target-triangle checks at 1,000,000. Projection targets currently require
+  base triangle/quad faces and no shape keys/modifiers.
+- Direct projection supports unparented XYZ source/target transforms with nonzero scale,
+  computes nearest world-space triangle points, and converts them back to source local space.
+  If any requested vertex exceeds max_distance, the mutation is denied before changing source
+  coordinates.
+- `mesh.retopology_relax` accepts factor 0.001..1 and 1..8 iterations. It performs synchronous
+  one-ring averaging on the explicit selection and can hold boundary vertices fixed.
+- `modifier.shrinkwrap_add` supports NEAREST_SURFACEPOINT/NEAREST_VERTEX and
+  ON_SURFACE/ABOVE_SURFACE with offset -100..100. Existing `modifier.update` can patch typed
+  Shrinkwrap method/mode/offset/visibility but cannot arbitrarily retarget the modifier.
+- Real Blender evaluated Shrinkwrap/depsgraph behavior remains runtime-unverified.
