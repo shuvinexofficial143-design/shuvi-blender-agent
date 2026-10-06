@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **20%**.
+Current Level 5 source progress: **30%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -18,7 +18,7 @@ Production ready: **No**.
 | --- | --- | --- |
 | 1 | Geometry Nodes tree inspection | complete |
 | 2 | Typed node creation | complete |
-| 3 | Typed node linking | pending |
+| 3 | Typed node linking | complete |
 | 4 | Modifier + node-group binding | pending |
 | 5 | Procedural modeling primitives | pending |
 | 6 | Attribute / field workflows | pending |
@@ -113,14 +113,14 @@ group revision.
 
 ### `geometry_nodes.node_remove`
 
-Requires a fresh group revision and an existing allowlisted node. Removal is intentionally
-conservative at this stage: a node with any incoming or outgoing link is rejected until
-Milestone 3 provides typed link capture/recovery.
+Requires a fresh group revision and an existing allowlisted node. Milestone 3 extends this
+operation so linked nodes are now handled with bounded typed recovery. Before deletion, source
+state captures the node's prior name, label, location, readable input defaults and every
+bounded incident link identity.
 
-For an unlinked allowlisted node, source state needed for recovery is captured before mutation.
-Removal verifies node absence and the exact node-count decrement. Verification failure
-recreates the node with its prior name, label, location and readable input defaults, then
-verifies restoration of the original group revision.
+Removal verifies node absence, exact node-count decrement and exact incident-link removal.
+Verification failure recreates the node, restores every captured incident link and only claims
+recovery after the original group revision is read back.
 
 ### `geometry_nodes.node_set_input`
 
@@ -141,14 +141,74 @@ The tool never disconnects an existing link in order to set a default value. Lin
 closed. Successful mutation reads back the exact requested default value. Verification failure
 restores the previous value and verifies the original group revision.
 
+## Milestone 3 — 30% complete
+
+Milestone 3 adds two explicit typed link mutations and upgrades linked-node recovery.
+
+### `geometry_nodes.link_add`
+
+A link request requires:
+
+- existing local GeometryNodeTree
+- fresh `expected_group_revision`
+- source allowlisted node name
+- source output socket identifier
+- destination allowlisted node name
+- destination input socket identifier
+
+Socket identifiers come from `geometry_nodes.tree_inspect`, so callers do not rely only on
+display names.
+
+The source operation validates:
+
+- both nodes exist and are different nodes
+- both nodes are in the Shuvi Geometry Nodes allowlist
+- exactly one requested output/input socket identifier resolves at each endpoint
+- both socket types are known and exactly equal
+- exact duplicate link does not already exist
+- a non-multi-input destination has no existing incoming link
+- the bounded 128-link work limit is not exhausted
+- adding the directed edge would not create a dependency cycle
+
+No implicit socket-type conversion is performed.
+
+Successful creation reads the tree back and verifies both exact link presence and an exact
+link-count increment of one. Known verification mismatch removes the new link and verifies the
+original group revision before reporting a recovered failure.
+
+### `geometry_nodes.link_remove`
+
+Removal uses the same explicit node/socket identifiers plus a fresh group revision. The exact
+existing link must be present. It verifies exact absence and an exact link-count decrement of
+one.
+
+Known verification failure recreates the original link and verifies restoration of the original
+group revision.
+
+### Linked-node removal recovery
+
+`geometry_nodes.node_remove` now captures all bounded incident links before an allowlisted
+node is removed. A successful node removal accounts for the exact number of links Blender
+removes with that node.
+
+If node-removal verification fails, recovery recreates the node and restores all captured
+incident links using their node names and socket identifiers. Recovery success is not claimed
+until the original group revision is restored.
+
+### Bounded registry-cap increase
+
+Milestones 1-2 reached the previous 160-tool hard limit. Milestone 3 deliberately changes the
+shared registry/client maximum from **160 to 168** and adds only two new typed operations.
+The factory therefore contains **162 typed tools** at this checkpoint. The extra capacity is
+bounded and does not introduce a generic executor.
+
 ## Safety boundary
 
-Milestones 1-2 do **not** expose:
+Milestones 1-3 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
 - generic node property mutation
-- typed socket linking/disconnecting
 - Geometry Nodes modifier binding
 - node-group interface mutation
 - unrestricted object/collection/material references
@@ -161,41 +221,36 @@ Milestones 1-2 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 20% source checkpoint
+## Verified 30% source checkpoint
 
-Source/test checkpoint: `34d57faf3c9fafd0cf27d3e724f563de6aba821b`.
+Source/test checkpoint: `492d4c91f2712a8d0eda83a72b81fb474633db8d`.
 
-CI run `37451234147` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37452665272` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **556 tests**
+- **567 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
 - **67 package modules**
 
-Factory typed tools: **160**.
-Current registry/catalog hard maximum: **160**.
+Factory typed tools: **162**.
+Current registry/catalog hard maximum: **168**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **20%** (Milestones 1-2 of 10).
+Level 5 source: **30%** (Milestones 1-3 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 3 — typed node linking — is the next source task, but it must not start without
-explicit user permission.
-
-The current factory exactly reaches the existing 160-tool hard cap. Before Milestone 3 adds new
-typed operations, the cap must be deliberately and boundedly increased with the existing
-registry/client cap tests kept in sync. Reaching the cap is not permission to expose generic
-operations or collapse multiple unsafe actions into an unrestricted executor.
+Milestone 4 — modifier + node-group binding — is the next source task, but it must not start
+without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime
 acceptance without separate explicit runtime authorization.

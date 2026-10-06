@@ -23,6 +23,7 @@ from .collection_ops import (
 from .destructive import DeleteObject
 from .geometry_nodes import (
     GeometryGroupCreate,
+    GeometryLinkChange,
     GeometryNodeAdd,
     GeometryNodeRemove,
     GeometryNodeSetInput,
@@ -142,6 +143,8 @@ def builtin_contracts() -> dict:
         "geometry_nodes.node_add": (mutation, GeometryNodeAdd.parse),
         "geometry_nodes.node_remove": (mutation, GeometryNodeRemove.parse),
         "geometry_nodes.node_set_input": (mutation, GeometryNodeSetInput.parse),
+        "geometry_nodes.link_add": (mutation, GeometryLinkChange.parse),
+        "geometry_nodes.link_remove": (mutation, GeometryLinkChange.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),

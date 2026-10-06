@@ -1,4 +1,4 @@
-"""Level 5 milestones 1-2: bounded Geometry Nodes inspection and typed node creation."""
+"""Level 5 milestones 1-3: bounded Geometry Nodes inspection, creation and linking."""
 
 import copy
 from dataclasses import dataclass
@@ -211,6 +211,38 @@ class GeometryNodeSetInput:
         )
 
 
+@dataclass(frozen=True)
+class GeometryLinkChange:
+    group_name: str
+    expected_group_revision: str
+    from_node_name: str
+    from_socket_identifier: str
+    to_node_name: str
+    to_socket_identifier: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "group_name",
+                "expected_group_revision",
+                "from_node_name",
+                "from_socket_identifier",
+                "to_node_name",
+                "to_socket_identifier",
+            },
+        )
+        return cls(
+            object_name(data["group_name"]),
+            string(data["expected_group_revision"], "expected_group_revision", limit=64),
+            object_name(data["from_node_name"]),
+            string(data["from_socket_identifier"], "from_socket_identifier", limit=128),
+            object_name(data["to_node_name"]),
+            string(data["to_socket_identifier"], "to_socket_identifier", limit=128),
+        )
+
+
 class GeometryNodeOperations:
     def __init__(self, objects: ObjectOperations):
         self.objects = objects
@@ -266,8 +298,31 @@ class GeometryNodeOperations:
         return NODE_TYPES_BY_ID.get(cls._node_idname(node))
 
     @staticmethod
+    def _socket_identifier(socket):
+        return str(getattr(socket, "identifier", socket.name))
+
+    @staticmethod
     def _socket_linked(group, socket):
         return any(link.from_socket is socket or link.to_socket is socket for link in group.links)
+
+    @classmethod
+    def _socket_by_identifier(cls, table, identifier, direction):
+        matches = [socket for socket in table if cls._socket_identifier(socket) == identifier]
+        if not matches:
+            raise AgentError(
+                ErrorCode.NOT_FOUND,
+                f"Geometry node {direction.lower()} socket not found",
+            )
+        if len(matches) != 1:
+            raise AgentError(
+                ErrorCode.AMBIGUOUS_TARGET,
+                f"Geometry node {direction.lower()} socket identifier is ambiguous",
+            )
+        return matches[0]
+
+    @staticmethod
+    def _socket_type(socket):
+        return str(getattr(socket, "type", "UNKNOWN"))
 
     def _socket_rows(self, group, node, table, direction):
         sockets = list(table)
@@ -324,14 +379,7 @@ class GeometryNodeOperations:
         nodes = [self._node_row(group, node) for node in group.nodes]
         links = []
         for link in group.links:
-            links.append(
-                {
-                    "from_node": str(link.from_node.name),
-                    "from_socket": str(link.from_socket.name),
-                    "to_node": str(link.to_node.name),
-                    "to_socket": str(link.to_socket.name),
-                }
-            )
+            links.append(self._link_row(link))
         nested_groups = sorted(
             {row["nested_group"] for row in nodes if row["nested_group"] is not None}
         )
@@ -348,9 +396,9 @@ class GeometryNodeOperations:
                 links,
                 key=lambda item: (
                     item["from_node"],
-                    item["from_socket"],
+                    item["from_socket_identifier"],
                     item["to_node"],
-                    item["to_socket"],
+                    item["to_socket_identifier"],
                 ),
             ),
             "nested_groups": nested_groups,
@@ -361,6 +409,19 @@ class GeometryNodeOperations:
     @staticmethod
     def _find_node(snapshot, name):
         return next((item for item in snapshot["nodes"] if item["name"] == name), None)
+
+    @classmethod
+    def _link_row(cls, link):
+        return {
+            "from_node": str(link.from_node.name),
+            "from_socket": str(link.from_socket.name),
+            "from_socket_identifier": cls._socket_identifier(link.from_socket),
+            "from_socket_type": cls._socket_type(link.from_socket),
+            "to_node": str(link.to_node.name),
+            "to_socket": str(link.to_socket.name),
+            "to_socket_identifier": cls._socket_identifier(link.to_socket),
+            "to_socket_type": cls._socket_type(link.to_socket),
+        }
 
     @staticmethod
     def _input_socket(node, name):
@@ -374,6 +435,112 @@ class GeometryNodeOperations:
         if socket is None:
             raise AgentError(ErrorCode.NOT_FOUND, "Geometry node input socket not found")
         return socket
+
+    @classmethod
+    def _link_from_action(cls, action):
+        return {
+            "from_node": action.from_node_name,
+            "from_socket_identifier": action.from_socket_identifier,
+            "to_node": action.to_node_name,
+            "to_socket_identifier": action.to_socket_identifier,
+        }
+
+    @staticmethod
+    def _find_link(snapshot, identity):
+        return next(
+            (
+                item
+                for item in snapshot["links"]
+                if all(item[key] == value for key, value in identity.items())
+            ),
+            None,
+        )
+
+    def _resolve_link_endpoints(self, group, action, *, require_available_input):
+        source = group.nodes.get(action.from_node_name)
+        target = group.nodes.get(action.to_node_name)
+        if source is None or target is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Geometry link node not found")
+        if source is target:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Self-links are not allowed")
+        if self._node_alias(source) is None or self._node_alias(target) is None:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Only allowlisted Geometry nodes can participate in typed link mutation",
+            )
+        output = self._socket_by_identifier(
+            source.outputs,
+            action.from_socket_identifier,
+            "output",
+        )
+        input_socket = self._socket_by_identifier(
+            target.inputs,
+            action.to_socket_identifier,
+            "input",
+        )
+        output_type = self._socket_type(output)
+        input_type = self._socket_type(input_socket)
+        if output_type == "UNKNOWN" or input_type == "UNKNOWN" or output_type != input_type:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Geometry link socket types are incompatible",
+            )
+        exact = next(
+            (
+                link
+                for link in group.links
+                if link.from_socket is output and link.to_socket is input_socket
+            ),
+            None,
+        )
+        if require_available_input:
+            if exact is not None:
+                raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Geometry link already exists")
+            incoming = [link for link in group.links if link.to_socket is input_socket]
+            if incoming and not bool(getattr(input_socket, "is_multi_input", False)):
+                raise AgentError(
+                    ErrorCode.SAFETY_DENIED,
+                    "Geometry input socket already has a link",
+                )
+        return output, input_socket, exact
+
+    @staticmethod
+    def _would_create_cycle(group, source, target):
+        pending = [target]
+        visited = set()
+        while pending:
+            node = pending.pop()
+            marker = id(node)
+            if marker in visited:
+                continue
+            visited.add(marker)
+            if node is source:
+                return True
+            pending.extend(link.to_node for link in group.links if link.from_node is node)
+        return False
+
+    def _restore_link_row(self, group, row):
+        source = group.nodes.get(row["from_node"])
+        target = group.nodes.get(row["to_node"])
+        if source is None or target is None:
+            raise AgentError(
+                ErrorCode.VERIFICATION_FAILED,
+                "Geometry link recovery node is missing",
+            )
+        output = self._socket_by_identifier(
+            source.outputs,
+            row["from_socket_identifier"],
+            "output",
+        )
+        input_socket = self._socket_by_identifier(
+            target.inputs,
+            row["to_socket_identifier"],
+            "input",
+        )
+        if not any(
+            link.from_socket is output and link.to_socket is input_socket for link in group.links
+        ):
+            group.links.new(output, input_socket)
 
     @staticmethod
     def _default_location(index):
@@ -511,15 +678,20 @@ class GeometryNodeOperations:
         alias = self._node_alias(node)
         if alias is None:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Only allowlisted Geometry nodes can mutate")
-        if any(link.from_node is node or link.to_node is node for link in group.links):
-            raise AgentError(
-                ErrorCode.SAFETY_DENIED,
-                "Linked Geometry nodes cannot be removed before typed link recovery is available",
-            )
-        values = {}
+        values = []
         for socket in node.inputs:
             if hasattr(socket, "default_value"):
-                values[str(socket.name)] = copy.deepcopy(socket.default_value)
+                values.append(
+                    {
+                        "identifier": self._socket_identifier(socket),
+                        "value": copy.deepcopy(socket.default_value),
+                    }
+                )
+        incident_links = [
+            self._link_row(link)
+            for link in group.links
+            if link.from_node is node or link.to_node is node
+        ]
         location = list(node.location)
         return {
             "node_type": alias,
@@ -527,6 +699,7 @@ class GeometryNodeOperations:
             "label": str(getattr(node, "label", "")),
             "location": [float(location[0]), float(location[1])],
             "inputs": values,
+            "links": incident_links,
         }
 
     def _recreate_node(self, group, state):
@@ -534,10 +707,16 @@ class GeometryNodeOperations:
         node.name = state["name"]
         node.label = state["label"]
         node.location = list(state["location"])
-        for socket_name, value in state["inputs"].items():
-            socket = self._input_socket(node, socket_name)
+        for item in state["inputs"]:
+            socket = self._socket_by_identifier(
+                node.inputs,
+                item["identifier"],
+                "input",
+            )
             if hasattr(socket, "default_value"):
-                socket.default_value = copy.deepcopy(value)
+                socket.default_value = copy.deepcopy(item["value"])
+        for row in state["links"]:
+            self._restore_link_row(group, row)
         return node
 
     def node_remove(self, request: Request, action: GeometryNodeRemove):
@@ -554,10 +733,12 @@ class GeometryNodeOperations:
         expected = {
             "node_absent": True,
             "node_count": before["node_count"] - 1,
+            "link_count": before["link_count"] - len(state["links"]),
         }
         actual = {
             "node_absent": self._find_node(after, action.node_name) is None,
             "node_count": after["node_count"],
+            "link_count": after["link_count"],
         }
         verification = compare(expected, actual)
         if verification.matched:
@@ -682,6 +863,142 @@ class GeometryNodeOperations:
             verification.to_dict(),
         )
 
+    def link_add(self, request: Request, action: GeometryLinkChange):
+        group = self._group(action.group_name)
+        before = self._snapshot(group)
+        require_revision(action.expected_group_revision, before["group_revision"])
+        if len(group.links) >= MAX_GEOMETRY_LINKS:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Geometry link work limit reached")
+        output, input_socket, _ = self._resolve_link_endpoints(
+            group,
+            action,
+            require_available_input=True,
+        )
+        if self._would_create_cycle(group, output.node, input_socket.node):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Geometry link would create a dependency cycle",
+            )
+        link = group.links.new(output, input_socket)
+        after = self._snapshot(group)
+        identity = self._link_from_action(action)
+        expected = {
+            "link_present": True,
+            "link_count": before["link_count"] + 1,
+        }
+        actual = {
+            "link_present": self._find_link(after, identity) is not None,
+            "link_count": after["link_count"],
+        }
+        verification = compare(expected, actual)
+        if verification.matched:
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.VERIFIED,
+                {
+                    "before": before,
+                    "after": after,
+                    "link": self._find_link(after, identity),
+                },
+                verification=verification.to_dict(),
+            )
+
+        if link in group.links:
+            group.links.remove(link)
+        restored = self._snapshot(group)
+        recovery = compare(
+            {"group_revision": before["group_revision"]},
+            {"group_revision": restored["group_revision"]},
+        )
+        if not recovery.matched:
+            raise AgentError(
+                ErrorCode.VERIFICATION_FAILED,
+                "Geometry link add rollback could not be verified",
+            )
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.FAILED,
+            {
+                "before": before,
+                "after": after,
+                "restored": restored,
+                "rolled_back": True,
+                "recovery_verified": True,
+            },
+            AgentError(
+                ErrorCode.VERIFICATION_FAILED,
+                "Geometry link add readback differs from requested state",
+            ),
+            verification.to_dict(),
+        )
+
+    def link_remove(self, request: Request, action: GeometryLinkChange):
+        group = self._group(action.group_name)
+        before = self._snapshot(group)
+        require_revision(action.expected_group_revision, before["group_revision"])
+        output, input_socket, exact = self._resolve_link_endpoints(
+            group,
+            action,
+            require_available_input=False,
+        )
+        if exact is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Geometry link not found")
+        row = self._link_row(exact)
+        group.links.remove(exact)
+        after = self._snapshot(group)
+        identity = self._link_from_action(action)
+        expected = {
+            "link_absent": True,
+            "link_count": before["link_count"] - 1,
+        }
+        actual = {
+            "link_absent": self._find_link(after, identity) is None,
+            "link_count": after["link_count"],
+        }
+        verification = compare(expected, actual)
+        if verification.matched:
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.VERIFIED,
+                {"before": before, "after": after, "removed_link": row},
+                verification=verification.to_dict(),
+            )
+
+        if not any(
+            link.from_socket is output and link.to_socket is input_socket for link in group.links
+        ):
+            group.links.new(output, input_socket)
+        restored = self._snapshot(group)
+        recovery = compare(
+            {"group_revision": before["group_revision"]},
+            {"group_revision": restored["group_revision"]},
+        )
+        if not recovery.matched:
+            raise AgentError(
+                ErrorCode.VERIFICATION_FAILED,
+                "Geometry link remove rollback could not be verified",
+            )
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.FAILED,
+            {
+                "before": before,
+                "after": after,
+                "restored": restored,
+                "rolled_back": True,
+                "recovery_verified": True,
+            },
+            AgentError(
+                ErrorCode.VERIFICATION_FAILED,
+                "Geometry link removal readback differs from requested state",
+            ),
+            verification.to_dict(),
+        )
+
     def tools(self):
         return [
             Tool(
@@ -713,5 +1030,17 @@ class GeometryNodeOperations:
                 SafetyClass.MUTATION,
                 GeometryNodeSetInput.parse,
                 self.node_set_input,
+            ),
+            Tool(
+                "geometry_nodes.link_add",
+                SafetyClass.MUTATION,
+                GeometryLinkChange.parse,
+                self.link_add,
+            ),
+            Tool(
+                "geometry_nodes.link_remove",
+                SafetyClass.MUTATION,
+                GeometryLinkChange.parse,
+                self.link_remove,
             ),
         ]
