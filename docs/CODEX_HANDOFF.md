@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 3 source/package commit: 26ea98059d548ba89957d43e939c859d099170b7.
+Latest verified pushed Level 3 source/package commit: 87a44d1dd98f0021433a6a0744dca243ee9f03e3.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -68,35 +68,43 @@ are separately authorized real Blender 4.2+ acceptance, integration into main Sh
 starting the separately scoped Level 3 work.
 
 ## Level 3 active checkpoint
-Latest verified Level 3 source/test checkpoint: 26ea98059d548ba89957d43e939c859d099170b7.
-CI run 37423092909 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **404 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **53 package modules**.
+Latest verified Level 3 source/test checkpoint: 87a44d1dd98f0021433a6a0744dca243ee9f03e3.
+CI run 37424020965 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **415 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **55 package modules**.
 
-Level 3 Sculpting + Character Modeling is now **30% source complete**
-(Milestones 1-3 of 10). Milestone 3 adds:
-- `sculpt.region_preview`: local-space radial region preview with side filtering, sparse
-  0..1 protection masks, symmetry partner mapping, missing-pair evidence and bounded work.
-- `sculpt.brush_displace_controlled`: normal displacement through mask/side controls with
-  optional X/Y/Z mirrored deformation.
-- `sculpt.brush_grab_controlled`: explicit local grab through the same controls, mirroring
-  only the selected axis component of the deformation delta.
+Level 3 Sculpting + Character Modeling is now **50% source complete**
+(Milestones 1-5 of 10). This 20% batch completed Milestones 4 and 5.
 
-Symmetry requires an explicit local axis and a single source side. Partner lookup uses a
-bounded spatial grid with a 1,000,000 candidate-check cap. Full source+mirror changed state is
-capped at 512 vertices. Pair masks use the stronger protection value across both sides.
-Strict pair mode fails closed on missing partners; symmetry-plane vertices are constrained to
-the plane for controlled mutations.
+Milestone 4 adds:
+- `sculpt.detail_plan`: bounded base-face × 4^level detail estimates with 0..3 levels,
+  existing SUBSURF evidence and an explicit Multires runtime-required flag.
+- `sculpt.subdivision_setup`: verified empty-stack non-destructive SUBSURF sculpt-detail
+  preview setup.
+- `sculpt.subdivision_set_levels`: fresh-stack verified level updates for the named SUBSURF
+  preview.
 
-The factory now exposes **102 typed tools**. Level 1 source remains 100%, Level 2 source
-remains 100%, and Level 3 source is 30%. No Blender install, launch, bpy runtime test or render
+Milestone 5 adds:
+- `sculpt.voxel_plan`: bounded voxel-size to grid/cell planning with 512-per-axis and
+  16,777,216 total-cell caps.
+- `sculpt.voxel_target_density`: derives a recommended voxel size from 8..512 desired cells
+  along the longest local mesh axis.
+- `sculpt.surface_snapshot`: local bounds/centroid/surface-area/average-edge-length baseline.
+- `sculpt.surface_anchor_plan`: 4..32 deterministic extrema/centroid-near spatial anchors
+  with positions and base normals for later remesh comparison.
+
+No actual Multires subdivision, Voxel Remesh or Dyntopo operation is exposed or claimed.
+Those remain runtime-required because no Blender environment is currently available.
+
+The factory now exposes **109 typed tools**. Level 1 source remains 100%, Level 2 source
+remains 100%, and Level 3 source is 50%. No Blender install, launch, bpy runtime test or render
 was performed; Level 3 real Blender runtime verification remains 0%.
 
-Milestone 4 is next: Multires/subdivision sculpt workflow and level controls.
+Milestone 6 is next: character blockout and proportion/landmark guides.
 
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
-Level 3 Sculpting + Character Modeling source is now **30% complete** (Milestones 1-3 of 10).
+Level 3 Sculpting + Character Modeling source is now **50% complete** (Milestones 1-5 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted because no usable Blender
 runtime/server is currently available.
 
@@ -132,7 +140,7 @@ runtime/server is currently available.
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 102 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 109 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -159,22 +167,22 @@ runtime/server is currently available.
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 53 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 55 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 102 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
-**100%**. Level 3 sculpting/character-modeling source: **30%**. Verified Level 3 source/test
-checkpoint: 26ea98059d548ba89957d43e939c859d099170b7. CI run 37423092909 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 404 tests, lint/format, package build,
-53-module distribution audit and clean install/import without bpy.
+Source: 109 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
+**100%**. Level 3 sculpting/character-modeling source: **50%**. Verified Level 3 source/test
+checkpoint: 87a44d1dd98f0021433a6a0744dca243ee9f03e3. CI run 37424020965 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 415 tests, lint/format, package build,
+55-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 3 Milestone 3 is complete, bringing Level 3 source to 30%. No Blender runtime work has
-been performed. Continue only with explicit typed/bounded source milestones and keep fake-bpy/
-CI evidence separate from real Blender runtime verification.
+Level 3 Milestones 4 and 5 are complete, bringing Level 3 source to 50%. No Blender runtime
+work has been performed. Continue only with explicit typed/bounded source milestones and keep
+fake-bpy/CI evidence separate from real Blender runtime verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -195,9 +203,8 @@ CI evidence separate from real Blender runtime verification.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-When the user asks to continue Level 3, begin Milestone 4: Multires/subdivision sculpt workflow
-and level controls. Keep the workflow typed and non-destructive where possible, explicitly
-separate base geometry from evaluated/subdivision expectations, enforce bounded level counts
-and fresh modifier/geometry state, and avoid claiming real Multires evaluation until Blender
-runtime testing is separately authorized. Do not expose arbitrary Python or unrestricted
-operators.
+When the user asks to continue Level 3, begin Milestone 6: character blockout and proportion/
+landmark guides. Add bounded human-proportion guide data, explicit landmark definitions and
+typed blockout planning helpers that remain independent of unrestricted Blender operators.
+Preserve local-space/source-vs-runtime boundaries and keep Level 3 runtime verification at 0%
+until real Blender testing is separately authorized.
