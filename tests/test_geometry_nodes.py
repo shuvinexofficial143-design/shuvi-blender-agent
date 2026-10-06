@@ -430,9 +430,10 @@ def test_node_set_input_verification_failure_restores_previous_value():
     assert result.status == Status.FAILED
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
     assert result.data["rolled_back"] is True
-    assert original(bpy.data.node_groups.get("Procedural"))["group_revision"] == before[
-        "group_revision"
-    ]
+    assert (
+        original(bpy.data.node_groups.get("Procedural"))["group_revision"]
+        == before["group_revision"]
+    )
 
 
 @pytest.mark.parametrize(
