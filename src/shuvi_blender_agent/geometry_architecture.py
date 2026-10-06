@@ -79,9 +79,7 @@ def _parameters(recipe, value):
     count_y = integer(value["count_y"], "count_y", 1, 6)
     module_count = count_x * count_y
     if module_count > MAX_ARCHITECTURE_MODULES:
-        raise invalid(
-            f"architecture module count exceeds {MAX_ARCHITECTURE_MODULES}"
-        )
+        raise invalid(f"architecture module count exceeds {MAX_ARCHITECTURE_MODULES}")
     return {
         "block_size": _vector3(
             value["block_size"],
@@ -470,9 +468,7 @@ class GeometryArchitectureOperations:
                     "name": row["name"],
                     "node_type": self._actual_node_type(row),
                     "location": row["location"],
-                    "inputs": {
-                        name: values.get(name) for name in spec.get("inputs", {})
-                    },
+                    "inputs": {name: values.get(name) for name in spec.get("inputs", {})},
                 }
             )
         return {
