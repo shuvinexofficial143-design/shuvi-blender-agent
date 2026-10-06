@@ -220,7 +220,10 @@ class ModelingRegionOperations:
             if len(users) == 1
         ]
         if not boundary:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Closed face region has no extrusion boundary")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Closed face region has no extrusion boundary",
+            )
 
         vertices = [list(vertex) for vertex in before["vertices"]]
         mapping = {}
@@ -368,7 +371,10 @@ class ModelingRegionOperations:
 
         replacement = [new_a_index, new_b_index, *rotated[2:]]
         if len(set(replacement)) != len(replacement):
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Bevel would create repeated polygon vertices")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Bevel would create repeated polygon vertices",
+            )
         faces = [list(item) for item in before["faces"]]
         faces[face_index] = replacement
         faces.append([old_a, old_b, new_b_index, new_a_index])
