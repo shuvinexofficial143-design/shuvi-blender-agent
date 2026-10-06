@@ -27,9 +27,12 @@ def test_default_cli_only_reports_preparation(capsys):
     assert '"status": "prepared"' in capsys.readouterr().out
 
 
-@pytest.mark.parametrize("allow_render", [False, True])
+@pytest.mark.parametrize(
+    "allow_render,allow_destructive",
+    [(False, False), (True, False), (False, True)],
+)
 def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
-    tmp_path, allow_render
+    tmp_path, allow_render, allow_destructive
 ):
     executable = tmp_path / "fake-blender.exe"
     executable.touch()
@@ -41,13 +44,31 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         assert config.blend_file is None
         bpy = fake_bpy()
         bpy.ops = NS(
-            wm=NS(save_as_mainfile=lambda **kwargs: save(kwargs)),
+            wm=NS(
+                save_as_mainfile=lambda **kwargs: save(kwargs),
+                open_mainfile=lambda **kwargs: open_mainfile(kwargs),
+            ),
             render=NS(render=lambda **kwargs: render()),
+            object=NS(mode_set=lambda **kwargs: mode_set(kwargs["mode"])),
         )
 
         def save(kwargs):
             assert kwargs["copy"] and not kwargs["compress"]
             Path(kwargs["filepath"]).write_bytes(b"BLENDER-v402" + b"fake data")
+            return {"FINISHED"}
+
+        def open_mainfile(kwargs):
+            bpy.data.filepath = kwargs["filepath"]
+            bpy.context.mode = "OBJECT"
+            return {"FINISHED"}
+
+        def mode_set(mode):
+            if mode == "OBJECT":
+                bpy.context.mode = "OBJECT"
+            elif mode == "EDIT":
+                bpy.context.mode = "EDIT_MESH"
+            else:
+                raise AssertionError("Unexpected acceptance mode")
             return {"FINISHED"}
 
         def render():
@@ -80,6 +101,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         executable,
         runtime_authorized=True,
         allow_render=allow_render,
+        allow_destructive=allow_destructive,
         launcher=launcher,
         version_probe=lambda *args: BlenderVersion(4, 2),
     )
@@ -89,6 +111,18 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
     assert not report["real_runtime_verified"]
     operations = {item["operation"] for item in report["cases"]}
     assert ("render.execute" in operations) == allow_render
-    assert {"mesh.translate_vertices", "file.checkpoint", "animation.insert_keyframe"} <= operations
+    assert ("object.delete" in operations) == allow_destructive
+    assert ("file.open_checkpoint" in operations) == allow_destructive
+    assert {
+        "mode.set",
+        "curve.create",
+        "text.create",
+        "device.update",
+        "mesh.translate_vertices",
+        "origin.to_centroid",
+        "mesh.apply_object_transform",
+        "file.checkpoint",
+        "animation.insert_keyframe",
+    } <= operations
     assert sessions[0].client.closed
     assert not configurations[0].output_directory.exists()
