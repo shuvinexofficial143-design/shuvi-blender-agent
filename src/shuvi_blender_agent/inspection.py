@@ -83,6 +83,9 @@ def modifier_snapshot(mod) -> dict:
     elif mod.type == "SHRINKWRAP":
         target = getattr(mod, "target", None)
         settings["target_name"] = target.name if target is not None else None
+    elif mod.type == "NODES":
+        node_group = getattr(mod, "node_group", None)
+        settings["node_group_name"] = node_group.name if node_group is not None else None
     return {
         "name": mod.name,
         "type": mod.type,
