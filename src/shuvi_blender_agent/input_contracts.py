@@ -65,14 +65,8 @@ from .sculpting_detail import DetailPlan, SubdivisionLevels, SubdivisionSetup
 from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelTarget
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
-from .texture_workflows import (
-    AssetScope,
-    BakePrep,
-    ImageInspect,
-    MaterialOnly,
-    RecoveryRestore as TextureRecoveryRestore,
-    UDIMPlan,
-)
+from .texture_workflows import AssetScope, BakePrep, ImageInspect, MaterialOnly, UDIMPlan
+from .texture_workflows import RecoveryRestore as TextureRecoveryRestore
 from .transform import PatchTransform
 from .uv import SeamSet
 from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPackPlan
