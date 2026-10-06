@@ -41,8 +41,8 @@ from .selection import SelectionOperations
 from .shape_ops import ShapeOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
-from .validation import fields
 from .uv import UVOperations
+from .validation import fields
 from .visibility import VisibilityOperations
 
 
