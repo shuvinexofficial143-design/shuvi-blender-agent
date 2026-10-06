@@ -28,11 +28,16 @@ def test_default_cli_only_reports_preparation(capsys):
 
 
 @pytest.mark.parametrize(
-    "allow_render,allow_destructive",
-    [(False, False), (True, False), (False, True)],
+    "allow_render,allow_destructive,allow_level2_modeling",
+    [
+        (False, False, False),
+        (True, False, False),
+        (False, True, False),
+        (False, False, True),
+    ],
 )
 def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
-    tmp_path, allow_render, allow_destructive
+    tmp_path, allow_render, allow_destructive, allow_level2_modeling
 ):
     executable = tmp_path / "fake-blender.exe"
     executable.touch()
@@ -102,6 +107,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         runtime_authorized=True,
         allow_render=allow_render,
         allow_destructive=allow_destructive,
+        allow_level2_modeling=allow_level2_modeling,
         launcher=launcher,
         version_probe=lambda *args: BlenderVersion(4, 2),
     )
@@ -113,6 +119,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
     assert ("render.execute" in operations) == allow_render
     assert ("object.delete" in operations) == allow_destructive
     assert ("file.open_checkpoint" in operations) == allow_destructive
+    assert report["level2_modeling_requested"] is allow_level2_modeling
     assert {
         "mode.set",
         "curve.create",
@@ -124,5 +131,17 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         "file.checkpoint",
         "animation.insert_keyframe",
     } <= operations
+    level2_operations = {
+        "mesh.topology_inspect",
+        "mesh.shading_inspect",
+        "mesh.retopology_inspect",
+        "modeling.qa_inspect",
+        "modeling.workflow_preview",
+        "modeling.workflow_apply",
+        "modifier.recipe_preview",
+        "modifier.recipe_apply",
+        "modifier.stack_diagnose",
+    }
+    assert level2_operations.issubset(operations) is allow_level2_modeling
     assert sessions[0].client.closed
     assert not configurations[0].output_directory.exists()
