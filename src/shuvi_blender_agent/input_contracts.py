@@ -26,7 +26,6 @@ from .geometry_binding import (
     GeometryModifierInspect,
     GeometryModifierRemove,
 )
-from .geometry_primitives import PrimitiveApply, PrimitiveClear, PrimitivePreview
 from .geometry_nodes import (
     GeometryGroupCreate,
     GeometryLinkChange,
@@ -35,6 +34,7 @@ from .geometry_nodes import (
     GeometryNodeSetInput,
     GeometryTreeInspect,
 )
+from .geometry_primitives import PrimitiveApply, PrimitiveClear, PrimitivePreview
 from .hierarchy import ParentChange
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
