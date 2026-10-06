@@ -154,8 +154,7 @@ class MeshTransformOperations:
         transform_before = object_before["transform"]
         count = len(geometry_before["vertices"])
         centroid = tuple(
-            sum(vertex[axis] for vertex in geometry_before["vertices"]) / count
-            for axis in range(3)
+            sum(vertex[axis] for vertex in geometry_before["vertices"]) / count for axis in range(3)
         )
         shifted = [
             vector3(
@@ -173,9 +172,7 @@ class MeshTransformOperations:
         new_location = vector3(
             [
                 value + delta
-                for value, delta in zip(
-                    transform_before["location"], world_offset, strict=True
-                )
+                for value, delta in zip(transform_before["location"], world_offset, strict=True)
             ],
             "origin location",
             1_000_000,
