@@ -77,9 +77,7 @@ def _clip_triangle(subject, clip):
             break
 
         def inside(point, a=a, b=b, orientation=orientation):
-            cross = (b[0] - a[0]) * (point[1] - a[1]) - (b[1] - a[1]) * (
-                point[0] - a[0]
-            )
+            cross = (b[0] - a[0]) * (point[1] - a[1]) - (b[1] - a[1]) * (point[0] - a[0])
             return orientation * cross >= -UV_EPSILON
 
         start = current[-1]
@@ -96,10 +94,7 @@ def _clip_triangle(subject, clip):
 
 
 def _triangles(points):
-    return [
-        [points[0], points[offset], points[offset + 1]]
-        for offset in range(1, len(points) - 1)
-    ]
+    return [[points[0], points[offset], points[offset + 1]] for offset in range(1, len(points) - 1)]
 
 
 def _faces_overlap(first, second):
@@ -271,9 +266,8 @@ class UVOperations:
                 continue
             first, second = users
             a, b = edge
-            if (
-                _same_uv(face_maps[first][a], face_maps[second][a])
-                and _same_uv(face_maps[first][b], face_maps[second][b])
+            if _same_uv(face_maps[first][a], face_maps[second][a]) and _same_uv(
+                face_maps[first][b], face_maps[second][b]
             ):
                 adjacency[first].add(second)
                 adjacency[second].add(first)
@@ -299,9 +293,7 @@ class UVOperations:
         uv_areas = [_uv_area(points) for points in face_uvs]
         surface_areas = [_face_area_3d(vertices, face) for face in faces]
         ratios = [
-            uv_area / surface_area
-            if uv_area > UV_EPSILON and surface_area > UV_EPSILON
-            else None
+            uv_area / surface_area if uv_area > UV_EPSILON and surface_area > UV_EPSILON else None
             for uv_area, surface_area in zip(uv_areas, surface_areas, strict=True)
         ]
         positive = [value for value in ratios if value is not None]
