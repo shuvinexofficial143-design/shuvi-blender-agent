@@ -200,7 +200,14 @@ def test_island_transform_moves_and_scales_exact_island_only():
     result = registry.dispatch(
         Request(
             "uv.island_transform",
-            island_payload(inspector, uv, obj, face_indices=(0,), translation=(0.25, 0.0), scale=0.5),
+            island_payload(
+                inspector,
+                uv,
+                obj,
+                face_indices=(0,),
+                translation=(0.25, 0.0),
+                scale=0.5,
+            ),
         )
     )
     assert result.status == Status.VERIFIED
