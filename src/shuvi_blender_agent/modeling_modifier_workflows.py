@@ -65,9 +65,7 @@ def _recipe_parameters(recipe, parameters):
             "width": number(parameters["width"], "width", 0, 100),
             "segments": integer(parameters["segments"], "segments", 1, 16),
             "levels": integer(parameters["levels"], "levels", 0, 3),
-            "render_levels": integer(
-                parameters["render_levels"], "render_levels", 0, 3
-            ),
+            "render_levels": integer(parameters["render_levels"], "render_levels", 0, 3),
         }
     raise invalid("Unsupported modifier recipe")
 
