@@ -22,10 +22,15 @@ def run_acceptance(
     *,
     runtime_authorized: bool = False,
     allow_render: bool = False,
+    allow_destructive: bool = False,
     launcher=launch,
     version_probe=probe_version,
 ) -> dict:
-    if runtime_authorized is not True or type(allow_render) is not bool:
+    if (
+        runtime_authorized is not True
+        or type(allow_render) is not bool
+        or type(allow_destructive) is not bool
+    ):
         raise AgentError(ErrorCode.SAFETY_DENIED, "Explicit runtime authorization is required")
     started = time.monotonic()
     report = {
@@ -33,6 +38,7 @@ def run_acceptance(
         "real_runtime_verified": False,
         "cases": [],
         "render_requested": allow_render,
+        "destructive_requested": allow_destructive,
     }
     session = None
     workspace_path = None
@@ -50,7 +56,10 @@ def run_acceptance(
                 blend_file=None,
                 output_directory=workspace_path,
                 policy=SafetyPolicy(
-                    allow_mutations=True, allow_file_writes=True, allow_rendering=allow_render
+                    allow_mutations=True,
+                    allow_destructive=allow_destructive,
+                    allow_file_writes=True,
+                    allow_rendering=allow_render,
                 ),
             )
             with launcher(config) as session:
@@ -94,12 +103,61 @@ def run_acceptance(
                         },
                     )
                     ids[kind] = data["after"]["object_id"]
-                execute(
+                copied = execute(
                     "object.duplicate",
                     {
                         "target": target(ids["CUBE"]),
                         "name": "AcceptanceCopy",
                         "transform": transform,
+                    },
+                )
+                ids["COPY"] = copied["after"]["object_id"]
+                execute(
+                    "selection.set",
+                    {
+                        "target": target(ids["CUBE"]),
+                        "selected": True,
+                        "active": True,
+                        "expected_scene_revision": scene_revision(),
+                    },
+                )
+                execute(
+                    "mode.set",
+                    {
+                        "target": target(ids["CUBE"]),
+                        "mode": "EDIT",
+                        "expected_scene_revision": scene_revision(),
+                    },
+                )
+                execute(
+                    "mode.set",
+                    {
+                        "target": target(ids["CUBE"]),
+                        "mode": "OBJECT",
+                        "expected_scene_revision": scene_revision(),
+                    },
+                )
+                execute(
+                    "curve.create",
+                    {
+                        "name": "AcceptanceCurve",
+                        "points": [[0, 0, 0], [1, 0, 0], [1, 1, 0]],
+                        "cyclic": False,
+                        "bevel_depth": 0.02,
+                        "transform": transform,
+                        "expected_scene_revision": scene_revision(),
+                    },
+                )
+                execute(
+                    "text.create",
+                    {
+                        "name": "AcceptanceText",
+                        "body": "Shuvi",
+                        "align_x": "CENTER",
+                        "size": 1,
+                        "extrude": 0.05,
+                        "transform": transform,
+                        "expected_scene_revision": scene_revision(),
                     },
                 )
                 moved = transform | {"location": [1, 2, 3]}
@@ -114,13 +172,14 @@ def run_acceptance(
                         "roughness": 0.5,
                     },
                 )
+                device_ids = {}
                 for kind in ("CAMERA", "POINT", "SUN", "SPOT", "AREA"):
                     settings = (
                         {"lens": 35, "clip_start": 0.1, "clip_end": 100, "make_active": True}
                         if kind == "CAMERA"
                         else {"energy": 1, "color": [1, 1, 1]}
                     )
-                    execute(
+                    created = execute(
                         "device.create",
                         {
                             "name": f"Acceptance{kind}",
@@ -130,6 +189,21 @@ def run_acceptance(
                             "expected_scene_revision": scene_revision(),
                         },
                     )
+                    device_ids[kind] = created["after"]["object_id"]
+                execute(
+                    "device.update",
+                    {
+                        "target": target(device_ids["CAMERA"]),
+                        "settings": {"lens": 50, "clip_end": 200},
+                    },
+                )
+                execute(
+                    "device.update",
+                    {
+                        "target": target(device_ids["POINT"]),
+                        "settings": {"energy": 2, "color": [1, 0.5, 0.25]},
+                    },
+                )
                 execute(
                     "modifier.add",
                     {
@@ -173,7 +247,7 @@ def run_acceptance(
                     {
                         "name": "AcceptanceTriangle",
                         "geometry": geometry,
-                        "transform": transform,
+                        "transform": transform | {"location": [2, 0, 0], "scale": [2, 1, 1]},
                         "expected_scene_revision": scene_revision(),
                     },
                 )
@@ -185,6 +259,22 @@ def run_acceptance(
                         "target": target(mesh_id),
                         "indices": [0],
                         "delta": [0, 0, 0.1],
+                        "expected_geometry_revision": mesh_state["geometry_revision"],
+                    },
+                )
+                mesh_state = execute("mesh.inspect", {"object_id": mesh_id})
+                execute(
+                    "origin.to_centroid",
+                    {
+                        "target": target(mesh_id),
+                        "expected_geometry_revision": mesh_state["geometry_revision"],
+                    },
+                )
+                mesh_state = execute("mesh.inspect", {"object_id": mesh_id})
+                execute(
+                    "mesh.apply_object_transform",
+                    {
+                        "target": target(mesh_id),
                         "expected_geometry_revision": mesh_state["geometry_revision"],
                     },
                 )
@@ -201,6 +291,21 @@ def run_acceptance(
                     "file.checkpoint",
                     {"name": "acceptance.blend", "expected_scene_revision": scene_revision()},
                 )
+                if allow_destructive:
+                    execute(
+                        "object.delete",
+                        {
+                            "target": target(ids["COPY"]),
+                            "expected_scene_revision": scene_revision(),
+                        },
+                    )
+                    execute(
+                        "file.open_checkpoint",
+                        {
+                            "name": "acceptance.blend",
+                            "expected_scene_revision": scene_revision(),
+                        },
+                    )
                 if allow_render:
                     execute(
                         "render.execute",
@@ -242,6 +347,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--authorize-runtime", action="store_true")
     parser.add_argument("--allow-render", action="store_true")
+    parser.add_argument("--allow-destructive", action="store_true")
     parser.add_argument("--executable", type=Path)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
@@ -249,7 +355,10 @@ def main(argv=None):
         if args.executable is None:
             parser.error("--executable is required for an authorized runtime run")
         report = run_acceptance(
-            args.executable, runtime_authorized=True, allow_render=args.allow_render
+            args.executable,
+            runtime_authorized=True,
+            allow_render=args.allow_render,
+            allow_destructive=args.allow_destructive,
         )
     else:
         report = {
