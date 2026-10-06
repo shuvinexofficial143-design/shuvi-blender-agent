@@ -53,9 +53,7 @@ def _recipe_parameters(recipe, parameters):
             "width": number(parameters["width"], "width", 0, 100),
             "segments": integer(parameters["segments"], "segments", 1, 16),
             "levels": integer(parameters["levels"], "levels", 0, 3),
-            "render_levels": integer(
-                parameters["render_levels"], "render_levels", 0, 3
-            ),
+            "render_levels": integer(parameters["render_levels"], "render_levels", 0, 3),
         }
     if recipe == "HARD_SURFACE_TRIPLE":
         fields(
@@ -265,20 +263,14 @@ class ModelingModifierWorkflowOperations:
             if kind == "SHRINKWRAP" and item["settings"].get("target_object_id") is None:
                 missing_references.append(index)
 
-        bevel_indices = [
-            index for index, item in enumerate(items) if item["type"] == "BEVEL"
-        ]
-        subsurf_indices = [
-            index for index, item in enumerate(items) if item["type"] == "SUBSURF"
-        ]
+        bevel_indices = [index for index, item in enumerate(items) if item["type"] == "BEVEL"]
+        subsurf_indices = [index for index, item in enumerate(items) if item["type"] == "SUBSURF"]
         for subsurf_index in subsurf_indices:
             for bevel_index in bevel_indices:
                 if subsurf_index < bevel_index:
                     subsurf_before_bevel.append([subsurf_index, bevel_index])
 
-        reference_modifier_count = sum(
-            item["type"] in ("BOOLEAN", "SHRINKWRAP") for item in items
-        )
+        reference_modifier_count = sum(item["type"] in ("BOOLEAN", "SHRINKWRAP") for item in items)
         warnings = []
         if unsupported:
             warnings.append("UNSUPPORTED_MODIFIER_TYPES")
@@ -343,9 +335,7 @@ class ModelingModifierWorkflowOperations:
             self.bpy.context.view_layer.update()
             after = self.modifiers.stack_snapshot(obj)
             after.update(evidence)
-            expected_items = before["items"] + [
-                self._expected_entry(spec) for spec in entries
-            ]
+            expected_items = before["items"] + [self._expected_entry(spec) for spec in entries]
             expected = {
                 "count": before["count"] + len(entries),
                 "items": expected_items,
