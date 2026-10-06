@@ -376,15 +376,13 @@ class TextureWorkflowOperations(MaterialNodeOperations):
             wired = False
             if channel == "NORMAL":
                 helper = tree.nodes.get(NORMAL_NODE)
-                wired = (
-                    helper is not None
-                    and self._link_exists(tree, node, output_name, helper, "Color")
+                wired = helper is not None and self._link_exists(
+                    tree, node, output_name, helper, "Color"
                 )
             elif channel == "HEIGHT":
                 helper = tree.nodes.get(BUMP_NODE)
-                wired = (
-                    helper is not None
-                    and self._link_exists(tree, node, output_name, helper, "Height")
+                wired = helper is not None and self._link_exists(
+                    tree, node, output_name, helper, "Height"
                 )
             elif channel == "AO":
                 wired = not any(link.from_node is node for link in tree.links)
@@ -470,9 +468,7 @@ class TextureWorkflowOperations(MaterialNodeOperations):
         for channel, image_name in channel_images.items():
             reused.setdefault(image_name, []).append(channel)
         reused = {
-            image_name: channels
-            for image_name, channels in reused.items()
-            if len(channels) > 1
+            image_name: channels for image_name, channels in reused.items() if len(channels) > 1
         }
         blockers = list(qa["blockers"])
         blockers.extend(f"{channel}:INVALID_IMAGE_SIZE" for channel in invalid_sizes)
@@ -598,10 +594,7 @@ class TextureWorkflowOperations(MaterialNodeOperations):
         if auxiliary["normal_strength"] is not None:
             normal, _ = self._ensure_node(tree, NORMAL_NODE, "NORMAL_MAP")
             self._socket(normal.inputs, "Strength").default_value = auxiliary["normal_strength"]
-        if (
-            auxiliary["height_strength"] is not None
-            or auxiliary["height_distance"] is not None
-        ):
+        if auxiliary["height_strength"] is not None or auxiliary["height_distance"] is not None:
             bump, _ = self._ensure_node(tree, BUMP_NODE, "BUMP")
             if auxiliary["height_strength"] is not None:
                 self._socket(bump.inputs, "Strength").default_value = auxiliary["height_strength"]
@@ -814,9 +807,7 @@ class TextureWorkflowOperations(MaterialNodeOperations):
             Status.SUCCEEDED,
             {
                 **qa,
-                "stages": [
-                    {"index": index + 1, "name": name} for index, name in enumerate(stages)
-                ],
+                "stages": [{"index": index + 1, "name": name} for index, name in enumerate(stages)],
                 "recommended_recovery_before_mutation": True,
                 "auto_mutates": False,
                 "workflow_scope": "LEVEL_4_SOURCE_PREVIEW_ONLY",
