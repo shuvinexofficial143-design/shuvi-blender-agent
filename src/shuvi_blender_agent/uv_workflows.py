@@ -281,8 +281,38 @@ class UVWorkflowOperations(UVOperations):
             "active_uv_layer": snapshot["active_uv_layer"],
             "uv_layer_count": snapshot["uv_layer_count"],
             "layer_names": [layer["name"] for layer in snapshot["layers"]],
+            "layer_revisions": [
+                [layer["name"], layer["coordinate_revision"]] for layer in snapshot["layers"]
+            ],
             "target_coordinate_revision": self._layer_revision(snapshot, layer_name),
         }
+
+    @staticmethod
+    def _expected_layer_revisions(before, layer_name, coordinate_revision, created):
+        values = [
+            [layer["name"], layer["coordinate_revision"]]
+            for layer in before["layers"]
+            if layer["name"] != layer_name
+        ]
+        if created:
+            values.append([layer_name, coordinate_revision])
+            return values
+        result = []
+        for layer in before["layers"]:
+            if layer["name"] == layer_name:
+                result.append([layer_name, coordinate_revision])
+            else:
+                result.append([layer["name"], layer["coordinate_revision"]])
+        return result
+
+    @staticmethod
+    def _flat_to_faces(mesh, flat_uvs):
+        result = []
+        for polygon in mesh.polygons:
+            start = int(polygon.loop_start)
+            count = int(polygon.loop_total)
+            result.append([list(flat_uvs[index]) for index in range(start, start + count)])
+        return result
 
     def unwrap_apply(self, request: Request, action: UVUnwrapApply):
         obj, object_before, before, mesh, layers = self._editable_uv_mesh(action)
@@ -313,6 +343,9 @@ class UVWorkflowOperations(UVOperations):
             self.bpy.context.view_layer.update()
 
             after = self.snapshot(obj)
+            expected_coordinate_revision = revision(
+                {"name": action.layer_name, "face_uvs": plan["face_uvs"]}
+            )
             expected = {
                 "geometry_revision": before["geometry_revision"],
                 "seam_flags": before["seam_flags"],
@@ -323,7 +356,13 @@ class UVWorkflowOperations(UVOperations):
                     if created
                     else [layer["name"] for layer in before["layers"]]
                 ),
-                "target_coordinate_revision": plan["coordinate_revision"],
+                "layer_revisions": self._expected_layer_revisions(
+                    before,
+                    action.layer_name,
+                    expected_coordinate_revision,
+                    created,
+                ),
+                "target_coordinate_revision": expected_coordinate_revision,
             }
             actual = self._unwrap_verification(after, action.layer_name)
             verification = compare(expected, actual)
@@ -373,8 +412,9 @@ class UVWorkflowOperations(UVOperations):
                 verification.to_dict(),
             )
         except Exception:
-            if created and layer is not None and self._layer_by_name(mesh, action.layer_name) is layer:
-                self._restore_unwrap(mesh, layer, True, None, active_before)
+            if layer is not None and self._layer_by_name(mesh, action.layer_name) is layer:
+                self._restore_unwrap(mesh, layer, created, prior_uvs, active_before)
+                self.bpy.context.view_layer.update()
             raise
 
     @staticmethod
@@ -449,21 +489,23 @@ class UVWorkflowOperations(UVOperations):
         after = self.snapshot(obj)
 
         unchanged_names = [item["name"] for item in before["layers"]]
+        expected_face_uvs = self._flat_to_faces(mesh, transformed)
+        expected_coordinate_revision = revision(
+            {"name": action.layer_name, "face_uvs": expected_face_uvs}
+        )
         expected = {
             "geometry_revision": before["geometry_revision"],
             "seam_flags": before["seam_flags"],
+            "active_uv_layer": before["active_uv_layer"],
             "uv_layer_count": before["uv_layer_count"],
             "layer_names": unchanged_names,
-            "target_coordinate_revision": revision(
-                {
-                    "name": action.layer_name,
-                    "face_uvs": self._layer_face_uvs(
-                        mesh,
-                        layer,
-                        sum(len(face.vertices) for face in mesh.polygons),
-                    ),
-                }
+            "layer_revisions": self._expected_layer_revisions(
+                before,
+                action.layer_name,
+                expected_coordinate_revision,
+                False,
             ),
+            "target_coordinate_revision": expected_coordinate_revision,
         }
         actual = self._unwrap_verification(after, action.layer_name)
         verification = compare(expected, actual)
