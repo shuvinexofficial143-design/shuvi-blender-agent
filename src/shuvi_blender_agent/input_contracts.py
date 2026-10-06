@@ -18,6 +18,7 @@ from .mode_ops import ModeChange
 from .modeling import ExtrudeFace
 from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
 from .modeling_hardsurface import BooleanAdd, ModifierMove, ModifierUpdate, StackAdd
+from .modeling_modifier_workflows import RecipeApply, RecipePreview, StackCompose
 from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
 from .modeling_repair import CleanupFaces, MergeByDistance, RemoveLooseVertices, RepairInspect
 from .modeling_retopology import (
@@ -103,6 +104,10 @@ def builtin_contracts() -> dict:
         "modifier.boolean_add": (mutation, BooleanAdd.parse),
         "modifier.update": (mutation, ModifierUpdate.parse),
         "modifier.move": (mutation, ModifierMove.parse),
+        "modifier.stack_diagnose": (read, object_id),
+        "modifier.stack_compose": (mutation, StackCompose.parse),
+        "modifier.recipe_preview": (read, RecipePreview.parse),
+        "modifier.recipe_apply": (mutation, RecipeApply.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),
