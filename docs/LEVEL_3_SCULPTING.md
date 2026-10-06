@@ -4,7 +4,7 @@ Level 3 starts after the completed Level 1 control and Level 2 professional-mode
 roadmaps. It is intentionally split into ten source milestones so source implementation,
 fake-bpy/CI evidence and real Blender runtime behavior remain separate.
 
-Current Level 3 source progress: **30%**.
+Current Level 3 source progress: **50%**.
 
 Real Blender runtime verification for Level 3: **0%**.
 
@@ -15,8 +15,8 @@ Real Blender runtime verification for Level 3: **0%**.
 | 1 | Sculpt mesh diagnostics + radial displace/smooth foundation | complete |
 | 2 | Expanded brush deformation set: inflate/flatten/pinch/grab/crease foundations | complete |
 | 3 | Mask/region weighting, symmetry and side-aware sculpt controls | complete |
-| 4 | Multires/subdivision sculpt workflow and level controls | pending |
-| 5 | Remesh/voxel-density planning and surface-preservation helpers | pending |
+| 4 | Multires/subdivision sculpt workflow and level controls | complete |
+| 5 | Remesh/voxel-density planning and surface-preservation helpers | complete |
 | 6 | Character blockout and proportion/landmark guides | pending |
 | 7 | Head/face character-modeling helpers and facial landmark workflows | pending |
 | 8 | Torso/limb/hands/feet character-modeling helpers and symmetry workflows | pending |
@@ -106,10 +106,10 @@ without pretending they prove Blender's real sculpt runtime behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **30%**.
+Level 3 source: **50%**.
 Level 3 real Blender runtime verification: **0%**.
 
-Milestone 2 is complete. Milestone 3 is complete. Milestone 4 is next: Multires/subdivision sculpt workflow and level controls.
+Milestone 2 is complete. Milestone 3 is complete. Milestones 4 and 5 are complete. Milestone 6 is next: character blockout and proportion/landmark guides.
 
 
 ## Milestone 2 — 20% complete
@@ -190,7 +190,7 @@ PBVH, Dyntopo, Multires, mask, face-set or interactive Sculpt Mode behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **30%**.
+Level 3 source: **50%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 3 is next: mask/region weighting, symmetry and side-aware sculpt controls.
@@ -274,7 +274,117 @@ runtime equivalence.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **30%**.
+Level 3 source: **50%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 4 is next: Multires/subdivision sculpt workflow and level controls.
+
+
+## Milestone 4 — 40% complete
+
+Milestone 4 adds bounded sculpt-detail planning plus a non-destructive SUBSURF preview/control
+workflow while explicitly refusing to pretend real Blender Multires subdivision has been
+executed.
+
+### `sculpt.detail_plan`
+
+Reports:
+
+- base face count
+- requested viewport/render detail levels, each 0..3
+- conservative face estimate using `base_faces × 4^level`
+- current modifier stack revision
+- existing SUBSURF entries
+- explicit `multires_runtime_required=true`
+- source status `PLANNING_ONLY` for real Multires behavior
+
+The estimated face count is capped at 250,000 for this source workflow.
+
+### `sculpt.subdivision_setup`
+
+Creates one verified non-destructive SUBSURF preview modifier on an empty modifier stack.
+
+It requires:
+
+- fresh ObjectTarget
+- fresh stack revision
+- local mesh without shape keys
+- empty stack
+- explicit modifier name
+- viewport/render levels 0..3
+- estimate under the sculpt-detail work cap
+
+The resulting ordered modifier stack is read back through the Level 2 typed modifier surface.
+This is a sculpt-detail preview/control foundation, not a Multires sculpt replacement.
+
+### `sculpt.subdivision_set_levels`
+
+Updates a named SUBSURF preview modifier's viewport/render levels using fresh stack state,
+complete stack readback and existing rollback behavior.
+
+The named entry must still be SUBSURF; type drift or stale stack state is rejected.
+
+## Milestone 5 — 50% complete
+
+Milestone 5 adds bounded voxel/remesh planning plus surface-preservation baselines and anchors.
+No source tool executes Blender voxel remesh yet.
+
+### `sculpt.voxel_plan`
+
+Given an explicit voxel size, reports:
+
+- mesh bounds and extents
+- padded per-axis voxel-grid dimensions
+- estimated total cell count
+- explicit per-axis/total work limits
+- `runtime_remesh_required=true`
+- `execution_status=PLANNING_ONLY`
+
+Each axis is capped at 512 planned cells and total cells at 16,777,216.
+
+### `sculpt.voxel_target_density`
+
+Accepts a desired 8..512 voxel count along the mesh's longest local-space axis and derives a
+recommended voxel size plus the resulting bounded grid/cell estimate.
+
+Zero-size bounds are rejected.
+
+### `sculpt.surface_snapshot`
+
+Captures a deterministic source-side preservation baseline:
+
+- geometry revision
+- local bounds
+- vertex centroid
+- polygon surface-area estimate
+- average unique-edge length
+- vertex/face counts
+
+This gives later remesh acceptance a compact before/after comparison target without claiming
+shape equivalence.
+
+### `sculpt.surface_anchor_plan`
+
+Selects 4..32 deterministic base-mesh anchors for later post-remesh comparison.
+
+The helper begins with local X/Y/Z extrema, fills remaining slots with vertices nearest the
+mesh centroid, and records base position, area-weighted normal and centroid distance.
+
+These anchors are planning evidence only; topology-changing remesh cannot preserve vertex IDs,
+so future runtime acceptance must compare spatial/surface proximity rather than index identity.
+
+### Milestones 4–5 source/runtime boundary
+
+- no real Multires subdivision is executed
+- no Voxel Remesh/Dyntopo operation is executed
+- SUBSURF is used only as a verified non-destructive detail preview/control foundation
+- real Multires and remesh remain explicitly marked runtime-required
+- all planning calculations are bounded and deterministic
+- no arbitrary Python or unrestricted Blender operator execution is exposed
+
+Level 1 source: **100%**.
+Level 2 source: **100%**.
+Level 3 source: **50%**.
+Level 3 real Blender runtime verification: **0%**.
+
+Milestone 6 is next: character blockout and proportion/landmark guides.
