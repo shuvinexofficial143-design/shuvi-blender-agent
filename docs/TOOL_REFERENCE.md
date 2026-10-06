@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 75 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 79 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -76,6 +76,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | mesh.shading_inspect | object_id | read_only | bounded source face normals/areas, smoothing state and topology/shading diagnostics |
 | mesh.set_face_smoothing | target, expected_geometry_revision, expected_shading_revision, face_indices, smooth | mutation | exact per-face smooth flags with unchanged bounded geometry |
 | mesh.orient_faces_consistently | target, expected_geometry_revision, expected_shading_revision | mutation | manifold-connected winding consistency with preserved smooth flags |
+| mesh.repair_inspect | object_id, distance, area_epsilon | read_only | bounded near-duplicate/duplicate/degenerate/loose/component repair diagnostics |
+| mesh.merge_by_distance | target, expected_geometry_revision, distance | mutation | deterministic proximity merge, index compaction and collapsed/duplicate face cleanup |
+| mesh.cleanup_faces | target, expected_geometry_revision, area_epsilon, remove_duplicate_faces | mutation | bounded degenerate/duplicate face removal with smooth-state preservation |
+| mesh.remove_loose_vertices | target, expected_geometry_revision | mutation | compact unreferenced vertices while preserving polygon order and smoothing |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -211,7 +215,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **60%**.
+Current Level 2 source progress: **70%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -317,3 +321,19 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
   complete ordered stack; verification failure restores the prior order.
 - Hard-surface source CI verifies contracts/state transitions only. Actual Blender modifier
   evaluation and Boolean solver geometry remain runtime-unverified.
+
+
+### Level 2 milestone 7 limits
+
+- `mesh.repair_inspect` accepts distance 1e-9..100 and area epsilon 0..1000000. Spatial
+  near-duplicate work is capped at 1,000,000 pair checks and 512 reported diagnostic groups.
+  Duplicate polygons are matched independent of cycle rotation/reversal.
+- `mesh.merge_by_distance` uses deterministic proximity clusters, compacts surviving
+  vertices, removes faces collapsed below three unique vertices, and deduplicates polygons
+  created by the merge. Surviving source face smoothing flags are preserved.
+- `mesh.cleanup_faces` removes triangle-fan-area-degenerate faces and, when explicitly
+  requested, later duplicate faces. It refuses to remove every polygon and rejects a no-op.
+- `mesh.remove_loose_vertices` removes only vertices unused by every polygon, remaps all
+  polygon indices, preserves per-face smooth state and rejects a no-op.
+- All Milestone 7 mutations retain the no-material/UV/color/vertex-group metadata guard and
+  deny shape keys/modifiers; failed verification restores captured geometry and smoothing.
