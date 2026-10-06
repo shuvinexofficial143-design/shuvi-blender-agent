@@ -66,6 +66,11 @@ clients should retain the filter, session ID and revision while continuing a pag
 | texture.asset_qa | object_id, material_name, uv_layer_name | read_only | aggregate Level 4 UV/material/texture structural QA |
 | texture.workflow_preview | object_id, material_name, uv_layer_name | read_only | fixed ten-stage non-mutating Level 4 workflow composition |
 | texture.level4_acceptance | object_id, material_name, uv_layer_name | read_only | eight-check source/fake-adapter Level 4 acceptance with runtime-required boundary |
+| geometry_nodes.tree_inspect | group_name | read_only | bounded GeometryNodeTree interface/node/socket/link/nested-group snapshot plus group_revision |
+| geometry_nodes.group_create | group_name | mutation | create one empty local GeometryNodeTree and verify bounded readback |
+| geometry_nodes.node_add | group_name, expected_group_revision, node_type, node_name, location (optional) | mutation | add one allowlisted Geometry node with deterministic/requested bounded placement and rollback |
+| geometry_nodes.node_remove | group_name, expected_group_revision, node_name | mutation | remove one unlinked allowlisted Geometry node with verified recreation rollback |
+| geometry_nodes.node_set_input | group_name, expected_group_revision, node_name, socket_name, value | mutation | edit one allowlisted unlinked typed socket default with exact readback and rollback |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -764,3 +769,30 @@ Current Level 3 source progress: **100%**.
 - The factory now exposes **155 typed tools** under the centralized **160-tool** hard cap.
 - No arbitrary Python, generic node editor, unrestricted bpy/material operator, external image
   loader, real bake execution or hidden production/runtime claim is introduced.
+
+
+### Level 5 milestones 1–2 limits
+
+- `geometry_nodes.tree_inspect` accepts only an existing local `GeometryNodeTree` by name.
+  It caps inspection at 64 nodes, 128 links, 64 interface sockets, 32 inputs and 32 outputs
+  per node, and 32 nested groups. It returns a fresh `group_revision` over the bounded
+  interface, nodes/sockets, links and nested-group references.
+- Foreign nodes may be inspected but are never implicitly made mutable.
+- `geometry_nodes.group_create` creates only an empty local `GeometryNodeTree`; it does not
+  attach the group to an object or create a modifier/interface automatically.
+- `geometry_nodes.node_add` accepts only ten explicit node aliases mapped internally to
+  Blender idnames: MESH_CUBE, MESH_ICO_SPHERE, JOIN_GEOMETRY, TRANSFORM_GEOMETRY,
+  SET_POSITION, INPUT_POSITION, INPUT_NORMAL, INPUT_INDEX, REALIZE_INSTANCES and
+  INSTANCE_ON_POINTS. Caller-supplied Blender idnames are never executed.
+- Node placement is bounded to ±10000 editor units and is deterministic when omitted.
+- `geometry_nodes.node_remove` refuses linked nodes until Milestone 3 provides typed link
+  capture/recovery. Unlinked removal captures restorable node state and verifies rollback.
+- `geometry_nodes.node_set_input` only edits specifically allowlisted typed defaults for the
+  allowlisted node kind. Linked inputs are never disconnected to make a default edit succeed.
+- Every node mutation requires a fresh group revision and actual bounded readback.
+- The factory now exposes **160 typed tools**, exactly matching the current centralized
+  **160-tool** hard registry/catalog cap. Milestone 3 must deliberately increase that bounded
+  cap before adding tools; the cap must not be bypassed with a generic executor.
+- No arbitrary Python, unrestricted node creation, generic node property setter, typed link
+  mutation, Geometry Nodes modifier binding, real Geometry Nodes evaluation or runtime claim
+  is exposed by Milestones 1–2.

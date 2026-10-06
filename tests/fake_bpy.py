@@ -166,10 +166,34 @@ class FakeMaterialLinks(list):
 
 
 class FakeSocket:
-    def __init__(self, node, name, default_value=None):
+    def __init__(
+        self,
+        node,
+        name,
+        default_value=None,
+        socket_type=None,
+        is_multi_input=False,
+    ):
         self.node = node
         self.name = name
+        self.identifier = name
         self.default_value = copy.deepcopy(default_value)
+        self.type = socket_type or self._infer_type(default_value)
+        self.is_multi_input = is_multi_input
+
+    @staticmethod
+    def _infer_type(value):
+        if type(value) is bool:
+            return "BOOLEAN"
+        if type(value) is int:
+            return "INT"
+        if type(value) is float:
+            return "VALUE"
+        if isinstance(value, (list, tuple)) and len(value) == 3:
+            return "VECTOR"
+        if isinstance(value, (list, tuple)) and len(value) == 4:
+            return "RGBA"
+        return "UNKNOWN"
 
 
 class FakeSockets(dict):
@@ -178,18 +202,34 @@ class FakeSockets(dict):
 
 
 class FakeNode:
-    def __init__(self, node_type, name=None):
+    def __init__(self, node_type, name=None, bl_idname=None):
         self.type = node_type
+        self.bl_idname = bl_idname or node_type
         self.name = name or node_type
         self.label = ""
         self.image = None
+        self.node_tree = None
+        self.location = [0.0, 0.0]
         self.blend_type = "MIX"
         self.inputs = FakeSockets()
         self.outputs = FakeSockets()
         self._init_sockets()
 
-    def _socket(self, table, name, value=None):
-        table[name] = FakeSocket(self, name, value)
+    def _socket(
+        self,
+        table,
+        name,
+        value=None,
+        socket_type=None,
+        is_multi_input=False,
+    ):
+        table[name] = FakeSocket(
+            self,
+            name,
+            value,
+            socket_type=socket_type,
+            is_multi_input=is_multi_input,
+        )
 
     def _init_sockets(self):
         if self.type == "BSDF_PRINCIPLED":
@@ -220,6 +260,54 @@ class FakeNode:
             self._socket(self.inputs, "Height", 0.0)
             self._socket(self.inputs, "Normal", [0.0, 0.0, 0.0])
             self._socket(self.outputs, "Normal")
+        elif self.type == "MESH_CUBE":
+            self._socket(self.inputs, "Size", [1.0, 1.0, 1.0])
+            self._socket(self.inputs, "Vertices X", 2)
+            self._socket(self.inputs, "Vertices Y", 2)
+            self._socket(self.inputs, "Vertices Z", 2)
+            self._socket(self.outputs, "Mesh", socket_type="GEOMETRY")
+        elif self.type == "MESH_ICO_SPHERE":
+            self._socket(self.inputs, "Radius", 1.0)
+            self._socket(self.inputs, "Subdivisions", 2)
+            self._socket(self.outputs, "Mesh", socket_type="GEOMETRY")
+        elif self.type == "JOIN_GEOMETRY":
+            self._socket(
+                self.inputs,
+                "Geometry",
+                socket_type="GEOMETRY",
+                is_multi_input=True,
+            )
+            self._socket(self.outputs, "Geometry", socket_type="GEOMETRY")
+        elif self.type == "TRANSFORM_GEOMETRY":
+            self._socket(self.inputs, "Geometry", socket_type="GEOMETRY")
+            self._socket(self.inputs, "Translation", [0.0, 0.0, 0.0])
+            self._socket(self.inputs, "Rotation", [0.0, 0.0, 0.0])
+            self._socket(self.inputs, "Scale", [1.0, 1.0, 1.0])
+            self._socket(self.outputs, "Geometry", socket_type="GEOMETRY")
+        elif self.type == "SET_POSITION":
+            self._socket(self.inputs, "Geometry", socket_type="GEOMETRY")
+            self._socket(self.inputs, "Selection", True)
+            self._socket(self.inputs, "Position", [0.0, 0.0, 0.0])
+            self._socket(self.inputs, "Offset", [0.0, 0.0, 0.0])
+            self._socket(self.outputs, "Geometry", socket_type="GEOMETRY")
+        elif self.type == "INPUT_POSITION":
+            self._socket(self.outputs, "Position", [0.0, 0.0, 0.0])
+        elif self.type == "INPUT_NORMAL":
+            self._socket(self.outputs, "Normal", [0.0, 0.0, 1.0])
+        elif self.type == "INPUT_INDEX":
+            self._socket(self.outputs, "Index", 0)
+        elif self.type == "REALIZE_INSTANCES":
+            self._socket(self.inputs, "Geometry", socket_type="GEOMETRY")
+            self._socket(self.outputs, "Geometry", socket_type="GEOMETRY")
+        elif self.type == "INSTANCE_ON_POINTS":
+            self._socket(self.inputs, "Points", socket_type="GEOMETRY")
+            self._socket(self.inputs, "Selection", True)
+            self._socket(self.inputs, "Instance", socket_type="GEOMETRY")
+            self._socket(self.inputs, "Pick Instance", False)
+            self._socket(self.inputs, "Instance Index", 0)
+            self._socket(self.inputs, "Rotation", [0.0, 0.0, 0.0])
+            self._socket(self.inputs, "Scale", [1.0, 1.0, 1.0])
+            self._socket(self.outputs, "Instances", socket_type="GEOMETRY")
 
 
 class FakeNodes(list):
@@ -229,11 +317,21 @@ class FakeNodes(list):
         "ShaderNodeTexImage": ("TEX_IMAGE", "Image Texture"),
         "ShaderNodeNormalMap": ("NORMAL_MAP", "Normal Map"),
         "ShaderNodeBump": ("BUMP", "Bump"),
+        "GeometryNodeMeshCube": ("MESH_CUBE", "Cube"),
+        "GeometryNodeMeshIcoSphere": ("MESH_ICO_SPHERE", "Ico Sphere"),
+        "GeometryNodeJoinGeometry": ("JOIN_GEOMETRY", "Join Geometry"),
+        "GeometryNodeTransform": ("TRANSFORM_GEOMETRY", "Transform Geometry"),
+        "GeometryNodeSetPosition": ("SET_POSITION", "Set Position"),
+        "GeometryNodeInputPosition": ("INPUT_POSITION", "Position"),
+        "GeometryNodeInputNormal": ("INPUT_NORMAL", "Normal"),
+        "GeometryNodeInputIndex": ("INPUT_INDEX", "Index"),
+        "GeometryNodeRealizeInstances": ("REALIZE_INSTANCES", "Realize Instances"),
+        "GeometryNodeInstanceOnPoints": ("INSTANCE_ON_POINTS", "Instance on Points"),
     }
 
     def new(self, node_type):
         kind, name = self.TYPES[node_type]
-        node = FakeNode(kind, name)
+        node = FakeNode(kind, name, node_type)
         self.append(node)
         return node
 
@@ -269,6 +367,31 @@ class FakeNodeTree:
         shader = self.nodes.new("ShaderNodeBsdfPrincipled")
         output = self.nodes.new("ShaderNodeOutputMaterial")
         self.links.new(shader.outputs["BSDF"], output.inputs["Surface"])
+
+
+class FakeNodeGroup:
+    def __init__(self, name, tree_type):
+        self.name = name
+        self.bl_idname = tree_type
+        self.library = None
+        self.users = 0
+        self.nodes = FakeNodes()
+        self.links = FakeNodeLinks()
+        self.nodes.tree = self
+        self.interface = NS(items_tree=[])
+
+
+class FakeNodeGroups(list):
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def new(self, name, tree_type):
+        group = FakeNodeGroup(name, tree_type)
+        self.append(group)
+        return group
+
+    def remove(self, group):
+        super().remove(group)
 
 
 class FakeImages(list):
@@ -599,6 +722,7 @@ def fake_bpy(objects=None):
             collections=collections,
             materials=FakeMaterials(),
             images=FakeImages(),
+            node_groups=FakeNodeGroups(),
             cameras=FakeDevices("CAMERA"),
             lights=FakeDevices("LIGHT"),
         ),
