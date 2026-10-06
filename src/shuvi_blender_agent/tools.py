@@ -11,6 +11,8 @@ from .safety import SafetyClass, SafetyPolicy
 from .validation import fields, string
 from .verification import compare
 
+MAX_REGISTERED_TOOLS = 160
+
 
 @dataclass(frozen=True)
 class Tool:
@@ -32,7 +34,7 @@ class Tool:
 class ToolRegistry:
     def __init__(self, tools: list[Tool], policy: SafetyPolicy | None = None):
         self.policy = policy or SafetyPolicy()
-        if len(tools) > 128:
+        if len(tools) > MAX_REGISTERED_TOOLS:
             raise ValueError("Registry limit exceeded")
         self._tools = {tool.name: tool for tool in tools}
         if len(self._tools) != len(tools):
@@ -93,7 +95,7 @@ class ToolRegistry:
             )
 
     def register(self, tool: Tool) -> None:
-        if tool.name in self._tools or len(self._tools) >= 128:
+        if tool.name in self._tools or len(self._tools) >= MAX_REGISTERED_TOOLS:
             raise ValueError("Duplicate tool or registry limit exceeded")
         self._tools[tool.name] = tool
 
