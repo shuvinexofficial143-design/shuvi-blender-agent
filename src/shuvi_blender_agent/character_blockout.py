@@ -281,7 +281,10 @@ class CharacterBlockoutOperations:
         minimum, maximum = _bounds(vertices)
         height = maximum[2] - minimum[2]
         if height <= 0:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Character landmark fit requires nonzero Z height")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Character landmark fit requires nonzero Z height",
+            )
         origin = (
             (minimum[0] + maximum[0]) / 2,
             (minimum[1] + maximum[1]) / 2,
