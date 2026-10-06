@@ -3,6 +3,7 @@
 from .animation import FrameRange, InsertKeyframe, SetFrame
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
+from .destructive import DeleteObject
 from .collection_ops import (
     CollectionNameRequest,
     CollectionObjectChange,
@@ -13,6 +14,7 @@ from .collection_ops import (
 from .hierarchy import ParentChange
 from .mesh import CreateMesh, TranslateVertices
 from .mesh_transform import MeshTransformAction
+from .mode_ops import ModeChange
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
@@ -45,6 +47,7 @@ def builtin_contracts() -> dict:
         "cursor.inspect": (read, empty),
         "cursor.set": (mutation, CursorSet.parse),
         "mode.inspect": (read, empty),
+        "mode.set": (mutation, ModeChange.parse),
         "shape.inspect": (read, object_id),
         "curve.create": (mutation, CreateCurve.parse),
         "text.create": (mutation, CreateText.parse),
@@ -72,6 +75,7 @@ def builtin_contracts() -> dict:
         "object.set_transform": (mutation, SetTransform.parse),
         "object.duplicate": (mutation, DuplicateObject.parse),
         "object.duplicate_linked": (mutation, DuplicateObject.parse),
+        "object.delete": (SafetyClass.DESTRUCTIVE, DeleteObject.parse),
         "material.create_assign": (mutation, MaterialAssign.parse),
         "device.create": (mutation, CreateDevice.parse),
         "device.update": (mutation, UpdateDevice.parse),
@@ -84,6 +88,7 @@ def builtin_contracts() -> dict:
         "render.configure": (mutation, RenderConfig.parse),
         "render.execute": (SafetyClass.RENDER, FileAction.parse_png),
         "file.checkpoint": (SafetyClass.FILE_WRITE, FileAction.parse_blend),
+        "file.open_checkpoint": (SafetyClass.DESTRUCTIVE, FileAction.parse_blend),
         "mesh.inspect": (read, object_id),
         "mesh.create": (mutation, CreateMesh.parse),
         "mesh.translate_vertices": (mutation, TranslateVertices.parse),
