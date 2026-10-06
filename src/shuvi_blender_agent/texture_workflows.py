@@ -207,6 +207,7 @@ class RecoveryRestore:
 class TextureWorkflowOperations(MaterialNodeOperations):
     def __init__(self, objects: ObjectOperations):
         super().__init__(objects)
+        self.inspector = objects.inspector
         self.uv = UVOperations(objects)
         self.slots = MaterialSlotOperations(objects)
 
