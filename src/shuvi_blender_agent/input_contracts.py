@@ -3,6 +3,8 @@
 from .animation import FrameRange, InsertKeyframe, SetFrame
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
+from .character_blockout import BlockoutPlan, LandmarkFit, ProportionGuide
+from .character_face import FaceFit, FaceGuide, FaceRegions, FaceSymmetryAudit
 from .collection_ops import (
     CollectionNameRequest,
     CollectionObjectChange,
@@ -67,6 +69,13 @@ def builtin_contracts() -> dict:
         "system.ping": (read, empty),
         "system.capabilities": (read, empty),
         "scene.inspect": (read, empty),
+        "character.proportion_guide": (read, ProportionGuide.parse),
+        "character.blockout_plan": (read, BlockoutPlan.parse),
+        "character.landmark_fit": (read, LandmarkFit.parse),
+        "character.face_guide": (read, FaceGuide.parse),
+        "character.face_landmark_fit": (read, FaceFit.parse),
+        "character.face_region_plan": (read, FaceRegions.parse),
+        "character.face_symmetry_audit": (read, FaceSymmetryAudit.parse),
         "scene.rename": (mutation, SceneRename.parse),
         "scene.set_units": (mutation, SetUnits.parse),
         "cursor.inspect": (read, empty),
