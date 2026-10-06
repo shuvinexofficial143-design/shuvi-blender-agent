@@ -97,27 +97,21 @@ def _inverse_rotate_xyz(vector, euler):
 
 def _world_from_local(value, transform):
     scaled = tuple(
-        component * factor
-        for component, factor in zip(value, transform["scale"], strict=True)
+        component * factor for component, factor in zip(value, transform["scale"], strict=True)
     )
     rotated = rotate_xyz(scaled, transform["rotation_euler"])
     return tuple(
-        component + offset
-        for component, offset in zip(rotated, transform["location"], strict=True)
+        component + offset for component, offset in zip(rotated, transform["location"], strict=True)
     )
 
 
 def _local_from_world(value, transform):
     translated = tuple(
-        component - offset
-        for component, offset in zip(value, transform["location"], strict=True)
+        component - offset for component, offset in zip(value, transform["location"], strict=True)
     )
     rotated = _inverse_rotate_xyz(translated, transform["rotation_euler"])
     return vector3(
-        [
-            component / factor
-            for component, factor in zip(rotated, transform["scale"], strict=True)
-        ],
+        [component / factor for component, factor in zip(rotated, transform["scale"], strict=True)],
         "projected vertex",
         1_000_000,
     )
@@ -343,9 +337,7 @@ class ModelingRetopologyOperations:
                 "Projection target requires base mesh without shape keys/modifiers",
             )
         transform = self._transform_snapshot(obj)
-        world_vertices = [
-            _world_from_local(vertex, transform) for vertex in geometry["vertices"]
-        ]
+        world_vertices = [_world_from_local(vertex, transform) for vertex in geometry["vertices"]]
         triangles = []
         for face_index, face in enumerate(geometry["faces"]):
             if len(face) not in (3, 4):
@@ -423,13 +415,9 @@ class ModelingRetopologyOperations:
         for edge in topology["edges"]:
             valence[edge[0]] += 1
             valence[edge[1]] += 1
-        boundary_vertices = sorted(
-            {index for edge in topology["boundary_edges"] for index in edge}
-        )
+        boundary_vertices = sorted({index for edge in topology["boundary_edges"] for index in edge})
         boundary_set = set(boundary_vertices)
-        triangles = [
-            index for index, face in enumerate(geometry["faces"]) if len(face) == 3
-        ]
+        triangles = [index for index, face in enumerate(geometry["faces"]) if len(face) == 3]
         quads = [index for index, face in enumerate(geometry["faces"]) if len(face) == 4]
         ngons = [index for index, face in enumerate(geometry["faces"]) if len(face) > 4]
         isolated = [index for index, value in enumerate(valence) if value == 0]
@@ -441,17 +429,23 @@ class ModelingRetopologyOperations:
         histogram = {}
         for value in valence:
             histogram[str(value)] = histogram.get(str(value), 0) + 1
-        data = geometry | topology | {
-            "vertex_valence": valence,
-            "valence_histogram": dict(sorted(histogram.items(), key=lambda item: int(item[0]))),
-            "boundary_vertex_indices": boundary_vertices,
-            "isolated_vertex_indices": isolated,
-            "interior_pole_vertex_indices": interior_poles,
-            "triangle_face_indices": triangles,
-            "quad_face_indices": quads,
-            "ngon_face_indices": ngons,
-            "quad_ratio": len(quads) / len(geometry["faces"]) if geometry["faces"] else 0.0,
-        }
+        data = (
+            geometry
+            | topology
+            | {
+                "vertex_valence": valence,
+                "valence_histogram": dict(
+                    sorted(histogram.items(), key=lambda item: int(item[0]))
+                ),
+                "boundary_vertex_indices": boundary_vertices,
+                "isolated_vertex_indices": isolated,
+                "interior_pole_vertex_indices": interior_poles,
+                "triangle_face_indices": triangles,
+                "quad_face_indices": quads,
+                "ngon_face_indices": ngons,
+                "quad_ratio": len(quads) / len(geometry["faces"]) if geometry["faces"] else 0.0,
+            }
+        )
         return Result(request.request_id, request.command_id, Status.SUCCEEDED, data)
 
     def projection_inspect(self, request: Request, action: ProjectionInspect):
@@ -479,9 +473,7 @@ class ModelingRetopologyOperations:
             "matches": matches,
             "matched_count": sum(item["within_max_distance"] for item in matches),
             "unmatched_vertex_indices": [
-                item["source_vertex_index"]
-                for item in matches
-                if not item["within_max_distance"]
+                item["source_vertex_index"] for item in matches if not item["within_max_distance"]
             ],
             "max_observed_distance": max(item["distance"] for item in matches),
             "triangle_count": mapping["triangle_count"],
