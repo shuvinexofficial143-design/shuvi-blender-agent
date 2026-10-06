@@ -215,9 +215,7 @@ class SculptingOperations:
     def inspect(self, request: Request, object_id: str):
         obj = self.inspector.resolve(object_id)
         geometry, topology, normals, valence, degenerate, invalid_normals = self._mesh_state(obj)
-        boundary_vertices = sorted(
-            {index for edge in topology["boundary_edges"] for index in edge}
-        )
+        boundary_vertices = sorted({index for edge in topology["boundary_edges"] for index in edge})
         data = {
             "object_id": geometry["object_id"],
             "name": geometry["name"],
@@ -234,9 +232,7 @@ class SculptingOperations:
             "invalid_normal_vertex_count": len(invalid_normals),
             "vertex_valence_min": min(valence) if valence else 0,
             "vertex_valence_max": max(valence) if valence else 0,
-            "vertex_valence_average": (
-                sum(valence) / len(valence) if valence else 0.0
-            ),
+            "vertex_valence_average": (sum(valence) / len(valence) if valence else 0.0),
             "sculpt_ready": (
                 bool(geometry["faces"])
                 and not degenerate
@@ -274,9 +270,7 @@ class SculptingOperations:
         changed_indices,
     ):
         expected = {"vertices": vertices, "faces": before["faces"]} | evidence
-        previous = {
-            index: list(obj.data.vertices[index].co) for index in changed_indices
-        }
+        previous = {index: list(obj.data.vertices[index].co) for index in changed_indices}
         try:
             for index in changed_indices:
                 obj.data.vertices[index].co = vertices[index]
@@ -314,9 +308,7 @@ class SculptingOperations:
             action.radius,
             action.falloff,
         )
-        affected = [
-            item for item in selected if _length(normals[item["index"]]) > NORMAL_EPSILON
-        ]
+        affected = [item for item in selected if _length(normals[item["index"]]) > NORMAL_EPSILON]
         if not affected:
             raise invalid("Sculpt brush affects no vertices with valid normals")
 
