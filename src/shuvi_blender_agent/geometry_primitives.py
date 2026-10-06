@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
-from .geometry_nodes import GeometryNodeOperations, NODE_TYPES
+from .geometry_nodes import NODE_TYPES, GeometryNodeOperations
 from .inspection import revision
 from .models import object_name
 from .operations import ObjectOperations
@@ -613,7 +613,11 @@ class ProceduralPrimitiveOperations:
             )
         except Exception:
             current = self.geometry._snapshot(group)
-            if current["node_count"] == 0 and current["link_count"] == 0 and not current["interface"]:
+            if (
+                current["node_count"] == 0
+                and current["link_count"] == 0
+                and not current["interface"]
+            ):
                 self._build(group, plan)
             raise
 
