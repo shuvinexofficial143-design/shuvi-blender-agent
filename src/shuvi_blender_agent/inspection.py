@@ -73,13 +73,18 @@ def modifier_snapshot(mod) -> dict:
         "BEVEL": ("width", "segments"),
         "SUBSURF": ("levels", "render_levels"),
         "SOLIDIFY": ("thickness",),
+        "BOOLEAN": ("operation", "solver"),
     }.get(mod.type, ())
+    settings = {key: getattr(mod, key, None) for key in keys}
+    if mod.type == "BOOLEAN":
+        cutter = getattr(mod, "object", None)
+        settings["cutter_name"] = cutter.name if cutter is not None else None
     return {
         "name": mod.name,
         "type": mod.type,
         "show_viewport": bool(mod.show_viewport),
         "show_render": bool(mod.show_render),
-        "settings": {key: getattr(mod, key, None) for key in keys},
+        "settings": settings,
     }
 
 
