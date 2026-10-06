@@ -140,12 +140,8 @@ def test_factory_registers_final_level5_acceptance_under_existing_cap():
 def test_workflow_preview_is_deterministic_bounded_and_nonexecuting():
     bpy, acceptance, registry = acceptance_setup()
 
-    first = registry.dispatch(
-        Request("geometry_nodes.workflow_preview", acceptance_payload())
-    )
-    second = registry.dispatch(
-        Request("geometry_nodes.workflow_preview", acceptance_payload())
-    )
+    first = registry.dispatch(Request("geometry_nodes.workflow_preview", acceptance_payload()))
+    second = registry.dispatch(Request("geometry_nodes.workflow_preview", acceptance_payload()))
 
     assert first.status == Status.SUCCEEDED
     assert first.data == second.data
