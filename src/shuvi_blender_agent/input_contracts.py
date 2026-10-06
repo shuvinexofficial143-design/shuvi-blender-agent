@@ -43,6 +43,8 @@ from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .sculpting import SculptBrush, SculptSmooth
 from .sculpting_brushes import SculptCrease, SculptFlatten, SculptGrab, SculptNormalizedBrush
 from .sculpting_controls import ControlledDisplace, ControlledGrab, RegionPreview
+from .sculpting_detail import DetailPlan, SubdivisionLevels, SubdivisionSetup
+from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelTarget
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
@@ -126,6 +128,13 @@ def builtin_contracts() -> dict:
         "sculpt.region_preview": (read, RegionPreview.parse),
         "sculpt.brush_displace_controlled": (mutation, ControlledDisplace.parse),
         "sculpt.brush_grab_controlled": (mutation, ControlledGrab.parse),
+        "sculpt.detail_plan": (read, DetailPlan.parse),
+        "sculpt.subdivision_setup": (mutation, SubdivisionSetup.parse),
+        "sculpt.subdivision_set_levels": (mutation, SubdivisionLevels.parse),
+        "sculpt.voxel_plan": (read, VoxelPlan.parse),
+        "sculpt.voxel_target_density": (read, VoxelTarget.parse),
+        "sculpt.surface_snapshot": (read, SurfaceSnapshot.parse),
+        "sculpt.surface_anchor_plan": (read, SurfaceAnchors.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),
