@@ -65,6 +65,14 @@ from .sculpting_detail import DetailPlan, SubdivisionLevels, SubdivisionSetup
 from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelTarget
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
+from .texture_workflows import (
+    AssetScope,
+    BakePrep,
+    ImageInspect,
+    MaterialOnly,
+    RecoveryRestore as TextureRecoveryRestore,
+    UDIMPlan,
+)
 from .transform import PatchTransform
 from .uv import SeamSet
 from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPackPlan
@@ -150,6 +158,16 @@ def builtin_contracts() -> dict:
         "material.principled_set": (mutation, PrincipledSet.parse),
         "material.pbr_texture_assign": (mutation, PBRTextureAssign.parse),
         "material.pbr_texture_clear": (mutation, PBRTextureClear.parse),
+        "texture.image_inspect": (read, ImageInspect.parse),
+        "texture.udim_plan": (read, UDIMPlan.parse),
+        "texture.channel_qa": (read, MaterialOnly.parse),
+        "texture.bake_prep": (read, BakePrep.parse),
+        "texture.consistency_qa": (read, MaterialOnly.parse),
+        "texture.recovery_snapshot": (read, MaterialOnly.parse),
+        "texture.recovery_restore": (mutation, TextureRecoveryRestore.parse),
+        "texture.asset_qa": (read, AssetScope.parse),
+        "texture.workflow_preview": (read, AssetScope.parse),
+        "texture.level4_acceptance": (read, AssetScope.parse),
         "device.create": (mutation, CreateDevice.parse),
         "device.update": (mutation, UpdateDevice.parse),
         "modifier.add": (mutation, AddModifier.parse),
