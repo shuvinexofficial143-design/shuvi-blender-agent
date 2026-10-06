@@ -231,15 +231,11 @@ def test_shared_group_is_denied_for_apply_and_clear():
     group = bpy.data.node_groups.get("FieldGroup")
     group.users = 2
 
-    denied = registry.dispatch(
-        Request("geometry_nodes.field_apply", apply_payload(registry))
-    )
+    denied = registry.dispatch(Request("geometry_nodes.field_apply", apply_payload(registry)))
     assert denied.error.code == ErrorCode.SAFETY_DENIED
 
     group.users = 0
-    applied = registry.dispatch(
-        Request("geometry_nodes.field_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.field_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
     group.users = 2
 
@@ -258,9 +254,7 @@ def test_shared_group_is_denied_for_apply_and_clear():
 def test_clear_exact_field_workflow_restores_empty_group():
     bpy, geometry, fields, registry = setup()
     empty = create_group(registry)
-    applied = registry.dispatch(
-        Request("geometry_nodes.field_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.field_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
 
     result = registry.dispatch(
@@ -285,9 +279,7 @@ def test_clear_exact_field_workflow_restores_empty_group():
 def test_clear_refuses_modified_attribute_settings_or_name():
     bpy, geometry, fields, registry = setup()
     create_group(registry)
-    applied = registry.dispatch(
-        Request("geometry_nodes.field_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.field_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
     group = bpy.data.node_groups.get("FieldGroup")
     store = group.nodes.get("FieldDemo_StoreAttribute")
@@ -340,9 +332,7 @@ def test_apply_verification_failure_rolls_back_to_empty_group():
         return original(snapshot, plan)
 
     fields._verify_exact_plan = fail_once
-    result = registry.dispatch(
-        Request("geometry_nodes.field_apply", apply_payload(registry))
-    )
+    result = registry.dispatch(Request("geometry_nodes.field_apply", apply_payload(registry)))
 
     assert result.status == Status.FAILED
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
@@ -354,9 +344,7 @@ def test_apply_verification_failure_rolls_back_to_empty_group():
 def test_clear_verification_failure_rebuilds_exact_field_workflow():
     bpy, geometry, fields, registry = setup()
     create_group(registry)
-    applied = registry.dispatch(
-        Request("geometry_nodes.field_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.field_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
     before = inspect(registry)
     original_snapshot = fields.geometry._snapshot
