@@ -28,16 +28,21 @@ def test_default_cli_only_reports_preparation(capsys):
 
 
 @pytest.mark.parametrize(
-    "allow_render,allow_destructive,allow_level2_modeling",
+    "allow_render,allow_destructive,allow_level2_modeling,allow_level3_character",
     [
-        (False, False, False),
-        (True, False, False),
-        (False, True, False),
-        (False, False, True),
+        (False, False, False, False),
+        (True, False, False, False),
+        (False, True, False, False),
+        (False, False, True, False),
+        (False, False, False, True),
     ],
 )
 def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
-    tmp_path, allow_render, allow_destructive, allow_level2_modeling
+    tmp_path,
+    allow_render,
+    allow_destructive,
+    allow_level2_modeling,
+    allow_level3_character,
 ):
     executable = tmp_path / "fake-blender.exe"
     executable.touch()
@@ -108,6 +113,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         allow_render=allow_render,
         allow_destructive=allow_destructive,
         allow_level2_modeling=allow_level2_modeling,
+        allow_level3_character=allow_level3_character,
         launcher=launcher,
         version_probe=lambda *args: BlenderVersion(4, 2),
     )
@@ -120,6 +126,7 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
     assert ("object.delete" in operations) == allow_destructive
     assert ("file.open_checkpoint" in operations) == allow_destructive
     assert report["level2_modeling_requested"] is allow_level2_modeling
+    assert report["level3_character_requested"] is allow_level3_character
     assert {
         "mode.set",
         "curve.create",
@@ -143,5 +150,25 @@ def test_acceptance_fake_session_exercises_flow_and_cleans_temporary_workspace(
         "modifier.stack_diagnose",
     }
     assert level2_operations.issubset(operations) is allow_level2_modeling
+    level3_operations = {
+        "sculpt.inspect",
+        "character.proportion_guide",
+        "character.blockout_plan",
+        "character.landmark_fit",
+        "character.body_region_plan",
+        "character.body_symmetry_audit",
+        "character.face_guide",
+        "character.face_landmark_fit",
+        "character.face_region_plan",
+        "character.face_symmetry_audit",
+        "character.sculpt_qa",
+        "character.sculpt_recipe_preview",
+        "character.sculpt_recovery_snapshot",
+        "sculpt.brush_grab_controlled",
+        "character.sculpt_recovery_restore",
+        "character.workflow_preview",
+        "character.level3_acceptance",
+    }
+    assert level3_operations.issubset(operations) is allow_level3_character
     assert sessions[0].client.closed
     assert not configurations[0].output_directory.exists()
