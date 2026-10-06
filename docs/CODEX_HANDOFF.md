@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 2 source/package commit: 8ac4261081245186653347e60c18ddb0a6b4a268.
+Latest verified pushed Level 2 source/package commit: ad762c8c5fbde8caaba998b17856741097f5fd45.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -33,29 +33,37 @@ Next: no additional Level 1 source feature is required. The next phase is real B
 acceptance and then integration into main Shuvi, only after explicit authorization.
 
 ## Level 2 active checkpoint
-Latest verified Level 2 source checkpoint: 8ac4261081245186653347e60c18ddb0a6b4a268.
-CI run 37409936391 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **272 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **41 package modules**.
+Latest verified Level 2 source checkpoint: ad762c8c5fbde8caaba998b17856741097f5fd45.
+CI run 37410698542 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **283 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **42 package modules**.
 
-Level 2 Professional Modeling is now **10% source complete**. Milestone 1 adds:
-- `mesh.topology_inspect`: bounded canonical edges, boundary/non-manifold diagnostics and
-  face adjacency derived from indexed polygon loops.
-- `mesh.extrude_face`: one explicitly indexed face extrusion with fresh object/geometry
-  revisions, Object-mode/local-unshared-mesh guards, geometry work preflight, complete
-  readback verification and rollback on verification mismatch.
+Level 2 Professional Modeling is now **20% source complete** (Milestones 1 and 2 of 10).
+Milestone 2 adds:
+- `mesh.transform_elements`: bounded VERTEX/EDGE/FACE transforms using explicit selection,
+  local-space pivot, scale + XYZ rotation + translation, complete geometry readback and
+  coordinate rollback on verification failure.
+- `mesh.merge_vertices`: 2..64 explicit vertices, deterministic CENTER/FIRST/LAST placement,
+  index compaction, collapsed-face removal, self-repeating polygon rejection and full rebuild
+  verification/rollback.
+- `mesh.dissolve_edge`: canonical edge-index dissolve for exactly two face users, producing
+  one bounded simple polygon with full rebuild verification/rollback.
 
-The factory now exposes **57 typed tools**. Level 1 remains source-complete at 100%.
+Topology rebuild tools conservatively reject material slots, vertex groups, UV layers and
+color attributes because Milestone 2 does not yet preserve those data layers. All tools keep
+the existing local/unshared mesh, Object-mode, shape-key/modifier, stale-state and object
+animation/constraint safety guards.
+
+The factory now exposes **60 typed tools**. Level 1 remains source-complete at 100%.
 No Blender install, launch, bpy runtime test or render was performed; runtime verification
 for both levels remains 0%.
 
-The Level 2 roadmap is documented in docs/LEVEL_2_MODELING.md as ten 10% milestones.
-Milestone 2 is the next source task: explicit vertex/edge/face transforms plus bounded
-merge/dissolve foundations, while keeping arbitrary Python/bmesh/operator execution closed.
+The Level 2 roadmap remains ten 10% milestones. Milestone 3 is next: bounded region extrusion,
+inset and bevel modeling foundations without opening arbitrary operator/Python execution.
 
 ## Current phase
-Level 1 source is complete at 100%. Level 2 Professional Modeling has started and is at
-10% source completion (Milestone 1 of 10 complete). Real Blender runtime acceptance remains
+Level 1 source is complete at 100%. Level 2 Professional Modeling is at **20% source
+completion** (Milestones 1-2 of 10 complete). Real Blender runtime acceptance remains
 prepared but unexecuted because no usable Blender runtime/server is currently available.
 
 ## Completed and verified
@@ -90,7 +98,7 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 57 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 60 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -122,16 +130,16 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 57 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
-**10%**. Verified Level 2 checkpoint: 8ac4261081245186653347e60c18ddb0a6b4a268.
-CI run 37409936391 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 272 tests,
-lint/format, package build, 41-module distribution audit and clean install/import without bpy.
+Source: 60 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
+**20%**. Verified Level 2 checkpoint: ad762c8c5fbde8caaba998b17856741097f5fd45.
+CI run 37410698542 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 283 tests,
+lint/format, package build, 42-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 2 Milestone 1 is complete at the requested 10% source checkpoint. No Blender runtime
-work is authorized/available. The next modeling slice should begin Milestone 2 only when
-requested; do not inflate progress by counting fake-bpy tests as real Blender verification.
+Level 2 Milestone 2 is complete at the requested next 10% checkpoint, bringing Level 2 source
+to 20%. No Blender runtime work is available. The next slice should begin Milestone 3 only
+when requested; do not count fake-bpy/CI evidence as real Blender runtime verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -152,8 +160,9 @@ requested; do not inflate progress by counting fake-bpy tests as real Blender ve
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-When the user asks to continue Level 2, begin Milestone 2: typed explicit vertex/edge/face
-modeling transforms and conservative merge/dissolve foundations with fresh geometry revisions,
-bounded topology work, full readback verification and rollback. Keep Level 2 runtime
-verification at 0% until a real Blender 4.2+ environment is explicitly available/authorized.
+When the user asks to continue Level 2, begin Milestone 3: bounded multi-face region extrusion,
+inset and bevel modeling foundations with explicit topology inputs, fresh geometry revisions,
+work-budget preflight, complete readback verification and rollback. Preserve the current
+topology metadata guards until those data layers can be intentionally preserved. Keep Level 2
+runtime verification at 0% until a real Blender 4.2+ environment is explicitly available.
 Do not install, probe, launch or render Blender in the meantime.
