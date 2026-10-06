@@ -76,6 +76,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.modifier_inspect | object_id | read_only | inspect bounded NODES modifiers, bound local GeometryNodeTree metadata and group revisions plus binding_revision |
 | geometry_nodes.modifier_bind | target, group_name, expected_group_revision, modifier_name | mutation | create one bounded NODES modifier and bind it to one fresh local GeometryNodeTree with exact object/group readback and rollback |
 | geometry_nodes.modifier_remove | target, group_name, expected_group_revision, modifier_name | mutation | remove one exact NODES modifier/group binding with stack-position/flag restoration on rollback |
+| geometry_nodes.primitive_preview | recipe, prefix, parameters | read_only | deterministic source-only CUBE / ICO_SPHERE / TWIN_CUBE graph plan with output/interface intent and primitive_revision |
+| geometry_nodes.primitive_apply | group_name, expected_group_revision, recipe, prefix, parameters | mutation | apply one exact bounded primitive recipe to an empty local GeometryNodeTree with internal Group Output/interface and verified rollback |
+| geometry_nodes.primitive_clear | group_name, expected_group_revision, recipe, prefix, parameters | mutation | clear only a graph that exactly matches the requested primitive recipe and rebuild it on known verification failure |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -855,3 +858,35 @@ Current Level 3 source progress: **100%**.
 - No modifier evaluation claim, generic modifier setter, arbitrary node-group assignment,
   modifier apply operation, external linked group mutation, shape-key workflow or real Blender
   Geometry Nodes runtime claim is exposed.
+
+
+### Level 5 milestone 5 limits
+
+- `geometry_nodes.primitive_preview` supports only three source-defined recipes:
+  `CUBE`, `ICO_SPHERE` and `TWIN_CUBE`. It returns a deterministic graph plan,
+  interface/output intent and `primitive_revision` without touching Blender data.
+- Recipe parameters are strongly bounded: positive size/radius, cube vertex counts 2..64,
+  Icosphere subdivisions 1..5 and twin-cube offsets within ±1000.
+- `geometry_nodes.primitive_apply` requires a fresh group revision and an entirely empty
+  bounded local GeometryNodeTree. It refuses groups with more than one user to avoid mutating a
+  shared procedural asset.
+- Apply creates one output Geometry interface socket plus an internal `NodeGroupOutput`.
+  Callers cannot request that internal node through the generic typed node-add surface.
+- Recipe graph nodes are only existing allowlisted Geometry Nodes. `CUBE` uses Mesh Cube,
+  `ICO_SPHERE` uses Mesh Ico Sphere, and `TWIN_CUBE` uses two Mesh Cubes plus one Transform
+  Geometry and one Join Geometry.
+- Every recipe uses deterministic names, node locations, typed default values and exact
+  source-side links into the Group Output Geometry socket.
+- Apply verification compares the exact interface, node types/names/locations/defaults and
+  link topology. Known mismatch removes the recipe graph/interface and verifies restoration of
+  the original empty group revision.
+- `geometry_nodes.primitive_clear` first requires the current group to exactly match the
+  requested recipe/prefix/parameters. Modified or foreign graphs fail closed instead of being
+  partially deleted.
+- Clear verifies the group becomes exactly empty. Known readback mismatch rebuilds the exact
+  recipe and verifies restoration of the original group revision.
+- These source-side checks do not evaluate modifier output, generated mesh topology,
+  dependency-graph behavior or render output in real Blender.
+- The factory now exposes **168 typed tools**, exactly matching the current **168-tool** hard
+  registry/client cap. Milestone 6 must deliberately raise the bounded cap before adding any
+  new typed operations; no generic executor may be used to bypass the limit.
