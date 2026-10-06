@@ -3,6 +3,7 @@
 from .animation import AnimationOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
+from .character_acceptance import CharacterAcceptanceOperations
 from .character_blockout import CharacterBlockoutOperations
 from .character_body import CharacterBodyOperations
 from .character_face import CharacterFaceOperations
@@ -59,6 +60,7 @@ def create_registry(
         SelectionOperations(objects),
         HierarchyOperations(objects),
         CollectionOperations(objects),
+        CharacterAcceptanceOperations(objects),
         CharacterBlockoutOperations(objects),
         CharacterBodyOperations(objects),
         CharacterFaceOperations(objects),
