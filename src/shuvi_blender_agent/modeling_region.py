@@ -270,8 +270,7 @@ class ModelingRegionOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Unsupported inset face size")
 
         center = [
-            sum(before["vertices"][index][axis] for index in face) / len(face)
-            for axis in range(3)
+            sum(before["vertices"][index][axis] for index in face) / len(face) for axis in range(3)
         ]
         vertices = [list(vertex) for vertex in before["vertices"]]
         inner = []
