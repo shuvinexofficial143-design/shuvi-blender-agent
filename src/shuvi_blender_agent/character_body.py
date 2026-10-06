@@ -343,12 +343,8 @@ class CharacterBodyOperations:
         vertices = geometry["vertices"]
         find_partner, get_checks = _symmetry_lookup(vertices, 0, action.tolerance)
 
-        positive = [
-            index for index, vertex in enumerate(vertices) if vertex[0] > action.tolerance
-        ]
-        negative = [
-            index for index, vertex in enumerate(vertices) if vertex[0] < -action.tolerance
-        ]
+        positive = [index for index, vertex in enumerate(vertices) if vertex[0] > action.tolerance]
+        negative = [index for index, vertex in enumerate(vertices) if vertex[0] < -action.tolerance]
         plane = [
             index for index, vertex in enumerate(vertices) if abs(vertex[0]) <= action.tolerance
         ]
