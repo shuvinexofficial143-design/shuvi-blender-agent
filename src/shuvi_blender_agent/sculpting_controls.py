@@ -252,7 +252,10 @@ def _symmetry_lookup(vertices, axis_index, epsilon):
 def _region(vertices, control):
     axis_index = _AXIS_INDEX.get(control.axis)
     find_partner = None
-    get_checks = lambda: 0
+
+    def get_checks():
+        return 0
+
     if control.symmetry:
         find_partner, get_checks = _symmetry_lookup(
             vertices,
