@@ -69,8 +69,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.tree_inspect | group_name | read_only | bounded GeometryNodeTree interface/node/socket/link/nested-group snapshot plus group_revision |
 | geometry_nodes.group_create | group_name | mutation | create one empty local GeometryNodeTree and verify bounded readback |
 | geometry_nodes.node_add | group_name, expected_group_revision, node_type, node_name, location (optional) | mutation | add one allowlisted Geometry node with deterministic/requested bounded placement and rollback |
-| geometry_nodes.node_remove | group_name, expected_group_revision, node_name | mutation | remove one unlinked allowlisted Geometry node with verified recreation rollback |
+| geometry_nodes.node_remove | group_name, expected_group_revision, node_name | mutation | remove one allowlisted Geometry node; capture incident links and verify full node/link recovery on rollback |
 | geometry_nodes.node_set_input | group_name, expected_group_revision, node_name, socket_name, value | mutation | edit one allowlisted unlinked typed socket default with exact readback and rollback |
+| geometry_nodes.link_add | group_name, expected_group_revision, from_node_name, from_socket_identifier, to_node_name, to_socket_identifier | mutation | add one exact typed acyclic link between allowlisted nodes with socket/type/input-limit validation and rollback |
+| geometry_nodes.link_remove | group_name, expected_group_revision, from_node_name, from_socket_identifier, to_node_name, to_socket_identifier | mutation | remove one exact typed link by node/socket identifiers with verified restoration rollback |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -790,9 +792,35 @@ Current Level 3 source progress: **100%**.
 - `geometry_nodes.node_set_input` only edits specifically allowlisted typed defaults for the
   allowlisted node kind. Linked inputs are never disconnected to make a default edit succeed.
 - Every node mutation requires a fresh group revision and actual bounded readback.
-- The factory now exposes **160 typed tools**, exactly matching the current centralized
-  **160-tool** hard registry/catalog cap. Milestone 3 must deliberately increase that bounded
-  cap before adding tools; the cap must not be bypassed with a generic executor.
+- Milestones 1-2 ended at **160 typed tools**. Milestone 3 deliberately raises the centralized
+  registry/client hard cap from **160 to 168** and adds only two typed link mutations, taking
+  the factory to **162 tools**. The bounded cap remains enforced and no generic executor is used.
 - No arbitrary Python, unrestricted node creation, generic node property setter, typed link
   mutation, Geometry Nodes modifier binding, real Geometry Nodes evaluation or runtime claim
   is exposed by Milestones 1–2.
+
+
+### Level 5 milestone 3 limits
+
+- Link mutation identifies sockets by their inspected stable socket identifiers, not only by
+  display names. Node names plus source/output and target/input socket identifiers define the
+  exact link identity.
+- Both endpoint nodes must be Shuvi-allowlisted Geometry Nodes. Foreign nodes remain inspectable
+  but cannot participate in external typed link mutation.
+- `geometry_nodes.link_add` requires a fresh group revision, an existing output socket and
+  input socket, exact non-UNKNOWN socket-type equality and remaining link budget.
+- Exact duplicate links are rejected. Single-input sockets reject a second incoming link;
+  multi-input sockets may accept multiple distinct compatible incoming links.
+- A bounded graph walk rejects a new directed link when it would introduce a dependency cycle.
+- Successful link creation verifies exact link presence and an exact +1 link count. A known
+  readback mismatch removes the new link and verifies the original group revision.
+- `geometry_nodes.link_remove` requires the exact existing link and fresh group revision.
+  Removal verifies exact absence and an exact -1 link count; verification failure recreates
+  the original link and verifies the original group revision.
+- Geometry-node removal now captures all bounded incident link identities before deleting an
+  allowlisted node. Verification accounts for the exact incident-link count; rollback rebuilds
+  the node and restores every captured link before claiming recovery.
+- The factory exposes **162 typed tools** under the deliberately bounded **168-tool** hard cap.
+- No unrestricted graph rewrite, arbitrary Blender node idname, implicit type conversion,
+  self-link, cyclic graph construction, generic Python or real Geometry Nodes evaluation is
+  exposed.
