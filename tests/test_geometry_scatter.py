@@ -72,9 +72,7 @@ def apply_payload(registry, recipe="CUBE_SCATTER", prefix="ScatterDemo"):
         "expected_group_revision": inspect(registry)["group_revision"],
         "recipe": recipe,
         "prefix": prefix,
-        "parameters": cube_parameters()
-        if recipe == "CUBE_SCATTER"
-        else ico_parameters(),
+        "parameters": cube_parameters() if recipe == "CUBE_SCATTER" else ico_parameters(),
     }
 
 
@@ -171,10 +169,7 @@ def test_apply_creates_exact_scatter_graph(recipe, instance_bl_idname, params):
     assert scatter_node["bl_idname"] == "GeometryNodeInstanceOnPoints"
     assert output["bl_idname"] == "NodeGroupOutput"
 
-    values = {
-        item["name"]: item["default_value"]
-        for item in scatter_node["inputs"]
-    }
+    values = {item["name"]: item["default_value"] for item in scatter_node["inputs"]}
     assert values["Selection"] is True
     assert values["Pick Instance"] is False
     assert values["Instance Index"] == 0
@@ -264,15 +259,11 @@ def test_shared_group_is_denied_for_apply_and_clear():
     group = bpy.data.node_groups.get("ScatterGroup")
     group.users = 2
 
-    denied = registry.dispatch(
-        Request("geometry_nodes.scatter_apply", apply_payload(registry))
-    )
+    denied = registry.dispatch(Request("geometry_nodes.scatter_apply", apply_payload(registry)))
     assert denied.error.code == ErrorCode.SAFETY_DENIED
 
     group.users = 0
-    applied = registry.dispatch(
-        Request("geometry_nodes.scatter_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.scatter_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
     group.users = 2
 
@@ -291,9 +282,7 @@ def test_shared_group_is_denied_for_apply_and_clear():
 def test_clear_exact_scatter_restores_empty_group():
     bpy, geometry, scatter, registry = setup()
     empty = create_group(registry)
-    applied = registry.dispatch(
-        Request("geometry_nodes.scatter_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.scatter_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
 
     result = registry.dispatch(
@@ -318,9 +307,7 @@ def test_clear_exact_scatter_restores_empty_group():
 def test_clear_refuses_modified_scatter_defaults():
     bpy, geometry, scatter, registry = setup()
     create_group(registry)
-    applied = registry.dispatch(
-        Request("geometry_nodes.scatter_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.scatter_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
     group = bpy.data.node_groups.get("ScatterGroup")
     scatter_node = group.nodes.get("ScatterDemo_Scatter")
@@ -356,9 +343,7 @@ def test_apply_verification_failure_rolls_back_to_empty_group():
         return original(snapshot, plan)
 
     scatter._verify_exact_plan = fail_once
-    result = registry.dispatch(
-        Request("geometry_nodes.scatter_apply", apply_payload(registry))
-    )
+    result = registry.dispatch(Request("geometry_nodes.scatter_apply", apply_payload(registry)))
 
     assert result.status == Status.FAILED
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
@@ -370,9 +355,7 @@ def test_apply_verification_failure_rolls_back_to_empty_group():
 def test_clear_verification_failure_rebuilds_exact_scatter():
     bpy, geometry, scatter, registry = setup()
     create_group(registry)
-    applied = registry.dispatch(
-        Request("geometry_nodes.scatter_apply", apply_payload(registry))
-    )
+    applied = registry.dispatch(Request("geometry_nodes.scatter_apply", apply_payload(registry)))
     assert applied.status == Status.VERIFIED
     before = inspect(registry)
     original_snapshot = scatter.geometry._snapshot
