@@ -19,6 +19,7 @@ from .modeling import ExtrudeFace
 from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
 from .modeling_hardsurface import BooleanAdd, ModifierMove, ModifierUpdate, StackAdd
 from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
+from .modeling_repair import CleanupFaces, MergeByDistance, RemoveLooseVertices, RepairInspect
 from .modeling_shading import OrientFaces, SetFaceSmoothing
 from .modeling_topology import (
     BridgeBoundaryLoops,
@@ -123,6 +124,10 @@ def builtin_contracts() -> dict:
         "mesh.shading_inspect": (read, object_id),
         "mesh.set_face_smoothing": (mutation, SetFaceSmoothing.parse),
         "mesh.orient_faces_consistently": (mutation, OrientFaces.parse),
+        "mesh.repair_inspect": (read, RepairInspect.parse),
+        "mesh.merge_by_distance": (mutation, MergeByDistance.parse),
+        "mesh.cleanup_faces": (mutation, CleanupFaces.parse),
+        "mesh.remove_loose_vertices": (mutation, RemoveLooseVertices.parse),
         "mesh.apply_object_transform": (mutation, MeshTransformAction.parse),
         "origin.to_centroid": (mutation, MeshTransformAction.parse),
     }
