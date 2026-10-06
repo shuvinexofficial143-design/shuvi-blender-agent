@@ -307,11 +307,7 @@ class GeometryNodeOperations:
 
     @classmethod
     def _socket_by_identifier(cls, table, identifier, direction):
-        matches = [
-            socket
-            for socket in table
-            if cls._socket_identifier(socket) == identifier
-        ]
+        matches = [socket for socket in table if cls._socket_identifier(socket) == identifier]
         if not matches:
             raise AgentError(
                 ErrorCode.NOT_FOUND,
@@ -484,11 +480,7 @@ class GeometryNodeOperations:
         )
         output_type = self._socket_type(output)
         input_type = self._socket_type(input_socket)
-        if (
-            output_type == "UNKNOWN"
-            or input_type == "UNKNOWN"
-            or output_type != input_type
-        ):
+        if output_type == "UNKNOWN" or input_type == "UNKNOWN" or output_type != input_type:
             raise AgentError(
                 ErrorCode.SAFETY_DENIED,
                 "Geometry link socket types are incompatible",
@@ -524,11 +516,7 @@ class GeometryNodeOperations:
             visited.add(marker)
             if node is source:
                 return True
-            pending.extend(
-                link.to_node
-                for link in group.links
-                if link.from_node is node
-            )
+            pending.extend(link.to_node for link in group.links if link.from_node is node)
         return False
 
     def _restore_link_row(self, group, row):
@@ -550,8 +538,7 @@ class GeometryNodeOperations:
             "input",
         )
         if not any(
-            link.from_socket is output and link.to_socket is input_socket
-            for link in group.links
+            link.from_socket is output and link.to_socket is input_socket for link in group.links
         ):
             group.links.new(output, input_socket)
 
@@ -981,8 +968,7 @@ class GeometryNodeOperations:
             )
 
         if not any(
-            link.from_socket is output and link.to_socket is input_socket
-            for link in group.links
+            link.from_socket is output and link.to_socket is input_socket for link in group.links
         ):
             group.links.new(output, input_socket)
         restored = self._snapshot(group)
