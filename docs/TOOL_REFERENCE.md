@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 94 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 99 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -95,6 +95,11 @@ clients should retain the filter, session ID and revision while continuing a pag
 | sculpt.inspect | object_id | read_only | bounded base-mesh sculpt readiness, valence, boundary, degenerate-face and vertex-normal diagnostics |
 | sculpt.brush_displace | target, expected_geometry_revision, center, radius, strength, falloff | mutation | radial area-weighted-normal displacement with ≤512 affected vertices and coordinate rollback |
 | sculpt.brush_smooth | target, expected_geometry_revision, center, radius, strength, falloff, iterations, preserve_boundary | mutation | bounded synchronous radial one-ring smoothing with optional boundary preservation and rollback |
+| sculpt.brush_inflate | target, expected_geometry_revision, center, radius, strength, falloff | mutation | radius-relative normal inflation/deflation with normalized signed strength and rollback |
+| sculpt.brush_flatten | target, expected_geometry_revision, center, radius, strength, falloff | mutation | weighted local tangent-plane flattening with complete geometry verification |
+| sculpt.brush_pinch | target, expected_geometry_revision, center, radius, strength, falloff | mutation | signed tangent-plane pinch/expand around brush center |
+| sculpt.brush_grab | target, expected_geometry_revision, center, radius, delta, falloff | mutation | explicit local-space weighted grab translation without normal dependency |
+| sculpt.brush_crease | target, expected_geometry_revision, center, radius, pinch, depth, falloff | mutation | combined tangent pinch plus normal indentation crease foundation |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -417,7 +422,7 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 
 ## Level 3 sculpting foundation
 
-Current Level 3 source progress: **10%**.
+Current Level 3 source progress: **20%**.
 
 ### Level 3 milestone 1 limits
 
@@ -439,3 +444,23 @@ Current Level 3 source progress: **10%**.
 - These are source-side deterministic sculpt-like base-mesh deformation tools. They do not
   invoke Blender's interactive Sculpt Mode brush engine, PBVH, Dyntopo, Multires, masks or
   face sets. Real Blender Level 3 runtime verification remains 0%.
+
+
+### Level 3 milestone 2 limits
+
+- `sculpt.brush_inflate` accepts normalized signed strength -1..1 and converts it to a
+  radius-relative local displacement scale of `radius × 0.25 × strength` before falloff.
+- `sculpt.brush_flatten` resolves a weighted regional brush normal and weighted selected
+  centroid, then moves vertices toward that local tangent plane with strength 0.001..1.0.
+- `sculpt.brush_pinch` accepts signed strength -1..1 and moves vertices along their tangent-
+  plane radial component toward/away from the brush center.
+- `sculpt.brush_grab` applies an explicit nonzero local delta (components ±1000) scaled by
+  radial falloff and does not require a valid surface normal.
+- `sculpt.brush_crease` combines tangent pinch 0..1 and indentation depth 0..100; at least
+  one component must be nonzero.
+- Normal-dependent brushes reject selections whose falloff-weighted accumulated base-mesh
+  normal cannot be normalized safely.
+- All expanded brushes inherit the 512-positive-weight selection cap, fresh object/geometry
+  state, local unshared base-mesh guard, full indexed-geometry readback and coordinate rollback.
+- These algorithms are deterministic base-mesh foundations only; they do not claim Blender
+  interactive Sculpt Mode brush equivalence or runtime verification.
