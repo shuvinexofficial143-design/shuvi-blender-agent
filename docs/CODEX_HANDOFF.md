@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 5 source/test commit: 34d57faf3c9fafd0cf27d3e724f563de6aba821b.
+Latest verified pushed Level 5 source/test commit: 492d4c91f2712a8d0eda83a72b81fb474633db8d.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -147,54 +147,54 @@ silently create Milestone 11. Next scope must be explicitly selected as Level 5 
 integration into main Shuvi, or separately authorized real Blender 4.2+ Level 4 acceptance.
 
 ## Level 5 active checkpoint
-Latest verified Level 5 source/test checkpoint: 34d57faf3c9fafd0cf27d3e724f563de6aba821b.
-CI run 37451234147 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **556 tests**, package build, distribution audit and clean install/import without bpy.
+Latest verified Level 5 source/test checkpoint: 492d4c91f2712a8d0eda83a72b81fb474633db8d.
+CI run 37452665272 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **567 tests**, package build, distribution audit and clean install/import without bpy.
 The distribution audit verified **67 package modules**.
 
-Level 5 Geometry Nodes is now **20% source complete** (Milestones 1-2 of 10).
+Level 5 Geometry Nodes is now **30% source complete** (Milestones 1-3 of 10).
 
-Milestone 1 adds:
-- `geometry_nodes.tree_inspect`: bounded local GeometryNodeTree inspection with group
-  interface sockets, nodes, node inputs/outputs, link topology, nested group references and
-  a fresh deterministic `group_revision`.
-- inspection limits are 64 nodes, 128 links, 64 interface sockets, 32 inputs and 32 outputs
-  per node, and 32 nested group names.
-- unmanaged/foreign nodes may be inspected but are not implicitly eligible for mutation.
+Milestones 1-2 remain the bounded GeometryNodeTree inspection and typed node creation/default
+editing foundation documented in LEVEL_5_GEOMETRY_NODES.md.
 
-Milestone 2 adds:
-- `geometry_nodes.group_create`: verified creation of one empty local GeometryNodeTree.
-- `geometry_nodes.node_add`: one of ten allowlisted Geometry Nodes types, unique bounded
-  name, fresh revision and deterministic four-column placement when no location is supplied.
-- `geometry_nodes.node_remove`: conservative removal of only an unlinked allowlisted node,
-  with source-state capture and verified recreation rollback on known verification failure.
-- `geometry_nodes.node_set_input`: typed bounded default-value updates for specifically
-  allowlisted sockets only; linked inputs fail closed and are never silently disconnected.
-- every mutation uses fresh group revision/readback evidence; caller-supplied Blender node
-  idnames, arbitrary Python and generic node/property mutation remain unavailable.
+Milestone 3 adds:
+- `geometry_nodes.link_add`: fresh-revision link creation using source/target node names and
+  inspected socket identifiers. Both endpoint nodes must be allowlisted Geometry Nodes.
+- exact non-UNKNOWN socket-type equality is required; no implicit conversion is exposed.
+- duplicate links are rejected; non-multi-input destinations reject a second incoming link;
+  multi-input sockets may accept multiple distinct compatible links.
+- a bounded directed graph walk rejects self-links/dependency cycles before mutation.
+- successful creation verifies exact link presence and exact +1 link count; known readback
+  failure removes the new link and verifies the initial group revision.
+- `geometry_nodes.link_remove`: removes one exact identified link, verifies exact absence and
+  exact -1 link count, and restores the original link on known verification failure.
+- link inspection now retains display socket names plus stable socket identifiers and types.
+- `geometry_nodes.node_remove` now captures every bounded incident link before deleting an
+  allowlisted linked node. Verification accounts for the exact removed-link count; rollback
+  recreates the node and restores all captured links before claiming recovery.
 
-The factory now exposes **160 typed tools**, exactly matching the current centralized
-**160-tool** hard registry/catalog cap. This is intentionally bounded. Before Milestone 3
-adds typed linking operations, the cap must be deliberately increased with the registry/client
-cap tests kept in sync; it must not be bypassed by adding a generic executor.
+The centralized registry/client hard cap was deliberately raised from **160 to 168** for this
+milestone. Only two typed link operations were added, taking the factory to **162 typed tools**.
+The bound remains enforced; no generic graph executor, arbitrary node idname or Python surface
+was introduced.
 
 Level 1 source is 100%, Level 2 source is 100%, Level 3 source is 100%, Level 4 source is
-100%, and Level 5 source is 20%. No Blender install/probe/launch, bpy runtime test, real
-Geometry Nodes evaluation, render or GPU-heavy operation was performed. Level 5 real Blender
+100%, and Level 5 source is 30%. No Blender install/probe/launch, bpy runtime test, real
+Geometry Nodes evaluation, render or GPU-heavy action was performed. Level 5 real Blender
 runtime verification remains 0% and production readiness remains No.
 
-Milestone 3 — typed node linking — is next, but must not start without explicit user
-permission.
+Milestone 4 — modifier + node-group binding — is next, but must not start without explicit
+user permission.
 
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
 Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
 Level 4 UV / Texture / Materials source is **100% complete** (Milestones 1-10 of 10).
-Level 5 Geometry Nodes source is **20% complete** (Milestones 1-2 of 10).
+Level 5 Geometry Nodes source is **30% complete** (Milestones 1-3 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted pending explicit authorization.
 
 ## Completed and verified
-- Fetched actual remote main at e4c1f1b and reconciled the current Level 5 starting state;
+- Fetched actual remote main at 9a5b848 and reconciled the Milestone 3 starting state;
   preserved concurrent work and checked latest main before the Level 5 checkpoint.
 - GitHub connector write permission confirmed. Local CLI has no GitHub credentials.
 - No Blender installation, launch, render, or bpy runtime test performed.
@@ -225,7 +225,7 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 160 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 162 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -257,20 +257,19 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 160 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
-**100%**. Level 3 sculpting/character-modeling source: **100%**. Level 4 UV/texture/materials
-source: **100%**. Level 5 Geometry Nodes source: **20%** (Milestones 1-2 of 10).
-Verified Level 5 source/test checkpoint:
-34d57faf3c9fafd0cf27d3e724f563de6aba821b. CI run 37451234147 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 556 tests, lint/format, package build,
+Source: 162 typed host contracts/tools under a bounded 168-tool cap. Level 1 source: **100%**.
+Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
+Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **30%**
+(Milestones 1-3 of 10). Verified Level 5 source/test checkpoint:
+492d4c91f2712a8d0eda83a72b81fb474633db8d. CI run 37452665272 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 567 tests, lint/format, package build,
 67-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 5 Milestones 1-2 are complete at 20%. Stop here. Do not begin Milestone 3 without
-explicit user permission. The current factory is exactly at the 160-tool cap; a future
-Milestone 3 implementation must first make a deliberate bounded cap increase with matching
-tests rather than bypassing the allowlist.
+Level 5 Milestones 1-3 are complete at 30%. Stop here. Do not begin Milestone 4 without
+explicit user permission. Keep source/fake evidence separate from real Blender runtime
+verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -288,15 +287,13 @@ tests rather than bypassing the allowlist.
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed 20% source checkpoint. The registry is exactly at its current
-160-tool hard cap, so the next authorized source milestone must deliberately raise that bounded
-cap before adding typed linking tools. Heavy Blender runtime actions still require separate
+None for the completed 30% source checkpoint. The registry/client cap is now deliberately
+bounded at 168 with 162 tools registered. Heavy Blender runtime actions still require separate
 user authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 5, start only Milestone 3:
-typed node linking — connect/disconnect sockets with explicit node/socket identities, type
-compatibility, link validation, fresh group revisions, exact readback and verified recovery.
-Before registering new tools, deliberately increase the current 160-tool bound and keep the host
-client/registry cap tests synchronized. Do not install, probe, launch, render or execute Blender
+Wait for explicit user permission. If the user asks to continue Level 5, start only Milestone 4:
+modifier + node-group binding. Preserve fresh object/group revisions, local/editable object and
+node-group guards, exact modifier/group readback, bounded creation/removal and verified recovery.
+Do not start Milestone 5 automatically. Do not install, probe, launch, render or execute Blender
 runtime acceptance unless the user separately authorizes it.
