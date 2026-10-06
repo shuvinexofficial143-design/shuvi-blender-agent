@@ -4,7 +4,7 @@ Level 3 starts after the completed Level 1 control and Level 2 professional-mode
 roadmaps. It is intentionally split into ten source milestones so source implementation,
 fake-bpy/CI evidence and real Blender runtime behavior remain separate.
 
-Current Level 3 source progress: **50%**.
+Current Level 3 source progress: **70%**.
 
 Real Blender runtime verification for Level 3: **0%**.
 
@@ -17,8 +17,8 @@ Real Blender runtime verification for Level 3: **0%**.
 | 3 | Mask/region weighting, symmetry and side-aware sculpt controls | complete |
 | 4 | Multires/subdivision sculpt workflow and level controls | complete |
 | 5 | Remesh/voxel-density planning and surface-preservation helpers | complete |
-| 6 | Character blockout and proportion/landmark guides | pending |
-| 7 | Head/face character-modeling helpers and facial landmark workflows | pending |
+| 6 | Character blockout and proportion/landmark guides | complete |
+| 7 | Head/face character-modeling helpers and facial landmark workflows | complete |
 | 8 | Torso/limb/hands/feet character-modeling helpers and symmetry workflows | pending |
 | 9 | Character sculpt QA, recovery and reusable sculpt workflow recipes | pending |
 | 10 | Level 3 acceptance, end-to-end character workflow composition and handoff | pending |
@@ -106,10 +106,10 @@ without pretending they prove Blender's real sculpt runtime behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **50%**.
+Level 3 source: **70%**.
 Level 3 real Blender runtime verification: **0%**.
 
-Milestone 2 is complete. Milestone 3 is complete. Milestones 4 and 5 are complete. Milestone 6 is next: character blockout and proportion/landmark guides.
+Milestone 2 is complete. Milestone 3 is complete. Milestones 4 and 5 are complete. Milestones 6 and 7 are complete. Milestone 8 is next: torso/limb/hands/feet character-modeling helpers and symmetry workflows.
 
 
 ## Milestone 2 — 20% complete
@@ -190,7 +190,7 @@ PBVH, Dyntopo, Multires, mask, face-set or interactive Sculpt Mode behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **50%**.
+Level 3 source: **70%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 3 is next: mask/region weighting, symmetry and side-aware sculpt controls.
@@ -274,7 +274,7 @@ runtime equivalence.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **50%**.
+Level 3 source: **70%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 4 is next: Multires/subdivision sculpt workflow and level controls.
@@ -384,7 +384,147 @@ so future runtime acceptance must compare spatial/surface proximity rather than 
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **50%**.
+Level 3 source: **70%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 6 is next: character blockout and proportion/landmark guides.
+
+
+## Milestone 6 — 60% complete
+
+Milestone 6 adds bounded character-proportion references, blockout planning and mesh-to-guide
+landmark candidate fitting. These helpers are intentionally read-only planning surfaces; they do
+not create anatomy automatically or claim artistic/anatomical correctness.
+
+### `character.proportion_guide`
+
+Returns one deterministic local-space human proportion reference for:
+
+- `ADULT_NEUTRAL`
+- `HEROIC`
+- `STYLIZED`
+
+Inputs are preset, total height and local origin. The guide reports head-unit count,
+head height, shoulder/hip widths, centerline landmark heights and paired left/right landmark
+positions.
+
+The convention is explicit: local X = left/right, local Y = depth, local Z = up.
+
+These presets are modeling references, not medical/anatomical ground truth.
+
+### `character.blockout_plan`
+
+Expands the same proportion preset into a bounded planning-only primitive layout for:
+
+- head
+- torso
+- pelvis
+- left/right upper arms
+- left/right forearms
+- left/right thighs
+- left/right lower legs
+
+Each part has a deterministic center, approximate dimensions and shape class
+(`ELLIPSOID` or `CAPSULE`). The plan is symmetric around local X and does not create Blender
+objects.
+
+### `character.landmark_fit`
+
+Fits the proportion guide to an existing bounded mesh using its local-space bounds.
+
+The mesh height is taken from local Z. Guide targets are generated inside those bounds, then
+each target is mapped to the nearest base-mesh vertex with deterministic distance/tie-breaking.
+
+The result reports:
+
+- geometry revision
+- mesh bounds/height
+- target landmark position
+- candidate vertex index and position
+- absolute and height-normalized distance
+- explicit `CANDIDATE_MAPPING_ONLY` status
+
+The fit is capped by the existing 4096-vertex bounded mesh surface and never mutates the mesh.
+
+## Milestone 7 — 70% complete
+
+Milestone 7 adds bounded head/face landmark, brush-region and symmetry-audit helpers.
+
+### `character.face_guide`
+
+Builds a normalized facial reference from one bounded head mesh.
+
+The caller explicitly chooses `POSITIVE_Y` or `NEGATIVE_Y` as the local-space front
+direction. Nonzero X/Y/Z head bounds are required.
+
+The guide contains 14 reference landmarks:
+
+- left/right brow
+- left/right eye
+- nose bridge
+- nose tip
+- left/right mouth corner
+- philtrum
+- chin
+- left/right jaw
+- left/right ear
+
+The guide is positioned slightly inside the selected local front surface and reports centerline
+landmarks plus left/right symmetry pairs.
+
+### `character.face_landmark_fit`
+
+Maps each facial guide target to the nearest bounded base-mesh vertex and reports normalized
+distance relative to max(head width, head height).
+
+The request includes an explicit maximum normalized distance. Candidates outside that threshold
+are reported as rejected, producing `REVIEW` rather than silently claiming a good facial fit.
+
+### `character.face_region_plan`
+
+Converts the face guide into six deterministic sculpt planning regions:
+
+- left eye socket
+- right eye socket
+- nose
+- mouth
+- chin/jaw
+- brow
+
+Each region has a local-space center and bounded radius derived from head width/height. The
+result is `SCULPT_BRUSH_PLANNING_ONLY`; it does not invoke brushes automatically.
+
+### `character.face_symmetry_audit`
+
+Uses the same fitted facial candidates to inspect local-X facial symmetry.
+
+For each paired landmark it reports:
+
+- mirrored X error around head center
+- combined Y/Z alignment error
+- tolerance pass/fail
+
+Centerline landmarks are separately checked for local-X drift. The aggregate result is
+`PASS` or `REVIEW`.
+
+This is a candidate-vertex audit only; it is not a perceptual face-symmetry score.
+
+### Milestones 6–7 source/runtime boundary
+
+- all seven new character tools are read-only
+- no mesh/object creation is performed
+- no unrestricted Blender operators are used
+- proportion presets are modeling references, not anatomical truth
+- blockout plans describe intended primitive layout only
+- landmark fitting uses bounded base-mesh nearest-vertex candidates
+- head/face guides require explicit local front direction
+- face symmetry is local X only and based on candidate vertices, not evaluated geometry
+- character fit workflows are capped by the bounded 4096-vertex mesh snapshot
+- no real Blender Sculpt Mode/PBVH/Multires/Dyntopo behavior is implied
+
+Level 1 source: **100%**.
+Level 2 source: **100%**.
+Level 3 source: **70%**.
+Level 3 real Blender runtime verification: **0%**.
+
+Milestone 8 is next: torso/limb/hands/feet character-modeling helpers and symmetry workflows.
