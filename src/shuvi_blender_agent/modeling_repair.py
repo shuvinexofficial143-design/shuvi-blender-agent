@@ -24,8 +24,7 @@ def _canonical_face(face):
     rotations = [values[index:] + values[:index] for index in range(len(values))]
     reversed_values = tuple(reversed(values))
     rotations += [
-        reversed_values[index:] + reversed_values[:index]
-        for index in range(len(reversed_values))
+        reversed_values[index:] + reversed_values[:index] for index in range(len(reversed_values))
     ]
     return min(rotations)
 
@@ -63,9 +62,7 @@ def _cluster_vertices(vertices, distance):
                         ErrorCode.SAFETY_DENIED,
                         "Repair proximity work limit exceeded",
                     )
-                squared = sum(
-                    (vertex[axis] - vertices[other][axis]) ** 2 for axis in range(3)
-                )
+                squared = sum((vertex[axis] - vertices[other][axis]) ** 2 for axis in range(3))
                 if squared <= distance_squared:
                     union(index, other)
         buckets.setdefault(cell, []).append(index)
@@ -206,11 +203,7 @@ class ModelingRepairOperations(ModelingRegionOperations):
         clusters, pair_checks = _cluster_vertices(vertices, distance)
         duplicate_faces = _duplicate_face_groups(faces)
         face_data = [_face_geometry(vertices, face) for face in faces]
-        degenerate = [
-            index
-            for index, data in enumerate(face_data)
-            if data["area"] <= area_epsilon
-        ]
+        degenerate = [index for index, data in enumerate(face_data) if data["area"] <= area_epsilon]
         referenced = {index for face in faces for index in face}
         loose = [index for index in range(len(vertices)) if index not in referenced]
         users, boundary, nonmanifold, winding = _edge_orientation_diagnostics(faces)
@@ -218,9 +211,7 @@ class ModelingRepairOperations(ModelingRegionOperations):
         threshold_squared = distance * distance
         for edge in sorted(users):
             a, b = edge
-            squared = sum(
-                (vertices[a][axis] - vertices[b][axis]) ** 2 for axis in range(3)
-            )
+            squared = sum((vertices[a][axis] - vertices[b][axis]) ** 2 for axis in range(3))
             if squared <= threshold_squared:
                 zero_length_edges.append(list(edge))
         components = _face_components(faces)
@@ -451,10 +442,7 @@ class ModelingRepairOperations(ModelingRegionOperations):
                 continue
             old_to_new[old_index] = len(vertices)
             vertices.append(list(vertex))
-        faces = [
-            [old_to_new[index] for index in face]
-            for face in before["faces"]
-        ]
+        faces = [[old_to_new[index] for index in face] for face in before["faces"]]
         face_sources = list(range(len(before["faces"])))
 
         return self._commit_repair(
