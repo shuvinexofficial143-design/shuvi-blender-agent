@@ -18,6 +18,7 @@ from .mode_ops import ModeChange
 from .modeling import ExtrudeFace
 from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
 from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
+from .modeling_shading import OrientFaces, SetFaceSmoothing
 from .modeling_topology import (
     BridgeBoundaryLoops,
     FillBoundaryLoop,
@@ -113,6 +114,9 @@ def builtin_contracts() -> dict:
         "mesh.loop_cut_quad_strip": (mutation, LoopCutQuadStrip.parse),
         "mesh.bridge_boundary_loops": (mutation, BridgeBoundaryLoops.parse),
         "mesh.fill_boundary_loop": (mutation, FillBoundaryLoop.parse),
+        "mesh.shading_inspect": (read, object_id),
+        "mesh.set_face_smoothing": (mutation, SetFaceSmoothing.parse),
+        "mesh.orient_faces_consistently": (mutation, OrientFaces.parse),
         "mesh.apply_object_transform": (mutation, MeshTransformAction.parse),
         "origin.to_centroid": (mutation, MeshTransformAction.parse),
     }
