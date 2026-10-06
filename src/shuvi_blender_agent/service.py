@@ -15,8 +15,8 @@ from .operations import ObjectOperations
 from .rendering import RenderOperations
 from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
-from .shape_ops import ShapeOperations
 from .selection import SelectionOperations
+from .shape_ops import ShapeOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
 from .validation import fields
