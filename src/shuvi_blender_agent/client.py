@@ -9,6 +9,7 @@ from .errors import AgentError, ErrorCode
 from .input_contracts import builtin_contracts
 from .models import CreateObject, ObjectTarget, PageQuery, SetTransform, Transform
 from .safety import SafetyClass
+from .tools import MAX_REGISTERED_TOOLS
 from .validation import integer, string
 from .verification import compare
 
@@ -38,7 +39,7 @@ class BlenderController:
                 )
             try:
                 catalog = result.data["operations"]
-                if not isinstance(catalog, list) or not 1 <= len(catalog) <= 128:
+                if not isinstance(catalog, list) or not 1 <= len(catalog) <= MAX_REGISTERED_TOOLS:
                     raise ValueError("Invalid catalog")
                 parsed = {}
                 contracts = builtin_contracts()
