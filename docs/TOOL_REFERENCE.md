@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 84 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 88 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -85,6 +85,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | mesh.retopology_project | source, target, expected_source_geometry_revision, expected_target_geometry_revision, vertex_indices, max_distance, offset | mutation | verified nearest-surface base-mesh projection with normal offset and coordinate rollback |
 | mesh.retopology_relax | target, expected_geometry_revision, vertex_indices, factor, iterations, preserve_boundary | mutation | bounded synchronous one-ring relax with optional boundary preservation |
 | modifier.shrinkwrap_add | source, target, expected_stack_revision, name, wrap_method, wrap_mode, offset | mutation | verified typed non-destructive Shrinkwrap modifier with explicit target identity |
+| modifier.stack_diagnose | object_id | read_only | bounded stack type/order/reference/visibility diagnostics plus diagnostic revision |
+| modifier.stack_compose | target, expected_stack_revision, entries | mutation | atomic append of 1..8 typed BEVEL/SUBSURF/SOLIDIFY entries with full-stack verification |
+| modifier.recipe_preview | recipe, prefix, parameters | read_only | deterministic allowlisted modifier recipe expansion and recipe revision |
+| modifier.recipe_apply | target, expected_stack_revision, recipe, prefix, parameters | mutation | transactional allowlisted preset composition with collision/capacity checks and rollback |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -220,7 +224,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **80%**.
+Current Level 2 source progress: **90%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -361,3 +365,21 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
   ON_SURFACE/ABOVE_SURFACE with offset -100..100. Existing `modifier.update` can patch typed
   Shrinkwrap method/mode/offset/visibility but cannot arbitrarily retarget the modifier.
 - Real Blender evaluated Shrinkwrap/depsgraph behavior remains runtime-unverified.
+
+
+### Level 2 milestone 9 limits
+
+- `modifier.stack_diagnose` reports unsupported entries, disabled viewport/render states,
+  missing BOOLEAN/SHRINKWRAP references, SUBSURF-before-BEVEL advisory pairs, type counts and
+  a bounded complexity score. Diagnostics do not automatically mutate/reorder the stack.
+- `modifier.stack_compose` accepts 1..8 unique named BEVEL/SUBSURF/SOLIDIFY specs using the
+  existing typed settings for each kind. External-reference modifiers are excluded from this
+  generic composition path and remain available through their dedicated tools.
+- `modifier.recipe_preview` and `modifier.recipe_apply` currently support PANEL_SHELL,
+  SUBDIV_BEVEL and HARD_SURFACE_TRIPLE. Each recipe has an exact parameter schema and
+  deterministic generated modifier names based on a bounded prefix.
+- Recipe/composition mutations require a fresh stack revision, preflight name collisions and
+  the 16-entry total stack cap. Verification compares the complete ordered stack; failure
+  removes all entries created by that transaction.
+- These workflows compose modifier state only. They do not evaluate/apply modifier geometry,
+  so real Blender solver/depsgraph behavior remains runtime-unverified.
