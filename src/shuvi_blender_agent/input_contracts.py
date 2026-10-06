@@ -16,6 +16,7 @@ from .mesh import CreateMesh, TranslateVertices
 from .mesh_transform import MeshTransformAction
 from .mode_ops import ModeChange
 from .modeling import ExtrudeFace
+from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
@@ -95,6 +96,9 @@ def builtin_contracts() -> dict:
         "mesh.create": (mutation, CreateMesh.parse),
         "mesh.translate_vertices": (mutation, TranslateVertices.parse),
         "mesh.extrude_face": (mutation, ExtrudeFace.parse),
+        "mesh.transform_elements": (mutation, TransformElements.parse),
+        "mesh.merge_vertices": (mutation, MergeVertices.parse),
+        "mesh.dissolve_edge": (mutation, DissolveEdge.parse),
         "mesh.apply_object_transform": (mutation, MeshTransformAction.parse),
         "origin.to_centroid": (mutation, MeshTransformAction.parse),
     }
