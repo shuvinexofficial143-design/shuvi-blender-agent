@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 67 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 70 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -73,6 +73,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | mesh.loop_cut_quad_strip | target, expected_geometry_revision, edge_index, factor | mutation | bounded all-quad strip discovery, one split vertex per ring edge and verified quad split |
 | mesh.bridge_boundary_loops | target, expected_geometry_revision, loop_a, loop_b | mutation | equal explicit boundary loops connected by one verified quad per segment |
 | mesh.fill_boundary_loop | target, expected_geometry_revision, vertex_indices | mutation | one verified polygon face across an explicit existing boundary loop |
+| mesh.shading_inspect | object_id | read_only | bounded source face normals/areas, smoothing state and topology/shading diagnostics |
+| mesh.set_face_smoothing | target, expected_geometry_revision, expected_shading_revision, face_indices, smooth | mutation | exact per-face smooth flags with unchanged bounded geometry |
+| mesh.orient_faces_consistently | target, expected_geometry_revision, expected_shading_revision | mutation | manifold-connected winding consistency with preserved smooth flags |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -208,7 +211,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **40%**.
+Current Level 2 source progress: **50%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -278,3 +281,21 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
   already exists.
 - All Milestone 4 topology rebuilds retain the no-material/UV/color/vertex-group metadata
   guard until those data layers can be intentionally preserved.
+
+
+### Level 2 milestone 5 limits
+
+- `mesh.shading_inspect` computes source face normals from triangle-fan area vectors and
+  reports triangle-fan area, degenerate/ambiguous-normal faces, isolated vertices, boundary/
+  non-manifold edges, winding conflicts and per-face `use_smooth` state. These are base-mesh
+  diagnostics and do not claim evaluated custom/split normals.
+- `mesh.set_face_smoothing` accepts 1..256 unique face indices and a boolean smooth state.
+  Both geometry and shading revisions must be fresh. The complete smooth/flat face partition
+  is read back; geometry revision must stay unchanged.
+- `mesh.orient_faces_consistently` solves pairwise orientation constraints across edges with
+  exactly two face users. More-than-two-user edges and contradictory constraints are denied.
+  Components are made internally consistent but are not automatically oriented "outside".
+  Smooth flags are preserved across the bounded topology rebuild.
+- The orientation rebuild keeps the existing no-material/UV/color/vertex-group metadata guard.
+  No custom normal layer editing, sharp-edge system, modifier-evaluated normal control or
+  arbitrary normal operator is exposed in this milestone.
