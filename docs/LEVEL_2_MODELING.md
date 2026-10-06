@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **60%**.
+Current Level 2 source progress: **70%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -18,7 +18,7 @@ Real Blender runtime verification for Level 2: **0%**.
 | 4 | Loop-cut/subdivide/bridge/fill workflows | complete |
 | 5 | Normals, smoothing and shading/topology diagnostics | complete |
 | 6 | Hard-surface boolean workflow and stronger modifier modeling controls | complete |
-| 7 | Topology cleanup and repair helpers | pending |
+| 7 | Topology cleanup and repair helpers | complete |
 | 8 | Retopology and shrinkwrap-oriented helpers | pending |
 | 9 | Advanced modeling modifier stack workflows | pending |
 | 10 | Modeling QA, recovery, acceptance and workflow composition | pending |
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **60% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **70% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -444,4 +444,84 @@ moves the modifier back to its prior index.
 - no claim that fake-bpy/CI verifies Blender Boolean solver geometry
 - failed source-level readback verification performs bounded rollback of the changed stack state
 
-Milestone 7 is next: bounded topology cleanup and repair helpers.
+Milestone 7 is complete. Milestone 8 is next: retopology and shrinkwrap-oriented helpers.
+
+
+## Milestone 7 — 70% complete
+
+Milestone 7 adds one bounded repair diagnostic and three conservative topology-cleanup tools.
+
+### `mesh.repair_inspect`
+
+Read-only repair analysis accepts an explicit near-duplicate distance and face-area epsilon.
+
+It reports:
+
+- near-duplicate vertex groups
+- bounded proximity pair-check count
+- duplicate face groups using rotation/reversal-insensitive polygon keys
+- degenerate face indices by triangle-fan area
+- loose/unreferenced vertices
+- zero-length/near-zero edges at the requested distance
+- boundary and non-manifold edges
+- winding-conflict edges
+- face-connected components
+- a separate `repair_revision` tied to geometry + diagnostic thresholds
+
+Near-duplicate clustering uses a bounded spatial grid/union-find pass rather than exposing an
+arbitrary nearest-neighbor routine. Proximity comparisons are capped at 1,000,000 and
+diagnostic groups are capped at 512.
+
+### `mesh.merge_by_distance`
+
+Merges all source vertices connected within a bounded distance threshold.
+
+- deterministic cluster representative is the smallest source vertex index
+- vertex indices are compacted after merging
+- consecutive duplicate polygon vertices are collapsed
+- faces reduced below three unique vertices are removed
+- self-repeating collapsed polygons are removed as degenerate
+- duplicate polygons created by the merge are removed deterministically
+- removed/merged source indices are returned as mutation evidence
+- source per-face smooth flags are preserved for surviving faces
+
+If no vertex group is within the requested distance, the mutation is rejected as a no-op.
+
+### `mesh.cleanup_faces`
+
+Removes explicit repair candidates without touching vertex coordinates.
+
+- faces at or below the requested area epsilon are removed
+- optional duplicate-face cleanup keeps the earliest deterministic face and removes later
+  rotation/reversal-equivalent duplicates
+- source face smoothing is preserved for surviving faces
+- removing every polygon is denied
+
+If no requested cleanup candidate exists, the mutation is rejected as a no-op.
+
+### `mesh.remove_loose_vertices`
+
+Removes vertices not referenced by any polygon and compacts all surviving polygon indices.
+
+- polygon topology/order is otherwise preserved
+- per-face smoothing state is preserved
+- no-op requests are rejected when no loose vertices exist
+
+### Shared Milestone 7 repair boundary
+
+All repair mutations reuse the conservative topology-rebuild boundary:
+
+- fresh ObjectTarget + fresh geometry revision
+- editable local unshared mesh
+- Object mode
+- no shape keys or modifier stack
+- no material slots, UV layers, color attributes or vertex groups during rebuild
+- bounded geometry and topology work
+- complete indexed geometry readback
+- per-face smoothing readback for repair rebuilds
+- rollback to captured geometry/smoothing on verification failure
+
+The repair diagnostic is source/base-mesh analysis. It does not claim evaluated modifier,
+custom-data-layer or real Blender mesh-validation equivalence.
+
+Milestone 8 is next: retopology and shrinkwrap-oriented helpers.
