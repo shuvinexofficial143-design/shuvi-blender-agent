@@ -112,6 +112,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | sculpt.surface_anchor_plan | object_id, max_anchors | read_only | deterministic extrema/centroid-near surface anchor evidence for later remesh comparison |
 | uv.inspect | object_id | read_only | bounded UV-layer/missing-UV, overlap/stretch/island and seam diagnostics with dedicated uv_revision |
 | uv.seam_set | target, expected_geometry_revision, expected_uv_revision, edge_indices, seam | mutation | explicit 1..512 edge seam flags with full bounded seam readback and verified rollback |
+| uv.unwrap_plan | object_id, projection | read_only | bounded XY/XZ/YZ deterministic planar UV projection preview; no Blender unwrap claim |
+| uv.unwrap_apply | target, expected_geometry_revision, expected_uv_revision, layer_name, projection | mutation | create/replace one named planar UV layer with complete layer-state verification and recovery |
+| uv.island_transform | target, expected_geometry_revision, expected_uv_revision, layer_name, face_indices, translation, scale | mutation | exact detected UV-island scale/translate with intended-coordinate readback and rollback |
 | character.proportion_guide | preset, height, origin | read_only | deterministic local-space ADULT_NEUTRAL/HEROIC/STYLIZED modeling proportion reference |
 | character.blockout_plan | preset, height, origin | read_only | planning-only symmetric primitive layout for head/torso/pelvis/arms/legs |
 | character.landmark_fit | object_id, preset | read_only | fit proportion guide targets to deterministic nearest base-mesh vertex candidates |
@@ -623,3 +626,26 @@ Current Level 3 source progress: **100%**.
   bounded seam state and restores the prior complete seam-flag vector if verification fails.
 - No arbitrary Python or unrestricted Blender operator surface is exposed. Real Blender
   unwrap/pack/material runtime behavior remains unverified.
+
+
+### Level 4 milestones 3–4 limits
+
+- `uv.unwrap_plan` and `uv.unwrap_apply` support only explicit XY, XZ or YZ object-local
+  planar projection. A zero projected axis extent is denied. This is deterministic source
+  projection, not Blender Angle Based/Conformal/Smart UV Project behavior.
+- `uv.unwrap_apply` requires fresh object, geometry and UV revisions and editable local
+  unshared mesh data. It creates a named UV layer only below the eight-layer cap or replaces
+  that exact named layer.
+- Successful unwrap verification requires unchanged geometry/seams, exact UV layer count/order,
+  intended active layer, unchanged non-target layer revisions and the intended target
+  coordinate revision. Failure removes a newly-created layer or restores every prior loop UV.
+- `uv.inspect` now returns explicit UV-island face-index groups as well as island count.
+- `uv.island_transform` accepts only a face set that exactly equals one current detected
+  island. It scales around that island's UV bounding-box center and applies bounded translation.
+- Island transform accepts scale 0.01..100 and translation/result coordinates within ±16.
+  Geometry, seams, active layer, layer order and all non-target UV revisions must remain
+  unchanged; verification failure restores all prior target-layer loop coordinates.
+- The typed factory currently contains 131 tools. The centralized registry/catalog capacity is
+  explicitly bounded at 160 and tested at both registry and host-catalog boundaries.
+- No arbitrary Python or unrestricted Blender operator execution was introduced. Real Blender
+  UV Editor/unwrap runtime behavior remains unverified.
