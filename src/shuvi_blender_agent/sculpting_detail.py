@@ -12,7 +12,7 @@ from .tools import Tool
 from .validation import fields, integer, string
 
 MAX_SCULPT_SUBDIV_LEVEL = 3
-MAX_ESTIMATED_FACES = 262_144
+MAX_ESTIMATED_FACES = 250_000
 
 
 def _estimate_faces(base_faces, level):
