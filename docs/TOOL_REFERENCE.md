@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 126 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 183 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -92,6 +92,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.recipe_preview | recipe_id, prefix, parameters | read_only | validate one managed recipe ID against its bounded family schema and route preview through the existing verified family implementation |
 | geometry_nodes.recipe_apply | recipe_id, group_name, expected_group_revision, prefix, parameters | mutation | route one managed recipe mutation through its existing bounded family apply path while preserving fresh-state/readback/rollback evidence |
 | geometry_nodes.recipe_clear | recipe_id, group_name, expected_group_revision, prefix, parameters | mutation | clear one exact managed recipe through its existing family clear path while preserving verified recovery evidence |
+| geometry_nodes.workflow_preview | recipe_id, prefix, parameters | read_only | fixed nine-stage non-mutating Level 5 QA/recovery/acceptance composition with direct-family preview equivalence and explicit runtime boundary |
+| geometry_nodes.level5_acceptance | recipe_id, prefix, parameters | read_only | seven-check source/fake-bpy Level 5 acceptance report; real Blender runtime remains unverified |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -1035,3 +1037,25 @@ Current Level 3 source progress: **100%**.
   payload, file-backed recipe loading or remote recipe source is exposed.
 - Milestone 9 adds four typed operations, taking the factory from 177 to **181 typed tools**
   under the existing bounded **184-tool** cap.
+
+
+### Level 5 milestone 10 limits
+
+- `geometry_nodes.workflow_preview` composes a fixed nine-stage Level 5 workflow over the
+  existing recipe catalog, direct managed-family preview, recipe-library preview, fresh-group
+  mutation gates, exact tree readback, negative-state gates, managed clear/recovery and final
+  acceptance reporting. It performs no automatic mutation.
+- `geometry_nodes.level5_acceptance` evaluates seven source-side checks: fixed ten-recipe
+  catalog, versioned compatibility metadata, static four-family routing, selected recipe
+  membership, direct-family preview equivalence, bounded node/link plan and explicit
+  source/runtime separation.
+- All 10 managed recipe IDs are exercised through the acceptance surface. Representative
+  primitive, field, scatter and architecture recipes also verify stale-revision refusal and
+  recipe-wrapper rollback/recovery behavior.
+- Cross-family parameter payloads fail during typed parsing rather than being reinterpreted by
+  another family.
+- Milestone 10 adds two read-only tools, taking the factory from 181 to **183 typed tools**
+  under the existing bounded **184-tool** registry/client cap.
+- Source/fake-bpy/CI acceptance does not prove real Blender Geometry Nodes evaluation,
+  dependency-graph behavior, viewport output, memory/GPU behavior or rendering.
+- Level 5 source roadmap is complete at 100%. Real Blender runtime verification remains 0%.
