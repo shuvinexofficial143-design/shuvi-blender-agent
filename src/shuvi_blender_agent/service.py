@@ -9,6 +9,7 @@ from .files import OutputWorkspace
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .mesh import MeshOperations
+from .mesh_transform import MeshTransformOperations
 from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
@@ -44,6 +45,7 @@ def create_registry(
         AnimationOperations(objects),
         RenderOperations(objects, policy, workspace),
         MeshOperations(objects),
+        MeshTransformOperations(objects),
     ]
     registry = ToolRegistry(
         [ping_tool(), *(tool for adapter in adapters for tool in adapter.tools())], policy
