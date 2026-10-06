@@ -21,6 +21,7 @@ from .collection_ops import (
     RenameCollection,
 )
 from .destructive import DeleteObject
+from .geometry_acceptance import GeometryWorkflowPreview, Level5Acceptance
 from .geometry_architecture import ArchitectureApply, ArchitectureClear, ArchitecturePreview
 from .geometry_binding import (
     GeometryModifierBind,
@@ -177,6 +178,8 @@ def builtin_contracts() -> dict:
         "geometry_nodes.recipe_preview": (read, GeometryRecipePreview.parse),
         "geometry_nodes.recipe_apply": (mutation, GeometryRecipeApply.parse),
         "geometry_nodes.recipe_clear": (mutation, GeometryRecipeClear.parse),
+        "geometry_nodes.workflow_preview": (read, GeometryWorkflowPreview.parse),
+        "geometry_nodes.level5_acceptance": (read, Level5Acceptance.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),
