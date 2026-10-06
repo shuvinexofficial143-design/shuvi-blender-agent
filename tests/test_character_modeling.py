@@ -321,13 +321,9 @@ def test_character_helpers_reject_flat_or_wrong_type_geometry():
 
 def test_milestones6_and7_contract_validation():
     with pytest.raises(AgentError):
-        ProportionGuide.parse(
-            {"preset": "UNKNOWN", "height": 1.8, "origin": [0, 0, 0]}
-        )
+        ProportionGuide.parse({"preset": "UNKNOWN", "height": 1.8, "origin": [0, 0, 0]})
     with pytest.raises(AgentError):
-        BlockoutPlan.parse(
-            {"preset": "HEROIC", "height": 0, "origin": [0, 0, 0]}
-        )
+        BlockoutPlan.parse({"preset": "HEROIC", "height": 0, "origin": [0, 0, 0]})
     with pytest.raises(AgentError):
         LandmarkFit.parse({"object_id": "id", "preset": "UNKNOWN"})
     with pytest.raises(AgentError):
@@ -348,6 +344,4 @@ def test_milestones6_and7_contract_validation():
                 "tolerance": 0,
             }
         )
-    assert FaceRegions.parse(
-        {"object_id": "id", "front_direction": "NEGATIVE_Y"}
-    ).object_id == "id"
+    assert FaceRegions.parse({"object_id": "id", "front_direction": "NEGATIVE_Y"}).object_id == "id"
