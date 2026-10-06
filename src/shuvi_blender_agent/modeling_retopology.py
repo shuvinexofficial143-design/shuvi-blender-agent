@@ -434,9 +434,7 @@ class ModelingRetopologyOperations:
             | topology
             | {
                 "vertex_valence": valence,
-                "valence_histogram": dict(
-                    sorted(histogram.items(), key=lambda item: int(item[0]))
-                ),
+                "valence_histogram": dict(sorted(histogram.items(), key=lambda item: int(item[0]))),
                 "boundary_vertex_indices": boundary_vertices,
                 "isolated_vertex_indices": isolated,
                 "interior_pole_vertex_indices": interior_poles,
