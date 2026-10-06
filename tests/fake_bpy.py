@@ -18,8 +18,13 @@ class FakeMesh:
 
     def from_pydata(self, vertices, edges, faces):
         self.vertices = [NS(co=list(vertex)) for vertex in vertices]
-        self.faces = faces
+        self.faces = [list(face) for face in faces]
         self.polygons = [NS(vertices=list(face)) for face in faces]
+
+    def clear_geometry(self):
+        self.vertices = []
+        self.faces = []
+        self.polygons = []
 
     def validate(self):
         return False
