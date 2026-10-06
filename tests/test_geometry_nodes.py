@@ -457,15 +457,11 @@ def test_node_set_input_verification_failure_restores_previous_value():
     )
 
 
-
 def test_link_add_and_remove_use_explicit_socket_identifiers():
     bpy, operations, registry = setup()
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status == Status.VERIFIED
 
     added = registry.dispatch(
         Request(
@@ -516,10 +512,7 @@ def test_link_add_refuses_occupied_single_input_and_exact_duplicate():
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
     assert add_node(registry, "MESH_ICO_SPHERE", "Sphere").status == Status.VERIFIED
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status == Status.VERIFIED
 
     first = registry.dispatch(
         Request(
@@ -574,14 +567,8 @@ def test_link_add_allows_multiple_links_into_multi_input_socket():
 def test_link_add_rejects_dependency_cycle():
     bpy, operations, registry = setup()
     create_group(registry)
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform A").status
-        == Status.VERIFIED
-    )
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform B").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform A").status == Status.VERIFIED
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform B").status == Status.VERIFIED
 
     first = registry.dispatch(
         Request(
@@ -617,10 +604,7 @@ def test_link_mutations_reject_stale_revision():
     bpy, operations, registry = setup()
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status == Status.VERIFIED
     stale = inspect(registry)["group_revision"]
     assert add_node(registry, "INPUT_POSITION", "Position").status == Status.VERIFIED
 
@@ -640,10 +624,7 @@ def test_link_add_verification_failure_rolls_back_exactly():
     bpy, operations, registry = setup()
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status == Status.VERIFIED
     original = operations._snapshot
     calls = {"count": 0}
 
@@ -681,10 +662,7 @@ def test_link_remove_verification_failure_restores_link():
     bpy, operations, registry = setup()
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status == Status.VERIFIED
     assert (
         registry.dispatch(
             Request(
@@ -729,10 +707,7 @@ def test_linked_node_remove_now_captures_and_removes_incident_links():
     bpy, operations, registry = setup()
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status == Status.VERIFIED
     assert (
         registry.dispatch(
             Request(
@@ -763,10 +738,7 @@ def test_linked_node_remove_failure_restores_node_and_links():
     bpy, operations, registry = setup()
     create_group(registry)
     assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
-    assert (
-        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
-        == Status.VERIFIED
-    )
+    assert add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status == Status.VERIFIED
     assert (
         registry.dispatch(
             Request(
