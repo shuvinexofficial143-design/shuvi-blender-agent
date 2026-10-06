@@ -16,7 +16,6 @@ from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
 from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS
 
-
 EXAMPLES = {
     "primitive.cube": {
         "parameters": {"size": [2, 3, 4], "vertices": 3},
