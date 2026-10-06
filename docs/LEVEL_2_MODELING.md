@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **40%**.
+Current Level 2 source progress: **50%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -16,7 +16,7 @@ Real Blender runtime verification for Level 2: **0%**.
 | 2 | Explicit vertex/edge/face transforms, merge and dissolve foundations | complete |
 | 3 | Region extrusion, inset and bevel modeling | complete |
 | 4 | Loop-cut/subdivide/bridge/fill workflows | complete |
-| 5 | Normals, smoothing and shading/topology diagnostics | pending |
+| 5 | Normals, smoothing and shading/topology diagnostics | complete |
 | 6 | Hard-surface boolean workflow and stronger modifier modeling controls | pending |
 | 7 | Topology cleanup and repair helpers | pending |
 | 8 | Retopology and shrinkwrap-oriented helpers | pending |
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **40% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **50% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -289,4 +289,72 @@ Milestone 4 inherits the topology-rebuild safety boundary from Milestones 2-3:
 
 No arbitrary bmesh, Python or unrestricted Blender operator execution is exposed.
 
-Milestone 5 is next: bounded normals, smoothing and shading/topology diagnostics.
+Milestone 5 is complete. Milestone 6 is next: hard-surface boolean workflow and stronger modifier modeling controls.
+
+
+## Milestone 5 — 50% complete
+
+Milestone 5 adds bounded source-side shading/normal diagnostics plus conservative smoothing and
+face-orientation controls.
+
+### `mesh.shading_inspect`
+
+Read-only diagnostics derived from the bounded base mesh.
+
+For every face it returns:
+
+- a unit face normal computed from the summed triangle-fan area vector
+- triangle-fan surface area
+- flat/smooth shading state
+
+It also reports:
+
+- smooth and flat face indices
+- degenerate face indices
+- faces whose accumulated normal vector is ambiguous
+- isolated vertices not referenced by any polygon
+- boundary edges
+- non-manifold edges
+- manifold edges whose two polygon users traverse the edge in the same direction
+  (`winding_conflict_edges`)
+- a separate `shading_revision` derived from geometry revision + per-face smoothing flags
+
+The diagnostic normals are deterministic source-geometry calculations. They are not claimed to
+be identical to Blender's evaluated split normals after modifiers, custom normals, sharp edges
+or render-time shading.
+
+### `mesh.set_face_smoothing`
+
+Sets `use_smooth` on 1..256 explicit face indices.
+
+The request requires both a fresh geometry revision and a fresh shading revision. The tool
+requires editable local unshared mesh data and conservatively denies shape keys/modifiers.
+Geometry must remain byte-for-byte equivalent at the bounded indexed-mesh level. Complete
+smoothing state is read back and verified; verification failure restores the prior face flags.
+
+### `mesh.orient_faces_consistently`
+
+Makes each manifold-connected polygon component internally winding-consistent.
+
+The tool builds constraints across edges with exactly two polygon users. Neighboring faces are
+assigned flip states so their shared edge directions become opposite. Boundary edges are
+allowed. Edges with more than two polygon users are rejected, as are contradictory orientation
+constraints. Each disconnected face component is anchored independently, so this operation
+guarantees local consistency but does **not** claim outward-facing normals.
+
+Because face winding is rebuilt, this tool inherits the topology metadata guard: material
+slots, vertex groups, UV layers and color attributes are denied until those layers can be
+preserved intentionally. Existing per-face smooth flags are explicitly restored after the
+rebuild and included in verification.
+
+### Shared Milestone 5 boundary
+
+- fresh object + geometry state for mutations
+- fresh shading state where shading can change or must be preserved
+- bounded base mesh only
+- no evaluated modifier-stack normal claims
+- no custom split-normal editing
+- no arbitrary Python, bmesh or unrestricted operator execution
+- verification mismatch triggers bounded rollback for smoothing/winding mutations
+
+Milestone 6 is next: hard-surface boolean workflow and stronger modifier modeling controls.
