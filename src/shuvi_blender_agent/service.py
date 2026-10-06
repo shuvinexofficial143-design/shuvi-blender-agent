@@ -12,6 +12,7 @@ from .collection_ops import CollectionOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
 from .files import OutputWorkspace
+from .geometry_architecture import GeometryArchitectureOperations
 from .geometry_binding import GeometryBindingOperations
 from .geometry_fields import GeometryFieldOperations
 from .geometry_nodes import GeometryNodeOperations
@@ -72,6 +73,7 @@ def create_registry(
         HierarchyOperations(objects),
         GeometryNodeOperations(objects),
         GeometryBindingOperations(objects),
+        GeometryArchitectureOperations(objects),
         GeometryFieldOperations(objects),
         ProceduralPrimitiveOperations(objects),
         GeometryScatterOperations(objects),
