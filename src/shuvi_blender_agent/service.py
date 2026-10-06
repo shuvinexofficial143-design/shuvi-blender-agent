@@ -14,6 +14,7 @@ from .mesh_transform import MeshTransformOperations
 from .mode_ops import ModeOperations
 from .modeling import ModelingOperations
 from .modeling_edit import ModelingEditOperations
+from .modeling_hardsurface import HardSurfaceOperations
 from .modeling_region import ModelingRegionOperations
 from .modeling_shading import ModelingShadingOperations
 from .modeling_topology import ModelingTopologyOperations
@@ -56,6 +57,7 @@ def create_registry(
         MeshTransformOperations(objects),
         ModelingOperations(objects),
         ModelingEditOperations(objects),
+        HardSurfaceOperations(objects),
         ModelingRegionOperations(objects),
         ModelingShadingOperations(objects),
         ModelingTopologyOperations(objects),
