@@ -36,6 +36,7 @@ from .geometry_nodes import (
     GeometryTreeInspect,
 )
 from .geometry_primitives import PrimitiveApply, PrimitiveClear, PrimitivePreview
+from .geometry_scatter import ScatterApply, ScatterClear, ScatterPreview
 from .hierarchy import ParentChange
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
@@ -161,6 +162,9 @@ def builtin_contracts() -> dict:
         "geometry_nodes.primitive_preview": (read, PrimitivePreview.parse),
         "geometry_nodes.primitive_apply": (mutation, PrimitiveApply.parse),
         "geometry_nodes.primitive_clear": (mutation, PrimitiveClear.parse),
+        "geometry_nodes.scatter_preview": (read, ScatterPreview.parse),
+        "geometry_nodes.scatter_apply": (mutation, ScatterApply.parse),
+        "geometry_nodes.scatter_clear": (mutation, ScatterClear.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),
