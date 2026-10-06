@@ -308,6 +308,8 @@ class FakeNode:
             self._socket(self.inputs, "Rotation", [0.0, 0.0, 0.0])
             self._socket(self.inputs, "Scale", [1.0, 1.0, 1.0])
             self._socket(self.outputs, "Instances", socket_type="GEOMETRY")
+        elif self.type == "GROUP_OUTPUT":
+            self._socket(self.inputs, "Geometry", socket_type="GEOMETRY")
 
 
 class FakeNodes(list):
@@ -327,6 +329,7 @@ class FakeNodes(list):
         "GeometryNodeInputIndex": ("INPUT_INDEX", "Index"),
         "GeometryNodeRealizeInstances": ("REALIZE_INSTANCES", "Realize Instances"),
         "GeometryNodeInstanceOnPoints": ("INSTANCE_ON_POINTS", "Instance on Points"),
+        "NodeGroupOutput": ("GROUP_OUTPUT", "Group Output"),
     }
 
     def new(self, node_type):
@@ -369,6 +372,25 @@ class FakeNodeTree:
         self.links.new(shader.outputs["BSDF"], output.inputs["Surface"])
 
 
+class FakeNodeInterface:
+    def __init__(self):
+        self.items_tree = []
+
+    def new_socket(self, name, in_out, socket_type):
+        item = NS(
+            item_type="SOCKET",
+            name=name,
+            identifier=name,
+            in_out=in_out,
+            socket_type=socket_type,
+        )
+        self.items_tree.append(item)
+        return item
+
+    def remove(self, item):
+        self.items_tree.remove(item)
+
+
 class FakeNodeGroup:
     def __init__(self, name, tree_type):
         self.name = name
@@ -378,7 +400,7 @@ class FakeNodeGroup:
         self.nodes = FakeNodes()
         self.links = FakeNodeLinks()
         self.nodes.tree = self
-        self.interface = NS(items_tree=[])
+        self.interface = FakeNodeInterface()
 
 
 class FakeNodeGroups(list):
