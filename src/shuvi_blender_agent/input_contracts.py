@@ -21,6 +21,7 @@ from .collection_ops import (
     RenameCollection,
 )
 from .destructive import DeleteObject
+from .geometry_architecture import ArchitectureApply, ArchitectureClear, ArchitecturePreview
 from .geometry_binding import (
     GeometryModifierBind,
     GeometryModifierInspect,
@@ -165,6 +166,9 @@ def builtin_contracts() -> dict:
         "geometry_nodes.scatter_preview": (read, ScatterPreview.parse),
         "geometry_nodes.scatter_apply": (mutation, ScatterApply.parse),
         "geometry_nodes.scatter_clear": (mutation, ScatterClear.parse),
+        "geometry_nodes.architecture_preview": (read, ArchitecturePreview.parse),
+        "geometry_nodes.architecture_apply": (mutation, ArchitectureApply.parse),
+        "geometry_nodes.architecture_clear": (mutation, ArchitectureClear.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),
