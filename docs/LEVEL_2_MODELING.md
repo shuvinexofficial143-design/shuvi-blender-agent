@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **20%**.
+Current Level 2 source progress: **30%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -14,7 +14,7 @@ Real Blender runtime verification for Level 2: **0%**.
 |---|---|---|
 | 1 | Topology foundation + bounded single-face extrusion | complete |
 | 2 | Explicit vertex/edge/face transforms, merge and dissolve foundations | complete |
-| 3 | Region extrusion, inset and bevel modeling | pending |
+| 3 | Region extrusion, inset and bevel modeling | complete |
 | 4 | Loop-cut/subdivide/bridge/fill workflows | pending |
 | 5 | Normals, smoothing and shading/topology diagnostics | pending |
 | 6 | Hard-surface boolean workflow and stronger modifier modeling controls | pending |
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **20% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **30% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -160,3 +160,56 @@ captured vertices/faces if verification fails.
 This milestone still does not expose arbitrary bmesh, Python or Blender operator execution.
 Region extrusion, inset, bevel, loop cut/subdivide/bridge/fill, normals and repair workflows
 remain later Level 2 milestones.
+
+
+## Milestone 3 — 30% complete
+
+Milestone 3 adds three bounded topology-rebuild modeling tools:
+
+### `mesh.extrude_region`
+
+Extrudes 1..64 explicit edge-connected faces as one region using a bounded local-space offset.
+
+- selected faces must form one edge-connected region
+- selected non-manifold edges are rejected
+- a closed selected shell with no boundary is rejected
+- all unique selected vertices are duplicated once
+- selected faces are replaced by offset cap faces
+- side quads are created only on the selected-region boundary
+- internal selected edges do not receive duplicate side walls
+- complete resulting vertices/faces are read back and verified
+
+### `mesh.inset_face`
+
+Insets one explicit polygon face by a bounded factor in `0.001..0.95`.
+
+The operation computes the arithmetic face-vertex center, creates one inner vertex for each
+source vertex using linear interpolation toward that center, replaces the source face with
+the inner cap, and creates a quad ring between the original boundary and inner cap. This is a
+deterministic planar/topological inset foundation; it does not yet claim Blender's complete
+Inset Faces operator semantics such as even offset, boundary modes, relative offset or depth.
+
+### `mesh.bevel_boundary_edge`
+
+Adds a first conservative bevel/chamfer foundation for one canonical boundary edge.
+
+- the edge must have exactly one polygon user
+- factor is bounded to `0.001..0.49`
+- each edge endpoint is moved inward along its neighboring polygon edge to create two new
+  vertices
+- the source polygon is rebuilt with the inner edge
+- one quad strip preserves the original outer boundary edge
+- shared/manifold edges are rejected in this foundation
+
+### Shared Milestone 3 guards
+
+All three tools require fresh object/geometry state, Object mode, editable local unshared
+mesh data, no shape keys/modifiers and the normal object animation/constraint guard.
+Topology rebuild is denied when material slots, vertex groups, UV layers or color attributes
+are present because this source milestone does not yet preserve those data layers.
+
+Every operation preflights the existing 4096-vertex, 4096-face, 32768-loop and 32-vertices-per-
+face limits, reads the complete resulting geometry back, verifies it, and restores the prior
+captured vertices/faces if verification fails.
+
+Milestone 4 is next: bounded loop-cut/subdivide/bridge/fill workflows.
