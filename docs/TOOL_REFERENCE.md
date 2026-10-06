@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 109 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 116 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -110,6 +110,13 @@ clients should retain the filter, session ID and revision while continuing a pag
 | sculpt.voxel_target_density | object_id, longest_axis_voxels | read_only | derive bounded recommended voxel size from requested longest-axis density |
 | sculpt.surface_snapshot | object_id | read_only | deterministic local bounds/centroid/area/edge-length preservation baseline |
 | sculpt.surface_anchor_plan | object_id, max_anchors | read_only | deterministic extrema/centroid-near surface anchor evidence for later remesh comparison |
+| character.proportion_guide | preset, height, origin | read_only | deterministic local-space ADULT_NEUTRAL/HEROIC/STYLIZED modeling proportion reference |
+| character.blockout_plan | preset, height, origin | read_only | planning-only symmetric primitive layout for head/torso/pelvis/arms/legs |
+| character.landmark_fit | object_id, preset | read_only | fit proportion guide targets to deterministic nearest base-mesh vertex candidates |
+| character.face_guide | object_id, front_direction | read_only | normalized 14-point facial reference from bounded local head bounds |
+| character.face_landmark_fit | object_id, front_direction, max_normalized_distance | read_only | nearest-vertex facial candidate mapping with explicit review threshold |
+| character.face_region_plan | object_id, front_direction | read_only | six deterministic head/face sculpt-region centers and radii |
+| character.face_symmetry_audit | object_id, front_direction, tolerance | read_only | local-X candidate landmark symmetry and centerline drift audit |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -432,7 +439,7 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 
 ## Level 3 sculpting foundation
 
-Current Level 3 source progress: **50%**.
+Current Level 3 source progress: **70%**.
 
 ### Level 3 milestone 1 limits
 
@@ -514,3 +521,29 @@ Current Level 3 source progress: **50%**.
   not preserved vertex indices.
 - Real Multires, Voxel Remesh, Dyntopo and evaluated subdivision behavior remain runtime
   unverified.
+
+
+### Level 3 milestones 6–7 limits
+
+- `character.proportion_guide` exposes ADULT_NEUTRAL, HEROIC and STYLIZED modeling-reference
+  presets with explicit local X-left/right, Y-depth, Z-up convention. The preset values are
+  artistic blockout references, not anatomical/medical truth.
+- `character.blockout_plan` returns an 11-part planning-only primitive layout for head,
+  torso, pelvis, bilateral upper/forearms and bilateral thigh/lower-leg masses. It creates
+  no Blender objects.
+- `character.landmark_fit` derives body-guide targets from current local mesh bounds and maps
+  them to deterministic nearest base-mesh vertex candidates. The fit is read-only and capped
+  by the existing 4096-vertex bounded geometry surface.
+- `character.face_guide` requires nonzero X/Y/Z head bounds and explicit POSITIVE_Y or
+  NEGATIVE_Y local front direction. It returns 14 facial reference points, centerline names
+  and left/right pair definitions.
+- `character.face_landmark_fit` reports per-landmark normalized candidate distance and an
+  explicit rejection list against caller-supplied threshold 0.001..2.0; rejected candidates
+  produce REVIEW rather than a false fit claim.
+- `character.face_region_plan` returns planning-only eye/nose/mouth/chin-jaw/brow brush
+  centers/radii derived from head width/height.
+- `character.face_symmetry_audit` checks mirrored local-X pair error, Y/Z pair alignment and
+  centerline X drift against tolerance 1e-6..1.0. It is candidate-vertex QA, not perceptual
+  symmetry analysis.
+- All milestone 6–7 tools are read-only and expose no arbitrary Python or unrestricted Blender
+  operator execution. Real Blender sculpt/evaluated-geometry behavior remains runtime-unverified.
