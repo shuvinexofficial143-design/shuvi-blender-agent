@@ -4,14 +4,36 @@ import copy
 from types import SimpleNamespace as NS
 
 
+class FakeUVLayers(list):
+    def __init__(self, mesh):
+        super().__init__()
+        self.mesh = mesh
+        self.active_index = 0
+
+    @property
+    def active(self):
+        if not self:
+            return None
+        return self[self.active_index]
+
+    def new(self, name="UVMap"):
+        loop_count = sum(len(face.vertices) for face in self.mesh.polygons)
+        layer = NS(name=name, data=[NS(uv=[0.0, 0.0]) for _ in range(loop_count)])
+        self.append(layer)
+        self.active_index = len(self) - 1
+        return layer
+
+
 class FakeMesh:
     def __init__(self, name, table):
         self.name = name
         self.users = 0
         self.vertices = []
+        self.edges = []
         self.polygons = []
         self.shape_keys = None
         self.faces = []
+        self.uv_layers = FakeUVLayers(self)
         self.table = table
         self.library = None
         self.materials = FakeMaterialLinks()
@@ -19,12 +41,34 @@ class FakeMesh:
     def from_pydata(self, vertices, edges, faces):
         self.vertices = [NS(co=list(vertex)) for vertex in vertices]
         self.faces = [list(face) for face in faces]
-        self.polygons = [NS(vertices=list(face), use_smooth=False) for face in faces]
+        pairs = {tuple(sorted(edge)) for edge in edges}
+        loop_start = 0
+        polygons = []
+        for face in faces:
+            for index, a in enumerate(face):
+                b = face[(index + 1) % len(face)]
+                pairs.add(tuple(sorted((a, b))))
+            polygons.append(
+                NS(
+                    vertices=list(face),
+                    use_smooth=False,
+                    loop_start=loop_start,
+                    loop_total=len(face),
+                )
+            )
+            loop_start += len(face)
+        self.edges = [NS(vertices=list(pair), use_seam=False) for pair in sorted(pairs)]
+        self.polygons = polygons
+        for layer in self.uv_layers:
+            layer.data = [NS(uv=[0.0, 0.0]) for _ in range(loop_start)]
 
     def clear_geometry(self):
         self.vertices = []
+        self.edges = []
         self.faces = []
         self.polygons = []
+        for layer in self.uv_layers:
+            layer.data = []
 
     def validate(self):
         return False
@@ -35,8 +79,13 @@ class FakeMesh:
     def copy(self):
         mesh = self.table.new(self.name + "Copy")
         mesh.vertices = copy.deepcopy(self.vertices)
+        mesh.edges = copy.deepcopy(self.edges)
         mesh.faces = copy.deepcopy(self.faces)
         mesh.polygons = copy.deepcopy(self.polygons)
+        for layer in self.uv_layers:
+            copied = mesh.uv_layers.new(layer.name)
+            copied.data = copy.deepcopy(layer.data)
+        mesh.uv_layers.active_index = self.uv_layers.active_index
         return mesh
 
 

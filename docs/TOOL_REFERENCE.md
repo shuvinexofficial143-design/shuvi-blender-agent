@@ -110,6 +110,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | sculpt.voxel_target_density | object_id, longest_axis_voxels | read_only | derive bounded recommended voxel size from requested longest-axis density |
 | sculpt.surface_snapshot | object_id | read_only | deterministic local bounds/centroid/area/edge-length preservation baseline |
 | sculpt.surface_anchor_plan | object_id, max_anchors | read_only | deterministic extrema/centroid-near surface anchor evidence for later remesh comparison |
+| uv.inspect | object_id | read_only | bounded UV-layer/missing-UV, overlap/stretch/island and seam diagnostics with dedicated uv_revision |
+| uv.seam_set | target, expected_geometry_revision, expected_uv_revision, edge_indices, seam | mutation | explicit 1..512 edge seam flags with full bounded seam readback and verified rollback |
 | character.proportion_guide | preset, height, origin | read_only | deterministic local-space ADULT_NEUTRAL/HEROIC/STYLIZED modeling proportion reference |
 | character.blockout_plan | preset, height, origin | read_only | planning-only symmetric primitive layout for head/torso/pelvis/arms/legs |
 | character.landmark_fit | object_id, preset | read_only | fit proportion guide targets to deterministic nearest base-mesh vertex candidates |
@@ -601,3 +603,23 @@ Current Level 3 source progress: **100%**.
   injected fake-session coverage has been executed. No real Blender runtime acceptance has
   occurred.
 - Level 3 source roadmap is complete at 100%; this does not alter the 0% real-runtime status.
+
+
+### Level 4 milestones 1–2 limits
+
+- `uv.inspect` is read-only and capped at 256 faces, 8,192 loops, 8 UV layers and 8,192
+  mesh edges. It reports a dedicated `uv_revision` derived from geometry, per-layer coordinate
+  revisions and the complete bounded seam-flag vector.
+- Missing UVs, degenerate UV faces, positive-area overlap pairs, UV-island count and relative
+  UV-to-surface-area stretch outliers are source-side diagnostics. They do not claim Blender
+  UV Editor or unwrap quality equivalence.
+- Overlap checks triangulate bounded UV polygons and retain at most 256 positive-area overlap
+  pairs. Edge/point-only contact is not treated as overlap.
+- `uv.inspect` also acts as the seam preview surface by returning seam flags, seam edge
+  indices and seam vertex pairs without mutation.
+- `uv.seam_set` requires fresh ObjectTarget, geometry revision and UV revision plus 1..512
+  unique explicit edge indices. The target must be editable local unshared mesh data.
+- Seam mutation preserves geometry and UV-layer coordinate revisions, reads back the complete
+  bounded seam state and restores the prior complete seam-flag vector if verification fails.
+- No arbitrary Python or unrestricted Blender operator surface is exposed. Real Blender
+  unwrap/pack/material runtime behavior remains unverified.

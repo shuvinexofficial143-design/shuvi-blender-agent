@@ -58,6 +58,7 @@ from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelT
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
+from .uv import SeamSet
 from .validation import fields, string
 from .visibility import SetVisibility
 
@@ -162,6 +163,8 @@ def builtin_contracts() -> dict:
         "sculpt.voxel_target_density": (read, VoxelTarget.parse),
         "sculpt.surface_snapshot": (read, SurfaceSnapshot.parse),
         "sculpt.surface_anchor_plan": (read, SurfaceAnchors.parse),
+        "uv.inspect": (read, object_id),
+        "uv.seam_set": (mutation, SeamSet.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),
