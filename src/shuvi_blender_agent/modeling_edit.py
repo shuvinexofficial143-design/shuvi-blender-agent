@@ -6,7 +6,7 @@ from .contracts import Request, Status
 from .errors import AgentError, ErrorCode
 from .mesh import MeshOperations
 from .mesh_transform import rotate_xyz
-from .modeling import MAX_EDGES, MAX_FACES, MAX_FACE_VERTICES, MAX_VERTICES, topology_from_faces
+from .modeling import MAX_EDGES, MAX_FACE_VERTICES, MAX_FACES, MAX_VERTICES, topology_from_faces
 from .models import ObjectTarget, vector3
 from .operations import ObjectOperations
 from .safety import SafetyClass, require_revision
