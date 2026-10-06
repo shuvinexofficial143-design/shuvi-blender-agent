@@ -112,10 +112,7 @@ class ModelingTopologyOperations(ModelingRegionOperations):
         point_b = vertices[b]
         return list(
             vector3(
-                [
-                    point_a[axis] + (point_b[axis] - point_a[axis]) * factor
-                    for axis in range(3)
-                ],
+                [point_a[axis] + (point_b[axis] - point_a[axis]) * factor for axis in range(3)],
                 "subdivide point",
                 1_000_000,
             )
