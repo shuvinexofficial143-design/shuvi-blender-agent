@@ -13,7 +13,6 @@ from .inspection import revision
 from .operations import ObjectOperations
 from .safety import SafetyClass
 from .tools import Tool
-from .validation import fields
 
 MAX_GEOMETRY_NODES = 64
 MAX_GEOMETRY_LINKS = 128
@@ -190,13 +189,13 @@ class GeometryAcceptanceOperations:
             {
                 "stage": 4,
                 "operation": "geometry_nodes.group_create",
-                "purpose": "create a fresh empty local GeometryNodeTree only when execution is authorized",
+                "purpose": (\n                    "create a fresh empty local GeometryNodeTree only when execution "\n                    "is authorized"\n                ),
                 "mutation": True,
             },
             {
                 "stage": 5,
                 "operation": "geometry_nodes.recipe_apply",
-                "purpose": "apply only with a fresh expected group revision and existing family bounds",
+                "purpose": (\n                    "apply only with a fresh expected group revision and existing "\n                    "family bounds"\n                ),
                 "mutation": True,
             },
             {
@@ -208,7 +207,7 @@ class GeometryAcceptanceOperations:
             {
                 "stage": 7,
                 "operation": "stale/cross-family negative gates",
-                "purpose": "fail closed on stale state, mismatched family parameters and foreign graph state",
+                "purpose": (\n                    "fail closed on stale state, mismatched family parameters and "\n                    "foreign graph state"\n                ),
                 "mutation": False,
             },
             {
