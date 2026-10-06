@@ -13,7 +13,7 @@ from .safety import SafetyClass
 from .tools import Tool
 from .uv import MAX_UV_FACES, _face_area_3d, _uv_area
 from .uv_workflows import UVWorkflowOperations, _islands
-from .validation import fields, integer, invalid, number, string
+from .validation import fields, integer, number, string
 from .verification import compare
 
 MAX_TEXTURE_SIZE = 32768
@@ -345,7 +345,10 @@ class UVPackingOperations(UVWorkflowOperations):
             )
         scale = action.target_density / current
         if scale <= 0.0 or scale > 10_000.0:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Texel-density scale is outside source bounds")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Texel-density scale is outside source bounds",
+            )
         return Result(
             request.request_id,
             request.command_id,
