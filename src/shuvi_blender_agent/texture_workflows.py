@@ -859,7 +859,12 @@ class TextureWorkflowOperations(MaterialNodeOperations):
 
     def tools(self):
         return [
-            Tool("texture.image_inspect", SafetyClass.READ_ONLY, ImageInspect.parse, self.image_inspect),
+            Tool(
+                "texture.image_inspect",
+                SafetyClass.READ_ONLY,
+                ImageInspect.parse,
+                self.image_inspect,
+            ),
             Tool("texture.udim_plan", SafetyClass.READ_ONLY, UDIMPlan.parse, self.udim_plan),
             Tool("texture.channel_qa", SafetyClass.READ_ONLY, MaterialOnly.parse, self.channel_qa),
             Tool("texture.bake_prep", SafetyClass.READ_ONLY, BakePrep.parse, self.bake_prep),
