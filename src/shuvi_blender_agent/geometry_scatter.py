@@ -69,9 +69,7 @@ def _parameters(recipe, value):
     point_vertices = _integer_vector3(value["point_vertices"], "point_vertices", 2, 20)
     estimated = _estimated_cube_surface_points(point_vertices)
     if estimated > MAX_SCATTER_INSTANCES:
-        raise invalid(
-            f"estimated scatter instance count exceeds {MAX_SCATTER_INSTANCES}"
-        )
+        raise invalid(f"estimated scatter instance count exceeds {MAX_SCATTER_INSTANCES}")
 
     result = {
         "point_size": _vector3(value["point_size"], "point_size", 0.001, 1_000.0),
@@ -427,9 +425,7 @@ class GeometryScatterOperations:
                     "name": row["name"],
                     "node_type": self._actual_node_type(row),
                     "location": row["location"],
-                    "inputs": {
-                        name: values.get(name) for name in spec.get("inputs", {})
-                    },
+                    "inputs": {name: values.get(name) for name in spec.get("inputs", {})},
                 }
             )
         return {
