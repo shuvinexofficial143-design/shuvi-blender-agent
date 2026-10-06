@@ -29,6 +29,7 @@ from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
 from .sculpting import SculptingOperations
 from .sculpting_brushes import SculptBrushOperations
+from .sculpting_controls import SculptControlOperations
 from .selection import SelectionOperations
 from .shape_ops import ShapeOperations
 from .tools import Tool, ToolRegistry, ping_tool
@@ -73,6 +74,7 @@ def create_registry(
         ModelingTopologyOperations(objects),
         SculptingOperations(objects),
         SculptBrushOperations(objects),
+        SculptControlOperations(objects),
         DestructiveOperations(objects, policy, workspace),
     ]
     registry = ToolRegistry(
