@@ -268,8 +268,7 @@ class CharacterFaceOperations:
             {
                 "name": "MOUTH",
                 "center": [
-                    (by_name["MOUTH_L"][axis] + by_name["MOUTH_R"][axis]) / 2
-                    for axis in range(3)
+                    (by_name["MOUTH_L"][axis] + by_name["MOUTH_R"][axis]) / 2 for axis in range(3)
                 ],
                 "radius": min(width * 0.22, height * 0.12),
             },
@@ -281,8 +280,7 @@ class CharacterFaceOperations:
             {
                 "name": "BROW",
                 "center": [
-                    (by_name["BROW_L"][axis] + by_name["BROW_R"][axis]) / 2
-                    for axis in range(3)
+                    (by_name["BROW_L"][axis] + by_name["BROW_R"][axis]) / 2 for axis in range(3)
                 ],
                 "radius": min(width * 0.28, height * 0.12),
             },
