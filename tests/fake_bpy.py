@@ -211,6 +211,8 @@ class FakeNode:
         self.node_tree = None
         self.location = [0.0, 0.0]
         self.blend_type = "MIX"
+        self.data_type = "FLOAT"
+        self.domain = "POINT"
         self.inputs = FakeSockets()
         self.outputs = FakeSockets()
         self._init_sockets()
@@ -308,6 +310,12 @@ class FakeNode:
             self._socket(self.inputs, "Rotation", [0.0, 0.0, 0.0])
             self._socket(self.inputs, "Scale", [1.0, 1.0, 1.0])
             self._socket(self.outputs, "Instances", socket_type="GEOMETRY")
+        elif self.type == "STORE_NAMED_ATTRIBUTE":
+            self._socket(self.inputs, "Geometry", socket_type="GEOMETRY")
+            self._socket(self.inputs, "Selection", True)
+            self._socket(self.inputs, "Name", "")
+            self._socket(self.inputs, "Value", 0.0)
+            self._socket(self.outputs, "Geometry", socket_type="GEOMETRY")
         elif self.type == "GROUP_OUTPUT":
             self._socket(self.inputs, "Geometry", socket_type="GEOMETRY")
 
@@ -329,6 +337,7 @@ class FakeNodes(list):
         "GeometryNodeInputIndex": ("INPUT_INDEX", "Index"),
         "GeometryNodeRealizeInstances": ("REALIZE_INSTANCES", "Realize Instances"),
         "GeometryNodeInstanceOnPoints": ("INSTANCE_ON_POINTS", "Instance on Points"),
+        "GeometryNodeStoreNamedAttribute": ("STORE_NAMED_ATTRIBUTE", "Store Named Attribute"),
         "NodeGroupOutput": ("GROUP_OUTPUT", "Group Output"),
     }
 
