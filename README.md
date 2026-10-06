@@ -13,7 +13,7 @@ The package imports without Blender. No unrestricted Python execution tool is ex
 Planning, model providers, authentication, billing, and frontend belong to the main Shuvi
 project and are outside this repository.
 
-The execution factory currently registers 91 typed tools. The host client validates its own
+The execution factory currently registers 94 typed tools. The host client validates its own
 allowlist and safety classes, verifies response correlation/readback and executes bounded
 declarative plans. Scene queries stream revision construction and cap nested work, page
 bytes and metadata. File outputs use exclusive reservations and verified readback.
@@ -22,6 +22,7 @@ bytes and metadata. File outputs use exclusive reservations and verified readbac
 
 - [Level 1 broad Blender control status](docs/LEVEL_1_CONTROL.md)
 - [Level 2 professional modeling roadmap/status](docs/LEVEL_2_MODELING.md)
+- [Level 3 sculpting + character modeling roadmap/status](docs/LEVEL_3_SCULPTING.md)
 - [Tool reference and exact limits](docs/TOOL_REFERENCE.md)
 - [Host client and stable integration interface](docs/CLIENT.md)
 - [Source audit and practical limits](docs/SOURCE_AUDIT.md)
@@ -36,6 +37,7 @@ python -m shuvi_blender_agent.runtime_acceptance
 
 Level 1 source-side control is **100% complete** against the current Level 1 roadmap.
 Level 2 professional modeling source-side roadmap is **100% complete**.
+Level 3 sculpting + character-modeling source work has started and is **10% complete**.
 Source and fake-data tests are available; real Blender runtime verification remains 0%.
 Production ready: no. Real launch, bpy, render and recovery behavior need the separately
 authorized acceptance procedure. No Blender is installed or launched by package import.
