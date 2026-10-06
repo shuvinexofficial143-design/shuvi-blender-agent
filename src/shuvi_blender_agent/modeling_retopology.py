@@ -7,8 +7,8 @@ from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .mesh import MeshOperations
 from .mesh_transform import rotate_xyz
-from .modeling import MAX_EDGES, MAX_VERTICES, topology_from_faces
-from .modeling_hardsurface import HardSurfaceOperations, MAX_MODIFIERS
+from .modeling import MAX_VERTICES, topology_from_faces
+from .modeling_hardsurface import MAX_MODIFIERS, HardSurfaceOperations
 from .models import ObjectTarget, object_name, vector3
 from .operations import ObjectOperations
 from .safety import SafetyClass, require_revision
@@ -320,7 +320,10 @@ class ModelingRetopologyOperations:
     @staticmethod
     def _transform_snapshot(obj):
         if obj.parent is not None:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Retopology helper requires unparented objects")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Retopology helper requires unparented objects",
+            )
         if obj.rotation_mode != "XYZ":
             raise AgentError(ErrorCode.SAFETY_DENIED, "Retopology helper requires XYZ rotation")
         scale = tuple(float(value) for value in obj.scale)
@@ -678,7 +681,10 @@ class ModelingRetopologyOperations:
         source, source_before = self.modifiers._mesh_target(action.source)
         target, target_before = self.inspector.target(action.target)
         if source == target:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Shrinkwrap target must be a different object")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Shrinkwrap target must be a different object",
+            )
         self._mesh_snapshot(target)
         if target.data.shape_keys is not None or len(target.modifiers):
             raise AgentError(
