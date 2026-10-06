@@ -5,6 +5,7 @@ from math import ceil
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
+from .mesh import MeshOperations
 from .modeling import topology_from_faces
 from .operations import ObjectOperations
 from .safety import SafetyClass
@@ -128,10 +129,7 @@ class SculptRemeshPlanningOperations:
     def __init__(self, objects: ObjectOperations):
         self.objects = objects
         self.inspector = objects.inspector
-        self.meshes = __import__(
-            "shuvi_blender_agent.mesh",
-            fromlist=["MeshOperations"],
-        ).MeshOperations(objects)
+        self.meshes = MeshOperations(objects)
 
     def _mesh(self, object_id):
         obj = self.inspector.resolve(object_id)
