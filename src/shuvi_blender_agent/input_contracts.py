@@ -18,6 +18,7 @@ from .rendering import FileAction, RenderConfig
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .selection import SelectionChange
+from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
 from .validation import fields, string
 from .visibility import SetVisibility
@@ -43,6 +44,9 @@ def builtin_contracts() -> dict:
         "cursor.inspect": (read, empty),
         "cursor.set": (mutation, CursorSet.parse),
         "mode.inspect": (read, empty),
+        "shape.inspect": (read, object_id),
+        "curve.create": (mutation, CreateCurve.parse),
+        "text.create": (mutation, CreateText.parse),
         "pivot.inspect": (read, empty),
         "pivot.set": (mutation, SetPivot.parse),
         "objects.list": (read, PageQuery.parse),
