@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 1 source/package commit: 48bb15d3c065428aa7b13e4461c9fd6c96abd221.
+Latest verified pushed Level 2 source/package commit: 8ac4261081245186653347e60c18ddb0a6b4a268.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -32,10 +32,31 @@ explicitly authorized Blender 4.2+ suite is actually executed.
 Next: no additional Level 1 source feature is required. The next phase is real Blender runtime
 acceptance and then integration into main Shuvi, only after explicit authorization.
 
+## Level 2 active checkpoint
+Latest verified Level 2 source checkpoint: 8ac4261081245186653347e60c18ddb0a6b4a268.
+CI run 37409936391 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **272 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **41 package modules**.
+
+Level 2 Professional Modeling is now **10% source complete**. Milestone 1 adds:
+- `mesh.topology_inspect`: bounded canonical edges, boundary/non-manifold diagnostics and
+  face adjacency derived from indexed polygon loops.
+- `mesh.extrude_face`: one explicitly indexed face extrusion with fresh object/geometry
+  revisions, Object-mode/local-unshared-mesh guards, geometry work preflight, complete
+  readback verification and rollback on verification mismatch.
+
+The factory now exposes **57 typed tools**. Level 1 remains source-complete at 100%.
+No Blender install, launch, bpy runtime test or render was performed; runtime verification
+for both levels remains 0%.
+
+The Level 2 roadmap is documented in docs/LEVEL_2_MODELING.md as ten 10% milestones.
+Milestone 2 is the next source task: explicit vertex/edge/face transforms plus bounded
+merge/dissolve foundations, while keeping arbitrary Python/bmesh/operator execution closed.
+
 ## Current phase
-Original phases 1-11, source hardening and the complete Level 1 source roadmap are finished.
-Level 1 source is at 100%. Phase 12 runtime acceptance remains prepared but unexecuted and
-still requires explicit authorization.
+Level 1 source is complete at 100%. Level 2 Professional Modeling has started and is at
+10% source completion (Milestone 1 of 10 complete). Real Blender runtime acceptance remains
+prepared but unexecuted because no usable Blender runtime/server is currently available.
 
 ## Completed and verified
 - Fetched actual remote main at acf13dc and reconciled the prior session's identical local
@@ -69,7 +90,7 @@ still requires explicit authorization.
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 55 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 57 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -101,16 +122,16 @@ still requires explicit authorization.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 55 typed host contracts/tools; Level 1 source **100% complete** for the current roadmap.
-Unit/CI tests: 261 passed at 48bb15d3c065428aa7b13e4461c9fd6c96abd221.
-Lint/format: passing. Wheel/sdist build, 40-module distribution audit and clean install/import
-without bpy passed. CI run 37409190864 passed all six Linux/Windows Python 3.11/3.12/3.13
-jobs. Real Blender runtime verification: none (0%). Production ready: no.
+Source: 57 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
+**10%**. Verified Level 2 checkpoint: 8ac4261081245186653347e60c18ddb0a6b4a268.
+CI run 37409936391 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 272 tests,
+lint/format, package build, 41-module distribution audit and clean install/import without bpy.
+Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 1 source work is complete at 100% for the current roadmap. No further Level 1 coding is
-required before runtime acceptance. Real Blender execution, rendering and destructive recovery
-tests remain opt-in and have not been authorized or run.
+Level 2 Milestone 1 is complete at the requested 10% source checkpoint. No Blender runtime
+work is authorized/available. The next modeling slice should begin Milestone 2 only when
+requested; do not inflate progress by counting fake-bpy tests as real Blender verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -131,9 +152,8 @@ tests remain opt-in and have not been authorized or run.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-After explicit runtime authorization, run docs/RUNTIME_ACCEPTANCE.md in the disposable factory
-workspace. First execute the non-render/non-destructive suite, then separately opt into tiny
-render and destructive checkpoint-recovery cases as authorized. Record exact Blender/OS/Python
-versions and verify mode transitions, Curve/Text, device updates, mesh transform/origin,
-object deletion, checkpoint reopening/session rotation, rendering and cleanup. Until explicitly
-authorized: do not install, probe, launch or render Blender.
+When the user asks to continue Level 2, begin Milestone 2: typed explicit vertex/edge/face
+modeling transforms and conservative merge/dissolve foundations with fresh geometry revisions,
+bounded topology work, full readback verification and rollback. Keep Level 2 runtime
+verification at 0% until a real Blender 4.2+ environment is explicitly available/authorized.
+Do not install, probe, launch or render Blender in the meantime.
