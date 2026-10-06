@@ -3,7 +3,7 @@
 Level 4 begins after the completed Level 1-3 source roadmaps. It follows the same boundary:
 source/fake-bpy/CI evidence is not real Blender runtime verification.
 
-Current Level 4 source progress: **80%**.
+Current Level 4 source progress: **100%**.
 
 Real Blender runtime verification for Level 4: **0%**.
 
@@ -19,8 +19,8 @@ Real Blender runtime verification for Level 4: **0%**.
 | 6 | Material slot management | complete |
 | 7 | Shader / material node foundation | complete |
 | 8 | PBR texture assignment | complete |
-| 9 | Advanced texture workflow | pending |
-| 10 | Level 4 QA / recovery / acceptance | pending |
+| 9 | Advanced texture workflow | complete |
+| 10 | Level 4 QA / recovery / acceptance | complete |
 
 ## Milestone 1 — 10% complete
 
@@ -387,9 +387,172 @@ original shader revision.
 Milestones 7-8 add four typed operations, taking the factory from 141 to **145** tools. The
 centralized registry/catalog maximum remains **160**.
 
+## Milestone 9 — 90% complete
+
+Milestone 9 adds bounded advanced texture planning and QA surfaces without introducing
+filesystem texture loading, arbitrary node editing or real baking execution.
+
+### `texture.image_inspect`
+
+This read-only operation inspects one existing local image datablock and reports bounded
+metadata only:
+
+- image name
+- width/height
+- color space
+- source kind
+- whether the source is tiled
+- up to 256 discovered tile numbers
+- packed-state boolean
+- filepath-presence boolean without exposing the path
+- dedicated image revision
+
+### `texture.udim_plan`
+
+The tool reads one existing UV layer and maps each bounded face to a source-side UDIM tile.
+Supported tiles use the standard 10-column numbering model starting at 1001. Exact face
+boundaries such as 0..1 remain in one deterministic tile; faces spanning multiple tiles are
+reported explicitly rather than silently assigned. Negative/out-of-range UVs are also reported.
+
+The result is planning-only and always states `runtime_udim_verified=false`.
+
+### `texture.channel_qa`
+
+This operation audits all seven managed PBR channels and detects:
+
+- missing image datablocks
+- wrong color spaces
+- broken Base Color/Roughness/Metallic/Alpha links
+- broken Normal/Height helper links
+- broken managed Normal Map → Bump → Principled normal chain
+- unexpected AO outgoing links
+
+Absent optional channels are reported as ABSENT instead of false failures. A material with no
+managed textures receives a REVIEW advisory rather than a false PASS claim.
+
+### `texture.consistency_qa`
+
+Consistency QA combines channel QA with bounded image metadata and reports:
+
+- invalid image dimensions
+- mixed texture resolutions
+- one image reused across multiple channels
+- channel/image mapping
+- PASS / REVIEW / BLOCKED source status
+
+Resolution mismatch and channel reuse are review advisories unless they accompany a structural
+blocker.
+
+### `texture.bake_prep`
+
+Bake preparation is read-only. It requires an object, assigned material, UV layer, 1..7 target
+channels and texture size 16..32768. It checks:
+
+- requested material is actually assigned to the object
+- UV degeneracy and overlap diagnostics
+- supported UDIM tile placement
+- current managed channel graph health
+- presence/absence of existing target channel textures
+
+It returns READY / REVIEW / BLOCKED plus explicit
+`BAKE_PREP_SOURCE_ONLY` / `runtime_bake_executed=false`. It does not invoke Blender bake
+operators.
+
+## Milestone 10 — 100% complete
+
+Milestone 10 adds bounded recovery, aggregate Level 4 QA, deterministic workflow composition,
+source acceptance and a separately gated runtime-acceptance path.
+
+### `texture.recovery_snapshot`
+
+The recovery snapshot records only Shuvi-managed Level 4 material state:
+
+- supported Principled values
+- Normal/Bump strengths and distance
+- image names for the seven managed PBR channels
+- current shader revision
+- deterministic recovery revision
+
+It does not serialize arbitrary nodes or unrestricted graph data.
+
+### `texture.recovery_restore`
+
+Restore requires a fresh shader revision plus a recovery state whose supplied recovery revision
+matches the validated state. The parser accepts only bounded supported Principled values,
+managed auxiliary values and allowlisted channel image names.
+
+Restore removes/rebuilds only Shuvi-managed nodes, verifies required image datablocks/color
+spaces, recreates the bounded managed normal chain, reads back the resulting managed state and
+compares its recovery revision. If the requested restore cannot be verified, the tool restores
+the immediate pre-call managed state and verifies that rollback before reporting failure.
+
+### `texture.asset_qa`
+
+Aggregate asset QA combines:
+
+- UV layer presence
+- degenerate UV diagnostics
+- UV overlap diagnostics
+- UDIM face placement
+- material assignment
+- managed channel graph QA
+- texture consistency QA
+- presence of at least one managed texture
+
+It reports PASS / REVIEW / BLOCKED, fresh geometry/UV/shader revisions, and explicitly keeps
+`real_runtime_verified=false` and `production_ready=false`.
+
+### `texture.workflow_preview`
+
+This read-only tool composes a fixed ten-stage Level 4 workflow:
+
+1. UV diagnostics
+2. seam and unwrap review
+3. UV island pack review
+4. texel-density review
+5. material slot assignment
+6. Principled shader review
+7. PBR channel QA
+8. UDIM and consistency QA
+9. bake preparation
+10. Level 4 source acceptance
+
+It never auto-mutates and explicitly recommends a recovery snapshot before later material
+mutations.
+
+### `texture.level4_acceptance`
+
+The final source acceptance evaluates eight structural checks from the aggregate asset QA:
+UV layer, UV degeneracy, UV overlap, UDIM placement, material assignment, channel graph,
+texture consistency and managed texture presence.
+
+Acceptance returns PASS / REVIEW / BLOCKED, blockers/advisories, deterministic acceptance
+revision and explicit boundaries:
+
+- `scope=LEVEL_4_SOURCE_AND_FAKE_ADAPTER_ACCEPTANCE_ONLY`
+- `runtime_acceptance_required=true`
+- `real_runtime_verified=false`
+- `production_ready=false`
+
+### Runtime acceptance preparation
+
+The acceptance harness now has a separate `--allow-level4-textures` opt-in behind the existing
+mandatory `--authorize-runtime` guard. Its injected fake-session CI path exercises disposable
+UV creation/packing, texel-density planning, material slots, Principled mutation, managed
+recovery, UDIM/channel/consistency/bake-prep QA, aggregate asset QA, workflow preview and final
+Level 4 source acceptance.
+
+That preparation does not count as real Blender testing and does not auto-enable render or
+destructive cases.
+
+### Tool-count boundary
+
+Milestones 9-10 add ten typed operations, taking the factory from 145 to **155** tools. The
+centralized registry/catalog maximum remains **160**.
+
 ## Source/runtime boundary
 
-Milestones 1-8 are source-side typed UV/material infrastructure only.
+Milestones 1-10 are source-side typed UV/material infrastructure only.
 
 They do **not** claim:
 
@@ -401,34 +564,35 @@ They do **not** claim:
 - production readiness
 
 No Blender install, version probe, launch, bpy runtime execution, render, real Blender shader/
-texture mutation or GPU-heavy operation was performed for this 80% source checkpoint.
+texture/bake mutation or GPU-heavy operation was performed for this 100% source checkpoint.
 
-## Verified 80% source checkpoint
+## Verified 100% source checkpoint
 
-Source/test checkpoint: `418c932e0764c52d477f435eff3bb025db0b30be`.
+Source/test checkpoint: `0d139c038db86a00590c15971ace2f88991e9da9`.
 
-CI run `37446928868` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37449038646` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **509 tests**
+- **527 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **65 package modules**
+- **66 package modules**
 
-Factory typed tools: **145**.
+Factory typed tools: **155**.
 Registry/catalog maximum: **160**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
-Level 4 source: **80%**.
+Level 4 source: **100%** (Milestones 1-10 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
-## Stop boundary
+## Completion boundary
 
-Milestone 9 — advanced texture workflow — is the next source task, but it must not start
-without explicit user permission.
+Level 4 has no remaining required source milestone in the current roadmap. Do not silently add
+Milestone 11. The next scope must be explicitly authorized as Level 5 Geometry Nodes, main-Shuvi
+integration, or real Blender 4.2+ Level 4 runtime acceptance.
