@@ -53,6 +53,24 @@ def add_node(registry, node_type, node_name, group_name="Procedural", location=N
     return registry.dispatch(Request("geometry_nodes.node_add", payload))
 
 
+def link_payload(
+    registry,
+    from_node_name,
+    from_socket_identifier,
+    to_node_name,
+    to_socket_identifier,
+    group_name="Procedural",
+):
+    return {
+        "group_name": group_name,
+        "expected_group_revision": inspect(registry, group_name)["group_revision"],
+        "from_node_name": from_node_name,
+        "from_socket_identifier": from_socket_identifier,
+        "to_node_name": to_node_name,
+        "to_socket_identifier": to_socket_identifier,
+    }
+
+
 def test_factory_stays_within_bounded_registry_cap():
     bpy = fake_bpy()
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
@@ -439,6 +457,358 @@ def test_node_set_input_verification_failure_restores_previous_value():
     )
 
 
+
+def test_link_add_and_remove_use_explicit_socket_identifiers():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
+        == Status.VERIFIED
+    )
+
+    added = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(registry, "Cube", "Mesh", "Transform", "Geometry"),
+        )
+    )
+    assert added.status == Status.VERIFIED
+    assert added.data["after"]["link_count"] == 1
+    row = added.data["link"]
+    assert row["from_node"] == "Cube"
+    assert row["from_socket"] == "Mesh"
+    assert row["from_socket_identifier"] == "Mesh"
+    assert row["from_socket_type"] == "GEOMETRY"
+    assert row["to_node"] == "Transform"
+    assert row["to_socket_identifier"] == "Geometry"
+    assert row["to_socket_type"] == "GEOMETRY"
+
+    removed = registry.dispatch(
+        Request(
+            "geometry_nodes.link_remove",
+            link_payload(registry, "Cube", "Mesh", "Transform", "Geometry"),
+        )
+    )
+    assert removed.status == Status.VERIFIED
+    assert removed.data["after"]["link_count"] == 0
+
+
+def test_link_add_rejects_incompatible_socket_types():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "INPUT_INDEX", "Index").status == Status.VERIFIED
+    assert add_node(registry, "SET_POSITION", "Set Position").status == Status.VERIFIED
+
+    result = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(registry, "Index", "Index", "Set Position", "Offset"),
+        )
+    )
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert inspect(registry)["link_count"] == 0
+
+
+def test_link_add_refuses_occupied_single_input_and_exact_duplicate():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert add_node(registry, "MESH_ICO_SPHERE", "Sphere").status == Status.VERIFIED
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
+        == Status.VERIFIED
+    )
+
+    first = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(registry, "Cube", "Mesh", "Transform", "Geometry"),
+        )
+    )
+    assert first.status == Status.VERIFIED
+
+    duplicate = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(registry, "Cube", "Mesh", "Transform", "Geometry"),
+        )
+    )
+    assert duplicate.error.code == ErrorCode.AMBIGUOUS_TARGET
+
+    occupied = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(registry, "Sphere", "Mesh", "Transform", "Geometry"),
+        )
+    )
+    assert occupied.error.code == ErrorCode.SAFETY_DENIED
+    assert inspect(registry)["link_count"] == 1
+
+
+def test_link_add_allows_multiple_links_into_multi_input_socket():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert add_node(registry, "MESH_ICO_SPHERE", "Sphere").status == Status.VERIFIED
+    assert add_node(registry, "JOIN_GEOMETRY", "Join").status == Status.VERIFIED
+
+    first = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(registry, "Cube", "Mesh", "Join", "Geometry"),
+        )
+    )
+    second = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(registry, "Sphere", "Mesh", "Join", "Geometry"),
+        )
+    )
+    assert first.status == Status.VERIFIED
+    assert second.status == Status.VERIFIED
+    assert inspect(registry)["link_count"] == 2
+
+
+def test_link_add_rejects_dependency_cycle():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform A").status
+        == Status.VERIFIED
+    )
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform B").status
+        == Status.VERIFIED
+    )
+
+    first = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(
+                registry,
+                "Transform A",
+                "Geometry",
+                "Transform B",
+                "Geometry",
+            ),
+        )
+    )
+    assert first.status == Status.VERIFIED
+
+    cycle = registry.dispatch(
+        Request(
+            "geometry_nodes.link_add",
+            link_payload(
+                registry,
+                "Transform B",
+                "Geometry",
+                "Transform A",
+                "Geometry",
+            ),
+        )
+    )
+    assert cycle.error.code == ErrorCode.SAFETY_DENIED
+    assert inspect(registry)["link_count"] == 1
+
+
+def test_link_mutations_reject_stale_revision():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
+        == Status.VERIFIED
+    )
+    stale = inspect(registry)["group_revision"]
+    assert add_node(registry, "INPUT_POSITION", "Position").status == Status.VERIFIED
+
+    payload = {
+        "group_name": "Procedural",
+        "expected_group_revision": stale,
+        "from_node_name": "Cube",
+        "from_socket_identifier": "Mesh",
+        "to_node_name": "Transform",
+        "to_socket_identifier": "Geometry",
+    }
+    result = registry.dispatch(Request("geometry_nodes.link_add", payload))
+    assert result.error.code == ErrorCode.STALE_STATE
+
+
+def test_link_add_verification_failure_rolls_back_exactly():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
+        == Status.VERIFIED
+    )
+    original = operations._snapshot
+    calls = {"count": 0}
+
+    def corrupt_second(group):
+        calls["count"] += 1
+        snapshot = original(group)
+        if calls["count"] == 2:
+            snapshot = copy.deepcopy(snapshot)
+            snapshot["link_count"] += 1
+        return snapshot
+
+    before = inspect(registry)
+    operations._snapshot = corrupt_second
+    payload = {
+        "group_name": "Procedural",
+        "expected_group_revision": before["group_revision"],
+        "from_node_name": "Cube",
+        "from_socket_identifier": "Mesh",
+        "to_node_name": "Transform",
+        "to_socket_identifier": "Geometry",
+    }
+    result = registry.dispatch(Request("geometry_nodes.link_add", payload))
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert original(bpy.data.node_groups.get("Procedural"))["link_count"] == 0
+    assert (
+        original(bpy.data.node_groups.get("Procedural"))["group_revision"]
+        == before["group_revision"]
+    )
+
+
+def test_link_remove_verification_failure_restores_link():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
+        == Status.VERIFIED
+    )
+    assert (
+        registry.dispatch(
+            Request(
+                "geometry_nodes.link_add",
+                link_payload(registry, "Cube", "Mesh", "Transform", "Geometry"),
+            )
+        ).status
+        == Status.VERIFIED
+    )
+    before = inspect(registry)
+    original = operations._snapshot
+    calls = {"count": 0}
+
+    def corrupt_second(group):
+        calls["count"] += 1
+        snapshot = original(group)
+        if calls["count"] == 2:
+            snapshot = copy.deepcopy(snapshot)
+            snapshot["link_count"] += 1
+        return snapshot
+
+    operations._snapshot = corrupt_second
+    payload = {
+        "group_name": "Procedural",
+        "expected_group_revision": before["group_revision"],
+        "from_node_name": "Cube",
+        "from_socket_identifier": "Mesh",
+        "to_node_name": "Transform",
+        "to_socket_identifier": "Geometry",
+    }
+    result = registry.dispatch(Request("geometry_nodes.link_remove", payload))
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    restored = original(bpy.data.node_groups.get("Procedural"))
+    assert restored["link_count"] == 1
+    assert restored["group_revision"] == before["group_revision"]
+
+
+def test_linked_node_remove_now_captures_and_removes_incident_links():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
+        == Status.VERIFIED
+    )
+    assert (
+        registry.dispatch(
+            Request(
+                "geometry_nodes.link_add",
+                link_payload(registry, "Cube", "Mesh", "Transform", "Geometry"),
+            )
+        ).status
+        == Status.VERIFIED
+    )
+    before = inspect(registry)
+
+    result = registry.dispatch(
+        Request(
+            "geometry_nodes.node_remove",
+            {
+                "group_name": "Procedural",
+                "expected_group_revision": before["group_revision"],
+                "node_name": "Cube",
+            },
+        )
+    )
+    assert result.status == Status.VERIFIED
+    assert result.data["after"]["node_count"] == 1
+    assert result.data["after"]["link_count"] == 0
+
+
+def test_linked_node_remove_failure_restores_node_and_links():
+    bpy, operations, registry = setup()
+    create_group(registry)
+    assert add_node(registry, "MESH_CUBE", "Cube").status == Status.VERIFIED
+    assert (
+        add_node(registry, "TRANSFORM_GEOMETRY", "Transform").status
+        == Status.VERIFIED
+    )
+    assert (
+        registry.dispatch(
+            Request(
+                "geometry_nodes.link_add",
+                link_payload(registry, "Cube", "Mesh", "Transform", "Geometry"),
+            )
+        ).status
+        == Status.VERIFIED
+    )
+    before = inspect(registry)
+    original = operations._snapshot
+    calls = {"count": 0}
+
+    def corrupt_second(group):
+        calls["count"] += 1
+        snapshot = original(group)
+        if calls["count"] == 2:
+            snapshot = copy.deepcopy(snapshot)
+            snapshot["node_count"] += 1
+        return snapshot
+
+    operations._snapshot = corrupt_second
+    result = registry.dispatch(
+        Request(
+            "geometry_nodes.node_remove",
+            {
+                "group_name": "Procedural",
+                "expected_group_revision": before["group_revision"],
+                "node_name": "Cube",
+            },
+        )
+    )
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    restored = original(bpy.data.node_groups.get("Procedural"))
+    assert restored["node_count"] == before["node_count"]
+    assert restored["link_count"] == before["link_count"]
+    assert restored["group_revision"] == before["group_revision"]
+
+
 @pytest.mark.parametrize(
     ("parser", "payload"),
     [
@@ -479,6 +849,17 @@ def test_node_set_input_verification_failure_restores_previous_value():
                 "node_name": "Node",
                 "socket_name": "Size",
                 "value": [1, 2],
+            },
+        ),
+        (
+            GeometryLinkChange.parse,
+            {
+                "group_name": "Group",
+                "expected_group_revision": "x" * 64,
+                "from_node_name": "Source",
+                "from_socket_identifier": "",
+                "to_node_name": "Target",
+                "to_socket_identifier": "Geometry",
             },
         ),
     ],
