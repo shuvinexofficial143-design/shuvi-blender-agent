@@ -19,6 +19,7 @@ from .modeling import ExtrudeFace
 from .modeling_edit import DissolveEdge, MergeVertices, TransformElements
 from .modeling_hardsurface import BooleanAdd, ModifierMove, ModifierUpdate, StackAdd
 from .modeling_modifier_workflows import RecipeApply, RecipePreview, StackCompose
+from .modeling_qa import QAInspect, WorkflowApply, WorkflowPreview
 from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
 from .modeling_repair import CleanupFaces, MergeByDistance, RemoveLooseVertices, RepairInspect
 from .modeling_retopology import (
@@ -108,6 +109,9 @@ def builtin_contracts() -> dict:
         "modifier.stack_compose": (mutation, StackCompose.parse),
         "modifier.recipe_preview": (read, RecipePreview.parse),
         "modifier.recipe_apply": (mutation, RecipeApply.parse),
+        "modeling.qa_inspect": (read, QAInspect.parse),
+        "modeling.workflow_preview": (read, WorkflowPreview.parse),
+        "modeling.workflow_apply": (mutation, WorkflowApply.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),
