@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 55 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 57 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -59,8 +59,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | file.checkpoint | name (.blend), expected_scene_revision | file_write | output size/hash/uncompressed header and unchanged active source path |
 | file.open_checkpoint | name (.blend), expected_scene_revision | destructive | opens only verified workspace checkpoint, rotates session/object identities, verifies loaded filepath |
 | mesh.inspect | object_id | read_only | indexed vertices/faces and separate geometry_revision |
+| mesh.topology_inspect | object_id | read_only | bounded derived edges, boundary/non-manifold edges and face adjacency |
 | mesh.create | name, geometry, transform, expected_scene_revision | mutation | actual indexed geometry and object transform/membership |
 | mesh.translate_vertices | target, expected_geometry_revision, indices, delta | mutation | actual complete bounded geometry; untouched indices/faces compared too |
+| mesh.extrude_face | target, expected_geometry_revision, face_index, offset | mutation | exact rebuilt vertices/faces for one bounded single-face extrusion |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -151,7 +153,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 - `scene.rename`: name, expected_scene_revision.
 - `scene.set_units`: bounded system/scale_length/length_unit patch plus scene revision.
 - `cursor.inspect` / `cursor.set`: read or verify the 3D cursor location.
-- `mode.inspect`: bounded current mode + active-object summary. Mode mutation is deferred.
+- `mode.inspect`: bounded current mode + active-object summary.
 - `pivot.inspect` / `pivot.set`: transform pivot with an allowlisted Blender enum.
 - `object.rename`: target, name.
 - `object.set_properties`: allowlisted display/color/pass-index/transform-lock/empty-display
@@ -192,3 +194,24 @@ Level 1 additions (mutations require normal policy and fresh state):
   A successful open invalidates all prior session object IDs by rotating the inspector session.
 - With these additions the current Level 1 **source roadmap is 100% implemented**. Real Blender
   runtime verification remains a separate acceptance phase and is not implied by source CI.
+
+
+## Level 2 modeling additions
+
+Current Level 2 source progress: **10%**.
+
+- `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
+  loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
+  is capped at 8192 unique edges in addition to the existing 4096-vertex/4096-face/32768-loop
+  geometry bounds.
+- `mesh.extrude_face` performs one explicitly indexed face extrusion using a bounded local
+  offset. It requires Object mode, fresh object + geometry revisions, editable local unshared
+  mesh data, no shape keys and no modifier stack. The resulting vertex/face/loop counts are
+  preflighted before mutation. The tool rebuilds the bounded mesh through direct data APIs,
+  reads the entire geometry back, verifies the new cap and side quads, and restores captured
+  geometry if verification fails.
+- This is the first professional-modeling milestone, not Blender's complete extrusion family.
+  Multi-face region extrusion, inset, bevel, loop cut, bridge, merge/dissolve, normals and
+  topology-repair workflows remain later Level 2 milestones.
+
+See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
