@@ -52,6 +52,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | material.slot_duplicate | target, expected_material_revision, source_slot_index, new_material_name | mutation | duplicate material datablock from one slot and append verified independent slot |
 | material.slot_remove | target, expected_material_revision, slot_index | mutation | conservatively remove only unused final slot |
 | material.face_assign | target, expected_material_revision, slot_index, face_indices | mutation | assign explicit bounded faces to one existing slot with rollback |
+| material.shader_inspect | material_name | read_only | bounded Principled values, managed node/link topology, PBR bindings and shader_revision |
+| material.principled_set | material_name, expected_shader_revision, settings | mutation | typed Principled/Normal Map/Bump settings with unmanaged-link protection and verified managed-graph recovery |
+| material.pbr_texture_assign | material_name, expected_shader_revision, channel, image_name | mutation | bind existing local image to allowlisted PBR channel with enforced color-space semantics and bounded wiring |
+| material.pbr_texture_clear | material_name, expected_shader_revision, channel | mutation | remove only one Shuvi-managed PBR texture node/link set with verified recovery |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -687,3 +691,34 @@ Current Level 3 source progress: **100%**.
 - The factory currently exposes 141 typed tools under the existing centralized 160-tool cap.
 - No arbitrary Python, unrestricted Blender UV/material operator surface or shader-node editor
   surface is exposed. Real Blender UV/material runtime behavior remains unverified.
+
+
+### Level 4 milestones 7–8 limits
+
+- Shader inspection/mutation requires one existing local node-enabled material, exactly one
+  Principled BSDF, at most 32 nodes and at most 64 links.
+- `material.shader_inspect` reports supported Principled values, managed Normal Map/Bump
+  settings, bounded node/link topology, all managed PBR channel bindings and a dedicated
+  shader_revision.
+- `material.principled_set` accepts only Base Color, Metallic, Roughness, Transmission,
+  Emission Color/Strength, Alpha, Normal strength and Height/Bump strength/distance. It may
+  create only Shuvi-managed Normal Map/Bump helpers and refuses to replace unmanaged incoming
+  shader links.
+- Managed normal wiring is bounded to Normal Map → Bump → Principled Normal, with either helper
+  omitted when unnecessary. Recovery restores supported Principled values plus the complete
+  prior Shuvi-managed node/link state and verifies the initial shader revision.
+- PBR assignment supports BASE_COLOR, ROUGHNESS, METALLIC, NORMAL, HEIGHT, AO and ALPHA only.
+  It binds only an already-existing local image datablock; no filesystem image-loading surface
+  is exposed in Milestone 8.
+- Color-space validation is fail-closed: Base Color requires sRGB; Roughness, Metallic, Normal,
+  Height, AO and Alpha require Non-Color. The operation does not silently mutate a shared image
+  datablock's global colorspace.
+- Base Color/Roughness/Metallic/Alpha link directly to matching Principled sockets; Normal and
+  Height use Shuvi-managed Normal Map/Bump helpers. Principled has no AO socket, so AO remains
+  an explicit managed auxiliary texture and is not falsely reported as directly wired.
+- `material.pbr_texture_clear` deletes only the requested Shuvi-managed texture node and its
+  links; it never deletes the image datablock or unmanaged nodes.
+- The factory currently exposes 145 typed tools under the existing centralized 160-tool cap.
+- No arbitrary Python, unrestricted shader-node creation, filesystem image loading or generic
+  Blender material operator surface is exposed. Real Blender shader/PBR runtime behavior
+  remains unverified.
