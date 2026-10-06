@@ -50,9 +50,7 @@ def test_sculpt_inspect_reports_base_mesh_readiness():
     obj = bpy.data.objects.get("Cube")
     quad(obj)
 
-    result = registry.dispatch(
-        Request("sculpt.inspect", {"object_id": inspector.identity(obj)})
-    )
+    result = registry.dispatch(Request("sculpt.inspect", {"object_id": inspector.identity(obj)}))
     assert result.status == Status.SUCCEEDED
     data = result.data
     assert data["vertex_count"] == 4
@@ -77,9 +75,7 @@ def test_sculpt_inspect_detects_degenerate_and_invalid_normals():
         [],
         [[0, 1, 2]],
     )
-    data = registry.dispatch(
-        Request("sculpt.inspect", {"object_id": inspector.identity(obj)})
-    ).data
+    data = registry.dispatch(Request("sculpt.inspect", {"object_id": inspector.identity(obj)})).data
     assert data["degenerate_face_indices"] == [0]
     assert data["invalid_normal_vertex_indices"] == [0, 1, 2, 3]
     assert data["sculpt_ready"] is False
