@@ -220,9 +220,7 @@ def test_open_checkpoint_is_confined_destructive_and_resets_session(tmp_path):
 def test_open_checkpoint_requires_workspace_and_fresh_scene(tmp_path):
     bpy = fake_bpy()
     bpy.ops = NS(wm=NS(open_mainfile=lambda **kwargs: {"FINISHED"}))
-    registry = create_registry(
-        bpy, SafetyPolicy(allow_mutations=True, allow_destructive=True)
-    )
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True, allow_destructive=True))
     result = registry.dispatch(
         Request(
             "file.open_checkpoint",
