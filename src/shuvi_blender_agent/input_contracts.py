@@ -3,6 +3,7 @@
 from .animation import FrameRange, InsertKeyframe, SetFrame
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
+from .character_acceptance import CharacterWorkflowPreview, Level3Acceptance
 from .character_blockout import BlockoutPlan, LandmarkFit, ProportionGuide
 from .character_body import BodyRegionPlan, BodySymmetryAudit, ExtremityGuide, LimbGuide
 from .character_face import FaceFit, FaceGuide, FaceRegions, FaceSymmetryAudit
@@ -76,6 +77,8 @@ def builtin_contracts() -> dict:
         "system.ping": (read, empty),
         "system.capabilities": (read, empty),
         "scene.inspect": (read, empty),
+        "character.workflow_preview": (read, CharacterWorkflowPreview.parse),
+        "character.level3_acceptance": (read, Level3Acceptance.parse),
         "character.proportion_guide": (read, ProportionGuide.parse),
         "character.blockout_plan": (read, BlockoutPlan.parse),
         "character.landmark_fit": (read, LandmarkFit.parse),
