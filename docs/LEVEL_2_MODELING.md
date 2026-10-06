@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **80%**.
+Current Level 2 source progress: **90%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -20,7 +20,7 @@ Real Blender runtime verification for Level 2: **0%**.
 | 6 | Hard-surface boolean workflow and stronger modifier modeling controls | complete |
 | 7 | Topology cleanup and repair helpers | complete |
 | 8 | Retopology and shrinkwrap-oriented helpers | complete |
-| 9 | Advanced modeling modifier stack workflows | pending |
+| 9 | Advanced modeling modifier stack workflows | complete |
 | 10 | Modeling QA, recovery, acceptance and workflow composition | pending |
 
 ## Milestone 1 — 10% complete
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **80% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **90% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -444,7 +444,7 @@ moves the modifier back to its prior index.
 - no claim that fake-bpy/CI verifies Blender Boolean solver geometry
 - failed source-level readback verification performs bounded rollback of the changed stack state
 
-Milestone 7 is complete. Milestone 8 is complete. Milestone 9 is next: advanced modeling modifier stack workflows.
+Milestone 7 is complete. Milestone 8 is complete. Milestone 9 is complete. Milestone 10 is next: modeling QA, recovery, acceptance and workflow composition.
 
 
 ## Milestone 7 — 70% complete
@@ -589,3 +589,90 @@ method, mode, offset and viewport/render visibility patches.
 - fake-bpy/CI evidence does not count as real Blender Shrinkwrap/depsgraph verification
 
 Milestone 9 is next: advanced modeling modifier stack workflows.
+
+
+## Milestone 9 — 90% complete
+
+Milestone 9 adds typed modifier-stack composition, deterministic presets and stronger
+stack diagnostics without exposing arbitrary modifier properties.
+
+### `modifier.stack_diagnose`
+
+Performs read-only bounded modifier-stack diagnostics on the current ordered stack.
+
+It reports:
+
+- type counts
+- unsupported modifier indices
+- viewport-disabled indices
+- render-disabled indices
+- missing Boolean/Shrinkwrap object-reference indices
+- SUBSURF-before-BEVEL ordering pairs as an explicit modeling warning
+- reference-modifier count
+- a simple bounded complexity score
+- deterministic warning codes
+- a separate diagnostic revision
+
+The order warning is advisory rather than a claim that another order is universally wrong.
+
+### `modifier.stack_compose`
+
+Transactionally appends 1..8 explicit typed modifiers in one request.
+
+Supported composed types:
+
+- BEVEL
+- SUBSURF
+- SOLIDIFY
+
+Each entry contains an explicit unique name plus the already allowlisted settings for its type.
+The final stack may not exceed the existing 16-entry stack cap. Name collisions and stale stack
+revisions are rejected before creation. The entire ordered resulting stack is read back and
+verified. If verification fails, every modifier created by that composition is removed in
+reverse order.
+
+BOOLEAN and SHRINKWRAP are intentionally excluded from generic composition because they require
+fresh external object references; those continue through their dedicated typed tools.
+
+### `modifier.recipe_preview`
+
+Builds a deterministic no-mutation preview of one allowlisted modeling recipe.
+
+Current recipes:
+
+- `PANEL_SHELL`: SOLIDIFY → BEVEL
+- `SUBDIV_BEVEL`: BEVEL → SUBSURF
+- `HARD_SURFACE_TRIPLE`: SOLIDIFY → BEVEL → SUBSURF
+
+The request supplies a bounded prefix and exactly the typed parameters required by that recipe.
+The response contains final modifier names/types/settings and a recipe revision.
+
+### `modifier.recipe_apply`
+
+Applies one previewable recipe transactionally to a fresh target stack.
+
+The tool:
+
+- validates recipe-specific parameters before mutation
+- generates deterministic prefixed modifier names
+- checks every generated name for collision
+- checks total stack capacity before creation
+- creates the complete recipe in declared order
+- verifies the full ordered stack through readback
+- removes every recipe-created entry if verification fails
+
+Recipes are convenience compositions over the existing typed modifier surface, not arbitrary
+scripts or opaque Blender macros.
+
+### Shared Milestone 9 boundary
+
+- no arbitrary modifier classes
+- no arbitrary modifier property paths
+- no generic modifier apply/evaluation
+- stack mutation requires a fresh ObjectTarget and fresh stack revision
+- generic composition is capped at 8 new entries and 16 total entries
+- recipes are closed allowlisted definitions with exact parameter schemas
+- full ordered stack readback is required for successful verification
+- fake-bpy/CI verifies stack state/contract behavior only, not Blender modifier evaluation
+
+Milestone 10 is next: modeling QA, recovery, acceptance and workflow composition.
