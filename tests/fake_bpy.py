@@ -45,6 +45,52 @@ class FakeMeshes(list):
         return next((item for item in self if item.name == name), None)
 
 
+class FakeCurvePoints(list):
+    def add(self, count):
+        for _ in range(count):
+            self.append(NS(co=[0.0, 0.0, 0.0, 1.0]))
+
+
+class FakeSpline:
+    def __init__(self, spline_type):
+        self.type = spline_type
+        self.points = FakeCurvePoints([NS(co=[0.0, 0.0, 0.0, 1.0])])
+        self.use_cyclic_u = False
+
+
+class FakeSplines(list):
+    def new(self, spline_type):
+        spline = FakeSpline(spline_type)
+        self.append(spline)
+        return spline
+
+
+class FakeCurveData:
+    def __init__(self, name, curve_type):
+        self.name = name
+        self.users = 0
+        self.library = None
+        self.object_type = "FONT" if curve_type == "FONT" else "CURVE"
+        self.dimensions = "2D"
+        self.splines = FakeSplines()
+        self.bevel_depth = 0.0
+        self.body = ""
+        self.align_x = "LEFT"
+        self.size = 1.0
+        self.extrude = 0.0
+        self.materials = FakeMaterialLinks()
+
+
+class FakeCurves(list):
+    def new(self, name, type):
+        data = FakeCurveData(name, type)
+        self.append(data)
+        return data
+
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+
 class FakeMaterialLinks(list):
     def append(self, material):
         super().append(material)
@@ -304,6 +350,7 @@ def fake_bpy(objects=None):
     objects = FakeLinks(objects)
     objects.table = table
     meshes = FakeMeshes()
+    curves = FakeCurves()
     for obj in objects:
         if obj.type == "MESH":
             obj.data = meshes.new(obj.name + "Mesh")
@@ -350,6 +397,7 @@ def fake_bpy(objects=None):
             filepath="",
             objects=table,
             meshes=meshes,
+            curves=curves,
             collections=collections,
             materials=FakeMaterials(),
             cameras=FakeDevices("CAMERA"),
