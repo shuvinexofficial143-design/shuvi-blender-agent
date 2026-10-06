@@ -267,10 +267,7 @@ class GeometryNodeOperations:
 
     @staticmethod
     def _socket_linked(group, socket):
-        return any(
-            link.from_socket is socket or link.to_socket is socket
-            for link in group.links
-        )
+        return any(link.from_socket is socket or link.to_socket is socket for link in group.links)
 
     def _socket_rows(self, group, node, table, direction):
         sockets = list(table)
@@ -336,11 +333,7 @@ class GeometryNodeOperations:
                 }
             )
         nested_groups = sorted(
-            {
-                row["nested_group"]
-                for row in nodes
-                if row["nested_group"] is not None
-            }
+            {row["nested_group"] for row in nodes if row["nested_group"] is not None}
         )
         if len(nested_groups) > MAX_NESTED_GROUPS:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Nested node-group work limit exceeded")
