@@ -76,7 +76,7 @@ def _clip_triangle(subject, clip):
         if not current:
             break
 
-        def inside(point):
+        def inside(point, a=a, b=b, orientation=orientation):
             cross = (b[0] - a[0]) * (point[1] - a[1]) - (b[1] - a[1]) * (
                 point[0] - a[0]
             )
@@ -242,7 +242,10 @@ class UVOperations:
             for loop_index in range(loop_start, loop_start + loop_total):
                 uv = list(data[loop_index].uv)
                 if len(uv) != 2:
-                    raise AgentError(ErrorCode.VERIFICATION_FAILED, "UV coordinate readback is invalid")
+                    raise AgentError(
+                        ErrorCode.VERIFICATION_FAILED,
+                        "UV coordinate readback is invalid",
+                    )
                 points.append([float(uv[0]), float(uv[1])])
             result.append(points)
             offset += len(polygon.vertices)
