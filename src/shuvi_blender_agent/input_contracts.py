@@ -15,6 +15,7 @@ from .hierarchy import ParentChange
 from .mesh import CreateMesh, TranslateVertices
 from .mesh_transform import MeshTransformAction
 from .mode_ops import ModeChange
+from .modeling import ExtrudeFace
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
@@ -90,8 +91,10 @@ def builtin_contracts() -> dict:
         "file.checkpoint": (SafetyClass.FILE_WRITE, FileAction.parse_blend),
         "file.open_checkpoint": (SafetyClass.DESTRUCTIVE, FileAction.parse_blend),
         "mesh.inspect": (read, object_id),
+        "mesh.topology_inspect": (read, object_id),
         "mesh.create": (mutation, CreateMesh.parse),
         "mesh.translate_vertices": (mutation, TranslateVertices.parse),
+        "mesh.extrude_face": (mutation, ExtrudeFace.parse),
         "mesh.apply_object_transform": (mutation, MeshTransformAction.parse),
         "origin.to_centroid": (mutation, MeshTransformAction.parse),
     }
