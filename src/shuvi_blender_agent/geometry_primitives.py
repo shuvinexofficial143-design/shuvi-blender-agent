@@ -209,7 +209,11 @@ class ProceduralPrimitiveOperations:
                     "name": transform,
                     "node_type": "TRANSFORM_GEOMETRY",
                     "location": [-300.0, -140.0],
-                    "inputs": {"Translation": parameters["offset"]},
+                    "inputs": {
+                        "Translation": parameters["offset"],
+                        "Rotation": [0.0, 0.0, 0.0],
+                        "Scale": [1.0, 1.0, 1.0],
+                    },
                 },
                 {
                     "name": join,
@@ -447,8 +451,16 @@ class ProceduralPrimitiveOperations:
     def _plan_signature(plan):
         return {
             "interface": plan["interface"],
-            "nodes": plan["nodes"],
-            "links": plan["links"],
+            "nodes": sorted(plan["nodes"], key=lambda item: item["name"]),
+            "links": sorted(
+                plan["links"],
+                key=lambda item: (
+                    item["from_node"],
+                    item["from_socket"],
+                    item["to_node"],
+                    item["to_socket"],
+                ),
+            ),
         }
 
     def _verify_exact_plan(self, snapshot, plan):
