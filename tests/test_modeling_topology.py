@@ -327,8 +327,6 @@ def test_milestone4_contract_validation():
     with pytest.raises(AgentError):
         LoopCutQuadStrip.parse(common | {"edge_index": 0, "factor": 0.0})
     with pytest.raises(AgentError):
-        BridgeBoundaryLoops.parse(
-            common | {"loop_a": [0, 1, 2], "loop_b": [3, 4, 5, 6]}
-        )
+        BridgeBoundaryLoops.parse(common | {"loop_a": [0, 1, 2], "loop_b": [3, 4, 5, 6]})
     with pytest.raises(AgentError):
         FillBoundaryLoop.parse(common | {"vertex_indices": [0, 0, 1]})
