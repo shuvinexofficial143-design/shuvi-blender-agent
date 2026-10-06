@@ -76,9 +76,7 @@ def _parameters(value):
 def _workflow(value):
     workflow = string(value, "workflow", limit=32)
     if workflow not in WORKFLOWS:
-        raise invalid(
-            "workflow must be INDEX_ATTRIBUTE, POSITION_ATTRIBUTE or NORMAL_ATTRIBUTE"
-        )
+        raise invalid("workflow must be INDEX_ATTRIBUTE, POSITION_ATTRIBUTE or NORMAL_ATTRIBUTE")
     return workflow
 
 
@@ -385,10 +383,7 @@ class GeometryFieldOperations:
                 "name": row["name"],
                 "node_type": self._actual_node_type(row),
                 "location": row["location"],
-                "inputs": {
-                    name: values.get(name)
-                    for name in spec.get("inputs", {})
-                },
+                "inputs": {name: values.get(name) for name in spec.get("inputs", {})},
             }
             if row["bl_idname"] == "GeometryNodeStoreNamedAttribute":
                 compact["field_settings"] = row.get("field_settings")
@@ -552,9 +547,7 @@ class GeometryFieldOperations:
                     {
                         "before": before,
                         "after": after,
-                        "cleared_field_workflow_revision": plan[
-                            "field_workflow_revision"
-                        ],
+                        "cleared_field_workflow_revision": plan["field_workflow_revision"],
                     },
                     verification=verification.to_dict(),
                 )
