@@ -1,7 +1,7 @@
 import pytest
 from fake_bpy import fake_bpy
 
-from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
+from shuvi_blender_agent import AgentError, Request, Status
 from shuvi_blender_agent.character_acceptance import (
     CharacterAcceptanceOperations,
     CharacterWorkflowPreview,
