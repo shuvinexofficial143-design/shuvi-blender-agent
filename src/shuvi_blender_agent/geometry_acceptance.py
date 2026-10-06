@@ -248,9 +248,7 @@ class GeometryAcceptanceOperations:
     def acceptance(self, request: Request, action: Level5Acceptance):
         evidence = self._evidence(action)
         checks = self._checks(action, evidence)
-        source_status = (
-            "READY" if all(item["status"] == "PASS" for item in checks) else "BLOCKED"
-        )
+        source_status = "READY" if all(item["status"] == "PASS" for item in checks) else "BLOCKED"
         data = {
             "recipe_id": action.recipe_id,
             "family": RECIPE_SPECS[action.recipe_id]["family"],
