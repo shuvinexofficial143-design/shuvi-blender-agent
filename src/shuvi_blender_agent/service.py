@@ -41,6 +41,7 @@ from .sculpting_detail import SculptDetailOperations
 from .sculpting_remesh import SculptRemeshPlanningOperations
 from .selection import SelectionOperations
 from .shape_ops import ShapeOperations
+from .texture_workflows import TextureWorkflowOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
 from .uv import UVOperations
@@ -76,6 +77,7 @@ def create_registry(
         AppearanceOperations(objects),
         MaterialSlotOperations(objects),
         MaterialNodeOperations(objects),
+        TextureWorkflowOperations(objects),
         AssetOperations(objects),
         AnimationOperations(objects),
         RenderOperations(objects, policy, workspace),
