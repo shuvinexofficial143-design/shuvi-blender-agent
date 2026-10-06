@@ -88,6 +88,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.architecture_preview | recipe, prefix, parameters | read_only | deterministic source-only MODULAR_WALL / BLOCK_GRID plan with bounded module count and architecture_revision |
 | geometry_nodes.architecture_apply | group_name, expected_group_revision, recipe, prefix, parameters | mutation | build one exact bounded Cube→Transform→Join→Output architecture graph in an empty local GeometryNodeTree with verified rollback |
 | geometry_nodes.architecture_clear | group_name, expected_group_revision, recipe, prefix, parameters | mutation | clear only an exact managed architecture graph and rebuild it on known verification failure |
+| geometry_nodes.recipe_catalog | none | read_only | deterministic versioned catalog of 10 managed Geometry Nodes recipe IDs, parameter schemas, compatibility markers and catalog_revision |
+| geometry_nodes.recipe_preview | recipe_id, prefix, parameters | read_only | validate one managed recipe ID against its bounded family schema and route preview through the existing verified family implementation |
+| geometry_nodes.recipe_apply | recipe_id, group_name, expected_group_revision, prefix, parameters | mutation | route one managed recipe mutation through its existing bounded family apply path while preserving fresh-state/readback/rollback evidence |
+| geometry_nodes.recipe_clear | recipe_id, group_name, expected_group_revision, prefix, parameters | mutation | clear one exact managed recipe through its existing family clear path while preserving verified recovery evidence |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -998,3 +1002,36 @@ Current Level 3 source progress: **100%**.
 - Fake-bpy/CI prove deterministic source graph intent only; they do not prove real Blender
   architecture dimensions, overlap, manifoldness, Boolean construction, viewport output,
   dependency-graph behavior, memory/GPU cost or render results.
+
+
+### Level 5 milestone 9 limits
+
+- `geometry_nodes.recipe_catalog` exposes a static bounded library of exactly **10 recipe IDs**:
+  three primitive recipes, three field/attribute workflows, two scatter recipes and two
+  architecture/environment recipes.
+- Every catalog entry reports a fixed `recipe_id`, family, underlying family recipe/workflow,
+  `recipe_version=1`, `library_version=1`, minimum Blender version `4.2`, explicit
+  parameter schema, supported operations, `source_only=true` and
+  `real_runtime_verified=false`.
+- Compatibility is explicitly marked `SOURCE_VALIDATED_RUNTIME_UNVERIFIED`; the catalog does
+  not claim real Blender Geometry Nodes execution.
+- Catalog entries are sorted deterministically and the complete catalog has a deterministic
+  `catalog_revision`.
+- `geometry_nodes.recipe_preview`, `recipe_apply` and `recipe_clear` accept only the
+  allowlisted recipe IDs. Unknown IDs fail before routing.
+- The library does not implement duplicate graph builders. It validates through and delegates to
+  the already-bounded primitive, field, scatter or architecture parser/operation for that ID.
+- Underlying family parameter limits remain authoritative: attribute-name rules, scatter
+  instance limits, architecture module limits and all numeric bounds are preserved unchanged.
+- Mutation routing preserves the underlying fresh group revision requirement, empty/shared-group
+  guards, exact source readback, structured verification and rollback/rebuild behavior.
+- Library results include recipe metadata plus the unchanged underlying `family_result`; verified
+  family mutations remain verified only when the underlying readback matched.
+- Source tests compare library previews with the direct family preview output and execute verified
+  apply→clear round trips for all **10 recipe IDs**.
+- The recipe-library host parsers use distinct aliases from the pre-existing modeling recipe
+  parser names, preventing host-contract shadowing.
+- No arbitrary recipe registration, dynamic Python import, arbitrary node ID, generic graph
+  payload, file-backed recipe loading or remote recipe source is exposed.
+- Milestone 9 adds four typed operations, taking the factory from 177 to **181 typed tools**
+  under the existing bounded **184-tool** cap.
