@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 102 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 109 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -103,6 +103,13 @@ clients should retain the filter, session ID and revision while continuing a pag
 | sculpt.region_preview | object_id, center, radius, falloff, axis, side, symmetry, plane_epsilon, require_symmetry_pairs, mask | read_only | bounded side-aware radial region preview with sparse mask weights and symmetry partner evidence |
 | sculpt.brush_displace_controlled | target, expected_geometry_revision, center, radius, falloff, axis, side, symmetry, plane_epsilon, require_symmetry_pairs, mask, strength | mutation | masked/side-filtered normal displacement with optional mirrored local-axis deformation |
 | sculpt.brush_grab_controlled | target, expected_geometry_revision, center, radius, falloff, axis, side, symmetry, plane_epsilon, require_symmetry_pairs, mask, delta | mutation | masked/side-filtered explicit grab with optional mirrored local-axis delta |
+| sculpt.detail_plan | object_id, viewport_level, render_level | read_only | bounded SUBSURF detail-cost estimate plus explicit real-Multires runtime boundary |
+| sculpt.subdivision_setup | target, expected_stack_revision, name, viewport_level, render_level | mutation | verified empty-stack SUBSURF sculpt-detail preview setup |
+| sculpt.subdivision_set_levels | target, expected_stack_revision, name, viewport_level, render_level | mutation | verified typed SUBSURF detail-level update |
+| sculpt.voxel_plan | object_id, voxel_size | read_only | bounded local-space voxel grid/cell estimate; planning only |
+| sculpt.voxel_target_density | object_id, longest_axis_voxels | read_only | derive bounded recommended voxel size from requested longest-axis density |
+| sculpt.surface_snapshot | object_id | read_only | deterministic local bounds/centroid/area/edge-length preservation baseline |
+| sculpt.surface_anchor_plan | object_id, max_anchors | read_only | deterministic extrema/centroid-near surface anchor evidence for later remesh comparison |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -425,7 +432,7 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 
 ## Level 3 sculpting foundation
 
-Current Level 3 source progress: **30%**.
+Current Level 3 source progress: **50%**.
 
 ### Level 3 milestone 1 limits
 
@@ -488,3 +495,22 @@ Current Level 3 source progress: **30%**.
 - These are stateless request-side mask and symmetry controls. They do not create or read
   Blender Sculpt Mask/Face Set layers and do not claim Blender Sculpt Mode symmetry
   equivalence.
+
+
+### Level 3 milestones 4–5 limits
+
+- Sculpt detail levels are bounded to 0..3 and use a conservative source-side estimate of
+  base faces × 4^level. Estimates above 250,000 faces are denied.
+- `sculpt.subdivision_setup` requires an empty stack and creates only a typed SUBSURF preview;
+  real Multires subdivision remains explicitly runtime-required.
+- `sculpt.subdivision_set_levels` requires fresh stack state and an unchanged named SUBSURF
+  entry; existing typed modifier rollback/readback behavior is reused.
+- Voxel planning is local-space only, capped at 512 planned cells per axis and 16,777,216
+  total estimated cells. It never executes Blender Voxel Remesh.
+- `sculpt.surface_snapshot` records bounds, centroid, surface-area estimate, average unique
+  edge length and topology counts as a preservation baseline.
+- `sculpt.surface_anchor_plan` returns 4..32 deterministic extrema/centroid-near anchors with
+  base positions/normals; future topology-changing runtime checks must use spatial proximity,
+  not preserved vertex indices.
+- Real Multires, Voxel Remesh, Dyntopo and evaluated subdivision behavior remain runtime
+  unverified.
