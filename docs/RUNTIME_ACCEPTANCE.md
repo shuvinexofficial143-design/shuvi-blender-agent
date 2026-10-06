@@ -4,7 +4,7 @@
 
 | Level | Status |
 | --- | --- |
-| Source implemented | 126 bounded typed tools; Level 1, Level 2 and Level 3 source roadmaps complete, host client, declarative plans and acceptance harness |
+| Source implemented | 155 bounded typed tools; Level 1, Level 2, Level 3 and Level 4 source roadmaps complete, host client, declarative plans and acceptance harness |
 | Unit tested | Source contracts, fake bpy adapters, Python sockets and injected owned process handles |
 | CI tested | Linux/Windows, Python 3.11/3.12/3.13; status recorded in CODEX_HANDOFF.md |
 | Real Blender runtime tested | No; 0% |
@@ -19,7 +19,7 @@ performed. Passing fake tests does not establish Blender API compatibility.
 Only run these commands after the user explicitly authorizes real runtime testing.
 No-argument invocation is safe preparation: it prints a prepared status and exits without
 executing Blender. The actual suite requires both --authorize-runtime and an executable.
-Rendering is a separate --allow-render opt-in. Destructive delete/checkpoint-reopen cases are a separate --allow-destructive opt-in. Level 2 professional-modeling acceptance cases are a separate --allow-level2-modeling opt-in. Level 3 sculpting/character acceptance cases are a separate --allow-level3-character opt-in. Do not install Blender automatically.
+Rendering is a separate --allow-render opt-in. Destructive delete/checkpoint-reopen cases are a separate --allow-destructive opt-in. Level 2 professional-modeling acceptance cases are a separate --allow-level2-modeling opt-in. Level 3 sculpting/character acceptance cases are a separate --allow-level3-character opt-in. Level 4 UV/texture/material acceptance cases are a separate --allow-level4-textures opt-in. Do not install Blender automatically.
 
 ```powershell
 # Safe preparation only; no Blender execution.
@@ -44,6 +44,11 @@ python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-lev
 python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-level3-character `
   --executable "C:\Program Files\Blender Foundation\Blender 4.2\blender.exe" `
   --report acceptance-4.2-level3.json
+
+# Future Level 4 texture acceptance: separately opt into UV/material/texture cases.
+python -m shuvi_blender_agent.runtime_acceptance --authorize-runtime --allow-level4-textures `
+  --executable "C:\Program Files\Blender Foundation\Blender 4.2\blender.exe" `
+  --report acceptance-4.2-level4.json
 ```
 
 The suite uses factory startup, no existing .blend input, disabled auto-execution and a
@@ -82,6 +87,10 @@ deadline; stop only the owned child, retain/report failure, and inspect cleanup 
   character mesh exercises sculpt inspection, body/face guides and audits, structural sculpt
   QA, recipe preview, bounded recovery snapshot, one controlled mirrored grab, verified
   recovery restore, end-to-end workflow preview and final Level 3 source acceptance surface.
+- [ ] When separately authorized for Level 4 texture acceptance, a disposable plane exercises
+  UV diagnostics/unwrap/packing/texel-density planning, material slot and Principled shader
+  inspection, bounded managed-material recovery, UDIM/channel/consistency/bake-prep QA,
+  end-to-end texture workflow preview and final Level 4 source acceptance surface.
 - [ ] A small declarative plan succeeds with correlated results.
 - [ ] Session closes; owned child has exited; temporary workspace is removed.
 
@@ -142,3 +151,27 @@ Until that exact path is run using the default real launcher and a real Blender 
 executable after explicit authorization, Level 3 real-runtime verification remains 0%.
 Source completion, fake bpy tests, fake sessions and CI are not substitutes for Blender PBVH,
 Sculpt Mode, Multires, Dyntopo, evaluated geometry or dependency-graph acceptance.
+
+
+## Level 4 acceptance boundary
+
+The `--allow-level4-textures` path is prepared in source and covered only by injected
+fake-session CI. It uses a disposable plane, creates a bounded material, creates one deterministic
+UV layer through the typed source unwrap path, exercises packing and texel-density surfaces,
+checks material slots and Principled state, verifies managed-material recovery, and runs UDIM,
+channel, consistency, bake-preparation, aggregate asset QA, workflow preview and Level 4 source
+acceptance.
+
+The current acceptance path intentionally does not fabricate or silently load external texture
+files. Real image datablock loading, PBR texture assignment with actual files, Blender UV Editor
+quality, baking, UDIM image-tile behavior and shader evaluation remain manual/extended runtime
+acceptance work after explicit authorization.
+
+This path does not auto-enable rendering, destructive project replacement or unrestricted
+operators. It remains behind the same explicit `--authorize-runtime` requirement plus the
+separate Level 4 opt-in.
+
+Until that exact path is run using the default real launcher and a real Blender 4.2+ executable
+after explicit authorization, Level 4 real-runtime verification remains 0%. Source completion,
+fake bpy tests, fake sessions and CI are not substitutes for Blender UV, image, shader,
+dependency-graph or bake acceptance.
