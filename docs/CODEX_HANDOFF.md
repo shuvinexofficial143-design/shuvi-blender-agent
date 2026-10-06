@@ -3,36 +3,39 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 1 source/package commit: 104fb189fbf449f199116e56be8ac1f7be3c1ca1.
+Latest verified pushed Level 1 source/package commit: 48bb15d3c065428aa7b13e4461c9fd6c96abd221.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
 ## Level 1 active checkpoint
-Latest verified source checkpoint: 104fb189fbf449f199116e56be8ac1f7be3c1ca1.
-CI run 37408002145 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs, including
-lint, format, 248 tests, package build, distribution checks and clean install/import without bpy.
-The distribution audit verified 38 package modules. Real Blender runtime verification remains 0%.
+Latest verified source checkpoint: 48bb15d3c065428aa7b13e4461c9fd6c96abd221.
+CI run 37409190864 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs, including
+lint, format, 261 tests, package build, distribution checks and clean install/import without bpy.
+The distribution audit verified 40 package modules. Real Blender runtime verification remains 0%.
 
-Level 1 now exposes 52 typed host contracts/tools. In addition to the earlier bounded
-primitives, transforms, hierarchy, collections, scene state, animation, materials and render
-surface, this checkpoint adds direct-data Curve/Text creation + shape inspection,
-`mesh.apply_object_transform`, `origin.to_centroid`, and verified camera/light updates.
-The mesh transform/origin tools are deliberately narrow: bounded unparented local/unshared
-XYZ-Euler meshes only, with fresh object/geometry revisions and rollback on verification
-mismatch. They do not claim arbitrary Blender operator semantics.
+Level 1 now exposes 55 typed host contracts/tools and the current Level 1 source roadmap is
+**100% implemented**. The final source slice adds typed `mode.set`, destructive
+`object.delete`, confined destructive `file.open_checkpoint`, project-wide session identity
+rotation after checkpoint reopening, and an acceptance harness that covers the complete
+Level 1 surface with separate render/destructive opt-ins.
 
-Level 1 source is approximately **94%** against the broad roadmap. Remaining source work is
-primarily context-sensitive mode mutation (Edit/Sculpt/Pose/Paint and related transitions)
-plus destructive deletion/project switching. Those are intentionally left beyond this source
-checkpoint until real Blender context and checkpoint-recovery acceptance can validate them.
+Mode transitions are allowlisted by object type and require a selected, active, editable local
+target plus fresh scene/object revisions. Destructive deletion requires explicit destructive
+policy, refuses linked/overridden/read-only targets and parents with children, and verifies
+absence from scene/data. Checkpoint reopening accepts only a verified regular BLEND file inside
+the configured OutputWorkspace, then invalidates all old object IDs by rotating the session.
 
-Next: preserve the 94% source checkpoint, keep runtime-sensitive/destructive actions deferred,
-and use the explicit runtime acceptance procedure only after user authorization.
+This completes **Level 1 source implementation at 100%**. It does not mean real Blender runtime
+verification or production readiness is complete. Runtime acceptance remains 0% until the
+explicitly authorized Blender 4.2+ suite is actually executed.
+
+Next: no additional Level 1 source feature is required. The next phase is real Blender runtime
+acceptance and then integration into main Shuvi, only after explicit authorization.
 
 ## Current phase
-Original phases 1-11 and source hardening are complete. Level 1 broad-control source has
-reached the approximately 94% checkpoint. Phase 12 runtime suite/checklist is prepared,
-but actual Blender acceptance still awaits explicit authorization.
+Original phases 1-11, source hardening and the complete Level 1 source roadmap are finished.
+Level 1 source is at 100%. Phase 12 runtime acceptance remains prepared but unexecuted and
+still requires explicit authorization.
 
 ## Completed and verified
 - Fetched actual remote main at acf13dc and reconciled the prior session's identical local
@@ -66,7 +69,7 @@ but actual Blender acceptance still awaits explicit authorization.
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 52 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 55 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -93,21 +96,21 @@ but actual Blender acceptance still awaits explicit authorization.
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 38 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 40 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 52 typed host contracts/tools; Level 1 source approximately 94%.
-Unit/CI tests: 248 passed at 104fb189fbf449f199116e56be8ac1f7be3c1ca1.
-Lint/format: passing. Wheel/sdist build, 38-module distribution audit and clean install/import
-without bpy passed. CI run 37408002145 passed all six Linux/Windows Python 3.11/3.12/3.13
+Source: 55 typed host contracts/tools; Level 1 source **100% complete** for the current roadmap.
+Unit/CI tests: 261 passed at 48bb15d3c065428aa7b13e4461c9fd6c96abd221.
+Lint/format: passing. Wheel/sdist build, 40-module distribution audit and clean install/import
+without bpy passed. CI run 37409190864 passed all six Linux/Windows Python 3.11/3.12/3.13
 jobs. Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-The Level 1 source target requested for this checkpoint has been reached at approximately 94%.
-No Blender runtime work is authorized. Mode mutation and destructive operations stay beyond
-the honest source/runtime boundary until real Blender and checkpoint recovery are validated.
+Level 1 source work is complete at 100% for the current roadmap. No further Level 1 coding is
+required before runtime acceptance. Real Blender execution, rendering and destructive recovery
+tests remain opt-in and have not been authorized or run.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -128,9 +131,9 @@ the honest source/runtime boundary until real Blender and checkpoint recovery ar
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-With later explicit runtime authorization, follow docs/RUNTIME_ACCEPTANCE.md in its disposable
-factory workspace. Validate real Blender semantics for Curve/Text creation, transform baking,
-origin-to-centroid, device updates and context/mode transitions before expanding mode mutation.
-Rendering needs separate authorization/flag. Deletion and destructive project switching stay
-deferred until checkpoint reopening/recovery is runtime-verified. Until explicitly authorized:
-do not install, probe, launch or render Blender.
+After explicit runtime authorization, run docs/RUNTIME_ACCEPTANCE.md in the disposable factory
+workspace. First execute the non-render/non-destructive suite, then separately opt into tiny
+render and destructive checkpoint-recovery cases as authorized. Record exact Blender/OS/Python
+versions and verify mode transitions, Curve/Text, device updates, mesh transform/origin,
+object deletion, checkpoint reopening/session rotation, rendering and cleanup. Until explicitly
+authorized: do not install, probe, launch or render Blender.
