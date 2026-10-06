@@ -21,8 +21,8 @@ from .modeling_hardsurface import BooleanAdd, ModifierMove, ModifierUpdate, Stac
 from .modeling_region import BevelBoundaryEdge, ExtrudeRegion, InsetFace
 from .modeling_repair import CleanupFaces, MergeByDistance, RemoveLooseVertices, RepairInspect
 from .modeling_retopology import (
-    ProjectVertices,
     ProjectionInspect,
+    ProjectVertices,
     RelaxVertices,
     ShrinkwrapAdd,
 )
