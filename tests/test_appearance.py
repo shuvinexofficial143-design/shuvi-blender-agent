@@ -126,3 +126,97 @@ def test_invalid_device_and_material_bounds():
     payload["roughness"] = 1.1
     with pytest.raises(AgentError):
         MaterialAssign.parse(payload)
+
+
+
+def target(snapshot):
+    return {
+        "object_id": snapshot["object_id"],
+        "expected_name": snapshot["name"],
+        "expected_revision": snapshot["revision"],
+    }
+
+
+def test_camera_and_light_updates_verified():
+    bpy, inspector, registry = setup()
+    camera_result = registry.dispatch(
+        Request("device.create", device_payload(inspector, "CAMERA"))
+    )
+    assert camera_result.status == Status.VERIFIED
+    camera = bpy.data.objects.get("Device")
+    camera_snapshot = inspector.snapshot(camera)
+    updated = registry.dispatch(
+        Request(
+            "device.update",
+            {
+                "target": target(camera_snapshot),
+                "settings": {"lens": 85, "clip_end": 800, "make_active": False},
+            },
+        )
+    )
+    assert updated.status == Status.VERIFIED
+    assert updated.data["after"]["camera"]["lens"] == 85
+    assert updated.data["after"]["camera"]["clip_end"] == 800
+    assert updated.data["after"]["active_camera"] is False
+    assert bpy.context.scene.camera is None
+
+    light_result = registry.dispatch(
+        Request(
+            "device.create",
+            {
+                **device_payload(inspector, "POINT"),
+                "name": "KeyLight",
+                "expected_scene_revision": inspector.summary()["revision"],
+            },
+        )
+    )
+    assert light_result.status == Status.VERIFIED
+    light = bpy.data.objects.get("KeyLight")
+    light_snapshot = inspector.snapshot(light)
+    updated = registry.dispatch(
+        Request(
+            "device.update",
+            {
+                "target": target(light_snapshot),
+                "settings": {"energy": 600, "color": [1, 0.5, 0.25]},
+            },
+        )
+    )
+    assert updated.status == Status.VERIFIED
+    assert updated.data["after"]["light"]["energy"] == 600
+    assert updated.data["after"]["light"]["color"] == [1.0, 0.5, 0.25]
+
+
+def test_device_update_rejects_wrong_settings_for_kind():
+    bpy, inspector, registry = setup()
+    registry.dispatch(Request("device.create", device_payload(inspector, "CAMERA")))
+    camera = bpy.data.objects.get("Device")
+    result = registry.dispatch(
+        Request(
+            "device.update",
+            {
+                "target": target(inspector.snapshot(camera)),
+                "settings": {"energy": 100},
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_camera_update_rejects_invalid_final_clip_range_without_writing():
+    bpy, inspector, registry = setup()
+    registry.dispatch(Request("device.create", device_payload(inspector, "CAMERA")))
+    camera = bpy.data.objects.get("Device")
+    before = inspector.snapshot(camera)
+    result = registry.dispatch(
+        Request(
+            "device.update",
+            {
+                "target": target(before),
+                "settings": {"clip_start": 600},
+            },
+        )
+    )
+    assert result.error.code == ErrorCode.INVALID_REQUEST
+    assert camera.data.clip_start == 0.1
+    assert camera.data.clip_end == 500
