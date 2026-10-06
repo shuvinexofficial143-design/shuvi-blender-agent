@@ -139,9 +139,7 @@ def test_modular_wall_plan_uses_exact_pitch_and_base_offset():
     assert result.status == Status.SUCCEEDED
 
     transforms = [
-        item
-        for item in result.data["nodes"]
-        if item["node_type"] == "TRANSFORM_GEOMETRY"
+        item for item in result.data["nodes"] if item["node_type"] == "TRANSFORM_GEOMETRY"
     ]
     assert [item["inputs"]["Translation"] for item in transforms] == [
         [1.0, 2.0, 0.0],
@@ -166,9 +164,7 @@ def test_block_grid_plan_uses_exact_xy_spacing():
     assert result.status == Status.SUCCEEDED
 
     transforms = [
-        item
-        for item in result.data["nodes"]
-        if item["node_type"] == "TRANSFORM_GEOMETRY"
+        item for item in result.data["nodes"] if item["node_type"] == "TRANSFORM_GEOMETRY"
     ]
     assert [item["inputs"]["Translation"] for item in transforms] == [
         [-2.0, 1.0, 0.5],
@@ -348,9 +344,7 @@ def test_shared_group_is_denied_for_apply_and_clear():
         "prefix": "ArchitectureDemo",
         "parameters": wall_parameters(),
     }
-    cleared = registry.dispatch(
-        Request("geometry_nodes.architecture_clear", clear_payload)
-    )
+    cleared = registry.dispatch(Request("geometry_nodes.architecture_clear", clear_payload))
     assert cleared.error.code == ErrorCode.SAFETY_DENIED
 
 
