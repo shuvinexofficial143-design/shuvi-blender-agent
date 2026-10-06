@@ -14,6 +14,7 @@ from .mesh_transform import MeshTransformOperations
 from .mode_ops import ModeOperations
 from .modeling import ModelingOperations
 from .modeling_edit import ModelingEditOperations
+from .modeling_region import ModelingRegionOperations
 from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
@@ -53,6 +54,7 @@ def create_registry(
         MeshTransformOperations(objects),
         ModelingOperations(objects),
         ModelingEditOperations(objects),
+        ModelingRegionOperations(objects),
         DestructiveOperations(objects, policy, workspace),
     ]
     registry = ToolRegistry(
