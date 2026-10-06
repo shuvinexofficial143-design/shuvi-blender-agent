@@ -7,8 +7,8 @@ from shuvi_blender_agent.mesh import MeshOperations
 from shuvi_blender_agent.modeling_hardsurface import HardSurfaceOperations
 from shuvi_blender_agent.modeling_retopology import (
     ModelingRetopologyOperations,
-    ProjectVertices,
     ProjectionInspect,
+    ProjectVertices,
     RelaxVertices,
     ShrinkwrapAdd,
     _closest_point_triangle,
