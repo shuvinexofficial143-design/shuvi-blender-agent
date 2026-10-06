@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 
 from .contracts import Request
-from .errors import AgentError, ErrorCode
 from .models import ObjectTarget, vector3
 from .operations import ObjectOperations
 from .safety import SafetyClass
