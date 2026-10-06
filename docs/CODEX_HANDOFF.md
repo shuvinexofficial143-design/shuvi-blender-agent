@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 2 source/package commit: fbcc451daabde1c4dd5e2ba8b222421b264ff67a.
+Latest verified pushed Level 2 source/package commit: 93eff19925dac3379b2b1e18fdb5af30eefac298.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -33,37 +33,37 @@ Next: no additional Level 1 source feature is required. The next phase is real B
 acceptance and then integration into main Shuvi, only after explicit authorization.
 
 ## Level 2 active checkpoint
-Latest verified Level 2 source checkpoint: fbcc451daabde1c4dd5e2ba8b222421b264ff67a.
-CI run 37414442754 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **323 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **46 package modules**.
+Latest verified Level 2 source checkpoint: 93eff19925dac3379b2b1e18fdb5af30eefac298.
+CI run 37415314535 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **334 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **47 package modules**.
 
-Level 2 Professional Modeling is now **60% source complete** (Milestones 1-6 of 10).
-Milestone 6 adds:
-- `modifier.stack_inspect`: ordered bounded stack readback with a separate stack revision and
-  typed BEVEL/SUBSURF/SOLIDIFY/BOOLEAN core settings.
-- `modifier.stack_add`: verified multi-modifier hard-surface stack addition for typed
-  BEVEL/SUBSURF/SOLIDIFY settings.
-- `modifier.boolean_add`: non-destructive Boolean setup using an explicit fresh cutter
-  ObjectTarget, DIFFERENCE/UNION/INTERSECT operations and EXACT/FAST solvers.
-- `modifier.update`: bounded type-specific property/visibility patching with stale-stack
-  protection and rollback.
-- `modifier.move`: explicit verified stack reordering with rollback.
+Level 2 Professional Modeling is now **70% source complete** (Milestones 1-7 of 10).
+Milestone 7 adds:
+- `mesh.repair_inspect`: bounded near-duplicate vertex clusters, duplicate polygon groups,
+  degenerate faces, loose vertices, zero/near-zero edges, boundary/non-manifold/winding
+  diagnostics and face components with a separate repair revision.
+- `mesh.merge_by_distance`: deterministic proximity clustering, vertex compaction,
+  collapsed/self-repeating face removal, duplicate-face removal and preserved smoothing.
+- `mesh.cleanup_faces`: bounded degenerate-area cleanup plus optional duplicate-face removal
+  while preserving surviving per-face smooth flags.
+- `mesh.remove_loose_vertices`: deterministic unreferenced-vertex removal and polygon-index
+  compaction with preserved smoothing.
 
-Boolean creation verifies target/cutter identity and ordered stack state but deliberately does
-not claim evaluated Boolean geometry or permanent application; actual Blender solver behavior
-remains runtime-unverified. Hard-surface stacks are capped at 16 entries, arbitrary modifier
-property paths stay closed, and shape-key target meshes are denied for this source workflow.
+Repair proximity work uses a spatial grid/union-find approach with a 1,000,000 pair-check cap
+and 512 diagnostic-group cap. Repair topology rebuilds keep the existing metadata-preservation
+guard (no material slots, UV/color layers or vertex groups), reject shape keys/modifiers and
+restore captured geometry + smoothing when verification fails.
 
-The factory now exposes **75 typed tools**. Level 1 remains source-complete at 100%.
+The factory now exposes **79 typed tools**. Level 1 remains source-complete at 100%.
 No Blender install, launch, bpy runtime test or render was performed; runtime verification
 for both levels remains 0%.
 
-Milestone 7 is next: bounded topology cleanup and repair helpers.
+Milestone 8 is next: retopology and shrinkwrap-oriented helpers.
 
 ## Current phase
-Level 1 source is complete at 100%. Level 2 Professional Modeling is at **60% source
-completion** (Milestones 1-6 of 10 complete). Real Blender runtime acceptance remains
+Level 1 source is complete at 100%. Level 2 Professional Modeling is at **70% source
+completion** (Milestones 1-7 of 10 complete). Real Blender runtime acceptance remains
 prepared but unexecuted because no usable Blender runtime/server is currently available.
 
 ## Completed and verified
@@ -98,7 +98,7 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 75 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 79 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -125,20 +125,20 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 46 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 47 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 75 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
-**60%**. Verified Level 2 checkpoint: fbcc451daabde1c4dd5e2ba8b222421b264ff67a.
-CI run 37414442754 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 323 tests,
-lint/format, package build, 46-module distribution audit and clean install/import without bpy.
+Source: 79 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
+**70%**. Verified Level 2 checkpoint: 93eff19925dac3379b2b1e18fdb5af30eefac298.
+CI run 37415314535 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 334 tests,
+lint/format, package build, 47-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 2 Milestone 6 is complete, bringing Level 2 source to 60%. No Blender runtime work is
-available. The next slice should begin Milestone 7 only when requested; do not count fake-bpy/
+Level 2 Milestone 7 is complete, bringing Level 2 source to 70%. No Blender runtime work is
+available. The next slice should begin Milestone 8 only when requested; do not count fake-bpy/
 CI evidence as real Blender runtime verification.
 
 ## Decisions
@@ -160,9 +160,8 @@ CI evidence as real Blender runtime verification.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-When the user asks to continue Level 2, begin Milestone 7: bounded topology cleanup and repair
-helpers (for example duplicate/near-duplicate analysis, conservative merge-by-distance,
-degenerate/loose geometry cleanup and explicit repair diagnostics). Keep fresh geometry
-revisions, bounded work budgets, metadata-preservation guards, complete readback verification
-and rollback. Keep Level 2 runtime verification at 0% until a real Blender 4.2+ environment
-is explicitly available. Do not install, probe, launch or render Blender in the meantime.
+When the user asks to continue Level 2, begin Milestone 8: retopology and shrinkwrap-oriented
+helpers with explicit source/target objects, bounded projection/search work, typed settings,
+fresh revisions, safe readback evidence and no arbitrary Python/operator execution. Keep
+Level 2 runtime verification at 0% until a real Blender 4.2+ environment is explicitly
+available. Do not install, probe, launch or render Blender in the meantime.
