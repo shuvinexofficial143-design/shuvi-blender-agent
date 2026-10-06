@@ -29,10 +29,7 @@ def _bounds(vertices):
 def _centroid(vertices):
     if not vertices:
         return [0.0, 0.0, 0.0]
-    return [
-        sum(vertex[axis] for vertex in vertices) / len(vertices)
-        for axis in range(3)
-    ]
+    return [sum(vertex[axis] for vertex in vertices) / len(vertices) for axis in range(3)]
 
 
 def _surface_area(vertices, faces):
@@ -43,17 +40,15 @@ def _average_edge_length(vertices, faces):
     topology = topology_from_faces(faces)
     if not topology["edges"]:
         return 0.0
-    return sum(
-        _length(_sub(vertices[a], vertices[b])) for a, b in topology["edges"]
-    ) / len(topology["edges"])
+    return sum(_length(_sub(vertices[a], vertices[b])) for a, b in topology["edges"]) / len(
+        topology["edges"]
+    )
 
 
 def _voxel_plan(vertices, voxel_size):
     minimum, maximum = _bounds(vertices)
     extents = [maximum[axis] - minimum[axis] for axis in range(3)]
-    dimensions = [
-        max(1, int(ceil(extent / voxel_size)) + 2) for extent in extents
-    ]
+    dimensions = [max(1, int(ceil(extent / voxel_size)) + 2) for extent in extents]
     if any(value > MAX_AXIS_VOXELS for value in dimensions):
         raise AgentError(
             ErrorCode.SAFETY_DENIED,
