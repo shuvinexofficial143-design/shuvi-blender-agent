@@ -68,9 +68,7 @@ def test_uv_inspect_reports_layer_island_area_and_no_overlap():
     for item, value in zip(layer.data, [[0, 0], [1, 0], [1, 1], [0, 1]], strict=True):
         item.uv = value
 
-    data = registry.dispatch(
-        Request("uv.inspect", {"object_id": inspector.identity(obj)})
-    ).data
+    data = registry.dispatch(Request("uv.inspect", {"object_id": inspector.identity(obj)})).data
     assert data["missing_uv"] is False
     assert data["active_uv_layer"] == "UVMap"
     summary = data["layers"][0]
