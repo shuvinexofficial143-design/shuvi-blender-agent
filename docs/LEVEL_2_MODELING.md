@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **90%**.
+Current Level 2 source progress: **100%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -21,7 +21,7 @@ Real Blender runtime verification for Level 2: **0%**.
 | 7 | Topology cleanup and repair helpers | complete |
 | 8 | Retopology and shrinkwrap-oriented helpers | complete |
 | 9 | Advanced modeling modifier stack workflows | complete |
-| 10 | Modeling QA, recovery, acceptance and workflow composition | pending |
+| 10 | Modeling QA, recovery, acceptance and workflow composition | complete |
 
 ## Milestone 1 — 10% complete
 
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **90% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **100% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -444,7 +444,7 @@ moves the modifier back to its prior index.
 - no claim that fake-bpy/CI verifies Blender Boolean solver geometry
 - failed source-level readback verification performs bounded rollback of the changed stack state
 
-Milestone 7 is complete. Milestone 8 is complete. Milestone 9 is complete. Milestone 10 is next: modeling QA, recovery, acceptance and workflow composition.
+Milestone 7 is complete. Milestone 8 is complete. Milestone 9 is complete. Milestone 10 is complete. The current Level 2 source roadmap is complete at 100%.
 
 
 ## Milestone 7 — 70% complete
@@ -675,4 +675,102 @@ scripts or opaque Blender macros.
 - full ordered stack readback is required for successful verification
 - fake-bpy/CI verifies stack state/contract behavior only, not Blender modifier evaluation
 
-Milestone 10 is next: modeling QA, recovery, acceptance and workflow composition.
+Milestone 10 is complete. The current Level 2 source roadmap is complete at 100%.
+
+
+## Milestone 10 — 100% complete
+
+Milestone 10 closes the current Level 2 source roadmap with aggregate modeling QA,
+transactional repair workflows, explicit recovery evidence and opt-in Level 2 runtime
+acceptance preparation.
+
+### `modeling.qa_inspect`
+
+Aggregates bounded base-mesh, shading, repair, retopology and modifier-stack signals into one
+read-only modeling QA report.
+
+The report includes:
+
+- geometry/shading/stack revisions plus a combined `qa_revision`
+- vertex/edge/face counts
+- triangle/quad/ngon partitions and quad ratio
+- interior non-4-valence poles
+- near-duplicate vertex groups
+- duplicate/degenerate faces
+- loose vertices
+- zero/near-zero edges
+- high-degree non-manifold edges (>2 polygon users)
+- winding conflicts
+- modifier type/reference/order/visibility diagnostics
+- deterministic blocker/advisory codes
+- `qa_status`: `BLOCKED`, `REVIEW` or `CLEAN`
+
+The status is a source-side structural QA classification, not an artistic-quality or
+production-readiness guarantee.
+
+### `modeling.workflow_preview`
+
+Previews one allowlisted repair workflow without mutation.
+
+Current workflows:
+
+- `CLEAN_BASE_MESH`
+- `CLEAN_ORIENT_BASE_MESH`
+
+The preview reports the initial QA revision, current geometry revision, initial triggered steps
+and a workflow revision. It explicitly states that repair conditions are re-evaluated after
+each executed step because one topology repair can create/remove later cleanup candidates.
+
+### `modeling.workflow_apply`
+
+Runs a bounded transactional repair composition over the existing verified Level 2 tools.
+
+Depending on refreshed readback state it can compose:
+
+1. `mesh.merge_by_distance`
+2. `mesh.cleanup_faces`
+3. `mesh.remove_loose_vertices`
+4. `mesh.orient_faces_consistently` for `CLEAN_ORIENT_BASE_MESH`
+
+The request requires a fresh ObjectTarget, geometry revision and QA revision. A clean no-op
+workflow is rejected.
+
+The workflow captures the complete initial indexed geometry and per-face smoothing state before
+the first mutation. Every child operation must itself return verified readback. Final QA must
+show zero near-duplicate groups, duplicate faces, degenerate faces, loose vertices and
+zero-length edges; the orienting workflow additionally requires zero winding conflicts.
+
+If a later step fails after earlier verified mutations, the workflow restores the original
+captured vertices/faces and smoothing flags, reads them back, and returns explicit
+`rolled_back=true` / `recovery_verified=true` evidence when recovery succeeds. If recovery
+cannot itself be verified, the operation escalates to verification failure rather than
+claiming a known safe outcome.
+
+All existing topology-rebuild metadata guards remain active: no shape keys/modifiers,
+material slots, UV/color layers or vertex groups are silently discarded.
+
+### Level 2 runtime acceptance preparation
+
+The acceptance harness now has a separate `--allow-level2-modeling` opt-in. When enabled in
+an explicitly authorized real Blender run, the disposable suite additionally exercises
+representative Level 2 topology/shading/retopology inspection, aggregate QA, workflow
+preview/apply, modifier recipe preview/apply and stack diagnostics.
+
+The injected fake-session acceptance test covers that path in CI, but it does **not** count as
+real Blender runtime verification.
+
+## Level 2 completion boundary
+
+The current Level 2 source roadmap is **100% implemented**.
+
+This means the typed source contracts, bounded algorithms, readback verification, rollback
+paths, fake-bpy tests, packaging and CI coverage for the ten defined milestones are complete.
+It does **not** mean:
+
+- real Blender 4.2+ runtime behavior is verified
+- modifier/Boolean/Shrinkwrap evaluated geometry is proven
+- production readiness is achieved
+- Level 3 sculpting/character modeling has started
+
+Real Blender runtime verification remains **0%** until the separately authorized acceptance
+suite is actually run against Blender.
