@@ -5,11 +5,13 @@ from .appearance import AppearanceOperations
 from .assets import AssetOperations
 from .collection_ops import CollectionOperations
 from .contracts import Result, Status
+from .destructive import DestructiveOperations
 from .files import OutputWorkspace
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .mesh import MeshOperations
 from .mesh_transform import MeshTransformOperations
+from .mode_ops import ModeOperations
 from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
@@ -39,6 +41,7 @@ def create_registry(
         HierarchyOperations(objects),
         CollectionOperations(objects),
         SceneStateOperations(objects),
+        ModeOperations(objects),
         ShapeOperations(objects),
         AppearanceOperations(objects),
         AssetOperations(objects),
@@ -46,6 +49,7 @@ def create_registry(
         RenderOperations(objects, policy, workspace),
         MeshOperations(objects),
         MeshTransformOperations(objects),
+        DestructiveOperations(objects, policy, workspace),
     ]
     registry = ToolRegistry(
         [ping_tool(), *(tool for adapter in adapters for tool in adapter.tools())], policy
