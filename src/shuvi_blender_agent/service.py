@@ -42,6 +42,7 @@ from .shape_ops import ShapeOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
 from .validation import fields
+from .uv import UVOperations
 from .visibility import VisibilityOperations
 
 
@@ -89,6 +90,7 @@ def create_registry(
         SculptControlOperations(objects),
         SculptDetailOperations(objects),
         SculptRemeshPlanningOperations(objects),
+        UVOperations(objects),
         DestructiveOperations(objects, policy, workspace),
     ]
     registry = ToolRegistry(
