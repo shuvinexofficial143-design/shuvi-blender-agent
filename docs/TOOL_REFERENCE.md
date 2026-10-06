@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 60 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 63 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -66,6 +66,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | mesh.transform_elements | target, expected_geometry_revision, domain, indices, translation, rotation_euler, scale, pivot | mutation | exact full-geometry readback plus affected vertex set |
 | mesh.merge_vertices | target, expected_geometry_revision, indices, mode | mutation | compacted vertices/faces plus deterministic merged vertex index |
 | mesh.dissolve_edge | target, expected_geometry_revision, edge_index | mutation | two-face edge dissolve into one verified simple polygon |
+| mesh.extrude_region | target, expected_geometry_revision, face_indices, offset | mutation | connected-region cap/side-wall rebuild with full geometry readback |
+| mesh.inset_face | target, expected_geometry_revision, face_index, factor | mutation | one inner cap plus verified quad ring |
+| mesh.bevel_boundary_edge | target, expected_geometry_revision, edge_index, factor | mutation | conservative boundary-edge chamfer strip and rebuilt source polygon |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -201,7 +204,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **20%**.
+Current Level 2 source progress: **30%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -235,3 +238,20 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 - All milestone 2 mutations require editable local unshared mesh data, fresh geometry state,
   no shape keys/modifiers, Object mode and normal object mutation safety guards. Verification
   compares complete bounded geometry; failed verification triggers bounded rollback.
+
+
+### Level 2 milestone 3 limits
+
+- `mesh.extrude_region` accepts 1..64 unique face indices, requires a single edge-connected
+  selected region, rejects selected non-manifold edges and rejects a closed region without a
+  boundary. Unique selected vertices are duplicated once; side quads are created only for
+  region boundary edges.
+- `mesh.inset_face` accepts one face and factor 0.001..0.95. It is a center-interpolation
+  inset foundation with one new inner vertex per source face vertex and one surrounding quad
+  per source edge.
+- `mesh.bevel_boundary_edge` accepts one canonical edge index and factor 0.001..0.49.
+  The edge must have exactly one polygon user. This milestone intentionally does not bevel
+  shared/manifold edges.
+- Milestone 3 topology rebuilds keep the Milestone 2 metadata guard: material slots, vertex
+  groups, UV layers and color attributes cause a safety denial until data-layer preservation
+  is implemented intentionally.
