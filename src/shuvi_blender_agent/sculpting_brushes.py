@@ -34,9 +34,7 @@ def _normalize(value):
 
 def _valid_selection(vertices, center, radius, falloff):
     return [
-        item
-        for item in _brush_selection(vertices, center, radius, falloff)
-        if item["weight"] > 0
+        item for item in _brush_selection(vertices, center, radius, falloff) if item["weight"] > 0
     ]
 
 
@@ -60,8 +58,7 @@ def _weighted_centroid(vertices, selected):
     if weight_sum <= NORMAL_EPSILON:
         raise invalid("Sculpt brush has no positive falloff weight")
     return tuple(
-        sum(vertices[item["index"]][axis] * item["weight"] for item in selected)
-        / weight_sum
+        sum(vertices[item["index"]][axis] * item["weight"] for item in selected) / weight_sum
         for axis in range(3)
     )
 
