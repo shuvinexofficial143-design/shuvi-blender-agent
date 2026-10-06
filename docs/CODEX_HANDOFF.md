@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 2 source/package commit: 8966c29acd836c561878865b5a695b13ce2b632c.
+Latest verified pushed Level 2 source/package commit: 05f89baaef2f009fdff1a3bfc614f899ca41c41c.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -33,37 +33,37 @@ Next: no additional Level 1 source feature is required. The next phase is real B
 acceptance and then integration into main Shuvi, only after explicit authorization.
 
 ## Level 2 active checkpoint
-Latest verified Level 2 source checkpoint: 8966c29acd836c561878865b5a695b13ce2b632c.
-CI run 37412639749 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **301 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **44 package modules**.
+Latest verified Level 2 source checkpoint: 05f89baaef2f009fdff1a3bfc614f899ca41c41c.
+CI run 37413661036 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **311 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **45 package modules**.
 
-Level 2 Professional Modeling is now **40% source complete** (Milestones 1-4 of 10).
-Milestone 4 adds:
-- `mesh.subdivide_edge`: one bounded boundary/manifold edge split with an interpolated vertex
-  inserted into every polygon cycle that uses the edge.
-- `mesh.loop_cut_quad_strip`: deterministic opposite-edge traversal through an all-quad
-  strip, one cut vertex per discovered ring edge and exact two-quad replacement per affected
-  face, with a 256-edge traversal cap.
-- `mesh.bridge_boundary_loops`: two explicit disjoint equal-count boundary loops (3..64
-  vertices each) connected by one verified quad per corresponding segment.
-- `mesh.fill_boundary_loop`: one explicit 3..32-vertex existing boundary cycle closed with
-  a verified polygon face.
+Level 2 Professional Modeling is now **50% source complete** (Milestones 1-5 of 10).
+Milestone 5 adds:
+- `mesh.shading_inspect`: bounded base-mesh face normals and triangle-fan areas, face
+  smooth/flat state, degenerate/ambiguous-normal faces, isolated vertices, boundary and
+  non-manifold edges, plus same-direction manifold-edge winding conflicts and a separate
+  shading revision.
+- `mesh.set_face_smoothing`: 1..256 explicit faces with fresh geometry + shading revisions,
+  exact `use_smooth` readback, unchanged geometry verification and bounded flag rollback.
+- `mesh.orient_faces_consistently`: manifold-connected face graph orientation solving,
+  explicit rejection of >2-user edges/contradictory constraints, verified winding-conflict
+  removal, and preservation of per-face smooth flags across the bounded rebuild.
 
-Milestone 4 retains the topology metadata-preservation guard from prior rebuild milestones:
-material slots, vertex groups, UV layers and color attributes are denied rather than silently
-discarded. Existing local/unshared mesh, Object-mode, stale-state, shape-key/modifier and
-object animation/constraint guards remain in force.
+The orientation tool guarantees internally consistent face winding per connected component;
+it deliberately does not claim globally outward normals. Source normals are deterministic
+base-geometry calculations and do not claim Blender evaluated/custom split-normal semantics.
+Topology rebuilding retains the no-material/UV/color/vertex-group metadata guard.
 
-The factory now exposes **67 typed tools**. Level 1 remains source-complete at 100%.
+The factory now exposes **70 typed tools**. Level 1 remains source-complete at 100%.
 No Blender install, launch, bpy runtime test or render was performed; runtime verification
 for both levels remains 0%.
 
-Milestone 5 is next: bounded normals, smoothing and shading/topology diagnostics.
+Milestone 6 is next: hard-surface boolean workflow and stronger modifier modeling controls.
 
 ## Current phase
-Level 1 source is complete at 100%. Level 2 Professional Modeling is at **40% source
-completion** (Milestones 1-4 of 10 complete). Real Blender runtime acceptance remains
+Level 1 source is complete at 100%. Level 2 Professional Modeling is at **50% source
+completion** (Milestones 1-5 of 10 complete). Real Blender runtime acceptance remains
 prepared but unexecuted because no usable Blender runtime/server is currently available.
 
 ## Completed and verified
@@ -98,7 +98,7 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 67 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 70 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -130,15 +130,15 @@ prepared but unexecuted because no usable Blender runtime/server is currently av
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 67 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
-**40%**. Verified Level 2 checkpoint: 8966c29acd836c561878865b5a695b13ce2b632c.
-CI run 37412639749 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 301 tests,
-lint/format, package build, 44-module distribution audit and clean install/import without bpy.
+Source: 70 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
+**50%**. Verified Level 2 checkpoint: 05f89baaef2f009fdff1a3bfc614f899ca41c41c.
+CI run 37413661036 passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with 311 tests,
+lint/format, package build, 45-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 2 Milestone 4 is complete, bringing Level 2 source to 40%. No Blender runtime work is
-available. The next slice should begin Milestone 5 only when requested; do not count fake-bpy/
+Level 2 Milestone 5 is complete, bringing Level 2 source to 50%. No Blender runtime work is
+available. The next slice should begin Milestone 6 only when requested; do not count fake-bpy/
 CI evidence as real Blender runtime verification.
 
 ## Decisions
@@ -160,8 +160,9 @@ CI evidence as real Blender runtime verification.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-When the user asks to continue Level 2, begin Milestone 5: bounded normals, smoothing and
-shading/topology diagnostics. Add explicit readback for face normals/smoothing state and
-conservative verified mutation controls without opening arbitrary Python/bmesh/operator
-execution. Keep Level 2 runtime verification at 0% until a real Blender 4.2+ environment is
-explicitly available. Do not install, probe, launch or render Blender in the meantime.
+When the user asks to continue Level 2, begin Milestone 6: hard-surface boolean workflow and
+stronger modifier modeling controls. Keep the interface typed/allowlisted, require explicit
+fresh targets and bounded geometry, verify modifier/boolean state through readback, and avoid
+arbitrary Python/operator execution. Keep Level 2 runtime verification at 0% until a real
+Blender 4.2+ environment is explicitly available. Do not install, probe, launch or render
+Blender in the meantime.
