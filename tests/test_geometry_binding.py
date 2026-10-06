@@ -40,9 +40,7 @@ def target(inspector, obj):
 
 
 def create_group(registry, name="Procedural"):
-    result = registry.dispatch(
-        Request("geometry_nodes.group_create", {"group_name": name})
-    )
+    result = registry.dispatch(Request("geometry_nodes.group_create", {"group_name": name}))
     assert result.status == Status.VERIFIED
     return result.data["after"]
 
@@ -87,9 +85,7 @@ def test_modifier_bind_and_inspect_verify_exact_group():
     assert modifier.node_group is bpy.data.node_groups.get("Procedural")
     assert result.data["after"]["revision"] != before["revision"]
     row = next(
-        item
-        for item in result.data["after"]["modifiers"]
-        if item["name"] == "GeometryNodes"
+        item for item in result.data["after"]["modifiers"] if item["name"] == "GeometryNodes"
     )
     assert row["settings"]["node_group_name"] == "Procedural"
 
