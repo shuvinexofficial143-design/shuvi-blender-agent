@@ -142,9 +142,7 @@ def test_object_delete_is_destructive_verified_and_policy_gated():
 def test_object_delete_rejects_parent_with_children():
     bpy = fake_bpy()
     bpy.data.objects.get("Sphere").parent = bpy.data.objects.get("Cube")
-    registry = create_registry(
-        bpy, SafetyPolicy(allow_mutations=True, allow_destructive=True)
-    )
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True, allow_destructive=True))
     cube = next(
         item
         for item in registry.dispatch(Request("objects.list")).data["items"]
