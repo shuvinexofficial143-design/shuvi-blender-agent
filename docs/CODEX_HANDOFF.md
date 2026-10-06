@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 3 source/package commit: 11d984225b070bcfff2633c8aa159cffc5062ce2.
+Latest verified pushed Level 3 source/package commit: e9c818533d202028212fe2f888e839f405bdc042.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -67,47 +67,43 @@ There is no additional required Level 2 source milestone in the current roadmap.
 are separately authorized real Blender 4.2+ acceptance, integration into main Shuvi, or
 starting the separately scoped Level 3 work.
 
-## Level 3 active checkpoint
-Latest verified Level 3 source/test checkpoint: 11d984225b070bcfff2633c8aa159cffc5062ce2.
-CI run 37426020551 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **440 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **59 package modules**.
+## Level 3 final source checkpoint
+Latest verified Level 3 source/test checkpoint: e9c818533d202028212fe2f888e839f405bdc042.
+CI run 37427027522 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **445 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **60 package modules**.
 
-Level 3 Sculpting + Character Modeling is now **90% source complete**
-(Milestones 1-9 of 10). This 20% batch completed Milestones 8 and 9.
+Level 3 Sculpting + Character Modeling source roadmap is now **100% complete**
+(Milestones 1-10 of 10).
 
-Milestone 8 adds:
-- `character.body_region_plan`: fits a character preset to current local mesh bounds and
-  emits 17 torso/limb/hand/foot sculpt planning regions.
-- `character.limb_guide`: side-aware ARM/LEG reference landmarks plus thickness guidance.
-- `character.extremity_guide`: HAND/FOOT reference landmarks including digit/toe tips.
-- `character.body_symmetry_audit`: bounded local-X base-coordinate symmetry partner audit
-  with unmatched and collision evidence.
+Milestone 10 adds:
+- `character.workflow_preview`: a fixed 12-stage end-to-end character workflow composition
+  around existing Level 3 body/face planning, structural QA, recovery and recipe tools. It
+  reports READY/REVIEW/BLOCKED and never auto-executes mutations.
+- `character.level3_acceptance`: eight bounded source-side acceptance checks across body
+  landmarks, body regions, face fit, face regions, face symmetry, structural sculpt QA,
+  allowlisted recipe preview and surface baseline.
+- explicit acceptance boundaries: source/fake-adapter scope only,
+  `runtime_acceptance_required=true`, `real_runtime_verified=false`,
+  `production_ready=false`.
+- runtime acceptance preparation now has a separate `--allow-level3-character` opt-in. Its
+  injected fake-session path creates a disposable symmetric mesh, runs Level 3 planning/QA,
+  captures a bounded recovery patch, performs one controlled mirrored grab, verifies recovery,
+  and exercises workflow/source-acceptance surfaces. This fake path does not count as Blender
+  runtime verification.
 
-Milestone 9 adds:
-- `character.sculpt_qa`: aggregate structural sculpt-readiness and local-X symmetry QA with
-  deterministic `qa_revision`.
-- `character.sculpt_recipe_preview`: allowlisted BODY_PRIMARY_FORMS,
-  FACE_PRIMARY_FORMS and HAND_FOOT_REFINEMENT preview recipes using existing typed tools.
-- `character.sculpt_recovery_snapshot`: bounded 1..512 vertex coordinate-patch snapshot with
-  topology revision.
-- `character.sculpt_recovery_restore`: verified 1..512 coordinate-patch restore requiring
-  fresh object/geometry state and exact topology match, with rollback on verification failure.
+The factory now exposes **126 typed tools**. Level 1 source is 100%, Level 2 source is 100%,
+and Level 3 source is 100%. No Blender install, version probe, launch, bpy runtime test,
+Sculpt Mode execution or render was performed while completing Level 3. Level 3 real Blender
+runtime verification remains **0%** and production readiness remains **No**.
 
-Body/limb/extremity tools are planning/reference helpers. Body symmetry and sculpt QA are
-base-coordinate structural checks, not perceptual/anatomical guarantees. Recipe previews do
-not auto-execute. Recovery mutates only explicit bounded coordinates and fails closed on
-topology drift.
-
-The factory now exposes **124 typed tools**. Level 1 source remains 100%, Level 2 source
-remains 100%, and Level 3 source is 90%. No Blender install, launch, bpy runtime test or render
-was performed; Level 3 real Blender runtime verification remains 0%.
-
-Milestone 10 is next: Level 3 acceptance, end-to-end character workflow composition and handoff.
+There is no additional required Level 3 source milestone in the current roadmap. Next choices
+are a separately defined Level 4 roadmap, integration into main Shuvi, or explicitly authorized
+real Blender 4.2+ acceptance.
 
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
-Level 3 Sculpting + Character Modeling source is now **90% complete** (Milestones 1-9 of 10).
+Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted because no usable Blender
 runtime/server is currently available.
 
@@ -143,7 +139,7 @@ runtime/server is currently available.
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 124 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 126 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -170,22 +166,23 @@ runtime/server is currently available.
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 59 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 60 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 124 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
-**100%**. Level 3 sculpting/character-modeling source: **90%**. Verified Level 3 source/test
-checkpoint: 11d984225b070bcfff2633c8aa159cffc5062ce2. CI run 37426020551 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 440 tests, lint/format, package build,
-59-module distribution audit and clean install/import without bpy.
+Source: 126 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
+**100%**. Level 3 sculpting/character-modeling source: **100%**. Verified Level 3 source/test
+checkpoint: e9c818533d202028212fe2f888e839f405bdc042. CI run 37427027522 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 445 tests, lint/format, package build,
+60-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 3 Milestones 8 and 9 are complete, bringing Level 3 source to 90%. No Blender runtime
-work has been performed. Continue only with the final Level 3 source acceptance/composition
-milestone while keeping fake-bpy/CI evidence separate from real Blender runtime verification.
+Level 3 source roadmap is complete at 100%. Do not silently add another Level 3 source
+milestone. Keep source/fake evidence separate from real Blender runtime verification. Future
+work must be explicitly scoped as Level 4, main-Shuvi integration, or authorized Blender
+runtime acceptance.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -206,11 +203,9 @@ milestone while keeping fake-bpy/CI evidence separate from real Blender runtime 
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-When the user asks to continue Level 3, complete Milestone 10: Level 3 acceptance,
-end-to-end character workflow composition and final handoff. Add a bounded character workflow
-preview/acceptance surface that composes existing Level 3 references, QA, recipe and recovery
-contracts without bypassing fresh-state requirements. Update runtime-acceptance preparation
-only if it can remain opt-in and explicitly separate fake-session evidence from real Blender
-runtime verification. Then run full CI, synchronize README/TOOL_REFERENCE/LEVEL_3_SCULPTING/
-CODEX_HANDOFF and mark Level 3 source 100% only after the complete source/fake CI checkpoint
-is green. Do not install, probe, launch or render Blender without separate authorization.
+Level 3 has no remaining source milestone. When the user asks to continue, first establish the
+next scope: Level 4 UV/Texture/Materials, integration of this Blender Agent into the main Shuvi
+repository, or separately authorized real Blender 4.2+ acceptance. Do not install, probe,
+launch or render Blender unless runtime testing is explicitly authorized. If Level 4 is chosen,
+define its ten source milestones before implementation and preserve the same typed/bounded,
+readback-verified architecture.
