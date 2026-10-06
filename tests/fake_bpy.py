@@ -52,6 +52,7 @@ class FakeMesh:
                 NS(
                     vertices=list(face),
                     use_smooth=False,
+                    material_index=0,
                     loop_start=loop_start,
                     loop_total=len(face),
                 )
@@ -150,6 +151,14 @@ class FakeMaterialLinks(list):
         super().append(material)
         material.users += 1
 
+    def __setitem__(self, index, material):
+        previous = self[index]
+        if previous is material:
+            return
+        previous.users -= 1
+        super().__setitem__(index, material)
+        material.users += 1
+
     def pop(self, index=-1):
         material = super().pop(index)
         material.users -= 1
@@ -176,6 +185,18 @@ class FakeMaterials(list):
             diffuse_color=[0.8, 0.8, 0.8, 1],
             node_tree=NS(nodes=[shader]),
         )
+
+        def duplicate():
+            clone = self.new(material.name + "Copy")
+            clone.use_nodes = material.use_nodes
+            clone.diffuse_color = copy.deepcopy(material.diffuse_color)
+            source_shader = material.node_tree.nodes[0]
+            target_shader = clone.node_tree.nodes[0]
+            for key, value in source_shader.inputs.items():
+                target_shader.inputs[key].default_value = copy.deepcopy(value.default_value)
+            return clone
+
+        material.copy = duplicate
         self.append(material)
         return material
 
