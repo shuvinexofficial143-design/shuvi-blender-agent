@@ -22,6 +22,7 @@ from .collection_ops import (
 )
 from .destructive import DeleteObject
 from .hierarchy import ParentChange
+from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
     MaterialFaceAssign,
     MaterialSlotDuplicate,
@@ -145,6 +146,10 @@ def builtin_contracts() -> dict:
         "material.slot_duplicate": (mutation, MaterialSlotDuplicate.parse),
         "material.slot_remove": (mutation, MaterialSlotRemove.parse),
         "material.face_assign": (mutation, MaterialFaceAssign.parse),
+        "material.shader_inspect": (read, ShaderInspect.parse),
+        "material.principled_set": (mutation, PrincipledSet.parse),
+        "material.pbr_texture_assign": (mutation, PBRTextureAssign.parse),
+        "material.pbr_texture_clear": (mutation, PBRTextureClear.parse),
         "device.create": (mutation, CreateDevice.parse),
         "device.update": (mutation, UpdateDevice.parse),
         "modifier.add": (mutation, AddModifier.parse),

@@ -14,6 +14,7 @@ from .destructive import DestructiveOperations
 from .files import OutputWorkspace
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
+from .material_nodes import MaterialNodeOperations
 from .material_slots import MaterialSlotOperations
 from .mesh import MeshOperations
 from .mesh_transform import MeshTransformOperations
@@ -74,6 +75,7 @@ def create_registry(
         ShapeOperations(objects),
         AppearanceOperations(objects),
         MaterialSlotOperations(objects),
+        MaterialNodeOperations(objects),
         AssetOperations(objects),
         AnimationOperations(objects),
         RenderOperations(objects, policy, workspace),

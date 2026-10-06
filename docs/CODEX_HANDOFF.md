@@ -3,7 +3,7 @@
 Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 4 source/test commit: f095e4ec6ea8f6e9a5072faa026583bcb63e21b7.
+Latest verified pushed Level 4 source/test commit: 418c932e0764c52d477f435eff3bb025db0b30be.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -101,54 +101,51 @@ There is no additional required Level 3 source milestone in the current roadmap.
 now been explicitly started by the user.
 
 ## Level 4 active checkpoint
-Latest verified Level 4 source/test checkpoint: f095e4ec6ea8f6e9a5072faa026583bcb63e21b7.
-CI run 37444522045 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **489 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **64 package modules**.
+Latest verified Level 4 source/test checkpoint: 418c932e0764c52d477f435eff3bb025db0b30be.
+CI run 37446928868 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **509 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **65 package modules**.
 
-Level 4 UV / Texture / Materials is now **60% source complete** (Milestones 1-6 of 10).
+Level 4 UV / Texture / Materials is now **80% source complete** (Milestones 1-8 of 10).
 
-Milestones 1-4 remain the bounded UV diagnostics, seams, planar unwrap and island-editing
+Milestones 1-6 remain the bounded UV diagnostics/editing/packing/texel-density and material-slot
 foundation documented in LEVEL_4_UV_MATERIALS.md.
 
-Milestone 5 adds:
-- `uv.pack_plan`: deterministic source-only grid packing preview for current UV islands with
-  bounded margin, per-island transforms and target coordinate revision.
-- `uv.pack_apply`: verified deterministic 0..1 grid pack with fresh object/geometry/UV
-  revisions and full target-layer coordinate rollback on mismatch.
-- `uv.texel_density_inspect`: bounded per-face plus min/median/max source texel-density
-  estimates from UV area, surface area and explicit texture size.
-- `uv.texel_density_plan`: read-only uniform UV scale planning toward a target median density.
+Milestone 7 adds:
+- `material.shader_inspect`: bounded node/link topology, supported Principled values,
+  Shuvi-managed Normal Map/Bump settings, managed PBR bindings and fresh shader_revision.
+- `material.principled_set`: typed Base Color/Metallic/Roughness/Transmission/Emission/Alpha
+  and managed Normal/Bump controls with stale-state checks, unmanaged-link protection,
+  actual readback and verified managed-graph recovery.
+- shader work is capped at 32 nodes and 64 links and requires one local node-enabled material
+  with exactly one Principled BSDF.
 
-Milestone 6 adds:
-- `material.slots_inspect`: bounded slot order, per-slot face-user counts, complete bounded
-  face material indices and a dedicated material_revision.
-- `material.slot_link`: append an existing material as a new slot.
-- `material.slot_reassign`: replace one existing slot reference.
-- `material.slot_duplicate`: duplicate one source-slot material datablock under a fresh name.
-- `material.slot_remove`: conservatively remove only an unused final slot.
-- `material.face_assign`: assign explicit bounded faces to one existing slot with verified
-  rollback.
+Milestone 8 adds:
+- `material.pbr_texture_assign`: bind one existing local image datablock to BASE_COLOR,
+  ROUGHNESS, METALLIC, NORMAL, HEIGHT, AO or ALPHA using only allowlisted managed nodes.
+- `material.pbr_texture_clear`: remove only the selected Shuvi-managed texture node/link set
+  without deleting the image datablock or unmanaged graph content.
+- Base Color requires sRGB; Roughness/Metallic/Normal/Height/AO/Alpha require Non-Color.
+  Mismatches fail closed instead of mutating a shared image datablock's global colorspace.
+- Base/Roughness/Metallic/Alpha wire directly to Principled inputs; Normal/Height use managed
+  Normal Map/Bump helpers. AO remains explicitly auxiliary because Principled has no AO socket.
 
-Material mutations require editable local unshared mesh data, fresh ObjectTarget and fresh
-material revision. Material surfaces are capped at 64 slots and 256 faces.
-
-The factory now exposes **141 typed tools** under the existing centralized **160-tool** hard
-registry/catalog cap. No arbitrary operation, Python execution, unrestricted bpy/operator
-surface or shader-node editing surface was introduced.
+The factory now exposes **145 typed tools** under the existing centralized **160-tool** hard
+registry/catalog cap. No arbitrary Python, unrestricted node creation, filesystem image loader,
+generic bpy/material operator surface or hidden runtime claim was introduced.
 
 Level 1 source is 100%, Level 2 source is 100%, Level 3 source is 100%, and Level 4 source is
-60%. No Blender install/probe/launch, bpy runtime test, real Blender UV pack/material mutation,
-render or GPU-heavy action was performed for this source checkpoint. Level 4 real Blender
-runtime verification remains 0% and production readiness remains No.
+80%. No Blender install/probe/launch, bpy runtime test, real Blender shader/PBR mutation,
+render or GPU-heavy action was performed. Level 4 real Blender runtime verification remains
+0% and production readiness remains No.
 
-Milestone 7 — shader / material node foundation — is next, but must not start without explicit
-user permission.
+Milestone 9 — advanced texture workflow — is next, but must not start without explicit user
+permission.
 
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
 Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
-Level 4 UV / Texture / Materials source is **60% complete** (Milestones 1-6 of 10).
+Level 4 UV / Texture / Materials source is **80% complete** (Milestones 1-8 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted pending explicit authorization.
 
 ## Completed and verified
@@ -183,7 +180,7 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 141 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 145 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -210,23 +207,23 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 64 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 65 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 141 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
+Source: 145 typed host contracts/tools. Level 1 source: **100%**. Level 2 modeling source:
 **100%**. Level 3 sculpting/character-modeling source: **100%**. Level 4 UV/texture/materials
-source: **60%**. Verified Level 4 source/test checkpoint:
-f095e4ec6ea8f6e9a5072faa026583bcb63e21b7. CI run 37444522045 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 489 tests, lint/format, package build,
-64-module distribution audit and clean install/import without bpy.
+source: **80%**. Verified Level 4 source/test checkpoint:
+418c932e0764c52d477f435eff3bb025db0b30be. CI run 37446928868 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 509 tests, lint/format, package build,
+65-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 4 Milestones 1-6 are complete at 60%. Stop here. Do not begin Milestone 7 or any later
-Level 4 milestone without explicit user permission. Keep source/fake evidence separate from
-real Blender runtime verification.
+Level 4 Milestones 1-8 are complete at 80%. Stop here. Do not begin Milestone 9 or Milestone 10
+without explicit user permission. Keep source/fake evidence separate from real Blender runtime
+verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -247,7 +244,8 @@ real Blender runtime verification.
 None for source development. Heavy Blender runtime actions require later user authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 4, start only Milestone 7:
-shader / material node foundation. Preserve typed/bounded inputs, fresh revisions, readback and
-recovery boundaries. Do not install, probe, launch or render Blender and do not execute real
-material/runtime acceptance unless separately authorized.
+Wait for explicit user permission. If the user asks to continue Level 4, start only Milestone 9:
+advanced texture workflow (UDIM planning, image-texture management, channel QA, baking prep and
+consistency diagnostics). Preserve typed/bounded inputs, fresh revisions, readback and recovery
+boundaries. Do not install, probe, launch or render Blender and do not execute real texture/
+material runtime acceptance unless separately authorized.

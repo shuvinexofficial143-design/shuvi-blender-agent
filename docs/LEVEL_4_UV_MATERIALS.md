@@ -3,7 +3,7 @@
 Level 4 begins after the completed Level 1-3 source roadmaps. It follows the same boundary:
 source/fake-bpy/CI evidence is not real Blender runtime verification.
 
-Current Level 4 source progress: **60%**.
+Current Level 4 source progress: **80%**.
 
 Real Blender runtime verification for Level 4: **0%**.
 
@@ -17,8 +17,8 @@ Real Blender runtime verification for Level 4: **0%**.
 | 4 | UV island editing | complete |
 | 5 | UV packing and texel-density planning | complete |
 | 6 | Material slot management | complete |
-| 7 | Shader / material node foundation | pending |
-| 8 | PBR texture assignment | pending |
+| 7 | Shader / material node foundation | complete |
+| 8 | PBR texture assignment | complete |
 | 9 | Advanced texture workflow | pending |
 | 10 | Level 4 QA / recovery / acceptance | pending |
 
@@ -280,9 +280,116 @@ editing. Shader/node work remains Milestone 7.
 Milestones 5-6 add ten typed operations, taking the factory from 131 to **141** tools. The
 centralized registry/catalog maximum remains **160**.
 
+## Milestone 7 — 70% complete
+
+Milestone 7 adds a bounded typed Principled-BSDF material node surface. It does not expose
+generic node creation, arbitrary Python or unrestricted shader graph editing.
+
+### `material.shader_inspect`
+
+This read-only operation targets one existing local node-enabled material by name and reports:
+
+- material name
+- node/link counts
+- bounded node type/name/image summaries
+- complete bounded link topology
+- supported Principled values for Base Color, Metallic, Roughness, Transmission Weight,
+  Emission Color, Emission Strength and Alpha
+- managed Normal Map / Bump strengths and distance
+- all managed PBR channel bindings
+- dedicated `shader_revision`
+
+Shader inspection is capped at 32 nodes and 64 links and requires exactly one Principled BSDF.
+
+### `material.principled_set`
+
+This mutation requires a fresh `expected_shader_revision` and accepts only typed bounded
+settings:
+
+- base color
+- metallic
+- roughness
+- transmission
+- emission color
+- emission strength
+- alpha
+- normal strength
+- height/bump strength
+- height/bump distance
+
+Normal and height controls may create only Shuvi-managed Normal Map / Bump helper nodes. The
+managed normal chain is deterministic:
+
+- Normal Map → Principled Normal when no managed Bump node is present
+- Normal Map → Bump Normal → Principled Normal when both are present
+- Bump → Principled Normal when only Bump is present
+
+The tool refuses to overwrite an unmanaged incoming shader link. Verification compares the
+requested Principled/auxiliary values against actual node readback. Recovery restores direct
+Principled values plus the complete prior Shuvi-managed node/link state and only claims success
+after the initial shader revision is restored.
+
+## Milestone 8 — 80% complete
+
+Milestone 8 adds typed PBR image-texture binding for seven channels:
+
+- Base Color
+- Roughness
+- Metallic
+- Normal
+- Height
+- Ambient Occlusion (AO)
+- Alpha
+
+### `material.pbr_texture_assign`
+
+The operation requires:
+
+- existing local material
+- fresh shader revision
+- allowlisted channel
+- existing local image datablock
+
+No filesystem path or image-loading surface is exposed here. The image must already exist in
+Blender's data and must already use the required color space:
+
+- Base Color → `sRGB`
+- Roughness / Metallic / Normal / Height / AO / Alpha → `Non-Color`
+
+The tool fails closed instead of silently changing the shared image datablock's global
+colorspace.
+
+Direct shader wiring is bounded:
+
+- Base Color texture Color → Principled Base Color
+- Roughness texture Color → Principled Roughness
+- Metallic texture Color → Principled Metallic
+- Alpha texture Alpha → Principled Alpha
+- Normal texture Color → Shuvi Normal Map → managed normal chain
+- Height texture Color → Shuvi Bump Height → managed normal chain
+
+Principled BSDF has no native AO socket, so AO is intentionally retained as a managed
+Non-Color auxiliary texture node and reported with `ao_auxiliary_only=true`; it is not falsely
+claimed as a direct shader connection.
+
+### `material.pbr_texture_clear`
+
+This removes only the requested Shuvi-managed texture-channel node and its links. It does not
+delete the image datablock or touch unmanaged nodes. Normal/height clearing re-evaluates only
+the bounded managed normal chain.
+
+Both assignment and clear preserve a full pre-mutation snapshot of supported Principled values
+and Shuvi-managed nodes/links. Verification mismatch restores that state and verifies the
+original shader revision.
+
+### Tool-count boundary
+
+Milestones 7-8 add four typed operations, taking the factory from 141 to **145** tools. The
+centralized registry/catalog maximum remains **160**.
+
 ## Source/runtime boundary
 
-Milestones 1-6 are source-side typed UV/material infrastructure only.
+Milestones 1-8 are source-side typed UV/material infrastructure only.
 
 They do **not** claim:
 
@@ -293,35 +400,35 @@ They do **not** claim:
 - texture/material runtime behavior
 - production readiness
 
-No Blender install, version probe, launch, bpy runtime execution, render, real Blender UV pack,
-material runtime mutation or GPU-heavy operation was performed for this 60% source checkpoint.
+No Blender install, version probe, launch, bpy runtime execution, render, real Blender shader/
+texture mutation or GPU-heavy operation was performed for this 80% source checkpoint.
 
-## Verified 60% source checkpoint
+## Verified 80% source checkpoint
 
-Source/test checkpoint: `f095e4ec6ea8f6e9a5072faa026583bcb63e21b7`.
+Source/test checkpoint: `418c932e0764c52d477f435eff3bb025db0b30be`.
 
-CI run `37444522045` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37446928868` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **489 tests**
+- **509 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **64 package modules**
+- **65 package modules**
 
-Factory typed tools: **141**.
+Factory typed tools: **145**.
 Registry/catalog maximum: **160**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
-Level 4 source: **60%**.
+Level 4 source: **80%**.
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 7 — shader / material node foundation — is the next source task, but it must not start
+Milestone 9 — advanced texture workflow — is the next source task, but it must not start
 without explicit user permission.
