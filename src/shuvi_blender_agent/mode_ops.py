@@ -88,7 +88,10 @@ class ModeOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Editable local active object required")
         allowed = ALLOWED_BY_TYPE.get(obj.type, {"OBJECT"})
         if action.mode not in allowed:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Requested mode is unsupported for object type")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Requested mode is unsupported for object type",
+            )
 
         layer = self.bpy.context.view_layer
         if getattr(layer.objects, "active", None) != obj or not obj.select_get():
@@ -105,7 +108,11 @@ class ModeOperations:
                 ErrorCode.SAFETY_DENIED, "Enter non-Object modes only from Object mode"
             )
 
-        expected_mode = "OBJECT" if action.mode == "OBJECT" else CONTEXT_MODE[(obj.type, action.mode)]
+        expected_mode = (
+            "OBJECT"
+            if action.mode == "OBJECT"
+            else CONTEXT_MODE[(obj.type, action.mode)]
+        )
         if before["mode"] == expected_mode:
             return self.objects._result(
                 request,
