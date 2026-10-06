@@ -16,6 +16,7 @@ from .geometry_binding import GeometryBindingOperations
 from .geometry_fields import GeometryFieldOperations
 from .geometry_nodes import GeometryNodeOperations
 from .geometry_primitives import ProceduralPrimitiveOperations
+from .geometry_scatter import GeometryScatterOperations
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .material_nodes import MaterialNodeOperations
@@ -73,6 +74,7 @@ def create_registry(
         GeometryBindingOperations(objects),
         GeometryFieldOperations(objects),
         ProceduralPrimitiveOperations(objects),
+        GeometryScatterOperations(objects),
         CollectionOperations(objects),
         CharacterAcceptanceOperations(objects),
         CharacterBlockoutOperations(objects),
