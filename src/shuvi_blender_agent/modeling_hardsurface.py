@@ -262,7 +262,7 @@ class HardSurfaceOperations:
 
     @staticmethod
     def _remove_if_present(obj, modifier):
-        if modifier in obj.modifiers:
+        if obj.modifiers.get(modifier.name) == modifier:
             obj.modifiers.remove(modifier)
 
     def add_stack_modifier(self, request: Request, action: StackAdd):
