@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 63 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 67 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -69,6 +69,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | mesh.extrude_region | target, expected_geometry_revision, face_indices, offset | mutation | connected-region cap/side-wall rebuild with full geometry readback |
 | mesh.inset_face | target, expected_geometry_revision, face_index, factor | mutation | one inner cap plus verified quad ring |
 | mesh.bevel_boundary_edge | target, expected_geometry_revision, edge_index, factor | mutation | conservative boundary-edge chamfer strip and rebuilt source polygon |
+| mesh.subdivide_edge | target, expected_geometry_revision, edge_index, factor | mutation | one interpolated edge vertex inserted into all bounded edge-user polygon cycles |
+| mesh.loop_cut_quad_strip | target, expected_geometry_revision, edge_index, factor | mutation | bounded all-quad strip discovery, one split vertex per ring edge and verified quad split |
+| mesh.bridge_boundary_loops | target, expected_geometry_revision, loop_a, loop_b | mutation | equal explicit boundary loops connected by one verified quad per segment |
+| mesh.fill_boundary_loop | target, expected_geometry_revision, vertex_indices | mutation | one verified polygon face across an explicit existing boundary loop |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -204,7 +208,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **30%**.
+Current Level 2 source progress: **40%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -255,3 +259,22 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 - Milestone 3 topology rebuilds keep the Milestone 2 metadata guard: material slots, vertex
   groups, UV layers and color attributes cause a safety denial until data-layer preservation
   is implemented intentionally.
+
+
+### Level 2 milestone 4 limits
+
+- `mesh.subdivide_edge` accepts one canonical edge index and factor 0.001..0.999. The edge
+  must have one or two polygon users. One interpolated vertex is inserted into every polygon
+  cycle using that edge; any resulting polygon above 32 vertices is denied.
+- `mesh.loop_cut_quad_strip` accepts one seed edge and factor 0.001..0.999. Discovery walks
+  only through quads by opposite edges, rejects non-manifold crossings, and caps the discovered
+  ring at 256 edges. Every affected quad is replaced by two verified quads.
+- `mesh.bridge_boundary_loops` accepts two disjoint equal-size loops of 3..64 vertices.
+  Consecutive loop vertices must already form boundary edges with exactly one polygon user.
+  Corresponding segments create one quad each; automatic twist/alignment solving is not part
+  of this foundation.
+- `mesh.fill_boundary_loop` accepts 3..32 unique vertices following an existing boundary
+  cycle and adds exactly one polygon. It rejects a polygon with the same vertex set when one
+  already exists.
+- All Milestone 4 topology rebuilds retain the no-material/UV/color/vertex-group metadata
+  guard until those data layers can be intentionally preserved.
