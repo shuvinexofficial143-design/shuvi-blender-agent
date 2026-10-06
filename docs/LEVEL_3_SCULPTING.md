@@ -4,7 +4,7 @@ Level 3 starts after the completed Level 1 control and Level 2 professional-mode
 roadmaps. It is intentionally split into ten source milestones so source implementation,
 fake-bpy/CI evidence and real Blender runtime behavior remain separate.
 
-Current Level 3 source progress: **70%**.
+Current Level 3 source progress: **90%**.
 
 Real Blender runtime verification for Level 3: **0%**.
 
@@ -19,8 +19,8 @@ Real Blender runtime verification for Level 3: **0%**.
 | 5 | Remesh/voxel-density planning and surface-preservation helpers | complete |
 | 6 | Character blockout and proportion/landmark guides | complete |
 | 7 | Head/face character-modeling helpers and facial landmark workflows | complete |
-| 8 | Torso/limb/hands/feet character-modeling helpers and symmetry workflows | pending |
-| 9 | Character sculpt QA, recovery and reusable sculpt workflow recipes | pending |
+| 8 | Torso/limb/hands/feet character-modeling helpers and symmetry workflows | complete |
+| 9 | Character sculpt QA, recovery and reusable sculpt workflow recipes | complete |
 | 10 | Level 3 acceptance, end-to-end character workflow composition and handoff | pending |
 
 ## Milestone 1 — 10% complete
@@ -106,10 +106,10 @@ without pretending they prove Blender's real sculpt runtime behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **70%**.
+Level 3 source: **90%**.
 Level 3 real Blender runtime verification: **0%**.
 
-Milestone 2 is complete. Milestone 3 is complete. Milestones 4 and 5 are complete. Milestones 6 and 7 are complete. Milestone 8 is next: torso/limb/hands/feet character-modeling helpers and symmetry workflows.
+Milestone 2 is complete. Milestone 3 is complete. Milestones 4 and 5 are complete. Milestones 6 and 7 are complete. Milestones 8 and 9 are complete. Milestone 10 is next: Level 3 acceptance, end-to-end character workflow composition and handoff.
 
 
 ## Milestone 2 — 20% complete
@@ -190,7 +190,7 @@ PBVH, Dyntopo, Multires, mask, face-set or interactive Sculpt Mode behavior.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **70%**.
+Level 3 source: **90%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 3 is next: mask/region weighting, symmetry and side-aware sculpt controls.
@@ -274,7 +274,7 @@ runtime equivalence.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **70%**.
+Level 3 source: **90%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 4 is next: Multires/subdivision sculpt workflow and level controls.
@@ -384,7 +384,7 @@ so future runtime acceptance must compare spatial/surface proximity rather than 
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **70%**.
+Level 3 source: **90%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 6 is next: character blockout and proportion/landmark guides.
@@ -524,7 +524,169 @@ This is a candidate-vertex audit only; it is not a perceptual face-symmetry scor
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
-Level 3 source: **70%**.
+Level 3 source: **90%**.
 Level 3 real Blender runtime verification: **0%**.
 
 Milestone 8 is next: torso/limb/hands/feet character-modeling helpers and symmetry workflows.
+
+
+## Milestone 8 — 80% complete
+
+Milestone 8 adds bounded torso/limb/hands/feet planning helpers plus a deterministic base-mesh
+local-X symmetry audit.
+
+### `character.body_region_plan`
+
+Fits the selected character proportion preset to the current mesh's local bounds and emits 17
+planning-only sculpt regions covering:
+
+- chest
+- abdomen
+- pelvis
+- left/right shoulder
+- left/right upper arm
+- left/right forearm
+- left/right hand
+- left/right thigh
+- left/right calf
+- left/right foot
+
+Each region contains a local-space center and reference radius derived from the chosen preset
+and fitted mesh height. The result is explicitly `CHARACTER_SCULPT_REGION_PLANNING_ONLY`.
+
+### `character.limb_guide`
+
+Builds one side-specific ARM or LEG guide from preset, total height and local origin.
+
+ARM guide landmarks:
+- shoulder
+- elbow
+- wrist
+- hand center
+
+LEG guide landmarks:
+- hip
+- knee
+- ankle
+- foot center
+
+The result also exposes a reference thickness for downstream planning.
+
+### `character.extremity_guide`
+
+Builds one explicit local-space HAND or FOOT landmark guide from side, anchor and length.
+
+HAND:
+- wrist
+- palm center
+- thumb/index/middle/ring/pinky tips
+
+FOOT:
+- ankle
+- heel
+- ball
+- big toe
+- little toe
+
+This is reference geometry only; it does not create bones, fingers, toes or mesh topology.
+
+### `character.body_symmetry_audit`
+
+Audits bounded base-mesh local-X coordinate symmetry.
+
+Vertices are classified as positive-X, negative-X or symmetry-plane using caller-supplied
+tolerance. Positive vertices search for mirrored negative partners using the existing bounded
+spatial-grid symmetry matcher.
+
+The result reports:
+- paired vertex count
+- unmatched positive/negative indices
+- duplicate partner collisions
+- symmetry-plane vertex count
+- candidate-check work evidence
+- PASS/REVIEW status
+
+This is coordinate symmetry QA only. It does not claim visual, anatomical or evaluated-mesh
+symmetry.
+
+## Milestone 9 — 90% complete
+
+Milestone 9 adds aggregate character-sculpt QA, reusable recipe previews and bounded verified
+coordinate-patch recovery.
+
+### `character.sculpt_qa`
+
+Combines existing sculpt diagnostics with the body local-X symmetry audit.
+
+Blockers include:
+- no faces
+- degenerate faces
+- unresolved vertex normals
+- base mesh not structurally sculpt-ready
+
+Advisories include:
+- open boundaries
+- local-X symmetry review
+
+The aggregate status is PASS, REVIEW or BLOCKED and includes a deterministic `qa_revision`.
+
+This remains structural base-mesh QA, not an artistic quality score.
+
+### `character.sculpt_recipe_preview`
+
+Supports three allowlisted reusable planning recipes:
+
+- `BODY_PRIMARY_FORMS`
+- `FACE_PRIMARY_FORMS`
+- `HAND_FOOT_REFINEMENT`
+
+Each recipe expands into an ordered preview of existing typed tools plus scaled suggested
+strengths. No recipe executes automatically. Each mutation still requires fresh target and
+geometry state when later executed.
+
+### `character.sculpt_recovery_snapshot`
+
+Captures a bounded 1..512 vertex coordinate patch from an existing mesh.
+
+The result includes:
+- current geometry revision
+- topology revision derived from vertex count + faces
+- selected vertex indices and restore positions
+- explicit bounded coordinate-patch scope
+
+This does not persist anything to disk.
+
+### `character.sculpt_recovery_restore`
+
+Restores 1..512 explicit vertex coordinates with full source-side verification and rollback.
+
+Requirements:
+- fresh ObjectTarget
+- fresh geometry revision
+- exact matching topology revision
+- editable local unshared base mesh
+- no shape keys
+- no modifier stack
+
+If topology changed since the recovery snapshot, restore fails closed with stale state.
+Successful recovery preserves topology and verifies the complete indexed geometry. If recovery
+verification itself fails, the coordinates that existed immediately before the restore attempt
+are restored by the ordinary sculpt coordinate rollback path.
+
+### Milestones 8–9 source/runtime boundary
+
+- body/limb/extremity tools are planning/reference helpers only
+- body symmetry is local-X base-coordinate QA only
+- aggregate sculpt QA is structural, not perceptual
+- recipe previews never auto-execute mutations
+- recovery is limited to an explicit coordinate patch of at most 512 vertices
+- recovery refuses topology drift and retains all normal sculpt editability guards
+- no arbitrary Python or unrestricted Blender operators are exposed
+- real Blender Sculpt Mode/PBVH/Multires/Dyntopo behavior remains unverified
+
+Level 1 source: **100%**.
+Level 2 source: **100%**.
+Level 3 source: **90%**.
+Level 3 real Blender runtime verification: **0%**.
+
+Milestone 10 is next: Level 3 acceptance, end-to-end character workflow composition and handoff.
