@@ -609,10 +609,13 @@ def run_acceptance(
                         "material_name": "AcceptanceLevel4Material",
                         "uv_layer_name": "AcceptanceUV",
                     }
-                    execute("texture.udim_plan", {
-                        "object_id": level4_id,
-                        "uv_layer_name": "AcceptanceUV",
-                    })
+                    execute(
+                        "texture.udim_plan",
+                        {
+                            "object_id": level4_id,
+                            "uv_layer_name": "AcceptanceUV",
+                        },
+                    )
                     execute(
                         "texture.channel_qa",
                         {"material_name": "AcceptanceLevel4Material"},
