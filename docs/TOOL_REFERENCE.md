@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 88 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 91 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -89,6 +89,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | modifier.stack_compose | target, expected_stack_revision, entries | mutation | atomic append of 1..8 typed BEVEL/SUBSURF/SOLIDIFY entries with full-stack verification |
 | modifier.recipe_preview | recipe, prefix, parameters | read_only | deterministic allowlisted modifier recipe expansion and recipe revision |
 | modifier.recipe_apply | target, expected_stack_revision, recipe, prefix, parameters | mutation | transactional allowlisted preset composition with collision/capacity checks and rollback |
+| modeling.qa_inspect | object_id, distance, area_epsilon | read_only | aggregate structural modeling QA across repair/shading/retopology/modifier state plus qa_revision |
+| modeling.workflow_preview | object_id, workflow, distance, area_epsilon | read_only | no-mutation preview of allowlisted repair workflow triggers and workflow revision |
+| modeling.workflow_apply | target, expected_geometry_revision, expected_qa_revision, workflow, distance, area_epsilon | mutation | transactional verified repair composition with full initial-geometry/smoothing recovery evidence |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -224,7 +227,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **90%**.
+Current Level 2 source progress: **100%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -383,3 +386,27 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
   removes all entries created by that transaction.
 - These workflows compose modifier state only. They do not evaluate/apply modifier geometry,
   so real Blender solver/depsgraph behavior remains runtime-unverified.
+
+
+### Level 2 milestone 10 limits
+
+- `modeling.qa_inspect` combines bounded base-mesh repair/shading/retopology diagnostics with
+  modifier-stack diagnostics. `qa_status` is a structural source classification only; it is
+  not an artistic score or production-readiness certification.
+- `modeling.workflow_preview` supports `CLEAN_BASE_MESH` and
+  `CLEAN_ORIENT_BASE_MESH`. The preview lists triggers from current QA but later steps are
+  intentionally re-evaluated after each verified mutation.
+- `modeling.workflow_apply` requires a fresh ObjectTarget, geometry revision and QA revision.
+  It conditionally composes merge-by-distance, face cleanup, loose-vertex removal and,
+  for the orienting workflow, consistent face winding. No-op workflows are rejected.
+- Before the first child mutation, the complete indexed mesh plus per-face smoothing is
+  captured. Each child operation must independently verify readback. A later failure causes
+  restoration of the original geometry/smoothing; a known failed result is returned only when
+  that recovery is itself read back and verified.
+- The final workflow readback requires zero near-duplicate groups, duplicate/degenerate faces,
+  loose vertices and zero-length edges; the orienting workflow also requires zero winding
+  conflicts.
+- Existing rebuild guards remain in force, so shape keys/modifiers/material/UV/color/
+  vertex-group data are never silently discarded by the workflow.
+- The current Level 2 source roadmap is 100% complete. Real Blender runtime verification
+  remains 0% until the separately authorized acceptance suite is actually executed.
