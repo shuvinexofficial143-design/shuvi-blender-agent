@@ -11,8 +11,8 @@ from shuvi_blender_agent.uv_packing import (
     TexelDensityInspect,
     TexelDensityPlan,
     UVPackApply,
-    UVPackPlan,
     UVPackingOperations,
+    UVPackPlan,
 )
 
 
