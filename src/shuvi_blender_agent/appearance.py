@@ -59,6 +59,39 @@ class CreateDevice:
 
 
 @dataclass(frozen=True)
+class UpdateDevice:
+    target: ObjectTarget
+    settings: dict
+
+    @classmethod
+    def parse(cls, data: dict) -> "UpdateDevice":
+        fields(data, {"target", "settings"})
+        values = fields(
+            data["settings"],
+            set(),
+            {"lens", "clip_start", "clip_end", "make_active", "energy", "color"},
+        )
+        if not values:
+            raise invalid("Device settings patch cannot be empty")
+        parsed = {}
+        if "lens" in values:
+            parsed["lens"] = number(values["lens"], "lens", 1, 500)
+        if "clip_start" in values:
+            parsed["clip_start"] = number(values["clip_start"], "clip_start", 0.0001, 1000)
+        if "clip_end" in values:
+            parsed["clip_end"] = number(values["clip_end"], "clip_end", 0.001, 1_000_000)
+        if "make_active" in values:
+            if type(values["make_active"]) is not bool:
+                raise invalid("make_active must be boolean")
+            parsed["make_active"] = values["make_active"]
+        if "energy" in values:
+            parsed["energy"] = number(values["energy"], "energy", 0, 1_000_000)
+        if "color" in values:
+            parsed["color"] = list(color(values["color"]))
+        return cls(ObjectTarget.parse(data["target"]), parsed)
+
+
+@dataclass(frozen=True)
 class MaterialAssign:
     target: ObjectTarget
     name: str
@@ -137,6 +170,94 @@ class AppearanceOperations:
                 table.remove(data)
             raise
 
+
+    def update_device(self, request: Request, action: UpdateDevice) -> Result:
+        obj, before = self.inspector.target(action.target)
+        self.objects._editable(obj)
+        previous_camera = self.bpy.context.scene.camera
+
+        if obj.type == "CAMERA":
+            if action.settings.keys() - {"lens", "clip_start", "clip_end", "make_active"}:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "Camera settings required")
+            before_data = dict(before["camera"])
+            final = dict(before_data)
+            final.update({key: value for key, value in action.settings.items() if key != "make_active"})
+            if final["clip_end"] <= final["clip_start"]:
+                raise AgentError(ErrorCode.INVALID_REQUEST, "clip_end must exceed clip_start")
+            desired_active = (
+                action.settings["make_active"]
+                if "make_active" in action.settings
+                else self.bpy.context.scene.camera == obj
+            )
+            try:
+                for key in ("lens", "clip_start", "clip_end"):
+                    if key in action.settings:
+                        setattr(obj.data, key, action.settings[key])
+                if "make_active" in action.settings:
+                    if action.settings["make_active"]:
+                        self.bpy.context.scene.camera = obj
+                    elif self.bpy.context.scene.camera == obj:
+                        self.bpy.context.scene.camera = None
+                self.bpy.context.view_layer.update()
+                after = self.objects._readback(obj)
+                after["active_camera"] = self.bpy.context.scene.camera == obj
+                result = self.objects._result(
+                    request,
+                    before,
+                    after,
+                    {
+                        "object_id": before["object_id"],
+                        "camera": final,
+                        "active_camera": desired_active,
+                    },
+                )
+                if result.status == Status.FAILED:
+                    for key, value in before_data.items():
+                        if key != "type":
+                            setattr(obj.data, key, value)
+                    self.bpy.context.scene.camera = previous_camera
+                    self.bpy.context.view_layer.update()
+                    result.data["rolled_back"] = True
+                return result
+            except Exception:
+                for key, value in before_data.items():
+                    if key != "type":
+                        setattr(obj.data, key, value)
+                self.bpy.context.scene.camera = previous_camera
+                self.bpy.context.view_layer.update()
+                raise
+
+        if obj.type == "LIGHT":
+            if action.settings.keys() - {"energy", "color"}:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "Light settings required")
+            before_data = dict(before["light"])
+            final = dict(before_data)
+            final.update(action.settings)
+            try:
+                for key, value in action.settings.items():
+                    setattr(obj.data, key, value)
+                self.bpy.context.view_layer.update()
+                after = self.objects._readback(obj)
+                result = self.objects._result(
+                    request,
+                    before,
+                    after,
+                    {"object_id": before["object_id"], "light": final},
+                )
+                if result.status == Status.FAILED:
+                    obj.data.energy = before_data["energy"]
+                    obj.data.color = before_data["color"]
+                    self.bpy.context.view_layer.update()
+                    result.data["rolled_back"] = True
+                return result
+            except Exception:
+                obj.data.energy = before_data["energy"]
+                obj.data.color = before_data["color"]
+                self.bpy.context.view_layer.update()
+                raise
+
+        raise AgentError(ErrorCode.SAFETY_DENIED, "Camera or light object required")
+
     def material_assign(self, request: Request, action: MaterialAssign) -> Result:
         obj, before = self.inspector.target(action.target)
         self.objects._editable(obj)
@@ -196,6 +317,7 @@ class AppearanceOperations:
     def tools(self) -> list[Tool]:
         return [
             Tool("device.create", SafetyClass.MUTATION, CreateDevice.parse, self.create_device),
+            Tool("device.update", SafetyClass.MUTATION, UpdateDevice.parse, self.update_device),
             Tool(
                 "material.create_assign",
                 SafetyClass.MUTATION,
