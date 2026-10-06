@@ -4,11 +4,11 @@ from fake_bpy import fake_bpy
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.material_nodes import (
+    MaterialNodeOperations,
     PBRTextureAssign,
     PBRTextureClear,
     PrincipledSet,
     ShaderInspect,
-    MaterialNodeOperations,
 )
 from shuvi_blender_agent.operations import ObjectOperations
 from shuvi_blender_agent.safety import SafetyPolicy
