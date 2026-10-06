@@ -4,7 +4,7 @@ Level 2 moves the Blender agent from broad scene/object control into professiona
 modeling. This level is intentionally split into ten source milestones so progress can be
 measured without pretending fake-bpy tests prove real Blender runtime behavior.
 
-Current Level 2 source progress: **30%**.
+Current Level 2 source progress: **40%**.
 
 Real Blender runtime verification for Level 2: **0%**.
 
@@ -15,7 +15,7 @@ Real Blender runtime verification for Level 2: **0%**.
 | 1 | Topology foundation + bounded single-face extrusion | complete |
 | 2 | Explicit vertex/edge/face transforms, merge and dissolve foundations | complete |
 | 3 | Region extrusion, inset and bevel modeling | complete |
-| 4 | Loop-cut/subdivide/bridge/fill workflows | pending |
+| 4 | Loop-cut/subdivide/bridge/fill workflows | complete |
 | 5 | Normals, smoothing and shading/topology diagnostics | pending |
 | 6 | Hard-surface boolean workflow and stronger modifier modeling controls | pending |
 | 7 | Topology cleanup and repair helpers | pending |
@@ -98,7 +98,7 @@ Milestone 1 is unit/CI-testable without Blender installed, but direct mesh repla
 Blender validation/dependency-graph behavior remain runtime-unverified. No Blender install,
 launch, render or runtime test was performed for this Level 2 work.
 
-Level 1 remains source-complete at 100%. Level 2 currently stands at **30% source completion**.
+Level 1 remains source-complete at 100%. Level 2 currently stands at **40% source completion**.
 
 
 ## Milestone 2 — 20% complete
@@ -212,4 +212,81 @@ Every operation preflights the existing 4096-vertex, 4096-face, 32768-loop and 3
 face limits, reads the complete resulting geometry back, verifies it, and restores the prior
 captured vertices/faces if verification fails.
 
-Milestone 4 is next: bounded loop-cut/subdivide/bridge/fill workflows.
+Milestone 4 is complete. Milestone 5 is next: normals, smoothing and shading/topology diagnostics.
+
+
+## Milestone 4 — 40% complete
+
+Milestone 4 adds four typed topology construction tools.
+
+### `mesh.subdivide_edge`
+
+Splits one canonical boundary/manifold edge at a bounded factor in `0.001..0.999`.
+
+- edge index comes from the deterministic canonical topology edge list
+- the edge must have one or two polygon users
+- one new vertex is linearly interpolated between the edge endpoints
+- every polygon using that edge receives the new vertex in its polygon cycle
+- resulting polygon size must remain within the 32-vertex face bound
+
+This is an explicit one-edge subdivision foundation, not Blender's complete Subdivide operator.
+
+### `mesh.loop_cut_quad_strip`
+
+Performs one deterministic cut through an all-quad strip.
+
+Starting from one canonical seed edge, the tool walks through each incident quad to the
+opposite edge and continues that topology component. Every ring edge receives one interpolated
+cut vertex at the requested factor, and every affected quad is split into two quads connecting
+the cut points.
+
+Safety limits:
+
+- only quads may participate in the discovered strip
+- seed/crossed edges with more than two face users are rejected
+- at most 256 ring edges are traversed
+- complete geometry limits are preflighted before committing
+
+This is a bounded quad-strip loop-cut foundation. It does not claim Blender's complete loop-cut
+behavior across poles, triangles/ngons, multi-cut counts, edge slide or proportional controls.
+
+### `mesh.bridge_boundary_loops`
+
+Bridges two explicit, disjoint boundary loops with equal vertex counts.
+
+- each loop has 3..64 unique vertices
+- every consecutive loop pair, including loop closure, must be an existing edge with exactly
+  one polygon user
+- loops must have equal counts and share no vertices
+- corresponding loop segments are connected with one new quad each
+
+Loop ordering and correspondence are explicit inputs; this foundation does not automatically
+solve loop alignment, twist minimization or unequal-count resampling.
+
+### `mesh.fill_boundary_loop`
+
+Adds one polygon face across an explicit boundary loop.
+
+- loop contains 3..32 unique vertices
+- every loop segment must be an existing boundary edge with one polygon user
+- a face containing the same vertex set is rejected as already filled
+- the supplied vertex order becomes the new polygon cycle
+
+This is a direct bounded face-fill foundation, not triangulate/grid-fill/beautify-fill.
+
+### Shared Milestone 4 guards
+
+Milestone 4 inherits the topology-rebuild safety boundary from Milestones 2-3:
+
+- fresh ObjectTarget and geometry revision
+- editable local unshared mesh data
+- Object mode and normal object mutation guards
+- no shape keys or modifier stack
+- no material slots, vertex groups, UV layers or color attributes during topology rebuild
+- existing 4096-vertex, 4096-face, 32768-loop and per-face bounds
+- complete geometry readback verification
+- restoration of captured vertices/faces on verification failure
+
+No arbitrary bmesh, Python or unrestricted Blender operator execution is exposed.
+
+Milestone 5 is next: bounded normals, smoothing and shading/topology diagnostics.
