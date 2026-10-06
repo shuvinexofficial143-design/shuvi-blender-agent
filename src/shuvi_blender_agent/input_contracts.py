@@ -42,6 +42,7 @@ from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .sculpting import SculptBrush, SculptSmooth
 from .sculpting_brushes import SculptCrease, SculptFlatten, SculptGrab, SculptNormalizedBrush
+from .sculpting_controls import ControlledDisplace, ControlledGrab, RegionPreview
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
@@ -122,6 +123,9 @@ def builtin_contracts() -> dict:
         "sculpt.brush_pinch": (mutation, SculptNormalizedBrush.parse),
         "sculpt.brush_grab": (mutation, SculptGrab.parse),
         "sculpt.brush_crease": (mutation, SculptCrease.parse),
+        "sculpt.region_preview": (read, RegionPreview.parse),
+        "sculpt.brush_displace_controlled": (mutation, ControlledDisplace.parse),
+        "sculpt.brush_grab_controlled": (mutation, ControlledGrab.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),
