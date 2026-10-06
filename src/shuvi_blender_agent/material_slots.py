@@ -152,7 +152,10 @@ class MaterialSlotOperations:
         face_indices = [int(getattr(face, "material_index", 0)) for face in faces]
         if slots and any(index < 0 or index >= len(slots) for index in face_indices):
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Face material index is out of bounds")
-        users = [sum(index == slot_index for index in face_indices) for slot_index in range(len(slots))]
+        users = [
+            sum(index == slot_index for index in face_indices)
+            for slot_index in range(len(slots))
+        ]
         material_revision = revision(
             {
                 "slot_names": slot_names,
@@ -552,7 +555,12 @@ class MaterialSlotOperations:
 
         return [
             Tool("material.slots_inspect", SafetyClass.READ_ONLY, parse_id, self.inspect),
-            Tool("material.slot_link", SafetyClass.MUTATION, MaterialSlotLink.parse, self.slot_link),
+            Tool(
+                "material.slot_link",
+                SafetyClass.MUTATION,
+                MaterialSlotLink.parse,
+                self.slot_link,
+            ),
             Tool(
                 "material.slot_reassign",
                 SafetyClass.MUTATION,
