@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 70 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 75 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -211,7 +211,7 @@ Level 1 additions (mutations require normal policy and fresh state):
 
 ## Level 2 modeling additions
 
-Current Level 2 source progress: **50%**.
+Current Level 2 source progress: **60%**.
 
 - `mesh.topology_inspect` derives a deterministic canonical edge set from bounded polygon
   loops, reports boundary edges, non-manifold edges and two-face adjacency. Derived topology
@@ -299,3 +299,21 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 - The orientation rebuild keeps the existing no-material/UV/color/vertex-group metadata guard.
   No custom normal layer editing, sharp-edge system, modifier-evaluated normal control or
   arbitrary normal operator is exposed in this milestone.
+
+
+### Level 2 milestone 6 limits
+
+- `modifier.stack_inspect` caps stack inspection at 16 entries and returns an ordered
+  `stack_revision`. Supported typed readback covers BEVEL, SUBSURF, SOLIDIFY and BOOLEAN;
+  arbitrary settings on unknown modifier types are not surfaced.
+- `modifier.stack_add` appends BEVEL/SUBSURF/SOLIDIFY to an existing bounded stack using
+  the allowlisted settings for that kind. Duplicate names and full stacks are denied.
+- `modifier.boolean_add` requires distinct fresh mesh target/cutter objects, accepts
+  DIFFERENCE/UNION/INTERSECT and EXACT/FAST, and verifies cutter identity/name plus ordered
+  modifier state. It does not apply the Boolean result to permanent mesh topology.
+- `modifier.update` accepts only allowlisted fields for the declared current modifier type,
+  plus viewport/render visibility. Verification failure restores the captured patched values.
+- `modifier.move` reorders one named stack entry to an existing index and verifies the
+  complete ordered stack; verification failure restores the prior order.
+- Hard-surface source CI verifies contracts/state transitions only. Actual Blender modifier
+  evaluation and Boolean solver geometry remain runtime-unverified.
