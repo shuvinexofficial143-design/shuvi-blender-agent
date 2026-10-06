@@ -3,7 +3,6 @@
 from .animation import FrameRange, InsertKeyframe, SetFrame
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
-from .destructive import DeleteObject
 from .collection_ops import (
     CollectionNameRequest,
     CollectionObjectChange,
@@ -11,6 +10,7 @@ from .collection_ops import (
     MoveObject,
     RenameCollection,
 )
+from .destructive import DeleteObject
 from .hierarchy import ParentChange
 from .mesh import CreateMesh, TranslateVertices
 from .mesh_transform import MeshTransformAction
