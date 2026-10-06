@@ -29,17 +29,13 @@ def setup():
 
 
 def create_group(registry, name="Procedural"):
-    result = registry.dispatch(
-        Request("geometry_nodes.group_create", {"group_name": name})
-    )
+    result = registry.dispatch(Request("geometry_nodes.group_create", {"group_name": name}))
     assert result.status == Status.VERIFIED
     return result.data["after"]
 
 
 def inspect(registry, name="Procedural"):
-    result = registry.dispatch(
-        Request("geometry_nodes.tree_inspect", {"group_name": name})
-    )
+    result = registry.dispatch(Request("geometry_nodes.tree_inspect", {"group_name": name}))
     assert result.status == Status.SUCCEEDED
     return result.data
 
@@ -394,9 +390,10 @@ def test_node_remove_verification_failure_recreates_original_node():
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
     assert result.data["rolled_back"] is True
     assert result.data["recovery_verified"] is True
-    assert original(bpy.data.node_groups.get("Procedural"))["group_revision"] == before[
-        "group_revision"
-    ]
+    assert (
+        original(bpy.data.node_groups.get("Procedural"))["group_revision"]
+        == before["group_revision"]
+    )
 
 
 def test_node_set_input_verification_failure_restores_previous_value():
