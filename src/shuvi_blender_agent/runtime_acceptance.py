@@ -24,6 +24,7 @@ def run_acceptance(
     allow_render: bool = False,
     allow_destructive: bool = False,
     allow_level2_modeling: bool = False,
+    allow_level3_character: bool = False,
     launcher=launch,
     version_probe=probe_version,
 ) -> dict:
@@ -32,6 +33,7 @@ def run_acceptance(
         or type(allow_render) is not bool
         or type(allow_destructive) is not bool
         or type(allow_level2_modeling) is not bool
+        or type(allow_level3_character) is not bool
     ):
         raise AgentError(ErrorCode.SAFETY_DENIED, "Explicit runtime authorization is required")
     started = time.monotonic()
@@ -42,6 +44,7 @@ def run_acceptance(
         "render_requested": allow_render,
         "destructive_requested": allow_destructive,
         "level2_modeling_requested": allow_level2_modeling,
+        "level3_character_requested": allow_level3_character,
     }
     session = None
     workspace_path = None
@@ -371,6 +374,144 @@ def run_acceptance(
                         },
                     )
                     execute("modifier.stack_diagnose", {"object_id": level2_id})
+                if allow_level3_character:
+                    level3_geometry = {
+                        "vertices": [
+                            [-1, -1, 0],
+                            [1, -1, 0],
+                            [1, 1, 0],
+                            [-1, 1, 0],
+                            [-1, -1, 2],
+                            [1, -1, 2],
+                            [1, 1, 2],
+                            [-1, 1, 2],
+                        ],
+                        "faces": [
+                            [0, 3, 2, 1],
+                            [4, 5, 6, 7],
+                            [0, 1, 5, 4],
+                            [1, 2, 6, 5],
+                            [2, 3, 7, 6],
+                            [3, 0, 4, 7],
+                        ],
+                    }
+                    level3_mesh = execute(
+                        "mesh.create",
+                        {
+                            "name": "AcceptanceLevel3Character",
+                            "geometry": level3_geometry,
+                            "transform": transform,
+                            "expected_scene_revision": scene_revision(),
+                        },
+                    )
+                    level3_id = level3_mesh["after"]["object"]["object_id"]
+                    execute("sculpt.inspect", {"object_id": level3_id})
+                    execute(
+                        "character.proportion_guide",
+                        {
+                            "preset": "ADULT_NEUTRAL",
+                            "height": 2,
+                            "origin": [0, 0, 0],
+                        },
+                    )
+                    execute(
+                        "character.blockout_plan",
+                        {
+                            "preset": "ADULT_NEUTRAL",
+                            "height": 2,
+                            "origin": [0, 0, 0],
+                        },
+                    )
+                    execute(
+                        "character.landmark_fit",
+                        {"object_id": level3_id, "preset": "ADULT_NEUTRAL"},
+                    )
+                    execute(
+                        "character.body_region_plan",
+                        {"object_id": level3_id, "preset": "ADULT_NEUTRAL"},
+                    )
+                    execute(
+                        "character.body_symmetry_audit",
+                        {"object_id": level3_id, "tolerance": 0.001},
+                    )
+                    execute(
+                        "character.face_guide",
+                        {"object_id": level3_id, "front_direction": "POSITIVE_Y"},
+                    )
+                    execute(
+                        "character.face_landmark_fit",
+                        {
+                            "object_id": level3_id,
+                            "front_direction": "POSITIVE_Y",
+                            "max_normalized_distance": 2,
+                        },
+                    )
+                    execute(
+                        "character.face_region_plan",
+                        {"object_id": level3_id, "front_direction": "POSITIVE_Y"},
+                    )
+                    execute(
+                        "character.face_symmetry_audit",
+                        {
+                            "object_id": level3_id,
+                            "front_direction": "POSITIVE_Y",
+                            "tolerance": 1,
+                        },
+                    )
+                    execute(
+                        "character.sculpt_qa",
+                        {"object_id": level3_id, "symmetry_tolerance": 0.001},
+                    )
+                    execute(
+                        "character.sculpt_recipe_preview",
+                        {"recipe": "BODY_PRIMARY_FORMS", "intensity": 0.5},
+                    )
+                    recovery = execute(
+                        "character.sculpt_recovery_snapshot",
+                        {
+                            "object_id": level3_id,
+                            "vertex_indices": list(range(8)),
+                        },
+                    )
+                    level3_state = execute("mesh.inspect", {"object_id": level3_id})
+                    execute(
+                        "sculpt.brush_grab_controlled",
+                        {
+                            "target": target(level3_id),
+                            "expected_geometry_revision": level3_state["geometry_revision"],
+                            "center": [1, 0, 1],
+                            "radius": 4,
+                            "falloff": "LINEAR",
+                            "axis": "X",
+                            "side": "POSITIVE",
+                            "symmetry": True,
+                            "plane_epsilon": 0.001,
+                            "require_symmetry_pairs": True,
+                            "mask": [],
+                            "delta": [0, 0, 0.05],
+                        },
+                    )
+                    level3_changed = execute("mesh.inspect", {"object_id": level3_id})
+                    execute(
+                        "character.sculpt_recovery_restore",
+                        {
+                            "target": target(level3_id),
+                            "expected_geometry_revision": level3_changed["geometry_revision"],
+                            "expected_topology_revision": recovery["topology_revision"],
+                            "entries": recovery["entries"],
+                        },
+                    )
+                    workflow_payload = {
+                        "object_id": level3_id,
+                        "preset": "ADULT_NEUTRAL",
+                        "front_direction": "POSITIVE_Y",
+                        "symmetry_tolerance": 0.001,
+                        "face_fit_threshold": 2,
+                        "recipe": "BODY_PRIMARY_FORMS",
+                        "intensity": 0.5,
+                    }
+                    execute("character.workflow_preview", workflow_payload)
+                    execute("character.level3_acceptance", workflow_payload)
                 execute(
                     "render.configure",
                     {
@@ -442,6 +583,7 @@ def main(argv=None):
     parser.add_argument("--allow-render", action="store_true")
     parser.add_argument("--allow-destructive", action="store_true")
     parser.add_argument("--allow-level2-modeling", action="store_true")
+    parser.add_argument("--allow-level3-character", action="store_true")
     parser.add_argument("--executable", type=Path)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
@@ -454,6 +596,7 @@ def main(argv=None):
             allow_render=args.allow_render,
             allow_destructive=args.allow_destructive,
             allow_level2_modeling=args.allow_level2_modeling,
+            allow_level3_character=args.allow_level3_character,
         )
     else:
         report = {
