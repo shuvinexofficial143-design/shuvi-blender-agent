@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **30%**.
+Current Level 5 source progress: **40%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -19,7 +19,7 @@ Production ready: **No**.
 | 1 | Geometry Nodes tree inspection | complete |
 | 2 | Typed node creation | complete |
 | 3 | Typed node linking | complete |
-| 4 | Modifier + node-group binding | pending |
+| 4 | Modifier + node-group binding | complete |
 | 5 | Procedural modeling primitives | pending |
 | 6 | Attribute / field workflows | pending |
 | 7 | Procedural scatter systems | pending |
@@ -202,14 +202,86 @@ shared registry/client maximum from **160 to 168** and adds only two new typed o
 The factory therefore contains **162 typed tools** at this checkpoint. The extra capacity is
 bounded and does not introduce a generic executor.
 
+## Milestone 4 — 40% complete
+
+Milestone 4 attaches bounded GeometryNodeTree groups to editable mesh objects through typed
+NODES modifier operations.
+
+### `geometry_nodes.modifier_inspect`
+
+This read-only operation resolves one current-session mesh object and reports only NODES
+modifiers from the existing bounded modifier stack. Each binding includes:
+
+- modifier name/type
+- viewport/render visibility
+- bound node-group name when present
+- whether the group is local
+- node-tree type
+- fresh group revision for a bounded local GeometryNodeTree
+
+Broken NODES modifiers with no group are reported explicitly rather than treated as valid.
+The response also contains the object's current revision and a deterministic binding revision.
+
+Object snapshots now include `node_group_name` for NODES modifiers, so binding changes
+participate in the ordinary object revision and stale ObjectTarget protection.
+
+### `geometry_nodes.modifier_bind`
+
+Binding requires:
+
+- fresh ObjectTarget
+- fresh expected GeometryNodeTree revision
+- OBJECT mode
+- editable local mesh object
+- local mesh data without shape keys
+- mesh geometry inside existing modifier work limits
+- modifier stack below the 16-entry bound
+- unique modifier name
+- bounded local GeometryNodeTree
+
+The operation creates exactly one `NODES` modifier and assigns exactly the requested node
+group. Existing modifiers are preserved.
+
+Successful readback verifies:
+
+- exact modifier-count increment
+- exact NODES modifier name/type
+- exact bound group name
+- object snapshot reports the same group
+- node-group revision is unchanged by binding
+
+Known verification failure removes the created modifier, updates the view layer and verifies
+restoration of both the original object revision and the original group revision.
+
+### `geometry_nodes.modifier_remove`
+
+Removal requires a fresh ObjectTarget, fresh group revision and an exact NODES modifier that is
+currently bound to the requested group.
+
+Successful readback verifies:
+
+- exact modifier-count decrement
+- requested modifier is absent
+- requested binding is absent
+- node-group revision is unchanged
+
+Before removal, recovery state records the modifier stack index plus viewport/render flags and
+the exact group object. If verification fails, the modifier is recreated, rebound, restored to
+its original stack position and visibility flags, then the original object/group revisions are
+verified before recovery is claimed.
+
+### Bounds
+
+Milestone 4 adds three typed operations, taking the factory from 162 to **165 typed tools**.
+The centralized registry/client maximum remains **168**.
+
 ## Safety boundary
 
-Milestones 1-3 do **not** expose:
+Milestones 1-4 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
 - generic node property mutation
-- Geometry Nodes modifier binding
 - node-group interface mutation
 - unrestricted object/collection/material references
 - procedural recipe execution
@@ -221,35 +293,35 @@ Milestones 1-3 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 30% source checkpoint
+## Verified 40% source checkpoint
 
-Source/test checkpoint: `492d4c91f2712a8d0eda83a72b81fb474633db8d`.
+Source/test checkpoint: `1589455b115abb06e76187b0f2fa0652ffbf2b0d`.
 
-CI run `37452665272` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37463352670` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **567 tests**
+- **582 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **67 package modules**
+- **68 package modules**
 
-Factory typed tools: **162**.
+Factory typed tools: **165**.
 Current registry/catalog hard maximum: **168**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **30%** (Milestones 1-3 of 10).
+Level 5 source: **40%** (Milestones 1-4 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 4 — modifier + node-group binding — is the next source task, but it must not start
+Milestone 5 — procedural modeling primitives — is the next source task, but it must not start
 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime

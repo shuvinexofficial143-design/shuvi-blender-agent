@@ -73,6 +73,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.node_set_input | group_name, expected_group_revision, node_name, socket_name, value | mutation | edit one allowlisted unlinked typed socket default with exact readback and rollback |
 | geometry_nodes.link_add | group_name, expected_group_revision, from_node_name, from_socket_identifier, to_node_name, to_socket_identifier | mutation | add one exact typed acyclic link between allowlisted nodes with socket/type/input-limit validation and rollback |
 | geometry_nodes.link_remove | group_name, expected_group_revision, from_node_name, from_socket_identifier, to_node_name, to_socket_identifier | mutation | remove one exact typed link by node/socket identifiers with verified restoration rollback |
+| geometry_nodes.modifier_inspect | object_id | read_only | inspect bounded NODES modifiers, bound local GeometryNodeTree metadata and group revisions plus binding_revision |
+| geometry_nodes.modifier_bind | target, group_name, expected_group_revision, modifier_name | mutation | create one bounded NODES modifier and bind it to one fresh local GeometryNodeTree with exact object/group readback and rollback |
+| geometry_nodes.modifier_remove | target, group_name, expected_group_revision, modifier_name | mutation | remove one exact NODES modifier/group binding with stack-position/flag restoration on rollback |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -824,3 +827,31 @@ Current Level 3 source progress: **100%**.
 - No unrestricted graph rewrite, arbitrary Blender node idname, implicit type conversion,
   self-link, cyclic graph construction, generic Python or real Geometry Nodes evaluation is
   exposed.
+
+
+### Level 5 milestone 4 limits
+
+- `geometry_nodes.modifier_inspect` resolves one current-session mesh object and inspects at
+  most the existing 16-modifier stack bound. Only NODES modifiers are returned as bindings.
+- Binding inspection reports modifier name/type/visibility, bound group name, whether the group
+  is local, its tree type, and a fresh group revision when the bound local group is a bounded
+  GeometryNodeTree. Broken/unbound NODES modifiers are reported without inventing a group.
+- Object snapshots now include `node_group_name` for NODES modifiers, so object revisions
+  change when a Geometry Nodes binding changes.
+- `geometry_nodes.modifier_bind` requires a fresh ObjectTarget plus fresh group revision,
+  OBJECT mode, editable local mesh object, local mesh data without shape keys, bounded mesh
+  size, available modifier capacity, unique modifier name and bounded local GeometryNodeTree.
+- Binding creates exactly one NODES modifier and assigns exactly the requested node group. It
+  preserves all pre-existing modifiers and verifies modifier count, NODES type, bound group
+  name, object snapshot and unchanged group revision.
+- Known bind verification failure removes the created modifier and verifies restoration of the
+  original object revision and group revision.
+- `geometry_nodes.modifier_remove` requires the exact NODES modifier already bound to the
+  requested fresh group. It verifies exact modifier absence and count decrement while keeping
+  the node group itself unchanged.
+- Known removal verification failure recreates the modifier, restores its original stack index,
+  viewport/render flags and group binding, then verifies the original object/group revisions.
+- The factory exposes **165 typed tools** under the existing bounded **168-tool** hard cap.
+- No modifier evaluation claim, generic modifier setter, arbitrary node-group assignment,
+  modifier apply operation, external linked group mutation, shape-key workflow or real Blender
+  Geometry Nodes runtime claim is exposed.

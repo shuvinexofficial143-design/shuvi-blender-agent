@@ -12,6 +12,7 @@ from .collection_ops import CollectionOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
 from .files import OutputWorkspace
+from .geometry_binding import GeometryBindingOperations
 from .geometry_nodes import GeometryNodeOperations
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
@@ -67,6 +68,7 @@ def create_registry(
         SelectionOperations(objects),
         HierarchyOperations(objects),
         GeometryNodeOperations(objects),
+        GeometryBindingOperations(objects),
         CollectionOperations(objects),
         CharacterAcceptanceOperations(objects),
         CharacterBlockoutOperations(objects),
