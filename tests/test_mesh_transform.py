@@ -71,9 +71,7 @@ def test_origin_to_centroid_preserves_geometry_in_world_space_for_identity_rotat
     assert result.status == Status.VERIFIED
     assert result.data["after"]["centroid_local_before"] == [1.0, 1.0, 0.0]
     expected = [[-1.0, -1.0, 0.0], [2.0, -1.0, 0.0], [-1.0, 2.0, 0.0]]
-    for actual, wanted in zip(
-        result.data["after"]["geometry"]["vertices"], expected, strict=True
-    ):
+    for actual, wanted in zip(result.data["after"]["geometry"]["vertices"], expected, strict=True):
         assert actual == pytest.approx(wanted)
     assert result.data["after"]["object"]["transform"]["location"] == [2.0, 3.0, 3.0]
 
