@@ -32,9 +32,7 @@ def revision_of(operations, material):
 def test_shader_inspect_reports_principled_and_revision():
     bpy, operations, registry, material = setup()
 
-    result = registry.dispatch(
-        Request("material.shader_inspect", {"material_name": material.name})
-    )
+    result = registry.dispatch(Request("material.shader_inspect", {"material_name": material.name}))
     assert result.status == Status.SUCCEEDED
     assert result.data["material_name"] == "Surface"
     assert result.data["principled"]["roughness"] == 0.5
