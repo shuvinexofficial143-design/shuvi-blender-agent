@@ -308,8 +308,7 @@ def _region(vertices, control):
                 "effective_mask_weight": effective_mask,
                 "final_weight": final_weight,
                 "on_symmetry_plane": (
-                    axis_index is not None
-                    and abs(vertex[axis_index]) <= control.plane_epsilon
+                    axis_index is not None and abs(vertex[axis_index]) <= control.plane_epsilon
                 ),
             }
         )
@@ -403,13 +402,17 @@ class SculptControlOperations:
             )
             partner = entry["partner_index"]
             if action.control.symmetry and partner is not None:
-                source_new = self._mirrored_result(
-                    source_new,
-                    before["vertices"][index],
-                    before["vertices"][index],
-                    axis_index,
-                    entry["on_symmetry_plane"],
-                ) if partner == index else source_new
+                source_new = (
+                    self._mirrored_result(
+                        source_new,
+                        before["vertices"][index],
+                        before["vertices"][index],
+                        axis_index,
+                        entry["on_symmetry_plane"],
+                    )
+                    if partner == index
+                    else source_new
+                )
             vertices[index] = list(
                 vector3(source_new, "controlled sculpt displaced vertex", 1_000_000)
             )
@@ -443,9 +446,7 @@ class SculptControlOperations:
             "affected_vertex_indices": sorted(changed),
             "affected_vertex_count": len(changed),
             "missing_symmetry_source_indices": region["missing_symmetry_source_indices"],
-            "weights": {
-                str(entry["source_index"]): entry["final_weight"] for entry in applied
-            },
+            "weights": {str(entry["source_index"]): entry["final_weight"] for entry in applied},
         }
         return self.base._verified_coordinate_mutation(
             request,
@@ -508,8 +509,7 @@ class SculptControlOperations:
             "affected_vertex_count": len(changed),
             "missing_symmetry_source_indices": region["missing_symmetry_source_indices"],
             "weights": {
-                str(entry["source_index"]): entry["final_weight"]
-                for entry in region["entries"]
+                str(entry["source_index"]): entry["final_weight"] for entry in region["entries"]
             },
         }
         return self.base._verified_coordinate_mutation(
