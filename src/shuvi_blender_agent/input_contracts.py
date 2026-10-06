@@ -22,6 +22,13 @@ from .collection_ops import (
 )
 from .destructive import DeleteObject
 from .hierarchy import ParentChange
+from .material_slots import (
+    MaterialFaceAssign,
+    MaterialSlotDuplicate,
+    MaterialSlotLink,
+    MaterialSlotReassign,
+    MaterialSlotRemove,
+)
 from .mesh import CreateMesh, TranslateVertices
 from .mesh_transform import MeshTransformAction
 from .mode_ops import ModeChange
@@ -59,6 +66,7 @@ from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .transform import PatchTransform
 from .uv import SeamSet
+from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPackPlan
 from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
 from .validation import fields, string
 from .visibility import SetVisibility
@@ -131,6 +139,12 @@ def builtin_contracts() -> dict:
         "object.duplicate_linked": (mutation, DuplicateObject.parse),
         "object.delete": (SafetyClass.DESTRUCTIVE, DeleteObject.parse),
         "material.create_assign": (mutation, MaterialAssign.parse),
+        "material.slots_inspect": (read, object_id),
+        "material.slot_link": (mutation, MaterialSlotLink.parse),
+        "material.slot_reassign": (mutation, MaterialSlotReassign.parse),
+        "material.slot_duplicate": (mutation, MaterialSlotDuplicate.parse),
+        "material.slot_remove": (mutation, MaterialSlotRemove.parse),
+        "material.face_assign": (mutation, MaterialFaceAssign.parse),
         "device.create": (mutation, CreateDevice.parse),
         "device.update": (mutation, UpdateDevice.parse),
         "modifier.add": (mutation, AddModifier.parse),
@@ -169,6 +183,10 @@ def builtin_contracts() -> dict:
         "uv.unwrap_plan": (read, UVUnwrapPlan.parse),
         "uv.unwrap_apply": (mutation, UVUnwrapApply.parse),
         "uv.island_transform": (mutation, UVIslandTransform.parse),
+        "uv.pack_plan": (read, UVPackPlan.parse),
+        "uv.pack_apply": (mutation, UVPackApply.parse),
+        "uv.texel_density_inspect": (read, TexelDensityInspect.parse),
+        "uv.texel_density_plan": (read, TexelDensityPlan.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
         "animation.set_range": (mutation, FrameRange.parse),

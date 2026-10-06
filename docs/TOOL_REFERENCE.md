@@ -46,6 +46,12 @@ clients should retain the filter, session ID and revision while continuing a pag
 | object.duplicate_linked | target, name, transform | mutation | distinct object identity with verified shared bounded mesh data |
 | object.delete | target, expected_scene_revision | destructive | verifies target object absent from scene/data after guarded deletion |
 | material.create_assign | target, name, base_color, metallic, roughness | mutation | actual Principled shader inputs, material slot and properties |
+| material.slots_inspect | object_id | read_only | bounded slot order, face-user counts, face material indices and material_revision |
+| material.slot_link | target, expected_material_revision, material_name | mutation | append existing material as a new verified slot |
+| material.slot_reassign | target, expected_material_revision, slot_index, material_name | mutation | replace one existing slot reference with verified rollback |
+| material.slot_duplicate | target, expected_material_revision, source_slot_index, new_material_name | mutation | duplicate material datablock from one slot and append verified independent slot |
+| material.slot_remove | target, expected_material_revision, slot_index | mutation | conservatively remove only unused final slot |
+| material.face_assign | target, expected_material_revision, slot_index, face_indices | mutation | assign explicit bounded faces to one existing slot with rollback |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -115,6 +121,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | uv.unwrap_plan | object_id, projection | read_only | bounded XY/XZ/YZ deterministic planar UV projection preview; no Blender unwrap claim |
 | uv.unwrap_apply | target, expected_geometry_revision, expected_uv_revision, layer_name, projection | mutation | create/replace one named planar UV layer with complete layer-state verification and recovery |
 | uv.island_transform | target, expected_geometry_revision, expected_uv_revision, layer_name, face_indices, translation, scale | mutation | exact detected UV-island scale/translate with intended-coordinate readback and rollback |
+| uv.pack_plan | object_id, layer_name, margin | read_only | deterministic bounded grid-pack preview for current UV islands; source-only |
+| uv.pack_apply | target, expected_geometry_revision, expected_uv_revision, layer_name, margin | mutation | deterministic grid pack with exact target-layer revision verification and full UV rollback |
+| uv.texel_density_inspect | object_id, layer_name, texture_size | read_only | bounded per-face/min/median/max source texel-density estimates |
+| uv.texel_density_plan | object_id, layer_name, texture_size, target_density | read_only | uniform UV scale planning toward a target median density; no mutation claim |
 | character.proportion_guide | preset, height, origin | read_only | deterministic local-space ADULT_NEUTRAL/HEROIC/STYLIZED modeling proportion reference |
 | character.blockout_plan | preset, height, origin | read_only | planning-only symmetric primitive layout for head/torso/pelvis/arms/legs |
 | character.landmark_fit | object_id, preset | read_only | fit proportion guide targets to deterministic nearest base-mesh vertex candidates |
@@ -649,3 +659,31 @@ Current Level 3 source progress: **100%**.
   explicitly bounded at 160 and tested at both registry and host-catalog boundaries.
 - No arbitrary Python or unrestricted Blender operator execution was introduced. Real Blender
   UV Editor/unwrap runtime behavior remains unverified.
+
+
+### Level 4 milestones 5–6 limits
+
+- `uv.pack_plan` / `uv.pack_apply` use deterministic row-major near-square cell packing in
+  0..1 UV space with margin 0..0.1. Islands preserve shape/aspect ratio through uniform scale;
+  degenerate island bounds and unusable margins fail closed.
+- Pack apply requires fresh object, geometry and UV revisions. Geometry, seams, active UV
+  layer, layer order and every non-target layer revision must remain unchanged. Verification
+  mismatch restores the complete prior target-layer loop coordinates.
+- `uv.texel_density_inspect` accepts texture size 16..32768 and reports per-face plus
+  min/median/max pixels-per-unit estimates based on UV-area/surface-area ratio.
+- `uv.texel_density_plan` is read-only and returns a bounded uniform scale toward a target
+  median density. It does not mutate UVs or claim Blender texel-density equivalence.
+- Material slot management is capped at 64 slots and 256 faces and requires editable local
+  unshared mesh data for mutations.
+- `material.slots_inspect` exposes ordered slot names, per-slot face-user counts, every
+  bounded face material index and a dedicated material_revision.
+- Slot link/reassign/duplicate/remove and face assignment require fresh ObjectTarget plus fresh
+  material_revision. Removal is intentionally limited to the final unused slot to avoid silent
+  material-index shifting.
+- `material.slot_duplicate` duplicates the material datablock rather than merely reusing the
+  same reference. New names must be unused.
+- `material.face_assign` accepts 1..256 unique explicit faces and restores prior per-face
+  material indices if verification fails.
+- The factory currently exposes 141 typed tools under the existing centralized 160-tool cap.
+- No arbitrary Python, unrestricted Blender UV/material operator surface or shader-node editor
+  surface is exposed. Real Blender UV/material runtime behavior remains unverified.
