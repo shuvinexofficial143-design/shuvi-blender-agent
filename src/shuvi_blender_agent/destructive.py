@@ -106,7 +106,10 @@ class DestructiveOperations:
         after["checkpoint_sha256"] = checkpoint["sha256"]
         after["previous_session_id"] = old_session_id
         if new_session_id == old_session_id:
-            raise AgentError(ErrorCode.VERIFICATION_FAILED, "Project replacement kept stale session")
+            raise AgentError(
+                ErrorCode.VERIFICATION_FAILED,
+                "Project replacement kept stale session",
+            )
         return self.objects._result(
             request,
             before,
