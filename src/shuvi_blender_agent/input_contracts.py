@@ -26,6 +26,7 @@ from .geometry_binding import (
     GeometryModifierInspect,
     GeometryModifierRemove,
 )
+from .geometry_primitives import PrimitiveApply, PrimitiveClear, PrimitivePreview
 from .geometry_nodes import (
     GeometryGroupCreate,
     GeometryLinkChange,
@@ -153,6 +154,9 @@ def builtin_contracts() -> dict:
         "geometry_nodes.modifier_inspect": (read, GeometryModifierInspect.parse),
         "geometry_nodes.modifier_bind": (mutation, GeometryModifierBind.parse),
         "geometry_nodes.modifier_remove": (mutation, GeometryModifierRemove.parse),
+        "geometry_nodes.primitive_preview": (read, PrimitivePreview.parse),
+        "geometry_nodes.primitive_apply": (mutation, PrimitiveApply.parse),
+        "geometry_nodes.primitive_clear": (mutation, PrimitiveClear.parse),
         "collection.inspect": (read, CollectionNameRequest.parse),
         "collection.rename": (mutation, RenameCollection.parse),
         "collection.link_object": (mutation, CollectionObjectChange.parse),
