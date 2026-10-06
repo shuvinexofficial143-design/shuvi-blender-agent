@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 46 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 52 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -36,12 +36,16 @@ clients should retain the filter, session ID and revision while continuing a pag
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
+| shape.inspect | object_id | read_only | bounded CURVE/FONT data summary and shape readback |
+| curve.create | name, points, cyclic, bevel_depth, transform, expected_scene_revision | mutation | one bounded 3D POLY spline, transform/membership and point readback |
+| text.create | name, body, align_x, size, extrude, transform, expected_scene_revision | mutation | FONT body/alignment/size/extrusion and transform/membership readback |
 | object.create | name, kind, transform, expected_scene_revision | mutation | bounded primitive; actual geometry counts/fingerprint, name/type/transform/membership |
 | object.set_transform | target, transform | mutation | actual local transform and unchanged object identity/name |
 | object.duplicate | target, name, transform | mutation | distinct identity/mesh, copied geometry/material slots, transform/membership |
 | object.duplicate_linked | target, name, transform | mutation | distinct object identity with verified shared bounded mesh data |
 | material.create_assign | target, name, base_color, metallic, roughness | mutation | actual Principled shader inputs, material slot and properties |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
+| device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
 | collection.create | name, expected_scene_revision, target (or null) | mutation | new collection's root link and optional object link |
 | asset.mark | target, description | mutation | new asset mark and actual description |
@@ -54,6 +58,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | mesh.inspect | object_id | read_only | indexed vertices/faces and separate geometry_revision |
 | mesh.create | name, geometry, transform, expected_scene_revision | mutation | actual indexed geometry and object transform/membership |
 | mesh.translate_vertices | target, expected_geometry_revision, indices, delta | mutation | actual complete bounded geometry; untouched indices/faces compared too |
+| mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
+| origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
 ## Operation limits and policy
 
@@ -75,14 +81,22 @@ clients should retain the filter, session ID and revision while continuing a pag
   Created faces have 3..32 distinct valid vertex indices. Translation selects 1..256 unique
   indices and delta components in -1000..1000; every result coordinate stays within
   -1000000..1000000. Translation requires unshared editable mesh without shapes/modifiers.
-  Duplicates reject shape keys and modifiers and require an unparented mesh or empty.
+  Complete transform baking and origin-to-centroid require a fresh geometry revision,
+  unparented local unshared mesh data, XYZ Euler rotation mode, no shape keys/modifiers,
+  and the normal Object-mode/no-animation/no-constraint guard. Duplicates reject shape keys
+  and modifiers and require an unparented mesh or empty.
 - Modifiers require no existing modifier stack and the bounded mesh above. BEVEL has width
   0..100 and segments 1..8; SUBSURF has levels/render_levels 0..2; SOLIDIFY thickness -100..100.
   These source bounds do not establish a hard Blender CPU/memory ceiling.
 - Material color is RGBA in 0..1; metallic/roughness are 0..1. Material assignment requires
   local unshared mesh data and fewer than 64 slots. Camera settings are lens 1..500,
   clip_start 0.0001..1000, clip_end 0.001..1000000 greater than start, boolean make_active.
-  Light kinds POINT/SUN/SPOT/AREA accept energy 0..1000000 and RGB in 0..1.
+  Light kinds POINT/SUN/SPOT/AREA accept energy 0..1000000 and RGB in 0..1. device.update
+  accepts only the fields appropriate to the target kind and verifies the resulting state.
+- Curves create exactly one 3D POLY spline with 2..256 points, coordinates within
+  -1000000..1000000, boolean cyclic state and bevel depth 0..100. Text body is 1..1000
+  characters; align_x is LEFT/CENTER/RIGHT/JUSTIFY/FLUSH, size .0001..1000 and extrude
+  0..100. Curve/Text creation uses direct data APIs, not editor operators.
 - Collections have at most 64 root children; adding an object membership requires fewer
   than 64 existing memberships. Asset descriptions are 0..1000 characters; replacement
   metadata is denied. Objects must be editable/local, in object mode, and unconstrained;
@@ -143,9 +157,16 @@ Level 1 additions (mutations require normal policy and fresh state):
 - `selection.inspect` / `selection.set`: bounded selected IDs and active object.
 - `hierarchy.inspect` / `hierarchy.set_parent`: parent/children readback, cycle rejection,
   unparent via null parent, and optional keep-world.
-- `origin.inspect`: local and world object-origin locations; origin mutation is deferred.
+- `origin.inspect`: local and world object-origin locations.
 - `collection.inspect`, `collection.rename`, `collection.link_object`,
   `collection.unlink_object`, `collection.move_object`, `collection.create_child`:
   bounded collection management with stale-state guards and orphan prevention.
 - `object.duplicate_linked`: independent object sharing the source mesh datablock, with
   geometry/material/readback checks and conservative mesh limits.
+- `shape.inspect`, `curve.create`, `text.create`: bounded direct-data Curve/Text
+  inspection and creation; no arbitrary bpy/operator execution.
+- `device.update`: bounded camera lens/clip/active-state or light energy/color updates.
+- `mesh.apply_object_transform`: bake the complete supported local object transform into
+  bounded mesh vertices, then verify reset object transform plus resulting geometry.
+- `origin.to_centroid`: move the origin to the arithmetic mesh-vertex centroid while
+  preserving supported world geometry through a verified vertex/object offset.
