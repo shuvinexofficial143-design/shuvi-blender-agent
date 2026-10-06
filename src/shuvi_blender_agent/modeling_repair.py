@@ -11,7 +11,7 @@ from .modeling import MAX_EDGES
 from .modeling_region import ModelingRegionOperations
 from .modeling_shading import _edge_orientation_diagnostics, _face_geometry
 from .models import ObjectTarget
-from .safety import SafetyClass, require_revision
+from .safety import SafetyClass
 from .tools import Tool
 from .validation import fields, invalid, number, string
 
