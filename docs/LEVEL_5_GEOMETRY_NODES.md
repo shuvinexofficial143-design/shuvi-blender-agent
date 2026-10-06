@@ -6,7 +6,7 @@ boundary: source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded procedural modeling and Geometry Nodes workflows without exposing
 arbitrary Python, unrestricted node creation or a generic bpy execution surface.
 
-Current Level 5 source progress: **70%**.
+Current Level 5 source progress: **80%**.
 
 Real Blender runtime verification for Level 5: **0%**.
 
@@ -23,7 +23,7 @@ Production ready: **No**.
 | 5 | Procedural modeling primitives | complete |
 | 6 | Attribute / field workflows | complete |
 | 7 | Procedural scatter systems | complete |
-| 8 | Procedural architecture / environment | pending |
+| 8 | Procedural architecture / environment | complete |
 | 9 | Geometry Nodes recipe library | pending |
 | 10 | Geometry Nodes QA / recovery / acceptance | pending |
 
@@ -555,9 +555,104 @@ Fake-bpy/CI establish deterministic source graph intent and bounds only. They do
 Blender instance placement/count, Geometry Nodes evaluation, dependency-graph behavior,
 viewport output, memory/GPU load or render results.
 
+## Milestone 8 — 80% complete
+
+Milestone 8 adds deterministic bounded procedural architecture/environment recipes using only
+existing allowlisted Geometry Nodes.
+
+### `geometry_nodes.architecture_preview`
+
+Preview supports exactly two recipes:
+
+- `MODULAR_WALL`
+- `BLOCK_GRID`
+
+MODULAR_WALL creates a row of repeated cube modules along X. Parameters are bounded to:
+
+- module size 0.001..1000 per axis
+- count 1..16
+- non-negative gap 0..1000
+- base offset within ±1000 per axis
+
+BLOCK_GRID creates repeated cube blocks on an XY grid. Parameters are bounded to:
+
+- block size 0.001..1000 per axis
+- count_x and count_y each 1..6
+- total module count at most **24**
+- non-negative gap_x/gap_y 0..1000
+- base offset within ±1000 per axis
+
+Every module uses exactly one Mesh Cube plus one Transform Geometry node. Cube vertex counts are
+fixed to 2 per axis. Transform rotation is fixed zero and scale fixed one.
+
+All transformed module outputs feed one Join Geometry multi-input socket, which then feeds one
+internal Group Output Geometry socket.
+
+Preview reports:
+
+- deterministic node names/editor locations
+- exact per-module translations
+- exact links
+- module count
+- maximum module count = 24
+- generated node count
+- external_asset_references = false
+- collection_references = false
+- material_references = false
+- source_only = true
+- real_runtime_verified = false
+- deterministic `architecture_revision`
+
+Worst-case BLOCK_GRID uses 24 modules and therefore exactly **50 nodes** (48 module nodes +
+Join + Group Output), below the existing 64-node Geometry Nodes work limit.
+
+### `geometry_nodes.architecture_apply`
+
+Apply requires:
+
+- existing local GeometryNodeTree
+- fresh expected group revision
+- completely empty node tree
+- no existing links or interface sockets
+- at most one current node-group user
+- one supported bounded architecture recipe
+
+No external object, collection, material, asset-library or arbitrary node reference is accepted.
+
+Successful source readback verifies:
+
+- exact Geometry output interface
+- exact generated node names/types/locations
+- exact selected cube/transform defaults
+- exact complete link topology
+- exact module count implied by the requested recipe
+
+Known verification failure removes the complete managed architecture graph/interface and verifies
+restoration of the original empty group revision.
+
+### `geometry_nodes.architecture_clear`
+
+Clear requires the current group to exactly match the requested recipe, prefix and parameters
+before mutation. Changed size, spacing, translation, link topology, interface or any foreign
+node causes a fail-closed refusal.
+
+Successful clear verifies zero nodes, zero links and an empty interface.
+
+Known clear verification failure rebuilds the exact architecture graph and verifies the
+original group revision before recovery is claimed.
+
+### Bounds and runtime boundary
+
+Milestone 8 deliberately raises the centralized registry/client cap from **176 to 184** and adds
+three typed operations, taking the factory from 174 to **177 typed tools**.
+
+Fake-bpy/CI establish deterministic source graph intent only. They do not prove real Blender
+architecture dimensions, overlap, manifoldness, modifier output, dependency-graph behavior,
+viewport output, memory/GPU cost or rendering.
+
 ## Safety boundary
 
-Milestones 1-7 do **not** expose:
+Milestones 1-8 do **not** expose:
 
 - arbitrary Python
 - arbitrary node idnames
@@ -571,36 +666,36 @@ Milestones 1-7 do **not** expose:
 Fake-bpy tests validate contracts, bounds, stale-state handling and source-side readback
 algorithms only. They do not establish Blender Geometry Nodes API/runtime compatibility.
 
-## Verified 70% source checkpoint
+## Verified 80% source checkpoint
 
-Source/test checkpoint: `1965fd5c5fa1df0fa18ddc1b47c2ea6352a1ad53`.
+Source/test checkpoint: `f14a111329b6815f9f96286e956d1db2a5762a4d`.
 
-CI run `37493156276` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37495296260` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **638 tests**
+- **659 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
-- **71 package modules**
+- **72 package modules**
 
-Factory typed tools: **174**.
-Current registry/catalog hard maximum: **176**.
+Factory typed tools: **177**.
+Current registry/catalog hard maximum: **184**.
 
 Level 1 source: **100%**.
 Level 2 source: **100%**.
 Level 3 source: **100%**.
 Level 4 source: **100%**.
-Level 5 source: **70%** (Milestones 1-7 of 10).
+Level 5 source: **80%** (Milestones 1-8 of 10).
 
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
 ## Stop boundary
 
-Milestone 8 — procedural architecture / environment — is the next source task, but it must not
-start without explicit user permission.
+Milestone 9 — Geometry Nodes recipe library — is the next source task, but it must not start
+without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real Geometry Nodes runtime
 acceptance without separate explicit runtime authorization.

@@ -85,6 +85,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | geometry_nodes.scatter_preview | recipe, prefix, parameters | read_only | deterministic source-only CUBE_SCATTER / ICO_SPHERE_SCATTER plan with bounded point resolution, estimated instance count and scatter_revision |
 | geometry_nodes.scatter_apply | group_name, expected_group_revision, recipe, prefix, parameters | mutation | build one exact bounded Instance on Points graph in an empty local GeometryNodeTree with verified rollback |
 | geometry_nodes.scatter_clear | group_name, expected_group_revision, recipe, prefix, parameters | mutation | clear only an exact managed scatter graph and rebuild it on known verification failure |
+| geometry_nodes.architecture_preview | recipe, prefix, parameters | read_only | deterministic source-only MODULAR_WALL / BLOCK_GRID plan with bounded module count and architecture_revision |
+| geometry_nodes.architecture_apply | group_name, expected_group_revision, recipe, prefix, parameters | mutation | build one exact bounded Cube→Transform→Join→Output architecture graph in an empty local GeometryNodeTree with verified rollback |
+| geometry_nodes.architecture_clear | group_name, expected_group_revision, recipe, prefix, parameters | mutation | clear only an exact managed architecture graph and rebuild it on known verification failure |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
 | modifier.add | target, name, kind, settings | mutation | actual newly added modifier settings |
@@ -961,3 +964,37 @@ Current Level 3 source progress: **100%**.
 - The factory now exposes **174 typed tools** under the existing bounded **176-tool** cap.
 - Fake-bpy/CI prove source graph intent only; they do not prove real Blender instance count,
   instance placement, geometry evaluation, viewport behavior, memory/GPU cost or render output.
+
+
+### Level 5 milestone 8 limits
+
+- `geometry_nodes.architecture_preview` supports exactly `MODULAR_WALL` and
+  `BLOCK_GRID`.
+- MODULAR_WALL repeats bounded Cube modules along X. Count is limited to 1..16, with module
+  size 0.001..1000, non-negative gap up to 1000 and base offset within ±1000 per axis.
+- BLOCK_GRID repeats bounded Cube blocks on an XY grid. Each axis count is limited to 1..6 and
+  the product is hard-limited to **24 modules**. Block size is 0.001..1000, per-axis gaps are
+  0..1000 and base offset is within ±1000.
+- Every module uses exactly one Mesh Cube plus one Transform Geometry node. All transformed
+  outputs feed one Join Geometry multi-input socket, then one internal Group Output.
+- Worst-case BLOCK_GRID uses 24 modules and therefore **50 nodes**, remaining below the
+  existing 64-node Geometry Nodes inspection/work limit.
+- All primitive cube vertex counts are fixed at 2 per axis; Transform rotation is fixed zero
+  and scale fixed one. Callers control only bounded module/block size, repetition counts,
+  spacing and base offset.
+- No external object, collection, asset-library, material or unrestricted node reference is
+  accepted.
+- Apply requires a fresh group revision, a completely empty local GeometryNodeTree and at most
+  one current group user. Existing or shared graphs fail closed.
+- Apply verification compares exact output interface, every generated node name/type/location,
+  selected typed defaults and complete link topology. Known mismatch removes the complete
+  architecture graph/interface and verifies restoration of the original empty group revision.
+- Clear requires the current graph to exactly match the requested architecture recipe/prefix/
+  parameters. Any changed translation, size, link, interface or foreign node causes refusal.
+- Known clear verification failure rebuilds the exact architecture graph and verifies the
+  original group revision.
+- The registry/client cap is deliberately raised from **176 to 184**. The factory now exposes
+  **177 typed tools**.
+- Fake-bpy/CI prove deterministic source graph intent only; they do not prove real Blender
+  architecture dimensions, overlap, manifoldness, Boolean construction, viewport output,
+  dependency-graph behavior, memory/GPU cost or render results.
