@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 52 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 55 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -36,6 +36,7 @@ clients should retain the filter, session ID and revision while continuing a pag
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
+| mode.set | target, mode, expected_scene_revision | mutation | verified compatible Object/Edit/Sculpt/Pose/Paint context transition |
 | shape.inspect | object_id | read_only | bounded CURVE/FONT data summary and shape readback |
 | curve.create | name, points, cyclic, bevel_depth, transform, expected_scene_revision | mutation | one bounded 3D POLY spline, transform/membership and point readback |
 | text.create | name, body, align_x, size, extrude, transform, expected_scene_revision | mutation | FONT body/alignment/size/extrusion and transform/membership readback |
@@ -43,6 +44,7 @@ clients should retain the filter, session ID and revision while continuing a pag
 | object.set_transform | target, transform | mutation | actual local transform and unchanged object identity/name |
 | object.duplicate | target, name, transform | mutation | distinct identity/mesh, copied geometry/material slots, transform/membership |
 | object.duplicate_linked | target, name, transform | mutation | distinct object identity with verified shared bounded mesh data |
+| object.delete | target, expected_scene_revision | destructive | verifies target object absent from scene/data after guarded deletion |
 | material.create_assign | target, name, base_color, metallic, roughness | mutation | actual Principled shader inputs, material slot and properties |
 | device.create | name, kind, transform, expected_scene_revision, settings | mutation | actual camera/light properties, transform/membership and active-camera state |
 | device.update | target, settings | mutation | bounded camera/light setting patch and active-camera readback |
@@ -55,6 +57,7 @@ clients should retain the filter, session ID and revision while continuing a pag
 | render.configure | width, height, samples, expected_scene_revision | mutation | actual CPU Cycles/PNG/RGBA/8-bit/single-thread settings |
 | render.execute | name (.png), expected_scene_revision | render | output size/hash, bounded PNG structure, dimensions and pixels decoded for structural validation |
 | file.checkpoint | name (.blend), expected_scene_revision | file_write | output size/hash/uncompressed header and unchanged active source path |
+| file.open_checkpoint | name (.blend), expected_scene_revision | destructive | opens only verified workspace checkpoint, rotates session/object identities, verifies loaded filepath |
 | mesh.inspect | object_id | read_only | indexed vertices/faces and separate geometry_revision |
 | mesh.create | name, geometry, transform, expected_scene_revision | mutation | actual indexed geometry and object transform/membership |
 | mesh.translate_vertices | target, expected_geometry_revision, indices, delta | mutation | actual complete bounded geometry; untouched indices/faces compared too |
@@ -64,10 +67,12 @@ clients should retain the filter, session ID and revision while continuing a pag
 ## Operation limits and policy
 
 - Read-only operations are enabled by default. Mutation requires `allow_mutations`.
+  Destructive operations require both `allow_mutations` and `allow_destructive`.
   Checkpoints require `allow_file_writes` and an output workspace. Rendering requires
   mutations, file writes, rendering permission, an output workspace and prior CPU settings.
-  Destructive operations have no registered tool. The host checks its own safety allowlist
-  and rejects catalog classifications that disagree with it.
+  `file.open_checkpoint` additionally requires a configured OutputWorkspace and accepts only
+  a verified regular `.blend` inside that confined root. The host checks its own safety
+  allowlist and rejects catalog classifications that disagree with it.
 - Scene work: at most 10000 objects, 10000 collections, 10000 allocated session identities,
   and 100000 nested inspection work units per scene request. Revisions scan current bounded
   scene metadata and collection relationships; snapshots stream rather than accumulate.
@@ -170,3 +175,20 @@ Level 1 additions (mutations require normal policy and fresh state):
   bounded mesh vertices, then verify reset object transform plus resulting geometry.
 - `origin.to_centroid`: move the origin to the arithmetic mesh-vertex centroid while
   preserving supported world geometry through a verified vertex/object offset.
+
+
+## Level 1 completion additions
+
+- `mode.set` supports the current Level 1 allowlist: OBJECT for supported targets; EDIT for
+  mesh/curve/font/surface/meta/lattice/armature; SCULPT/VERTEX_PAINT/WEIGHT_PAINT/
+  TEXTURE_PAINT for mesh; POSE for armature. The target must already be selected and active.
+  Non-Object entry is only from Object mode. Actual Blender context semantics remain subject
+  to runtime acceptance.
+- `object.delete` is destructive and source-verified by absence readback. It refuses linked,
+  overridden/read-only objects and refuses deleting a parent while scene children still
+  reference it. It does not automatically remove orphan data blocks.
+- `file.open_checkpoint` is a confined destructive project replacement. Before opening, the
+  file is structurally verified as a bounded regular BLEND output in the configured workspace.
+  A successful open invalidates all prior session object IDs by rotating the inspector session.
+- With these additions the current Level 1 **source roadmap is 100% implemented**. Real Blender
+  runtime verification remains a separate acceptance phase and is not implied by source CI.
