@@ -1,4 +1,3 @@
-from pathlib import Path
 from types import SimpleNamespace as NS
 
 import pytest
@@ -40,7 +39,10 @@ def test_mode_set_mesh_edit_and_return_to_object():
         return {"FINISHED"}
 
     bpy.ops = NS(object=NS(mode_set=mode_set))
-    before = registry.dispatch(Request("object.inspect", {"object_id": registry.dispatch(Request("selection.inspect")).data["active_object_id"]})).data
+    active_id = registry.dispatch(Request("selection.inspect")).data["active_object_id"]
+    before = registry.dispatch(
+        Request("object.inspect", {"object_id": active_id})
+    ).data
     result = registry.dispatch(
         Request(
             "mode.set",
