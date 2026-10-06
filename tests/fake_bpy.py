@@ -211,6 +211,10 @@ class FakeModifiers(list):
         self.append(modifier)
         return modifier
 
+    def move(self, from_index, to_index):
+        item = self.pop(from_index)
+        self.insert(to_index, item)
+
 
 class FakeChildren(list):
     def get(self, name):
