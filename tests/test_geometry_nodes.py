@@ -52,10 +52,12 @@ def add_node(registry, node_type, node_name, group_name="Procedural", location=N
     return registry.dispatch(Request("geometry_nodes.node_add", payload))
 
 
-def test_factory_reaches_existing_hard_cap_without_exceeding_it():
+def test_factory_stays_within_bounded_registry_cap():
     bpy = fake_bpy()
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 160
+    assert len(registry.catalog()) == 160
+    assert MAX_REGISTERED_TOOLS == 168
+    assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
 
 
 def test_group_create_and_empty_tree_inspection_are_verified():
