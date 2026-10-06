@@ -460,10 +460,7 @@ class UVWorkflowOperations(UVOperations):
 
         prior_uvs = self._capture_layer(layer)
         bounds = self._island_bounds(face_uvs, requested)
-        pivot = [
-            (bounds["min"][axis] + bounds["max"][axis]) * 0.5
-            for axis in range(2)
-        ]
+        pivot = [(bounds["min"][axis] + bounds["max"][axis]) * 0.5 for axis in range(2)]
         transformed = [list(uv) for uv in prior_uvs]
         selected_loops = []
         for face_index in requested:
