@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 124 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 126 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -125,6 +125,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | character.sculpt_recipe_preview | recipe, intensity | read_only | allowlisted BODY/FACE/HAND_FOOT sculpt workflow preview using existing typed tools |
 | character.sculpt_recovery_snapshot | object_id, vertex_indices | read_only | bounded 1..512 vertex coordinate-patch snapshot plus topology revision |
 | character.sculpt_recovery_restore | target, expected_geometry_revision, expected_topology_revision, entries | mutation | verified 1..512 coordinate-patch restore with topology-drift denial and rollback |
+| character.workflow_preview | object_id, preset, front_direction, symmetry_tolerance, face_fit_threshold, recipe, intensity | read_only | 12-stage end-to-end Level 3 composition preview; never auto-executes mutation |
+| character.level3_acceptance | object_id, preset, front_direction, symmetry_tolerance, face_fit_threshold, recipe, intensity | read_only | aggregate eight-check Level 3 source acceptance with explicit runtime/production boundary |
 | mesh.apply_object_transform | target, expected_geometry_revision | mutation | complete local scale/XYZ rotation/location baked into mesh; object channels reset |
 | origin.to_centroid | target, expected_geometry_revision | mutation | arithmetic local vertex centroid becomes origin with verified geometry/object offset |
 
@@ -447,7 +449,7 @@ See [Level 2 modeling](LEVEL_2_MODELING.md) for the ten-milestone roadmap.
 
 ## Level 3 sculpting foundation
 
-Current Level 3 source progress: **90%**.
+Current Level 3 source progress: **100%**.
 
 ### Level 3 milestone 1 limits
 
@@ -580,3 +582,22 @@ Current Level 3 source progress: **90%**.
   ordinary sculpt coordinate rollback path if verification fails.
 - These helpers do not expose arbitrary Python or unrestricted Blender operators. Real Blender
   Sculpt Mode/PBVH/Multires/Dyntopo behavior remains runtime-unverified.
+
+
+### Level 3 milestone 10 limits
+
+- `character.workflow_preview` composes a fixed 12-stage character workflow around existing
+  Level 3 tools. It aggregates current body/face/QA/recipe/surface evidence and reports
+  READY/REVIEW/BLOCKED, but performs no automatic mutations.
+- Recommended mutation groups require a recovery snapshot first and fresh target/geometry state
+  for every mutation. Recovery restore is explicit and never triggered automatically.
+- `character.level3_acceptance` evaluates eight source-side checks: body landmarks, body
+  regions, face fit, face regions, face symmetry, structural sculpt QA, recipe preview and
+  surface baseline.
+- Acceptance output is explicitly scoped to source/fake-adapter evidence, always reports
+  `runtime_acceptance_required=true`, `real_runtime_verified=false` and
+  `production_ready=false` in the current source-only environment.
+- The separately opt-in runtime harness now supports `--allow-level3-character`, but only
+  injected fake-session coverage has been executed. No real Blender runtime acceptance has
+  occurred.
+- Level 3 source roadmap is complete at 100%; this does not alter the 0% real-runtime status.
