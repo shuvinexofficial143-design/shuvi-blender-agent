@@ -96,6 +96,9 @@ from .rigging import (
     VertexGroupRemove,
     VertexGroupWeightsSet,
 )
+from .rig_recipe_library import RecipeApply as RigRecipeApply
+from .rig_recipe_library import RecipeCatalog as RigRecipeCatalog
+from .rig_recipe_library import RecipePreview as RigRecipePreview
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .sculpting import SculptBrush, SculptSmooth
@@ -147,6 +150,9 @@ def builtin_contracts() -> dict:
         "rig.ik_fk_preview": (read, IKFKPreview.parse),
         "rig.ik_fk_setup": (mutation, IKFKSetup.parse),
         "rig.ik_fk_switch": (mutation, IKFKSwitch.parse),
+        "rig.recipe_catalog": (read, RigRecipeCatalog.parse),
+        "rig.recipe_preview": (read, RigRecipePreview.parse),
+        "rig.recipe_apply": (mutation, RigRecipeApply.parse),
         "character.workflow_preview": (read, CharacterWorkflowPreview.parse),
         "character.level3_acceptance": (read, Level3Acceptance.parse),
         "character.proportion_guide": (read, ProportionGuide.parse),
