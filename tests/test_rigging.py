@@ -12,7 +12,6 @@ from shuvi_blender_agent.rigging import (
     BoneCreate,
     BoneHierarchyEdit,
     BoneSymmetryEdit,
-    IKFKPreview,
     IKFKSetup,
     IKFKSwitch,
     MeshArmatureBinding,
