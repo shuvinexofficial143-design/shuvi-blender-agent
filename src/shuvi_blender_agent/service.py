@@ -40,6 +40,7 @@ from .modeling_topology import ModelingTopologyOperations
 from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
+from .rigging import RiggingOperations
 from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
 from .sculpting import SculptingOperations
@@ -97,6 +98,7 @@ def create_registry(
         AssetOperations(objects),
         AnimationOperations(objects),
         RenderOperations(objects, policy, workspace),
+        RiggingOperations(objects),
         MeshOperations(objects),
         MeshTransformOperations(objects),
         ModelingOperations(objects),
