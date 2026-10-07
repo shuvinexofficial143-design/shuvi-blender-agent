@@ -1807,9 +1807,10 @@ def test_vertex_group_remove_rejects_nonfinal_group_for_exact_recovery():
 
     assert result.status == Status.FAILED
     assert result.error.code == ErrorCode.SAFETY_DENIED
-    assert inspect_weights(registry, mesh_state, rig_state)["weight_revision"] == weights[
-        "weight_revision"
-    ]
+    assert (
+        inspect_weights(registry, mesh_state, rig_state)["weight_revision"]
+        == weights["weight_revision"]
+    )
 
 
 def test_vertex_group_weights_set_verification_failure_restores_weights(monkeypatch):
