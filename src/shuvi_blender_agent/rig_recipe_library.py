@@ -6,7 +6,13 @@ from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .inspection import revision
 from .operations import ObjectOperations
-from .rigging import IKFKSetup, PoseConstraintCreate, RiggingOperations
+from .rigging import (
+    MAX_POSE_CONSTRAINTS,
+    MAX_POSE_CONSTRAINTS_PER_BONE,
+    IKFKSetup,
+    PoseConstraintCreate,
+    RiggingOperations,
+)
 from .safety import SafetyClass, require_revision
 from .tools import Tool
 from .validation import fields, invalid, string
@@ -89,6 +95,7 @@ def _descriptor(recipe_id):
 def _delegate(recipe_id, target, expected_rig_revision, parameters):
     if not isinstance(parameters, dict):
         raise invalid("parameters must be an object")
+    fields(parameters, set(RECIPE_SPECS[recipe_id]["parameter_schema"]))
     payload = {
         "target": target,
         "expected_rig_revision": expected_rig_revision,
@@ -182,14 +189,12 @@ class RigRecipeLibraryOperations:
         delegate = action.delegate
         obj, target_before, before, _pose_bone, pose_before = self.rigging._pose_target(delegate)
         blockers = []
-        existing = self.rigging._constraint_from_snapshot(
-            pose_before, delegate.constraint_name
-        )
+        existing = self.rigging._constraint_from_snapshot(pose_before, delegate.constraint_name)
         if existing is not None:
             blockers.append("CONSTRAINT_NAME_EXISTS")
-        if pose_before["constraint_count"] >= 64:
+        if pose_before["constraint_count"] >= MAX_POSE_CONSTRAINTS_PER_BONE:
             blockers.append("POSE_BONE_CONSTRAINT_LIMIT")
-        if before["total_pose_constraint_count"] >= 512:
+        if before["total_pose_constraint_count"] >= MAX_POSE_CONSTRAINTS:
             blockers.append("TOTAL_POSE_CONSTRAINT_LIMIT")
 
         target_state = None
@@ -249,12 +254,10 @@ class RigRecipeLibraryOperations:
         blockers = []
         if state["constraint"] is not None:
             blockers.append("CONSTRAINT_NAME_EXISTS")
-        end_pose = next(
-            item for item in before["pose_bones"] if item["name"] == delegate.end_bone
-        )
-        if end_pose["constraint_count"] >= 64:
+        end_pose = next(item for item in before["pose_bones"] if item["name"] == delegate.end_bone)
+        if end_pose["constraint_count"] >= MAX_POSE_CONSTRAINTS_PER_BONE:
             blockers.append("POSE_BONE_CONSTRAINT_LIMIT")
-        if before["total_pose_constraint_count"] >= 512:
+        if before["total_pose_constraint_count"] >= MAX_POSE_CONSTRAINTS:
             blockers.append("TOTAL_POSE_CONSTRAINT_LIMIT")
 
         return {

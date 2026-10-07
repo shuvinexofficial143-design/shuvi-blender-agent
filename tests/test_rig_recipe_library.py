@@ -252,15 +252,9 @@ def test_constraint_recipes_apply_through_verified_existing_mutation(
     delegate = result.data["delegate_result"]
     assert delegate["before"]["rig_revision"] == rig["rig_revision"]
     after = registry.dispatch(Request("rig.armature_inspect", {"object_id": object_id})).data
-    owner = next(
-        item
-        for item in after["pose_bones"]
-        if item["name"] == parameters["bone_name"]
-    )
+    owner = next(item for item in after["pose_bones"] if item["name"] == parameters["bone_name"])
     created = next(
-        item
-        for item in owner["constraints"]
-        if item["name"] == parameters["constraint_name"]
+        item for item in owner["constraints"] if item["name"] == parameters["constraint_name"]
     )
     assert created["type"] == constraint_type
     assert obj.select_get() is True
@@ -336,8 +330,26 @@ def test_recipe_apply_propagates_verified_delegate_recovery(monkeypatch):
             "expected_rig_revision": "y" * 64,
             "parameters": [],
         },
+        {
+            "recipe_id": "constraint.same_armature_ik",
+            "target": {
+                "object_id": "id",
+                "expected_name": "Rig",
+                "expected_revision": "x" * 64,
+            },
+            "expected_rig_revision": "y" * 64,
+            "parameters": {
+                "bone_name": "End",
+                "constraint_name": "Recipe IK",
+                "influence": 1.0,
+                "mute": False,
+                "target_bone_name": "IK.Target",
+                "chain_count": 3,
+                "unrestricted_extra": True,
+            },
+        },
     ],
 )
-def test_recipe_contract_rejects_unknown_or_untyped_payload(payload):
+def test_recipe_contract_rejects_unknown_untyped_or_extra_payload(payload):
     with pytest.raises(AgentError):
         RecipeAction.parse(payload)
