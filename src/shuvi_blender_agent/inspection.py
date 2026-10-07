@@ -86,6 +86,11 @@ def modifier_snapshot(mod) -> dict:
     elif mod.type == "NODES":
         node_group = getattr(mod, "node_group", None)
         settings["node_group_name"] = node_group.name if node_group is not None else None
+    elif mod.type == "ARMATURE":
+        target = getattr(mod, "object", None)
+        settings["target_name"] = target.name if target is not None else None
+        settings["use_vertex_groups"] = bool(getattr(mod, "use_vertex_groups", True))
+        settings["use_bone_envelopes"] = bool(getattr(mod, "use_bone_envelopes", False))
     return {
         "name": mod.name,
         "type": mod.type,
