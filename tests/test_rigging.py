@@ -782,8 +782,8 @@ def setup_pose_rig():
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    inspector = BpyInspector(bpy)
-    object_id = inspector.identity(obj)
+    objects = registry.dispatch(Request("objects.list")).data["items"]
+    object_id = next(item["object_id"] for item in objects if item["name"] == "CharacterRig")
     return bpy, obj, registry, object_id
 
 
