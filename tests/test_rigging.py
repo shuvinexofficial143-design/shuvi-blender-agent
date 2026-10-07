@@ -13,7 +13,6 @@ from shuvi_blender_agent.rigging import (
     BoneHierarchyEdit,
     BoneSymmetryEdit,
     MeshArmatureBinding,
-    MeshWeightInspect,
     PoseBoneReset,
     PoseBoneTransform,
     PoseConstraintCreate,
