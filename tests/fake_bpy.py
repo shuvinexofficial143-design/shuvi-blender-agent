@@ -146,6 +146,80 @@ class FakeCurves(list):
         return next((item for item in self if item.name == name), None)
 
 
+class FakeArmatureBone:
+    def __init__(self, name):
+        self.name = name
+        self.parent = None
+        self._head = [0.0, 0.0, 0.0]
+        self._tail = [0.0, 0.0, 1.0]
+        self.matrix_local = [[float(row == col) for col in range(4)] for row in range(4)]
+        self.use_connect = False
+        self.use_deform = True
+        self.inherit_scale = "FULL"
+
+    @property
+    def head(self):
+        return self._head
+
+    @head.setter
+    def head(self, value):
+        self._head = list(value)
+
+    @property
+    def tail(self):
+        return self._tail
+
+    @tail.setter
+    def tail(self, value):
+        self._tail = list(value)
+
+    @property
+    def head_local(self):
+        return self._head
+
+    @property
+    def tail_local(self):
+        return self._tail
+
+
+class FakeEditBones(list):
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def new(self, name):
+        if self.get(name) is not None:
+            raise RuntimeError("Bone already exists")
+        bone = FakeArmatureBone(name)
+        self.append(bone)
+        return bone
+
+    def remove(self, bone):
+        super().remove(bone)
+
+
+class FakeArmatureData:
+    def __init__(self, name):
+        self.name = name
+        self.users = 0
+        self.library = None
+        self.object_type = "ARMATURE"
+        self.edit_bones = FakeEditBones()
+        self.bones = self.edit_bones
+
+
+class FakeArmatures(list):
+    def new(self, name):
+        armature = FakeArmatureData(name)
+        self.append(armature)
+        return armature
+
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def remove(self, armature):
+        super().remove(armature)
+
+
 class FakeMaterialLinks(list):
     def append(self, material):
         super().append(material)
@@ -510,6 +584,8 @@ class FakeObjects(list):
             name, getattr(mesh, "object_type", "MESH") if mesh is not None else "EMPTY"
         )
         obj.data = mesh
+        if obj.type == "ARMATURE":
+            obj.pose = NS(bones=[])
         self.append(obj)
         return obj
 
@@ -750,6 +826,7 @@ def fake_bpy(objects=None):
             objects=table,
             meshes=meshes,
             curves=curves,
+            armatures=FakeArmatures(),
             collections=collections,
             materials=FakeMaterials(),
             images=FakeImages(),
