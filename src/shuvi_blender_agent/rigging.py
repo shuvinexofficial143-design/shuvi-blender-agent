@@ -5,7 +5,7 @@ from math import isfinite, sqrt
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
-from .inspection import bounded_text, revision
+from .inspection import bounded_text, modifier_snapshot, revision
 from .models import ObjectTarget, Transform, object_name, vector3
 from .operations import ObjectOperations
 from .safety import SafetyClass, require_revision
@@ -372,6 +372,32 @@ class PoseConstraintRemove:
             object_name(data["bone_name"]),
             object_name(data["constraint_name"]),
             kind,
+        )
+
+
+@dataclass(frozen=True)
+class MeshArmatureBinding:
+    mesh_target: ObjectTarget
+    armature_target: ObjectTarget
+    expected_rig_revision: str
+    modifier_name: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "mesh_target",
+                "armature_target",
+                "expected_rig_revision",
+                "modifier_name",
+            },
+        )
+        return cls(
+            ObjectTarget.parse(data["mesh_target"]),
+            ObjectTarget.parse(data["armature_target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            object_name(data["modifier_name"]),
         )
 
 
@@ -1464,6 +1490,255 @@ class RiggingOperations:
                     pass
             raise
 
+
+    def _binding_targets(self, action: MeshArmatureBinding):
+        mesh, mesh_before = self.inspector.target(action.mesh_target)
+        armature, armature_object_before = self.inspector.target(action.armature_target)
+        self.objects._editable(mesh)
+        self.objects._editable(armature)
+        if mesh.type != "MESH" or mesh.data is None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Binding requires a mesh object")
+        if armature.type != "ARMATURE" or armature.data is None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Binding target must be an armature object")
+        if mesh is armature:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Mesh and armature targets must differ")
+        if getattr(mesh.data, "library", None) is not None or getattr(
+            armature.data, "library", None
+        ) is not None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Binding requires local mesh and armature data")
+        if mesh.data.shape_keys is not None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Binding does not accept shape-key meshes")
+        if mesh.parent is not None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "M6 binding requires an unparented mesh")
+        if len(getattr(mesh, "vertex_groups", ())):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "M6 binding requires no pre-existing vertex groups",
+            )
+        if (
+            len(mesh.data.vertices) > 4096
+            or len(mesh.data.polygons) > 4096
+            or sum(len(face.vertices) for face in mesh.data.polygons) > 32768
+        ):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Binding mesh exceeds work bounds")
+        rig_before = self._snapshot(armature)
+        require_revision(action.expected_rig_revision, rig_before["rig_revision"])
+        return mesh, mesh_before, armature, armature_object_before, rig_before
+
+    @staticmethod
+    def _managed_armature_modifier_state(name, armature_name):
+        return {
+            "name": name,
+            "type": "ARMATURE",
+            "show_viewport": True,
+            "show_render": True,
+            "settings": {
+                "target_name": armature_name,
+                "use_vertex_groups": True,
+                "use_bone_envelopes": False,
+            },
+        }
+
+    @staticmethod
+    def _configure_armature_modifier(modifier, armature):
+        modifier.object = armature
+        modifier.use_vertex_groups = True
+        modifier.use_bone_envelopes = False
+        modifier.show_viewport = True
+        modifier.show_render = True
+
+    def bind_mesh_armature(self, request: Request, action: MeshArmatureBinding):
+        mesh, mesh_before, armature, armature_object_before, rig_before = self._binding_targets(
+            action
+        )
+        if len(mesh.modifiers):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "M6 binding requires an empty modifier stack",
+            )
+        if mesh.modifiers.get(action.modifier_name) is not None:
+            raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Modifier name already exists")
+
+        created = None
+        try:
+            created = mesh.modifiers.new(action.modifier_name, "ARMATURE")
+            self._configure_armature_modifier(created, armature)
+            self.bpy.context.view_layer.update()
+
+            mesh_after = self.inspector.snapshot(mesh)
+            rig_after = self._snapshot(armature)
+            actual_modifier = mesh.modifiers.get(action.modifier_name)
+            actual = {
+                "mesh_object_id": mesh_after["object_id"],
+                "armature_object_id": armature_object_before["object_id"],
+                "parent_id": mesh_after["parent_id"],
+                "modifier_count": mesh_after["modifier_count"],
+                "modifier": modifier_snapshot(actual_modifier) if actual_modifier is not None else None,
+                "modifier_target_object_id": (
+                    self.inspector.identity(actual_modifier.object)
+                    if actual_modifier is not None and getattr(actual_modifier, "object", None)
+                    else None
+                ),
+                "rig_revision": rig_after["rig_revision"],
+                "mode": self.bpy.context.mode,
+            }
+            expected = {
+                "mesh_object_id": mesh_before["object_id"],
+                "armature_object_id": armature_object_before["object_id"],
+                "parent_id": None,
+                "modifier_count": 1,
+                "modifier": self._managed_armature_modifier_state(
+                    action.modifier_name,
+                    armature.name,
+                ),
+                "modifier_target_object_id": armature_object_before["object_id"],
+                "rig_revision": rig_before["rig_revision"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {
+                        "before": {"mesh": mesh_before, "armature": rig_before},
+                        "after": {"mesh": mesh_after, "armature": rig_after},
+                    },
+                    verification=verification.to_dict(),
+                )
+
+            if created is not None and mesh.modifiers.get(created.name) == created:
+                mesh.modifiers.remove(created)
+            self.bpy.context.view_layer.update()
+            mesh_recovered = self.inspector.snapshot(mesh)
+            rig_recovered = self._snapshot(armature)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": {"mesh": mesh_before, "armature": rig_before},
+                    "after": {"mesh": mesh_after, "armature": rig_after},
+                    "rolled_back": True,
+                    "recovery_verified": (
+                        mesh_recovered["revision"] == mesh_before["revision"]
+                        and rig_recovered["rig_revision"] == rig_before["rig_revision"]
+                    ),
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Armature binding readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if created is not None:
+                try:
+                    if mesh.modifiers.get(created.name) == created:
+                        mesh.modifiers.remove(created)
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
+    def unbind_mesh_armature(self, request: Request, action: MeshArmatureBinding):
+        mesh, mesh_before, armature, armature_object_before, rig_before = self._binding_targets(
+            action
+        )
+        if len(mesh.modifiers) != 1:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "M6 unbind requires exactly one modifier",
+            )
+        modifier = mesh.modifiers.get(action.modifier_name)
+        if modifier is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Armature modifier not found")
+        if getattr(modifier, "type", None) != "ARMATURE":
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Expected modifier is not ARMATURE")
+        if getattr(modifier, "object", None) is not armature:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Armature modifier target differs")
+        state = modifier_snapshot(modifier)
+        expected_state = self._managed_armature_modifier_state(action.modifier_name, armature.name)
+        if not compare(expected_state, state).matched:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Armature modifier is outside M6 managed state",
+            )
+
+        removed = False
+        try:
+            mesh.modifiers.remove(modifier)
+            removed = True
+            self.bpy.context.view_layer.update()
+
+            mesh_after = self.inspector.snapshot(mesh)
+            rig_after = self._snapshot(armature)
+            actual = {
+                "mesh_object_id": mesh_after["object_id"],
+                "armature_object_id": armature_object_before["object_id"],
+                "parent_id": mesh_after["parent_id"],
+                "modifier_absent": mesh.modifiers.get(action.modifier_name) is None,
+                "modifier_count": mesh_after["modifier_count"],
+                "rig_revision": rig_after["rig_revision"],
+                "mode": self.bpy.context.mode,
+            }
+            expected = {
+                "mesh_object_id": mesh_before["object_id"],
+                "armature_object_id": armature_object_before["object_id"],
+                "parent_id": None,
+                "modifier_absent": True,
+                "modifier_count": 0,
+                "rig_revision": rig_before["rig_revision"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {
+                        "before": {"mesh": mesh_before, "armature": rig_before},
+                        "after": {"mesh": mesh_after, "armature": rig_after},
+                    },
+                    verification=verification.to_dict(),
+                )
+
+            restored = mesh.modifiers.new(action.modifier_name, "ARMATURE")
+            self._configure_armature_modifier(restored, armature)
+            self.bpy.context.view_layer.update()
+            mesh_recovered = self.inspector.snapshot(mesh)
+            rig_recovered = self._snapshot(armature)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": {"mesh": mesh_before, "armature": rig_before},
+                    "after": {"mesh": mesh_after, "armature": rig_after},
+                    "rolled_back": True,
+                    "recovery_verified": (
+                        mesh_recovered["revision"] == mesh_before["revision"]
+                        and rig_recovered["rig_revision"] == rig_before["rig_revision"]
+                    ),
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Armature unbind readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if removed and mesh.modifiers.get(action.modifier_name) is None:
+                try:
+                    restored = mesh.modifiers.new(action.modifier_name, "ARMATURE")
+                    self._configure_armature_modifier(restored, armature)
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
     def tools(self):
         return [
             Tool(
@@ -1519,5 +1794,17 @@ class RiggingOperations:
                 SafetyClass.MUTATION,
                 PoseConstraintRemove.parse,
                 self.remove_pose_constraint,
+            ),
+            Tool(
+                "rig.mesh_armature_bind",
+                SafetyClass.MUTATION,
+                MeshArmatureBinding.parse,
+                self.bind_mesh_armature,
+            ),
+            Tool(
+                "rig.mesh_armature_unbind",
+                SafetyClass.MUTATION,
+                MeshArmatureBinding.parse,
+                self.unbind_mesh_armature,
             ),
         ]
