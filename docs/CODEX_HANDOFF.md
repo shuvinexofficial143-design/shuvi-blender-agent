@@ -3,7 +3,7 @@
 Updated: 2026-10-07. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 6 source/test commit: 7732e365f7259cc9dfb951ac25517b6f439ecfda.
+Latest verified pushed Level 6 source/test commit: 3777267dc806f6aab550c3c103f9b380fcaa6095.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -207,12 +207,12 @@ Milestone 10 — Geometry Nodes QA / recovery / acceptance — is complete. Do n
 without explicit user permission.
 
 ## Level 6 active checkpoint
-Latest verified Level 6 source/test checkpoint: 7732e365f7259cc9dfb951ac25517b6f439ecfda.
-CI run 37607776888 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **759 tests**, package build, distribution audit and clean install/import without bpy.
+Latest verified Level 6 source/test checkpoint: 3777267dc806f6aab550c3c103f9b380fcaa6095.
+CI run 37623998540 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **767 tests**, package build, distribution audit and clean install/import without bpy.
 The distribution audit verified **75 package modules**.
 
-Level 6 Rigging is now **50% source complete** (Milestones 1-5 of 10).
+Level 6 Rigging is now **60% source complete** (Milestones 1-6 of 10).
 
 Milestone 1 adds:
 - `rig.armature_inspect`: one bounded read-only armature/pose inspection surface using a
@@ -303,17 +303,37 @@ Milestone 5 adds:
 - Milestone 5 adds two mutation tools, taking the factory from 190 to **192 tools**, exactly at
   the current bounded **192-tool** registry/client cap.
 
+Milestone 6 adds:
+- `rig.mesh_armature_bind`: fresh mesh ObjectTarget + fresh armature ObjectTarget + fresh
+  `rig_revision` gated creation of exactly one explicit `ARMATURE` modifier.
+- binding requires local editable Object-mode objects/data, an unparented mesh, no shape keys,
+  no vertex groups, an empty modifier stack, and bounded mesh work of at most 4096 vertices,
+  4096 polygons and 32768 polygon indices.
+- the managed modifier targets exactly the supplied armature object and fixes
+  `use_vertex_groups=true`, `use_bone_envelopes=false`, viewport/render enabled.
+- Milestone 6 intentionally does not parent the mesh, create groups/weights, invoke automatic
+  weights, use envelopes or expose generic modifier settings.
+- bind readback verifies mesh identity, armature identity, exact modifier settings/count,
+  unchanged parent state and unchanged armature `rig_revision`; mismatch removes the exact
+  created modifier and verifies both original revisions.
+- `rig.mesh_armature_unbind`: removes only the sole exact M6-managed ARMATURE modifier from an
+  unparented zero-group mesh; mismatch recreates the managed modifier and verifies recovery.
+- the zero-group unbind restriction is intentional until Milestone 7 owns vertex-group/weight
+  workflows.
+- Milestone 6 raises the bounded registry/client cap from 192 to **200** and adds two mutation
+  tools, taking the factory from 192 to **194 tools**.
+
 Level 6 real Blender runtime verification remains 0%. Production readiness remains No.
 
-Milestone 5 — Rig constraints + IK foundations — is complete. Do not begin Milestone 6
-without explicit user permission.
+Milestone 6 — Mesh-to-armature binding + Armature modifier — is complete. Do not begin
+Milestone 7 without explicit user permission.
 
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
 Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
 Level 4 UV / Texture / Materials source is **100% complete** (Milestones 1-10 of 10).
 Level 5 Geometry Nodes source is **100% complete** (Milestones 1-10 of 10).
-Level 6 Rigging source is **50% complete** (Milestones 1-5 of 10).
+Level 6 Rigging source is **60% complete** (Milestones 1-6 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted pending explicit authorization.
 
 ## Completed and verified
@@ -348,7 +368,7 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 192 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 194 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -380,17 +400,17 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 192 typed host contracts/tools at the bounded 192-tool cap. Level 1 source: **100%**.
+Source: 194 typed host contracts/tools under the bounded 200-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
-Level 6 Rigging source: **50%** (Milestones 1-5 of 10). Verified Level 6 source/test checkpoint:
-7732e365f7259cc9dfb951ac25517b6f439ecfda. CI run 37607776888 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 759 tests, lint/format, package build,
+Level 6 Rigging source: **60%** (Milestones 1-6 of 10). Verified Level 6 source/test checkpoint:
+3777267dc806f6aab550c3c103f9b380fcaa6095. CI run 37623998540 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 767 tests, lint/format, package build,
 75-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 6 Milestones 1-5 are complete at 50%. Stop here. Do not begin Milestone 6 without
+Level 6 Milestones 1-6 are complete at 60%. Stop here. Do not begin Milestone 7 without
 explicit user permission. Keep source/fake evidence separate from real Blender runtime
 verification.
 
@@ -410,14 +430,13 @@ verification.
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed Level 6 50% source checkpoint. The registry/client is exactly at the
-192-tool cap, so Milestone 6 must deliberately raise the cap or reuse/consolidate existing
-surfaces before adding tools. Heavy Blender runtime actions still require separate user
+None for the completed Level 6 60% source checkpoint. The registry/client cap is bounded at
+200 with 194 tools registered. Heavy Blender runtime actions still require separate user
 authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 6, start only Milestone 6:
-Mesh-to-armature binding + Armature modifier. First reconcile the current 192/192 registry/client
-cap, then keep binding/modifier mutations typed, bounded and fresh-revision gated with exact
-readback/recovery evidence. Keep real Blender runtime acceptance at 0% unless the user separately
-authorizes installation/probe/launch/runtime execution, and do not begin Milestone 7 automatically.
+Wait for explicit user permission. If the user asks to continue Level 6, start only Milestone 7:
+Vertex groups + bounded weight workflows. Extend inspection/revision coverage for vertex groups
+before weight mutation, keep group/weight edits typed, bounded and fresh-revision gated with exact
+readback/recovery evidence, keep real Blender runtime acceptance at 0% unless the user separately
+authorizes installation/probe/launch/runtime execution, and do not begin Milestone 8 automatically.
