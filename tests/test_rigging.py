@@ -14,6 +14,8 @@ from shuvi_blender_agent.rigging import (
     BoneSymmetryEdit,
     PoseBoneReset,
     PoseBoneTransform,
+    PoseConstraintCreate,
+    PoseConstraintRemove,
     RiggingOperations,
 )
 from shuvi_blender_agent.safety import SafetyPolicy
@@ -36,6 +38,34 @@ def bone(name, *, parent=None, head=(0, 0, 0), tail=(0, 0, 1), connect=False, de
     )
 
 
+class FakePoseConstraints(list):
+    def new(self, constraint_type):
+        constraint = NS(
+            name=constraint_type,
+            type=constraint_type,
+            mute=False,
+            influence=1.0,
+        )
+        if constraint_type == "LIMIT_ROTATION":
+            constraint.use_limit_x = False
+            constraint.min_x = 0.0
+            constraint.max_x = 0.0
+            constraint.use_limit_y = False
+            constraint.min_y = 0.0
+            constraint.max_y = 0.0
+            constraint.use_limit_z = False
+            constraint.min_z = 0.0
+            constraint.max_z = 0.0
+        elif constraint_type == "IK":
+            constraint.target = None
+            constraint.subtarget = ""
+            constraint.chain_count = 0
+        else:
+            raise RuntimeError("Unsupported fake constraint type")
+        self.append(constraint)
+        return constraint
+
+
 def pose_bone(name, *, location=(0, 0, 0), constraints=()):
     return NS(
         name=name,
@@ -44,7 +74,7 @@ def pose_bone(name, *, location=(0, 0, 0), constraints=()):
         rotation_euler=[0.0, 0.0, 0.0],
         rotation_quaternion=[1.0, 0.0, 0.0, 0.0],
         scale=[1.0, 1.0, 1.0],
-        constraints=list(constraints),
+        constraints=FakePoseConstraints(constraints),
     )
 
 
@@ -97,9 +127,9 @@ def setup():
 
 def test_factory_registers_level6_armature_inspection_under_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 190
+    assert len(registry.catalog()) == 192
     assert MAX_REGISTERED_TOOLS == 192
-    assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
     item = next(entry for entry in registry.catalog() if entry["name"] == "rig.armature_inspect")
     assert item["classification"] == "read_only"
     assert item["verification_required"] is False
@@ -137,6 +167,15 @@ def test_armature_inspection_is_deterministic_and_reports_hierarchy_pose_state()
             "type": "LIMIT_ROTATION",
             "mute": False,
             "influence": 0.75,
+            "use_limit_x": False,
+            "min_x": 0.0,
+            "max_x": 0.0,
+            "use_limit_y": False,
+            "min_y": 0.0,
+            "max_y": 0.0,
+            "use_limit_z": False,
+            "min_z": 0.0,
+            "max_z": 0.0,
         }
     ]
     assert data["pose_missing_bones"] == []
@@ -526,7 +565,7 @@ def inspect_rig(registry, object_id):
 
 def test_factory_registers_level6_m3_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 190
+    assert len(registry.catalog()) == 192
     assert MAX_REGISTERED_TOOLS == 192
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.bone_hierarchy_edit", "rig.bone_symmetry_edit"} <= names
@@ -801,7 +840,7 @@ def pose_payload(rig, bone_name="Root", rotation_mode="XYZ", rotation=(0.1, 0.2,
 
 def test_factory_registers_level6_m4_pose_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 190
+    assert len(registry.catalog()) == 192
     assert MAX_REGISTERED_TOOLS == 192
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.pose_bone_transform", "rig.pose_bone_reset"} <= names
@@ -999,5 +1038,307 @@ def test_pose_bone_transform_verification_failure_restores_pose(monkeypatch):
     ],
 )
 def test_level6_m4_contracts_reject_unsafe_payloads(parser, payload):
+    with pytest.raises(AgentError):
+        parser(payload)
+
+
+def limit_constraint_payload(rig, bone_name="Arm.L", constraint_name="Shuvi Limit"):
+    return {
+        "target": target_from_rig(rig),
+        "expected_rig_revision": rig["rig_revision"],
+        "bone_name": bone_name,
+        "constraint_name": constraint_name,
+        "constraint_type": "LIMIT_ROTATION",
+        "influence": 0.8,
+        "mute": False,
+        "use_limit_x": True,
+        "min_x": -0.5,
+        "max_x": 0.5,
+        "use_limit_y": True,
+        "min_y": -0.25,
+        "max_y": 0.25,
+        "use_limit_z": False,
+        "min_z": -0.1,
+        "max_z": 0.1,
+    }
+
+
+def ik_constraint_payload(rig, bone_name="Arm.L", target_bone_name="Root"):
+    return {
+        "target": target_from_rig(rig),
+        "expected_rig_revision": rig["rig_revision"],
+        "bone_name": bone_name,
+        "constraint_name": "Shuvi IK",
+        "constraint_type": "IK",
+        "influence": 1.0,
+        "mute": False,
+        "target_bone_name": target_bone_name,
+        "chain_count": 2,
+    }
+
+
+def test_factory_registers_level6_m5_constraint_tools_at_cap():
+    registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
+    assert len(registry.catalog()) == 192
+    assert MAX_REGISTERED_TOOLS == 192
+    names = {item["name"] for item in registry.catalog()}
+    assert {"rig.pose_constraint_create", "rig.pose_constraint_remove"} <= names
+
+
+def test_pose_constraint_create_limit_rotation_with_exact_readback():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+
+    result = registry.dispatch(
+        Request("rig.pose_constraint_create", limit_constraint_payload(before))
+    )
+
+    assert result.status == Status.VERIFIED
+    arm = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Arm.L")
+    constraint = next(item for item in arm["constraints"] if item["name"] == "Shuvi Limit")
+    assert constraint["type"] == "LIMIT_ROTATION"
+    assert constraint["influence"] == 0.8
+    assert constraint["use_limit_x"] is True
+    assert constraint["min_x"] == -0.5
+    assert constraint["max_y"] == 0.25
+    assert (
+        result.data["after"]["total_pose_constraint_count"]
+        == before["total_pose_constraint_count"] + 1
+    )
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_pose_constraint_create_ik_uses_same_armature_explicit_target_bone():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+
+    result = registry.dispatch(Request("rig.pose_constraint_create", ik_constraint_payload(before)))
+
+    assert result.status == Status.VERIFIED
+    arm = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Arm.L")
+    constraint = next(item for item in arm["constraints"] if item["name"] == "Shuvi IK")
+    assert constraint["type"] == "IK"
+    assert constraint["target_object_name"] == "CharacterRig"
+    assert constraint["target_bone_name"] == "Root"
+    assert constraint["chain_count"] == 2
+
+
+def test_pose_constraint_create_rejects_duplicate_name_and_self_ik_target():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    created = registry.dispatch(
+        Request("rig.pose_constraint_create", limit_constraint_payload(before))
+    )
+    assert created.status == Status.VERIFIED
+
+    current = inspect_rig(registry, object_id)
+    duplicate = registry.dispatch(
+        Request("rig.pose_constraint_create", limit_constraint_payload(current))
+    )
+    assert duplicate.status == Status.FAILED
+    assert duplicate.error.code == ErrorCode.AMBIGUOUS_TARGET
+
+    current = inspect_rig(registry, object_id)
+    self_ik = registry.dispatch(
+        Request(
+            "rig.pose_constraint_create",
+            ik_constraint_payload(current, bone_name="Arm.L", target_bone_name="Arm.L"),
+        )
+    )
+    assert self_ik.status == Status.FAILED
+    assert self_ik.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_pose_constraint_remove_verifies_absence_and_counts():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    created = registry.dispatch(
+        Request("rig.pose_constraint_create", ik_constraint_payload(before))
+    )
+    assert created.status == Status.VERIFIED
+    current = inspect_rig(registry, object_id)
+
+    result = registry.dispatch(
+        Request(
+            "rig.pose_constraint_remove",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Arm.L",
+                "constraint_name": "Shuvi IK",
+                "expected_constraint_type": "IK",
+            },
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    arm = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Arm.L")
+    assert not any(item["name"] == "Shuvi IK" for item in arm["constraints"])
+    assert (
+        result.data["after"]["total_pose_constraint_count"]
+        == current["total_pose_constraint_count"] - 1
+    )
+
+
+def test_pose_constraint_remove_rejects_nonfinal_constraint_for_exact_recovery():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    first = registry.dispatch(
+        Request("rig.pose_constraint_create", limit_constraint_payload(before))
+    )
+    assert first.status == Status.VERIFIED
+
+    current = inspect_rig(registry, object_id)
+    second = registry.dispatch(
+        Request("rig.pose_constraint_create", ik_constraint_payload(current))
+    )
+    assert second.status == Status.VERIFIED
+
+    current = inspect_rig(registry, object_id)
+    result = registry.dispatch(
+        Request(
+            "rig.pose_constraint_remove",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Arm.L",
+                "constraint_name": "Shuvi Limit",
+                "expected_constraint_type": "LIMIT_ROTATION",
+            },
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert inspect_rig(registry, object_id)["rig_revision"] == current["rig_revision"]
+
+
+def test_pose_constraint_create_verification_failure_removes_created_constraint(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request("rig.pose_constraint_create", limit_constraint_payload(before))
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert inspect_rig(registry, object_id)["rig_revision"] == before["rig_revision"]
+
+
+def test_pose_constraint_remove_verification_failure_recreates_constraint(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    created = registry.dispatch(
+        Request("rig.pose_constraint_create", limit_constraint_payload(before))
+    )
+    assert created.status == Status.VERIFIED
+    current = inspect_rig(registry, object_id)
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request(
+            "rig.pose_constraint_remove",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Arm.L",
+                "constraint_name": "Shuvi Limit",
+                "expected_constraint_type": "LIMIT_ROTATION",
+            },
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert inspect_rig(registry, object_id)["rig_revision"] == current["rig_revision"]
+
+
+@pytest.mark.parametrize(
+    ("parser", "payload"),
+    [
+        (
+            PoseConstraintCreate.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Arm.L",
+                "constraint_name": "IK",
+                "constraint_type": "IK",
+                "influence": 1.0,
+                "mute": False,
+                "target_bone_name": "Root",
+                "chain_count": 0,
+            },
+        ),
+        (
+            PoseConstraintCreate.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Arm.L",
+                "constraint_name": "Limit",
+                "constraint_type": "LIMIT_ROTATION",
+                "influence": 1.0,
+                "mute": False,
+                "use_limit_x": True,
+                "min_x": 2.0,
+                "max_x": 1.0,
+                "use_limit_y": False,
+                "min_y": 0.0,
+                "max_y": 0.0,
+                "use_limit_z": False,
+                "min_z": 0.0,
+                "max_z": 0.0,
+            },
+        ),
+        (
+            PoseConstraintRemove.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Arm.L",
+                "constraint_name": "Whatever",
+                "expected_constraint_type": "COPY_LOCATION",
+            },
+        ),
+    ],
+)
+def test_level6_m5_constraint_contracts_reject_unsafe_payloads(parser, payload):
     with pytest.raises(AgentError):
         parser(payload)

@@ -86,6 +86,8 @@ from .rigging import (
     BoneSymmetryEdit,
     PoseBoneReset,
     PoseBoneTransform,
+    PoseConstraintCreate,
+    PoseConstraintRemove,
 )
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
@@ -128,6 +130,8 @@ def builtin_contracts() -> dict:
         "rig.bone_symmetry_edit": (mutation, BoneSymmetryEdit.parse),
         "rig.pose_bone_transform": (mutation, PoseBoneTransform.parse),
         "rig.pose_bone_reset": (mutation, PoseBoneReset.parse),
+        "rig.pose_constraint_create": (mutation, PoseConstraintCreate.parse),
+        "rig.pose_constraint_remove": (mutation, PoseConstraintRemove.parse),
         "character.workflow_preview": (read, CharacterWorkflowPreview.parse),
         "character.level3_acceptance": (read, Level3Acceptance.parse),
         "character.proportion_guide": (read, ProportionGuide.parse),
