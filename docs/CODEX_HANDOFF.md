@@ -3,7 +3,7 @@
 Updated: 2026-10-07. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 6 source/test commit: eb6c00aa6e591fa0aa073c879044037decabc78d.
+Latest verified pushed Level 6 source/test commit: 8b1f76baebcb02bd285e95dd8754df4fb9e787d4.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -207,12 +207,12 @@ Milestone 10 — Geometry Nodes QA / recovery / acceptance — is complete. Do n
 without explicit user permission.
 
 ## Level 6 active checkpoint
-Latest verified Level 6 source/test checkpoint: eb6c00aa6e591fa0aa073c879044037decabc78d.
-CI run 37642857534 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **803 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **76 package modules**.
+Latest verified Level 6 source/test checkpoint: 8b1f76baebcb02bd285e95dd8754df4fb9e787d4.
+CI run 37657039445 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **807 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **77 package modules**.
 
-Level 6 Rigging is now **90% source complete** (Milestones 1-9 of 10).
+Level 6 Rigging is now **100% source complete** (Milestones 1-10 of 10).
 
 Milestone 1 adds:
 - `rig.armature_inspect`: one bounded read-only armature/pose inspection surface using a
@@ -380,9 +380,22 @@ Milestone 9 adds:
 - Milestone 9 raises the bounded registry/client cap from 200 to **203** and adds three tools,
   taking the factory from 200 to **203 tools**.
 
+Milestone 10 adds:
+- an internal `rig_acceptance.py` source/fake-bpy acceptance harness over the existing M1-M9
+  rigging surfaces without adding a public protocol tool.
+- the registry/client remains exactly **203/203 tools**; no cap increase is used for QA-only work.
+- final acceptance requires bounded armature structure, exact managed M6 binding, non-empty
+  deform-bone-matched M7 weights, the fixed M9 recipe catalog and a fresh managed M8/M9
+  three-bone IK/FK preview inside the same inspector/session.
+- stale state is proven to fail closed, and forced IK/FK readback mismatch is proven to remove
+  the created constraint, report verified recovery and allow the recovered rig to pass the final
+  acceptance harness again.
+- runtime/production boundaries remain explicit: source/fake-bpy acceptance is not real Blender
+  execution.
+
 Level 6 real Blender runtime verification remains 0%. Production readiness remains No.
 
-Milestone 9 — Versioned rig recipe library — is complete. Do not begin Milestone 10 without
+Milestone 10 — Rigging QA / recovery / acceptance — is complete. Do not begin Level 7 without
 explicit user permission.
 
 ## Current phase
@@ -390,7 +403,7 @@ Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100%
 Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
 Level 4 UV / Texture / Materials source is **100% complete** (Milestones 1-10 of 10).
 Level 5 Geometry Nodes source is **100% complete** (Milestones 1-10 of 10).
-Level 6 Rigging source is **90% complete** (Milestones 1-9 of 10).
+Level 6 Rigging source is **100% complete** (Milestones 1-10 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted pending explicit authorization.
 
 ## Completed and verified
@@ -452,7 +465,7 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 76 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 77 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
@@ -460,16 +473,15 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
 Source: 203 typed host contracts/tools at the bounded 203-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
-Level 6 Rigging source: **90%** (Milestones 1-9 of 10). Verified Level 6 source/test checkpoint:
-eb6c00aa6e591fa0aa073c879044037decabc78d. CI run 37642857534 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 803 tests, lint/format, package build,
-76-module distribution audit and clean install/import without bpy.
+Level 6 Rigging source: **100%** (Milestones 1-10 of 10). Verified Level 6 source/test checkpoint:
+8b1f76baebcb02bd285e95dd8754df4fb9e787d4. CI run 37657039445 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 807 tests, lint/format, package build,
+77-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 6 Milestones 1-9 are complete at 90%. Stop here. Do not begin Milestone 10 without
-explicit user permission. Keep source/fake evidence separate from real Blender runtime
-verification.
+Level 6 Milestones 1-10 are complete at 100%. Stop here. Do not begin Level 7 without explicit
+user permission. Keep source/fake evidence separate from real Blender runtime verification.
 
 ## Decisions
 - Standard-library runtime; pytest is a development dependency.
@@ -487,14 +499,12 @@ verification.
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed Level 6 90% source checkpoint. The registry/client is exactly at the
-203-tool cap, so Milestone 10 must deliberately reconcile capacity before adding any new tool
-surface. Heavy Blender runtime actions still require separate user authorization.
+None for the completed Level 6 100% source checkpoint. Milestone 10 reconciled the 203/203 cap
+by adding no new public protocol surface. Heavy Blender runtime actions still require separate
+user authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 6, start only Milestone 10:
-Rigging QA / recovery / acceptance. Build source/fake-bpy acceptance over the completed M1-M9
-surfaces, prove negative paths and recovery/readback invariants, reconcile the current 203/203
-registry/client cap before adding any tool, and keep real Blender runtime acceptance at 0% unless
-the user separately authorizes installation/probe/launch/runtime execution. Do not begin Level 7
-automatically.
+Wait for explicit user permission. If the user asks to continue the source roadmap, start only
+Level 7 Milestone 1 — Advanced Animation foundation. Keep real Blender runtime acceptance at 0%
+unless the user separately authorizes installation/probe/launch/runtime execution. Do not begin
+Level 7 automatically.

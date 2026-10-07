@@ -1288,3 +1288,16 @@ Current Level 3 source progress: **100%**.
   raises the bounded registry/client cap to **203**.
 - Real Blender constraint solving, evaluated transforms, dependency-graph behavior and runtime
   compatibility remain unverified.
+
+
+### Level 6 milestone 10 limits
+
+- Milestone 10 adds an internal source/fake-bpy acceptance harness, not a new public protocol tool.
+- The public factory/catalog remains exactly **203 typed tools** under the **203-tool** cap.
+- Acceptance requires bounded armature structure, the exact managed mesh/armature binding,
+  non-empty deform-bone-matched skin weights, the fixed versioned recipe catalog and a fresh
+  managed three-bone IK/FK recipe preview in the same inspector/session.
+- Stale state must fail closed. Forced IK/FK verification failure must roll back to the original
+  rig state with verified recovery before the recovered state can pass acceptance.
+- The acceptance result remains explicitly source-only: real Blender runtime verification is
+  **0%** and production readiness is **No**.
