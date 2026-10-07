@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **20%**.
+Current Level 6 source progress: **30%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -18,7 +18,7 @@ Production ready: **No**.
 | --- | --- | --- |
 | 1 | Armature + bone hierarchy inspection | complete |
 | 2 | Armature creation + bounded edit-bone creation | complete |
-| 3 | Bone parenting / connect / rename / symmetry-safe editing | pending |
+| 3 | Bone parenting / connect / rename / symmetry-safe editing | complete |
 | 4 | Pose transforms + bounded pose controls | pending |
 | 5 | Rig constraints + IK foundations | pending |
 | 6 | Mesh-to-armature binding + Armature modifier | pending |
@@ -177,9 +177,74 @@ Current registry/catalog hard maximum: **192**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+
+## Milestone 3 — 30% complete
+
+Milestone 3 adds two bounded mutation tools over the fresh `rig_revision` surface.
+
+### `rig.bone_hierarchy_edit`
+
+Hierarchy editing accepts:
+
+- fresh ObjectTarget
+- fresh `expected_rig_revision`
+- current bone name
+- requested final bone name
+- explicit parent name or null
+- explicit `use_connect`
+
+The target must be an editable local armature in Object mode, selected and active. The edit is
+rejected before mutation if the requested parent is missing, the final name collides, a connected
+bone has no parent, or the requested relationship would create a hierarchy cycle.
+
+Connected edits deterministically place the child head at the requested parent's tail before
+enabling `use_connect`. Successful readback verifies unchanged bone count, final name/parent,
+connect state, expected head/tail/deform state, the same armature object, Object mode and no
+hierarchy cycle.
+
+Known verification mismatch restores the original name, parent, head, tail and connect state,
+returns to Object mode and verifies the original `rig_revision`.
+
+### `rig.bone_symmetry_edit`
+
+Symmetry editing accepts one explicit matching `.L` / `.R` bone pair plus bounded left-side
+head/tail coordinates. It mirrors the left coordinates across local X onto the right bone.
+
+The operation requires both bones to exist and be disconnected. It never guesses a counterpart,
+never scans by fuzzy name and never applies global mirror operators. Head/tail values remain
+bounded to ±100000 Blender units and must define a non-zero bone.
+
+Successful readback verifies unchanged bone count, exact left coordinates, exact X-mirrored right
+coordinates, preserved parent/deform state, the same armature object and final Object mode.
+Known verification mismatch restores both bones' original coordinates and verifies the original
+`rig_revision`.
+
+Milestone 3 does not add pose transforms, constraints, IK, mesh binding, Armature modifiers,
+vertex groups or weight editing. Those remain Milestones 4+.
+
+### Milestone 3 source checkpoint
+
+Code/test checkpoint: `ce4734eac961fc03bf081739de49ca99fc46390f`.
+
+CI run `37602106158` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **737 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **75 package modules**
+
+Factory typed tools: **188**.
+Current registry/catalog hard maximum: **192**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-2 are complete at 20%. Do not begin Milestone 3 without explicit user permission.
+Milestones 1-3 are complete at 30%. Do not begin Milestone 4 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.
