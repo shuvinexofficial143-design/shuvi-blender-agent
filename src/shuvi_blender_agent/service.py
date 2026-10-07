@@ -41,6 +41,7 @@ from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
 from .rigging import RiggingOperations
+from .rig_recipe_library import RigRecipeLibraryOperations
 from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
 from .sculpting import SculptingOperations
@@ -99,6 +100,7 @@ def create_registry(
         AnimationOperations(objects),
         RenderOperations(objects, policy, workspace),
         RiggingOperations(objects),
+        RigRecipeLibraryOperations(objects),
         MeshOperations(objects),
         MeshTransformOperations(objects),
         ModelingOperations(objects),
