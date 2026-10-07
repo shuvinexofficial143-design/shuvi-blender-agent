@@ -1834,7 +1834,6 @@ class RiggingOperations:
                     pass
             raise
 
-
     def _weight_mesh_base(self, mesh, armature):
         self.objects._editable(mesh)
         self.objects._editable(armature)
@@ -2037,8 +2036,7 @@ class RiggingOperations:
                 "name": action.bone_name,
                 "index": before["group_count"] if created else group_before["index"],
                 "weights": [
-                    {"vertex_index": index, "weight": weight}
-                    for index, weight in action.weights
+                    {"vertex_index": index, "weight": weight} for index, weight in action.weights
                 ],
             }
             actual = {
