@@ -78,6 +78,9 @@ from .modeling_topology import (
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
+from .rig_recipe_library import RecipeApply as RigRecipeApply
+from .rig_recipe_library import RecipeCatalog as RigRecipeCatalog
+from .rig_recipe_library import RecipePreview as RigRecipePreview
 from .rigging import (
     ArmatureCreate,
     ArmatureInspect,
@@ -96,9 +99,6 @@ from .rigging import (
     VertexGroupRemove,
     VertexGroupWeightsSet,
 )
-from .rig_recipe_library import RecipeApply as RigRecipeApply
-from .rig_recipe_library import RecipeCatalog as RigRecipeCatalog
-from .rig_recipe_library import RecipePreview as RigRecipePreview
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .sculpting import SculptBrush, SculptSmooth
