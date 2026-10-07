@@ -238,7 +238,9 @@ def test_failed_ik_fk_apply_recovers_then_acceptance_still_passes(monkeypatch):
     monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
     payload = acceptance_payload(rig_state, mesh_state)
     recipe_payload = {
-        key: value for key, value in payload.items() if key != "mesh_object_id"
+        key: value
+        for key, value in payload.items()
+        if key != "mesh_object_id"
     }
     result = registry.dispatch(Request("rig.recipe_apply", recipe_payload))
 
