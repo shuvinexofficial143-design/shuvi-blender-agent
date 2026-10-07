@@ -5,7 +5,10 @@ from fake_bpy import FakeObject, fake_bpy
 from shuvi_blender_agent import ErrorCode, Request, Status
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.operations import ObjectOperations
-from shuvi_blender_agent.rig_acceptance import Level6AcceptanceRequest, RigAcceptanceOperations
+from shuvi_blender_agent.rig_acceptance import (
+    Level6AcceptanceRequest,
+    RigAcceptanceOperations,
+)
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
 from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS
@@ -234,7 +237,9 @@ def test_failed_ik_fk_apply_recovers_then_acceptance_still_passes(monkeypatch):
 
     monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
     payload = acceptance_payload(rig_state, mesh_state)
-    recipe_payload = {key: value for key, value in payload.items() if key != "mesh_object_id"}
+    recipe_payload = {
+        key: value for key, value in payload.items() if key != "mesh_object_id"
+    }
     result = registry.dispatch(Request("rig.recipe_apply", recipe_payload))
 
     assert result.status == Status.FAILED

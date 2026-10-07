@@ -5,8 +5,18 @@ from dataclasses import dataclass
 from .contracts import Request
 from .inspection import revision
 from .operations import ObjectOperations
-from .rig_recipe_library import LIBRARY_VERSION, RECIPE_SPECS, RecipePreview, RigRecipeLibraryOperations
-from .rigging import MAX_RIG_BONES, MAX_WEIGHT_ASSIGNMENTS, MAX_WEIGHT_GROUPS, RiggingOperations
+from .rig_recipe_library import (
+    LIBRARY_VERSION,
+    RECIPE_SPECS,
+    RecipePreview,
+    RigRecipeLibraryOperations,
+)
+from .rigging import (
+    MAX_RIG_BONES,
+    MAX_WEIGHT_ASSIGNMENTS,
+    MAX_WEIGHT_GROUPS,
+    RiggingOperations,
+)
 from .validation import fields, string
 
 EXPECTED_RECIPE_IDS = {
