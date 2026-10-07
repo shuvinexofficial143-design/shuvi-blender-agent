@@ -10,7 +10,7 @@ from .models import ObjectTarget, Transform, object_name, vector3
 from .operations import ObjectOperations
 from .safety import SafetyClass, require_revision
 from .tools import Tool
-from .validation import fields, invalid, number, string
+from .validation import fields, integer, invalid, number, string
 from .verification import compare
 
 MAX_RIG_BONES = 256
@@ -234,6 +234,137 @@ class PoseBoneReset:
         )
 
 
+@dataclass(frozen=True)
+class PoseConstraintCreate:
+    target: ObjectTarget
+    expected_rig_revision: str
+    bone_name: str
+    constraint_name: str
+    constraint_type: str
+    influence: float
+    mute: bool
+    target_bone_name: str | None = None
+    chain_count: int | None = None
+    use_limit_x: bool | None = None
+    min_x: float | None = None
+    max_x: float | None = None
+    use_limit_y: bool | None = None
+    min_y: float | None = None
+    max_y: float | None = None
+    use_limit_z: bool | None = None
+    min_z: float | None = None
+    max_z: float | None = None
+
+    @classmethod
+    def parse(cls, data):
+        common = {
+            "target",
+            "expected_rig_revision",
+            "bone_name",
+            "constraint_name",
+            "constraint_type",
+            "influence",
+            "mute",
+        }
+        limit_fields = {
+            "use_limit_x",
+            "min_x",
+            "max_x",
+            "use_limit_y",
+            "min_y",
+            "max_y",
+            "use_limit_z",
+            "min_z",
+            "max_z",
+        }
+        ik_fields = {"target_bone_name", "chain_count"}
+        fields(data, common, limit_fields | ik_fields)
+        kind = data["constraint_type"]
+        if not isinstance(kind, str) or kind not in {"LIMIT_ROTATION", "IK"}:
+            raise invalid("constraint_type must be LIMIT_ROTATION or IK")
+        if type(data["mute"]) is not bool:
+            raise invalid("mute must be a boolean")
+        extras = set(data) - common
+        if kind == "LIMIT_ROTATION":
+            if extras != limit_fields:
+                raise invalid("LIMIT_ROTATION requires exactly the bounded limit fields")
+            flags = []
+            limits = []
+            for axis in ("x", "y", "z"):
+                flag = data[f"use_limit_{axis}"]
+                if type(flag) is not bool:
+                    raise invalid(f"use_limit_{axis} must be a boolean")
+                low = number(data[f"min_{axis}"], f"min_{axis}", -MAX_POSE_ROTATION, MAX_POSE_ROTATION)
+                high = number(data[f"max_{axis}"], f"max_{axis}", -MAX_POSE_ROTATION, MAX_POSE_ROTATION)
+                if low > high:
+                    raise invalid(f"min_{axis} must not exceed max_{axis}")
+                flags.append(flag)
+                limits.extend((low, high))
+            return cls(
+                ObjectTarget.parse(data["target"]),
+                string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+                object_name(data["bone_name"]),
+                object_name(data["constraint_name"]),
+                kind,
+                number(data["influence"], "influence", 0.0, 1.0),
+                data["mute"],
+                use_limit_x=flags[0],
+                min_x=limits[0],
+                max_x=limits[1],
+                use_limit_y=flags[1],
+                min_y=limits[2],
+                max_y=limits[3],
+                use_limit_z=flags[2],
+                min_z=limits[4],
+                max_z=limits[5],
+            )
+        if extras != ik_fields:
+            raise invalid("IK requires exactly target_bone_name and chain_count")
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            object_name(data["bone_name"]),
+            object_name(data["constraint_name"]),
+            kind,
+            number(data["influence"], "influence", 0.0, 1.0),
+            data["mute"],
+            target_bone_name=object_name(data["target_bone_name"]),
+            chain_count=integer(data["chain_count"], "chain_count", 1, 64),
+        )
+
+
+@dataclass(frozen=True)
+class PoseConstraintRemove:
+    target: ObjectTarget
+    expected_rig_revision: str
+    bone_name: str
+    constraint_name: str
+    expected_constraint_type: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "target",
+                "expected_rig_revision",
+                "bone_name",
+                "constraint_name",
+                "expected_constraint_type",
+            },
+        )
+        kind = data["expected_constraint_type"]
+        if not isinstance(kind, str) or kind not in {"LIMIT_ROTATION", "IK"}:
+            raise invalid("expected_constraint_type must be LIMIT_ROTATION or IK")
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            object_name(data["bone_name"]),
+            object_name(data["constraint_name"]),
+            kind,
+        )
+
+
 def _finite(value, label):
     value = float(value)
     if not isfinite(value):
@@ -266,12 +397,40 @@ class RiggingOperations:
         name = bounded_text(getattr(constraint, "name", ""), limit=256)
         kind = bounded_text(getattr(constraint, "type", "UNKNOWN"), limit=64)
         influence = getattr(constraint, "influence", 1.0)
-        return {
+        data = {
             "name": name,
             "type": kind,
             "mute": bool(getattr(constraint, "mute", False)),
             "influence": _finite(influence, "pose constraint influence"),
         }
+        if kind == "LIMIT_ROTATION":
+            for axis in ("x", "y", "z"):
+                data[f"use_limit_{axis}"] = bool(getattr(constraint, f"use_limit_{axis}", False))
+                data[f"min_{axis}"] = _finite(
+                    getattr(constraint, f"min_{axis}", 0.0),
+                    f"pose constraint min_{axis}",
+                )
+                data[f"max_{axis}"] = _finite(
+                    getattr(constraint, f"max_{axis}", 0.0),
+                    f"pose constraint max_{axis}",
+                )
+        elif kind == "IK":
+            target = getattr(constraint, "target", None)
+            target_name = getattr(target, "name", None) if target is not None else None
+            if target_name is not None:
+                target_name = bounded_text(target_name, limit=256)
+            subtarget = bounded_text(getattr(constraint, "subtarget", ""), limit=256)
+            chain_count = getattr(constraint, "chain_count", 0)
+            if type(chain_count) is not int or not 0 <= chain_count <= MAX_RIG_BONES:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "IK chain count exceeds inspection bound")
+            data.update(
+                {
+                    "target_object_name": target_name,
+                    "target_bone_name": subtarget,
+                    "chain_count": chain_count,
+                }
+            )
+        return data
 
     def _bone_snapshot(self, bone):
         name = bounded_text(bone.name, limit=256)
@@ -1048,6 +1207,241 @@ class RiggingOperations:
                     pass
             raise
 
+
+    @staticmethod
+    def _constraint_object(pose_bone, name):
+        return next(
+            (item for item in getattr(pose_bone, "constraints", ()) if getattr(item, "name", None) == name),
+            None,
+        )
+
+    @staticmethod
+    def _constraint_from_snapshot(pose_state, name):
+        return next((item for item in pose_state["constraints"] if item["name"] == name), None)
+
+    @staticmethod
+    def _apply_constraint_state(constraint, state, obj):
+        constraint.name = state["name"]
+        constraint.influence = state["influence"]
+        constraint.mute = state["mute"]
+        if state["type"] == "LIMIT_ROTATION":
+            for axis in ("x", "y", "z"):
+                setattr(constraint, f"use_limit_{axis}", state[f"use_limit_{axis}"])
+                setattr(constraint, f"min_{axis}", state[f"min_{axis}"])
+                setattr(constraint, f"max_{axis}", state[f"max_{axis}"])
+        elif state["type"] == "IK":
+            constraint.target = obj
+            constraint.subtarget = state["target_bone_name"]
+            constraint.chain_count = state["chain_count"]
+
+    @staticmethod
+    def _validate_removable_constraint(state, obj):
+        if not 0.0 <= state["influence"] <= 1.0:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Constraint influence is outside managed bounds")
+        if state["type"] == "LIMIT_ROTATION":
+            for axis in ("x", "y", "z"):
+                low = state[f"min_{axis}"]
+                high = state[f"max_{axis}"]
+                if (
+                    low < -MAX_POSE_ROTATION
+                    or high > MAX_POSE_ROTATION
+                    or low > high
+                ):
+                    raise AgentError(
+                        ErrorCode.SAFETY_DENIED,
+                        "Limit Rotation settings are outside managed bounds",
+                    )
+        elif state["type"] == "IK":
+            if (
+                state["target_object_name"] != obj.name
+                or not state["target_bone_name"]
+                or not 1 <= state["chain_count"] <= 64
+            ):
+                raise AgentError(
+                    ErrorCode.SAFETY_DENIED,
+                    "IK constraint is outside managed same-armature bounds",
+                )
+
+    def create_pose_constraint(self, request: Request, action: PoseConstraintCreate):
+        obj, target_before, before, pose_bone, pose_before = self._pose_target(action)
+        if self._constraint_from_snapshot(pose_before, action.constraint_name) is not None:
+            raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Constraint name already exists")
+        if pose_before["constraint_count"] >= MAX_POSE_CONSTRAINTS_PER_BONE:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Pose bone constraint limit reached")
+        if before["total_pose_constraint_count"] >= MAX_POSE_CONSTRAINTS:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Total pose constraint limit reached")
+        if action.constraint_type == "IK":
+            if action.target_bone_name == action.bone_name:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "IK target bone must differ from owner bone")
+            bone_names = {item["name"] for item in before["bones"]}
+            pose_names = {item["name"] for item in before["pose_bones"]}
+            if action.target_bone_name not in bone_names or action.target_bone_name not in pose_names:
+                raise AgentError(ErrorCode.NOT_FOUND, "IK target bone not found in armature")
+
+        created = None
+        try:
+            created = pose_bone.constraints.new(action.constraint_type)
+            created.name = action.constraint_name
+            state = {
+                "name": action.constraint_name,
+                "type": action.constraint_type,
+                "mute": action.mute,
+                "influence": action.influence,
+            }
+            if action.constraint_type == "LIMIT_ROTATION":
+                for axis in ("x", "y", "z"):
+                    state[f"use_limit_{axis}"] = getattr(action, f"use_limit_{axis}")
+                    state[f"min_{axis}"] = getattr(action, f"min_{axis}")
+                    state[f"max_{axis}"] = getattr(action, f"max_{axis}")
+            else:
+                state.update(
+                    {
+                        "target_object_name": obj.name,
+                        "target_bone_name": action.target_bone_name,
+                        "chain_count": action.chain_count,
+                    }
+                )
+            self._apply_constraint_state(created, state, obj)
+            self.bpy.context.view_layer.update()
+
+            after = self._snapshot(obj)
+            pose_after = next(
+                item for item in after["pose_bones"] if item["name"] == action.bone_name
+            )
+            actual = {
+                "constraint": self._constraint_from_snapshot(pose_after, action.constraint_name),
+                "constraint_count": pose_after["constraint_count"],
+                "total_pose_constraint_count": after["total_pose_constraint_count"],
+                "object_id": after["object_id"],
+                "mode": self.bpy.context.mode,
+            }
+            expected = {
+                "constraint": state,
+                "constraint_count": pose_before["constraint_count"] + 1,
+                "total_pose_constraint_count": before["total_pose_constraint_count"] + 1,
+                "object_id": target_before["object_id"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after},
+                    verification=verification.to_dict(),
+                )
+
+            current = self._constraint_object(pose_bone, action.constraint_name)
+            if current is not None:
+                pose_bone.constraints.remove(current)
+            self.bpy.context.view_layer.update()
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Constraint creation readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if created is not None:
+                try:
+                    current = self._constraint_object(pose_bone, action.constraint_name)
+                    if current is not None:
+                        pose_bone.constraints.remove(current)
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
+    def remove_pose_constraint(self, request: Request, action: PoseConstraintRemove):
+        obj, target_before, before, pose_bone, pose_before = self._pose_target(action)
+        state = self._constraint_from_snapshot(pose_before, action.constraint_name)
+        if state is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Constraint not found")
+        if state["type"] != action.expected_constraint_type:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Constraint type differs from expectation")
+        self._validate_removable_constraint(state, obj)
+        current = self._constraint_object(pose_bone, action.constraint_name)
+        if current is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Constraint unavailable")
+
+        removed = False
+        try:
+            pose_bone.constraints.remove(current)
+            removed = True
+            self.bpy.context.view_layer.update()
+            after = self._snapshot(obj)
+            pose_after = next(
+                item for item in after["pose_bones"] if item["name"] == action.bone_name
+            )
+            actual = {
+                "constraint_absent": self._constraint_from_snapshot(
+                    pose_after, action.constraint_name
+                )
+                is None,
+                "constraint_count": pose_after["constraint_count"],
+                "total_pose_constraint_count": after["total_pose_constraint_count"],
+                "object_id": after["object_id"],
+                "mode": self.bpy.context.mode,
+            }
+            expected = {
+                "constraint_absent": True,
+                "constraint_count": pose_before["constraint_count"] - 1,
+                "total_pose_constraint_count": before["total_pose_constraint_count"] - 1,
+                "object_id": target_before["object_id"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after},
+                    verification=verification.to_dict(),
+                )
+
+            restored = pose_bone.constraints.new(state["type"])
+            self._apply_constraint_state(restored, state, obj)
+            self.bpy.context.view_layer.update()
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Constraint removal readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if removed and self._constraint_object(pose_bone, action.constraint_name) is None:
+                try:
+                    restored = pose_bone.constraints.new(state["type"])
+                    self._apply_constraint_state(restored, state, obj)
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
     def tools(self):
         return [
             Tool(
@@ -1091,5 +1485,17 @@ class RiggingOperations:
                 SafetyClass.MUTATION,
                 PoseBoneReset.parse,
                 self.reset_pose_bone,
+            ),
+            Tool(
+                "rig.pose_constraint_create",
+                SafetyClass.MUTATION,
+                PoseConstraintCreate.parse,
+                self.create_pose_constraint,
+            ),
+            Tool(
+                "rig.pose_constraint_remove",
+                SafetyClass.MUTATION,
+                PoseConstraintRemove.parse,
+                self.remove_pose_constraint,
             ),
         ]
