@@ -208,7 +208,6 @@ def test_armature_inspection_contract_rejects_invalid_payload(payload):
         ArmatureInspect.parse(payload)
 
 
-
 def transform():
     return {
         "location": [0, 0, 0],
