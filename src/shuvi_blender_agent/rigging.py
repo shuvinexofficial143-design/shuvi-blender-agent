@@ -294,8 +294,18 @@ class PoseConstraintCreate:
                 flag = data[f"use_limit_{axis}"]
                 if type(flag) is not bool:
                     raise invalid(f"use_limit_{axis} must be a boolean")
-                low = number(data[f"min_{axis}"], f"min_{axis}", -MAX_POSE_ROTATION, MAX_POSE_ROTATION)
-                high = number(data[f"max_{axis}"], f"max_{axis}", -MAX_POSE_ROTATION, MAX_POSE_ROTATION)
+                low = number(
+                    data[f"min_{axis}"],
+                    f"min_{axis}",
+                    -MAX_POSE_ROTATION,
+                    MAX_POSE_ROTATION,
+                )
+                high = number(
+                    data[f"max_{axis}"],
+                    f"max_{axis}",
+                    -MAX_POSE_ROTATION,
+                    MAX_POSE_ROTATION,
+                )
                 if low > high:
                     raise invalid(f"min_{axis} must not exceed max_{axis}")
                 flags.append(flag)
@@ -1211,7 +1221,11 @@ class RiggingOperations:
     @staticmethod
     def _constraint_object(pose_bone, name):
         return next(
-            (item for item in getattr(pose_bone, "constraints", ()) if getattr(item, "name", None) == name),
+            (
+                item
+                for item in getattr(pose_bone, "constraints", ())
+                if getattr(item, "name", None) == name
+            ),
             None,
         )
 
@@ -1237,7 +1251,10 @@ class RiggingOperations:
     @staticmethod
     def _validate_removable_constraint(state, obj):
         if not 0.0 <= state["influence"] <= 1.0:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Constraint influence is outside managed bounds")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Constraint influence is outside managed bounds",
+            )
         if state["type"] == "LIMIT_ROTATION":
             for axis in ("x", "y", "z"):
                 low = state[f"min_{axis}"]
@@ -1272,10 +1289,16 @@ class RiggingOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Total pose constraint limit reached")
         if action.constraint_type == "IK":
             if action.target_bone_name == action.bone_name:
-                raise AgentError(ErrorCode.SAFETY_DENIED, "IK target bone must differ from owner bone")
+                raise AgentError(
+                    ErrorCode.SAFETY_DENIED,
+                    "IK target bone must differ from owner bone",
+                )
             bone_names = {item["name"] for item in before["bones"]}
             pose_names = {item["name"] for item in before["pose_bones"]}
-            if action.target_bone_name not in bone_names or action.target_bone_name not in pose_names:
+            if (
+                action.target_bone_name not in bone_names
+                or action.target_bone_name not in pose_names
+            ):
                 raise AgentError(ErrorCode.NOT_FOUND, "IK target bone not found in armature")
 
         created = None
