@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 188 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 190 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -38,6 +38,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
 | rig.bone_hierarchy_edit | target, expected_rig_revision, bone_name, new_name, parent_name, use_connect | mutation | fresh-revision-gated parent/connect/rename edit with cycle preflight, exact readback and full state recovery |
 | rig.bone_symmetry_edit | target, expected_rig_revision, left_name, right_name, left_head, left_tail | mutation | explicit matching .L/.R pair coordinate edit mirrored across local X with exact dual-bone readback and recovery |
+| rig.pose_bone_transform | target, expected_rig_revision, bone_name, location, rotation_mode, rotation, scale | mutation | set one explicit pose bone's bounded raw transform channels with quaternion normalization, exact readback and full pose-state recovery |
+| rig.pose_bone_reset | target, expected_rig_revision, bone_name | mutation | reset one explicit pose bone to identity quaternion/location/scale with exact readback and recovery |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1127,3 +1129,24 @@ Current Level 3 source progress: **100%**.
   the existing bounded **192-tool** registry/client cap.
 - Real Blender edit-bone rename propagation, connect snapping, pose-channel regeneration,
   dependency-graph updates and viewport behavior remain runtime-unverified.
+
+
+### Level 6 milestone 4 limits
+
+- Both pose mutations require a fresh ObjectTarget, fresh `rig_revision`, an editable local
+  armature, Object mode, and the target selected and active.
+- `rig.pose_bone_transform` targets exactly one named existing pose bone. Location is bounded to
+  ±100000 Blender units. XYZ Euler rotation is bounded to ±1000 radians.
+- Quaternion rotation uses exactly four finite components in [-1, 1], rejects the zero
+  quaternion and normalizes deterministically before mutation and verification.
+- Pose scale uses exactly three finite positive components in [0.001, 1000].
+- Mutation changes only raw pose channels: rotation mode, location, the selected rotation
+  representation and scale. Pre-existing constraint metadata is left untouched.
+- `rig.pose_bone_reset` restores one explicit pose bone to quaternion identity, zero location/
+  Euler channels and unit scale.
+- Known verification mismatch restores rotation mode, location, Euler rotation, quaternion
+  rotation and scale and checks recovery against the original `rig_revision`.
+- Milestone 4 adds two mutation tools, taking the factory from 188 to **190 typed tools** under
+  the existing bounded **192-tool** registry/client cap.
+- Real Blender pose evaluation, dependency-graph behavior, constraint interaction, animation/
+  keyframe interaction and viewport behavior remain runtime-unverified.
