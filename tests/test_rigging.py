@@ -1092,9 +1092,10 @@ def test_pose_constraint_create_limit_rotation_with_exact_readback():
     assert constraint["use_limit_x"] is True
     assert constraint["min_x"] == -0.5
     assert constraint["max_y"] == 0.25
-    assert result.data["after"]["total_pose_constraint_count"] == before[
-        "total_pose_constraint_count"
-    ] + 1
+    assert (
+        result.data["after"]["total_pose_constraint_count"]
+        == before["total_pose_constraint_count"] + 1
+    )
     assert bpy.context.mode == "OBJECT"
 
 
@@ -1102,9 +1103,7 @@ def test_pose_constraint_create_ik_uses_same_armature_explicit_target_bone():
     bpy, obj, registry, object_id = setup_pose_rig()
     before = inspect_rig(registry, object_id)
 
-    result = registry.dispatch(
-        Request("rig.pose_constraint_create", ik_constraint_payload(before))
-    )
+    result = registry.dispatch(Request("rig.pose_constraint_create", ik_constraint_payload(before)))
 
     assert result.status == Status.VERIFIED
     arm = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Arm.L")
@@ -1166,9 +1165,10 @@ def test_pose_constraint_remove_verifies_absence_and_counts():
     assert result.status == Status.VERIFIED
     arm = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Arm.L")
     assert not any(item["name"] == "Shuvi IK" for item in arm["constraints"])
-    assert result.data["after"]["total_pose_constraint_count"] == current[
-        "total_pose_constraint_count"
-    ] - 1
+    assert (
+        result.data["after"]["total_pose_constraint_count"]
+        == current["total_pose_constraint_count"] - 1
+    )
 
 
 def test_pose_constraint_create_verification_failure_removes_created_constraint(monkeypatch):
