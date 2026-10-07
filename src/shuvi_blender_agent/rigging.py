@@ -569,9 +569,9 @@ class RiggingOperations:
         require_revision(action.expected_rig_revision, before["rig_revision"])
         original = self._bone_from_snapshot(before, action.bone_name)
         if original is None:
-            raise AgentError(ErrorCode.TARGET_NOT_FOUND, "Bone not found")
+            raise AgentError(ErrorCode.NOT_FOUND, "Bone not found")
         if action.parent_name is not None and self._bone_from_snapshot(before, action.parent_name) is None:
-            raise AgentError(ErrorCode.TARGET_NOT_FOUND, "Parent bone not found")
+            raise AgentError(ErrorCode.NOT_FOUND, "Parent bone not found")
         if action.new_name != action.bone_name and self._bone_from_snapshot(before, action.new_name):
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Bone name already exists")
 
@@ -591,9 +591,9 @@ class RiggingOperations:
                 else None
             )
             if bone is None:
-                raise AgentError(ErrorCode.TARGET_NOT_FOUND, "Bone not found in edit armature")
+                raise AgentError(ErrorCode.NOT_FOUND, "Bone not found in edit armature")
             if action.parent_name is not None and parent is None:
-                raise AgentError(ErrorCode.TARGET_NOT_FOUND, "Parent bone not found in edit armature")
+                raise AgentError(ErrorCode.NOT_FOUND, "Parent bone not found in edit armature")
             bone.use_connect = False
             bone.parent = parent
             if action.use_connect:
@@ -681,7 +681,7 @@ class RiggingOperations:
         left_before = self._bone_from_snapshot(before, action.left_name)
         right_before = self._bone_from_snapshot(before, action.right_name)
         if left_before is None or right_before is None:
-            raise AgentError(ErrorCode.TARGET_NOT_FOUND, "Symmetry pair bone not found")
+            raise AgentError(ErrorCode.NOT_FOUND, "Symmetry pair bone not found")
         if left_before["use_connect"] or right_before["use_connect"]:
             raise AgentError(
                 ErrorCode.SAFETY_DENIED,
@@ -696,7 +696,7 @@ class RiggingOperations:
             left = obj.data.edit_bones.get(action.left_name)
             right = obj.data.edit_bones.get(action.right_name)
             if left is None or right is None:
-                raise AgentError(ErrorCode.TARGET_NOT_FOUND, "Symmetry pair missing in edit armature")
+                raise AgentError(ErrorCode.NOT_FOUND, "Symmetry pair missing in edit armature")
             left.head = action.left_head
             left.tail = action.left_tail
             right.head = right_head
