@@ -233,6 +233,18 @@ def test_failed_ik_fk_apply_recovers_then_acceptance_still_passes(monkeypatch):
         return real_compare(expected, actual)
 
     monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
-    result = registry.dispatch(Request("rig.recipe_apply", acceptance_payload(rig_state, mesh_state) | {"mesh_object_id": None}))
+    payload = acceptance_payload(rig_state, mesh_state)
+    recipe_payload = {key: value for key, value in payload.items() if key != "mesh_object_id"}
+    result = registry.dispatch(Request("rig.recipe_apply", recipe_payload))
+
     assert result.status == Status.FAILED
-    assert result.error.code == ErrorCode.INVALID_REQUEST or result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    delegate = result.data["delegate_result"]
+    assert delegate["rolled_back"] is True
+    assert delegate["recovery_verified"] is True
+    end = next(item for item in rig.pose.bones if item.name == "End")
+    assert len(end.constraints) == 0
+
+    recovered = evaluate(bpy, payload)
+    assert recovered["source_acceptance_status"] == "READY"
+    assert all(item["status"] == "PASS" for item in recovered["checks"])
