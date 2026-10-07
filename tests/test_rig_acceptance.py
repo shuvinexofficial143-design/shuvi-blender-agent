@@ -105,14 +105,13 @@ def setup_acceptance_rig():
         ]
     )
     mesh = FakeObject("Body", "MESH")
+    bpy = fake_bpy([mesh, rig])
     mesh.data.from_pydata(
         [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)],
         [],
         [(0, 1, 2), (0, 2, 3)],
     )
     mesh.data.update()
-
-    bpy = fake_bpy([mesh, rig])
     rig.select_set(True)
     bpy.context.view_layer.objects.active = rig
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
