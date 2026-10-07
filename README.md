@@ -44,6 +44,7 @@ Level 3 sculpting + character-modeling source roadmap is **100% complete**.
 Level 4 UV / texture / materials source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 5 Geometry Nodes source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 6 Rigging source roadmap is **90% complete** (Milestones 1-9 of 10).
+Milestone 9 adds a fixed versioned rig recipe catalog/preview/apply layer over the existing verified constraint and IK/FK operations.
 Source and fake-data tests are available; real Blender runtime verification remains 0% and production readiness is still not claimed.
 Production ready: no. Real launch, bpy, render and recovery behavior need the separately
 authorized acceptance procedure. No Blender is installed or launched by package import.
