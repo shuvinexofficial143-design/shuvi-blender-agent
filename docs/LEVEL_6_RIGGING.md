@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **50%**.
+Current Level 6 source progress: **60%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -21,7 +21,7 @@ Production ready: **No**.
 | 3 | Bone parenting / connect / rename / symmetry-safe editing | complete |
 | 4 | Pose transforms + bounded pose controls | complete |
 | 5 | Rig constraints + IK foundations | complete |
-| 6 | Mesh-to-armature binding + Armature modifier | pending |
+| 6 | Mesh-to-armature binding + Armature modifier | complete |
 | 7 | Vertex groups + bounded weight workflows | pending |
 | 8 | IK/FK control-rig helpers | pending |
 | 9 | Versioned rig recipe library | pending |
@@ -379,9 +379,94 @@ Current registry/catalog hard maximum: **192**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+
+## Milestone 6 — 60% complete
+
+Milestone 6 adds two bounded mutation tools for establishing and removing a mesh-to-armature
+binding through one explicit Blender `ARMATURE` modifier.
+
+### `rig.mesh_armature_bind`
+
+Binding requires:
+
+- fresh mesh ObjectTarget
+- fresh armature ObjectTarget
+- fresh `expected_rig_revision`
+- explicit unique modifier name
+- editable local mesh and armature objects/data
+- Object mode
+- unparented mesh
+- no shape keys
+- no pre-existing vertex groups
+- empty modifier stack
+- bounded mesh work: at most 4096 vertices, 4096 polygons and 32768 polygon indices
+
+The tool creates exactly one `ARMATURE` modifier and fixes the managed settings to:
+
+- target = the explicit armature object
+- `use_vertex_groups=true`
+- `use_bone_envelopes=false`
+- viewport/render enabled
+
+Milestone 6 deliberately does **not** parent the mesh, create vertex groups, assign weights,
+invoke automatic weights, use bone envelopes, or expose a generic modifier-settings surface.
+
+Successful readback verifies:
+
+- same mesh object identity
+- same explicit armature identity
+- mesh remains unparented
+- modifier count becomes exactly one
+- exact modifier name/type/settings
+- modifier target resolves to the expected armature object ID
+- armature `rig_revision` remains unchanged
+- final Object mode
+
+Known verification mismatch removes the exact created modifier and verifies both the original mesh
+object revision and original armature `rig_revision`.
+
+### `rig.mesh_armature_unbind`
+
+Unbind uses the same fresh mesh/armature/rig gates and only accepts the narrow M6-managed state:
+
+- unparented mesh
+- no vertex groups
+- exactly one modifier
+- explicit modifier is `ARMATURE`
+- modifier target is the explicit armature
+- managed viewport/render and vertex-group/envelope flags are unchanged
+
+Successful readback verifies exact modifier absence, zero remaining modifiers, unchanged
+armature `rig_revision`, same object identities and Object mode. Known verification mismatch
+recreates the exact managed Armature modifier and verifies recovery to the original mesh and rig
+revisions.
+
+This zero-vertex-group unbind restriction is intentional for the Milestone 6 source boundary.
+Milestone 7 owns vertex-group and weight workflows and may extend later integration behavior.
+
+### Milestone 6 source checkpoint
+
+Code/test checkpoint: `3777267dc806f6aab550c3c103f9b380fcaa6095`.
+
+CI run `37623998540` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **767 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **75 package modules**
+
+Factory typed tools: **194**.
+Current registry/catalog hard maximum: **200**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-5 are complete at 50%. Do not begin Milestone 6 without explicit user permission.
+Milestones 1-6 are complete at 60%. Do not begin Milestone 7 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.
