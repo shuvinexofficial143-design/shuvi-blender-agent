@@ -1970,7 +1970,10 @@ class RiggingOperations:
         before = self._weight_snapshot(mesh, armature, rig_before)
         require_revision(action.expected_weight_revision, before["weight_revision"])
 
-        bone = next((item for item in rig_before["bones"] if item["name"] == action.bone_name), None)
+        bone = next(
+            (item for item in rig_before["bones"] if item["name"] == action.bone_name),
+            None,
+        )
         if bone is None:
             raise AgentError(ErrorCode.NOT_FOUND, "Weight target bone not found")
         if not bone["use_deform"]:
