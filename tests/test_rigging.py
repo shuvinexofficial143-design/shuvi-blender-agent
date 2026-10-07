@@ -12,6 +12,7 @@ from shuvi_blender_agent.rigging import (
     BoneCreate,
     BoneHierarchyEdit,
     BoneSymmetryEdit,
+    MeshArmatureBinding,
     PoseBoneReset,
     PoseBoneTransform,
     PoseConstraintCreate,
@@ -1342,3 +1343,212 @@ def test_pose_constraint_remove_verification_failure_recreates_constraint(monkey
 def test_level6_m5_constraint_contracts_reject_unsafe_payloads(parser, payload):
     with pytest.raises(AgentError):
         parser(payload)
+
+
+def object_state(registry, name):
+    items = registry.dispatch(Request("objects.list", {"limit": 100})).data["items"]
+    return next(item for item in items if item["name"] == name)
+
+
+def target_from_object(snapshot):
+    return {
+        "object_id": snapshot["object_id"],
+        "expected_name": snapshot["name"],
+        "expected_revision": snapshot["revision"],
+    }
+
+
+def setup_binding_rig():
+    mesh = FakeObject("Body", "MESH")
+    rig = rig_fixture()
+    bpy = fake_bpy([mesh, rig])
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    mesh_state = object_state(registry, "Body")
+    rig_state = object_state(registry, "CharacterRig")
+    rig_detail = inspect_rig(registry, rig_state["object_id"])
+    return bpy, mesh, rig, registry, mesh_state, rig_detail
+
+
+def binding_payload(mesh_state, rig_state, modifier_name="Shuvi Armature"):
+    return {
+        "mesh_target": target_from_object(mesh_state),
+        "armature_target": target_from_rig(rig_state),
+        "expected_rig_revision": rig_state["rig_revision"],
+        "modifier_name": modifier_name,
+    }
+
+
+def test_factory_registers_level6_m6_binding_tools_below_raised_cap():
+    registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
+    assert len(registry.catalog()) == 194
+    assert MAX_REGISTERED_TOOLS == 200
+    assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
+    names = {item["name"] for item in registry.catalog()}
+    assert {"rig.mesh_armature_bind", "rig.mesh_armature_unbind"} <= names
+
+
+def test_mesh_armature_bind_adds_exact_managed_modifier_without_parenting():
+    bpy, mesh, rig, registry, mesh_state, rig_state = setup_binding_rig()
+
+    result = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(mesh_state, rig_state))
+    )
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]["mesh"]
+    assert after["parent_id"] is None
+    assert after["modifier_count"] == 1
+    modifier = after["modifiers"][0]
+    assert modifier == {
+        "name": "Shuvi Armature",
+        "type": "ARMATURE",
+        "show_viewport": True,
+        "show_render": True,
+        "settings": {
+            "target_name": "CharacterRig",
+            "use_vertex_groups": True,
+            "use_bone_envelopes": False,
+        },
+    }
+    assert mesh.modifiers[0].object is rig
+    assert result.data["after"]["armature"]["rig_revision"] == rig_state["rig_revision"]
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_mesh_armature_unbind_removes_exact_managed_modifier():
+    bpy, mesh, rig, registry, mesh_state, rig_state = setup_binding_rig()
+    bound = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(mesh_state, rig_state))
+    )
+    assert bound.status == Status.VERIFIED
+
+    current_mesh = object_state(registry, "Body")
+    current_rig = inspect_rig(registry, rig_state["object_id"])
+    result = registry.dispatch(
+        Request(
+            "rig.mesh_armature_unbind",
+            binding_payload(current_mesh, current_rig),
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]["mesh"]
+    assert after["modifier_count"] == 0
+    assert after["parent_id"] is None
+    assert len(mesh.modifiers) == 0
+    assert result.data["after"]["armature"]["rig_revision"] == current_rig["rig_revision"]
+
+
+def test_mesh_armature_bind_rejects_stale_rig_revision_not_visible_to_object_target():
+    bpy, mesh, rig, registry, mesh_state, rig_state = setup_binding_rig()
+    root = next(item for item in rig.pose.bones if item.name == "Root")
+    root.location = [0.25, 0.0, 0.0]
+
+    result = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(mesh_state, rig_state))
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.STALE_STATE
+    assert len(mesh.modifiers) == 0
+
+
+def test_mesh_armature_bind_rejects_existing_modifier_and_vertex_groups():
+    bpy, mesh, rig, registry, mesh_state, rig_state = setup_binding_rig()
+    mesh.modifiers.new("Existing", "BEVEL")
+    fresh_mesh = object_state(registry, "Body")
+    result = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(fresh_mesh, rig_state))
+    )
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+
+    mesh.modifiers.clear()
+    mesh.vertex_groups = [NS(name="Root")]
+    fresh_mesh = object_state(registry, "Body")
+    fresh_rig = inspect_rig(registry, rig_state["object_id"])
+    result = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(fresh_mesh, fresh_rig))
+    )
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_mesh_armature_bind_verification_failure_removes_created_modifier(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, mesh, rig, registry, mesh_state, rig_state = setup_binding_rig()
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(mesh_state, rig_state))
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert len(mesh.modifiers) == 0
+    assert object_state(registry, "Body")["revision"] == mesh_state["revision"]
+
+
+def test_mesh_armature_unbind_verification_failure_restores_modifier(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, mesh, rig, registry, mesh_state, rig_state = setup_binding_rig()
+    bound = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(mesh_state, rig_state))
+    )
+    assert bound.status == Status.VERIFIED
+    current_mesh = object_state(registry, "Body")
+    current_rig = inspect_rig(registry, rig_state["object_id"])
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request(
+            "rig.mesh_armature_unbind",
+            binding_payload(current_mesh, current_rig),
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert len(mesh.modifiers) == 1
+    assert mesh.modifiers[0].type == "ARMATURE"
+    assert mesh.modifiers[0].object is rig
+    assert object_state(registry, "Body")["revision"] == current_mesh["revision"]
+
+
+def test_mesh_armature_binding_contract_rejects_invalid_modifier_name():
+    payload = {
+        "mesh_target": {
+            "object_id": "mesh",
+            "expected_name": "Body",
+            "expected_revision": "x" * 64,
+        },
+        "armature_target": {
+            "object_id": "rig",
+            "expected_name": "Rig",
+            "expected_revision": "y" * 64,
+        },
+        "expected_rig_revision": "z" * 64,
+        "modifier_name": "",
+    }
+    with pytest.raises(AgentError):
+        MeshArmatureBinding.parse(payload)
