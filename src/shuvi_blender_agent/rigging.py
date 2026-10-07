@@ -1,4 +1,4 @@
-"""Level 6 rigging: bounded inspection and typed armature/bone creation."""
+"""Level 6 rigging: bounded inspection, armature creation and hierarchy editing."""
 
 from dataclasses import dataclass
 from math import isfinite
@@ -75,6 +75,89 @@ class BoneCreate:
             head,
             tail,
             use_deform,
+        )
+
+
+@dataclass(frozen=True)
+class BoneHierarchyEdit:
+    target: ObjectTarget
+    expected_rig_revision: str
+    bone_name: str
+    new_name: str
+    parent_name: str | None
+    use_connect: bool
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "target",
+                "expected_rig_revision",
+                "bone_name",
+                "new_name",
+                "parent_name",
+                "use_connect",
+            },
+        )
+        parent_name = data["parent_name"]
+        if parent_name is not None:
+            parent_name = object_name(parent_name)
+        use_connect = data["use_connect"]
+        if type(use_connect) is not bool:
+            raise invalid("use_connect must be a boolean")
+        if use_connect and parent_name is None:
+            raise invalid("Connected bones require a parent")
+        bone_name = object_name(data["bone_name"])
+        if parent_name == bone_name:
+            raise invalid("Bone cannot parent itself")
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            bone_name,
+            object_name(data["new_name"]),
+            parent_name,
+            use_connect,
+        )
+
+
+@dataclass(frozen=True)
+class BoneSymmetryEdit:
+    target: ObjectTarget
+    expected_rig_revision: str
+    left_name: str
+    right_name: str
+    left_head: tuple[float, float, float]
+    left_tail: tuple[float, float, float]
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "target",
+                "expected_rig_revision",
+                "left_name",
+                "right_name",
+                "left_head",
+                "left_tail",
+            },
+        )
+        left_name = object_name(data["left_name"])
+        right_name = object_name(data["right_name"])
+        if not left_name.endswith(".L") or right_name != left_name[:-2] + ".R":
+            raise invalid("Symmetry pair must use matching .L/.R names")
+        left_head = vector3(data["left_head"], "left_head", MAX_BONE_COORDINATE)
+        left_tail = vector3(data["left_tail"], "left_tail", MAX_BONE_COORDINATE)
+        if left_head == left_tail:
+            raise invalid("Bone head and tail must differ")
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            left_name,
+            right_name,
+            left_head,
+            left_tail,
         )
 
 
@@ -437,6 +520,283 @@ class RiggingOperations:
                     pass
             raise
 
+    def _require_editable_active_armature(self, target):
+        obj, target_before = self.inspector.target(target)
+        if obj.type != "ARMATURE" or obj.data is None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Armature object required")
+        if (
+            obj.library is not None
+            or obj.override_library is not None
+            or not obj.is_editable
+            or getattr(obj.data, "library", None) is not None
+        ):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Editable local armature required")
+        if self.bpy.context.mode != "OBJECT":
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Object mode required")
+        if (
+            getattr(self.bpy.context.view_layer.objects, "active", None) != obj
+            or not obj.select_get()
+        ):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Rig editing requires the target armature selected and active",
+            )
+        return obj, target_before
+
+    @staticmethod
+    def _bone_from_snapshot(snapshot, name):
+        return next((item for item in snapshot["bones"] if item["name"] == name), None)
+
+    def _restore_edit_bone(self, obj, current_name, state):
+        if self.bpy.context.mode != "EDIT_ARMATURE":
+            self._set_mode("EDIT")
+        bone = obj.data.edit_bones.get(current_name) or obj.data.edit_bones.get(state["name"])
+        if bone is None:
+            raise AgentError(ErrorCode.EXECUTION_ERROR, "Edited bone disappeared during recovery")
+        bone.use_connect = False
+        bone.name = state["name"]
+        bone.parent = (
+            obj.data.edit_bones.get(state["parent"]) if state["parent"] is not None else None
+        )
+        bone.head = state["head_local"]
+        bone.tail = state["tail_local"]
+        bone.use_connect = state["use_connect"]
+
+    def edit_bone_hierarchy(self, request: Request, action: BoneHierarchyEdit):
+        obj, target_before = self._require_editable_active_armature(action.target)
+        before = self._snapshot(obj)
+        require_revision(action.expected_rig_revision, before["rig_revision"])
+        original = self._bone_from_snapshot(before, action.bone_name)
+        if original is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Bone not found")
+        if (
+            action.parent_name is not None
+            and self._bone_from_snapshot(before, action.parent_name) is None
+        ):
+            raise AgentError(ErrorCode.NOT_FOUND, "Parent bone not found")
+        if action.new_name != action.bone_name and self._bone_from_snapshot(
+            before, action.new_name
+        ):
+            raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Bone name already exists")
+
+        parent_by_name = {item["name"]: item["parent"] for item in before["bones"]}
+        parent_by_name[action.bone_name] = action.parent_name
+        if self._hierarchy_cycle(parent_by_name):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Bone parenting would create a cycle")
+
+        final_name = action.new_name
+        changed = False
+        try:
+            self._set_mode("EDIT")
+            bone = obj.data.edit_bones.get(action.bone_name)
+            parent = (
+                obj.data.edit_bones.get(action.parent_name)
+                if action.parent_name is not None
+                else None
+            )
+            if bone is None:
+                raise AgentError(ErrorCode.NOT_FOUND, "Bone not found in edit armature")
+            if action.parent_name is not None and parent is None:
+                raise AgentError(ErrorCode.NOT_FOUND, "Parent bone not found in edit armature")
+            bone.use_connect = False
+            bone.parent = parent
+            if action.use_connect:
+                bone.head = list(parent.tail)
+            bone.use_connect = action.use_connect
+            bone.name = final_name
+            changed = True
+            self._set_mode("OBJECT")
+
+            after = self._snapshot(obj)
+            edited = self._bone_from_snapshot(after, final_name)
+            expected_head = (
+                list(self._bone_from_snapshot(before, action.parent_name)["tail_local"])
+                if action.use_connect
+                else original["head_local"]
+            )
+            actual = {
+                "bone_count": after["bone_count"],
+                "edited_bone": edited,
+                "mode": self.bpy.context.mode,
+                "object_id": after["object_id"],
+                "hierarchy_cycle": after["hierarchy_cycle"],
+            }
+            expected = {
+                "bone_count": before["bone_count"],
+                "edited_bone": {
+                    "name": final_name,
+                    "parent": action.parent_name,
+                    "head_local": expected_head,
+                    "tail_local": original["tail_local"],
+                    "use_connect": action.use_connect,
+                    "use_deform": original["use_deform"],
+                },
+                "mode": "OBJECT",
+                "object_id": target_before["object_id"],
+                "hierarchy_cycle": False,
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after},
+                    verification=verification.to_dict(),
+                )
+
+            self._restore_edit_bone(obj, final_name, original)
+            self._set_mode("OBJECT")
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Bone hierarchy readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if changed:
+                try:
+                    self._restore_edit_bone(obj, final_name, original)
+                    self._set_mode("OBJECT")
+                except Exception:
+                    pass
+            elif self.bpy.context.mode == "EDIT_ARMATURE":
+                try:
+                    self._set_mode("OBJECT")
+                except Exception:
+                    pass
+            raise
+
+    def edit_bone_symmetry(self, request: Request, action: BoneSymmetryEdit):
+        obj, target_before = self._require_editable_active_armature(action.target)
+        before = self._snapshot(obj)
+        require_revision(action.expected_rig_revision, before["rig_revision"])
+        left_before = self._bone_from_snapshot(before, action.left_name)
+        right_before = self._bone_from_snapshot(before, action.right_name)
+        if left_before is None or right_before is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Symmetry pair bone not found")
+        if left_before["use_connect"] or right_before["use_connect"]:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Symmetry coordinate editing requires disconnected bones",
+            )
+
+        right_head = [-action.left_head[0], action.left_head[1], action.left_head[2]]
+        right_tail = [-action.left_tail[0], action.left_tail[1], action.left_tail[2]]
+        changed = False
+        try:
+            self._set_mode("EDIT")
+            left = obj.data.edit_bones.get(action.left_name)
+            right = obj.data.edit_bones.get(action.right_name)
+            if left is None or right is None:
+                raise AgentError(ErrorCode.NOT_FOUND, "Symmetry pair missing in edit armature")
+            left.head = action.left_head
+            left.tail = action.left_tail
+            right.head = right_head
+            right.tail = right_tail
+            changed = True
+            self._set_mode("OBJECT")
+
+            after = self._snapshot(obj)
+            actual = {
+                "bone_count": after["bone_count"],
+                "left": self._bone_from_snapshot(after, action.left_name),
+                "right": self._bone_from_snapshot(after, action.right_name),
+                "mode": self.bpy.context.mode,
+                "object_id": after["object_id"],
+            }
+            expected = {
+                "bone_count": before["bone_count"],
+                "left": {
+                    "name": action.left_name,
+                    "head_local": list(action.left_head),
+                    "tail_local": list(action.left_tail),
+                    "parent": left_before["parent"],
+                    "use_connect": False,
+                    "use_deform": left_before["use_deform"],
+                },
+                "right": {
+                    "name": action.right_name,
+                    "head_local": right_head,
+                    "tail_local": right_tail,
+                    "parent": right_before["parent"],
+                    "use_connect": False,
+                    "use_deform": right_before["use_deform"],
+                },
+                "mode": "OBJECT",
+                "object_id": target_before["object_id"],
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after},
+                    verification=verification.to_dict(),
+                )
+
+            self._set_mode("EDIT")
+            left = obj.data.edit_bones.get(action.left_name)
+            right = obj.data.edit_bones.get(action.right_name)
+            left.head, left.tail = left_before["head_local"], left_before["tail_local"]
+            right.head, right.tail = right_before["head_local"], right_before["tail_local"]
+            self._set_mode("OBJECT")
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Bone symmetry readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if changed:
+                try:
+                    if self.bpy.context.mode != "EDIT_ARMATURE":
+                        self._set_mode("EDIT")
+                    left = obj.data.edit_bones.get(action.left_name)
+                    right = obj.data.edit_bones.get(action.right_name)
+                    if left is not None:
+                        left.head, left.tail = (
+                            left_before["head_local"],
+                            left_before["tail_local"],
+                        )
+                    if right is not None:
+                        right.head, right.tail = (
+                            right_before["head_local"],
+                            right_before["tail_local"],
+                        )
+                    self._set_mode("OBJECT")
+                except Exception:
+                    pass
+            elif self.bpy.context.mode == "EDIT_ARMATURE":
+                try:
+                    self._set_mode("OBJECT")
+                except Exception:
+                    pass
+            raise
+
     def tools(self):
         return [
             Tool(
@@ -456,5 +816,17 @@ class RiggingOperations:
                 SafetyClass.MUTATION,
                 BoneCreate.parse,
                 self.create_bone,
+            ),
+            Tool(
+                "rig.bone_hierarchy_edit",
+                SafetyClass.MUTATION,
+                BoneHierarchyEdit.parse,
+                self.edit_bone_hierarchy,
+            ),
+            Tool(
+                "rig.bone_symmetry_edit",
+                SafetyClass.MUTATION,
+                BoneSymmetryEdit.parse,
+                self.edit_bone_symmetry,
             ),
         ]

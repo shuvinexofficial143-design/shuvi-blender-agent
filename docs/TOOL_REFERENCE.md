@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 186 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 188 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -36,6 +36,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
+| rig.bone_hierarchy_edit | target, expected_rig_revision, bone_name, new_name, parent_name, use_connect | mutation | fresh-revision-gated parent/connect/rename edit with cycle preflight, exact readback and full state recovery |
+| rig.bone_symmetry_edit | target, expected_rig_revision, left_name, right_name, left_head, left_tail | mutation | explicit matching .L/.R pair coordinate edit mirrored across local X with exact dual-bone readback and recovery |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1104,3 +1106,24 @@ Current Level 3 source progress: **100%**.
   under the existing bounded **192-tool** registry/client cap.
 - Real Blender edit-bone lifetime behavior, mode/context quirks, pose-channel regeneration,
   dependency-graph updates and deformation remain runtime-unverified.
+
+
+### Level 6 milestone 3 limits
+
+- `rig.bone_hierarchy_edit` requires a fresh ObjectTarget, fresh `rig_revision`, an editable
+  local armature, Object mode, and the target selected and active.
+- The requested final bone name must be unique. Parent assignment is explicit; null unparents.
+  `use_connect=true` requires a parent.
+- Hierarchy edits preflight the complete bounded parent map and reject cycles before mutation.
+- Connected children are explicitly snapped to the requested parent's tail before connect is
+  enabled; successful readback verifies the final hierarchy and coordinate side effect.
+- Verification mismatch restores original name, parent, head, tail and connect state and checks
+  recovery against the original `rig_revision`.
+- `rig.bone_symmetry_edit` only accepts an explicit matching `.L` / `.R` pair and reflects
+  left head/tail coordinates across local X. It does not perform fuzzy counterpart discovery.
+- Symmetry coordinate editing requires both bones to be disconnected and preserves their parent
+  and deform state. Both bones are restored on verification failure.
+- Milestone 3 adds two mutation tools, taking the factory from 186 to **188 typed tools** under
+  the existing bounded **192-tool** registry/client cap.
+- Real Blender edit-bone rename propagation, connect snapping, pose-channel regeneration,
+  dependency-graph updates and viewport behavior remain runtime-unverified.

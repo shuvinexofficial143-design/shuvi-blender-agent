@@ -134,7 +134,7 @@ def create_group(reg, name="RecipeGroup"):
 
 def test_factory_registers_recipe_library_under_existing_cap():
     reg = registry()
-    assert len(reg.catalog()) == 186
+    assert len(reg.catalog()) == 188
     assert MAX_REGISTERED_TOOLS == 192
     assert len(reg.catalog()) < MAX_REGISTERED_TOOLS
     names = {item["name"] for item in reg.catalog()}

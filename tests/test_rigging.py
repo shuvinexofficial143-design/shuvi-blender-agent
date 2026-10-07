@@ -10,6 +10,8 @@ from shuvi_blender_agent.rigging import (
     ArmatureCreate,
     ArmatureInspect,
     BoneCreate,
+    BoneHierarchyEdit,
+    BoneSymmetryEdit,
     RiggingOperations,
 )
 from shuvi_blender_agent.safety import SafetyPolicy
@@ -93,7 +95,7 @@ def setup():
 
 def test_factory_registers_level6_armature_inspection_under_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 186
+    assert len(registry.catalog()) == 188
     assert MAX_REGISTERED_TOOLS == 192
     assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
     item = next(entry for entry in registry.catalog() if entry["name"] == "rig.armature_inspect")
@@ -485,3 +487,288 @@ def test_armature_create_contract_rejects_invalid_payload(payload):
 def test_bone_create_contract_rejects_invalid_payload(payload):
     with pytest.raises(AgentError):
         BoneCreate.parse(payload)
+
+
+def prepare_editable_rig():
+    bpy = fake_bpy()
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    created = create_armature(registry)
+    assert created.status == Status.VERIFIED
+    obj = bpy.data.objects.get("NewRig")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    install_armature_mode_ops(bpy)
+    object_id = created.data["after"]["rig"]["object_id"]
+    return bpy, obj, registry, object_id
+
+
+def add_rig_bone(registry, object_id, name, head, tail):
+    current = registry.dispatch(Request("rig.armature_inspect", {"object_id": object_id})).data
+    return registry.dispatch(
+        Request(
+            "rig.bone_create",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "name": name,
+                "head": head,
+                "tail": tail,
+            },
+        )
+    )
+
+
+def inspect_rig(registry, object_id):
+    return registry.dispatch(Request("rig.armature_inspect", {"object_id": object_id})).data
+
+
+def test_factory_registers_level6_m3_tools_under_cap():
+    registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
+    assert len(registry.catalog()) == 188
+    assert MAX_REGISTERED_TOOLS == 192
+    names = {item["name"] for item in registry.catalog()}
+    assert {"rig.bone_hierarchy_edit", "rig.bone_symmetry_edit"} <= names
+
+
+def test_bone_hierarchy_edit_parents_connects_and_renames_with_exact_readback():
+    bpy, obj, registry, object_id = prepare_editable_rig()
+    assert add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Child", [1, 0, 0], [1, 0, 1]).status == Status.VERIFIED
+    )
+    before = inspect_rig(registry, object_id)
+
+    result = registry.dispatch(
+        Request(
+            "rig.bone_hierarchy_edit",
+            {
+                "target": target_from_rig(before),
+                "expected_rig_revision": before["rig_revision"],
+                "bone_name": "Child",
+                "new_name": "Spine",
+                "parent_name": "Root",
+                "use_connect": True,
+            },
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]
+    spine = next(item for item in after["bones"] if item["name"] == "Spine")
+    assert spine["parent"] == "Root"
+    assert spine["use_connect"] is True
+    assert spine["head_local"] == [0.0, 0.0, 2.0]
+    assert spine["tail_local"] == [1.0, 0.0, 1.0]
+    assert after["hierarchy_cycle"] is False
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_bone_hierarchy_edit_rejects_cycle_and_duplicate_rename():
+    bpy, obj, registry, object_id = prepare_editable_rig()
+    assert add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Child", [0, 0, 2], [0, 0, 3]).status == Status.VERIFIED
+    )
+    current = inspect_rig(registry, object_id)
+    parented = registry.dispatch(
+        Request(
+            "rig.bone_hierarchy_edit",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Child",
+                "new_name": "Child",
+                "parent_name": "Root",
+                "use_connect": True,
+            },
+        )
+    )
+    assert parented.status == Status.VERIFIED
+
+    current = inspect_rig(registry, object_id)
+    cycle = registry.dispatch(
+        Request(
+            "rig.bone_hierarchy_edit",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Root",
+                "new_name": "Root",
+                "parent_name": "Child",
+                "use_connect": False,
+            },
+        )
+    )
+    assert cycle.status == Status.FAILED
+    assert cycle.error.code == ErrorCode.SAFETY_DENIED
+
+    duplicate = registry.dispatch(
+        Request(
+            "rig.bone_hierarchy_edit",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Root",
+                "new_name": "Child",
+                "parent_name": None,
+                "use_connect": False,
+            },
+        )
+    )
+    assert duplicate.status == Status.FAILED
+    assert duplicate.error.code == ErrorCode.AMBIGUOUS_TARGET
+
+
+def test_bone_hierarchy_edit_verification_failure_restores_original_rig(
+    monkeypatch,
+):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, obj, registry, object_id = prepare_editable_rig()
+    assert add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Child", [1, 0, 0], [1, 0, 1]).status == Status.VERIFIED
+    )
+    before = inspect_rig(registry, object_id)
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request(
+            "rig.bone_hierarchy_edit",
+            {
+                "target": target_from_rig(before),
+                "expected_rig_revision": before["rig_revision"],
+                "bone_name": "Child",
+                "new_name": "Spine",
+                "parent_name": "Root",
+                "use_connect": True,
+            },
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert inspect_rig(registry, object_id)["rig_revision"] == before["rig_revision"]
+
+
+def test_bone_symmetry_edit_mirrors_left_coordinates_across_local_x():
+    bpy, obj, registry, object_id = prepare_editable_rig()
+    assert (
+        add_rig_bone(registry, object_id, "Arm.L", [1, 0, 0], [2, 0, 0]).status == Status.VERIFIED
+    )
+    assert (
+        add_rig_bone(registry, object_id, "Arm.R", [-1, 0, 0], [-2, 0, 0]).status == Status.VERIFIED
+    )
+    before = inspect_rig(registry, object_id)
+
+    result = registry.dispatch(
+        Request(
+            "rig.bone_symmetry_edit",
+            {
+                "target": target_from_rig(before),
+                "expected_rig_revision": before["rig_revision"],
+                "left_name": "Arm.L",
+                "right_name": "Arm.R",
+                "left_head": [1.5, 2, 3],
+                "left_tail": [2.5, 2, 4],
+            },
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]
+    left = next(item for item in after["bones"] if item["name"] == "Arm.L")
+    right = next(item for item in after["bones"] if item["name"] == "Arm.R")
+    assert left["head_local"] == [1.5, 2.0, 3.0]
+    assert left["tail_local"] == [2.5, 2.0, 4.0]
+    assert right["head_local"] == [-1.5, 2.0, 3.0]
+    assert right["tail_local"] == [-2.5, 2.0, 4.0]
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_bone_symmetry_edit_verification_failure_restores_both_bones(
+    monkeypatch,
+):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, obj, registry, object_id = prepare_editable_rig()
+    assert (
+        add_rig_bone(registry, object_id, "Arm.L", [1, 0, 0], [2, 0, 0]).status == Status.VERIFIED
+    )
+    assert (
+        add_rig_bone(registry, object_id, "Arm.R", [-1, 0, 0], [-2, 0, 0]).status == Status.VERIFIED
+    )
+    before = inspect_rig(registry, object_id)
+
+    monkeypatch.setattr(
+        "shuvi_blender_agent.rigging.compare",
+        lambda expected, actual: real_compare({"forced": 1}, {"forced": 2}),
+    )
+    result = registry.dispatch(
+        Request(
+            "rig.bone_symmetry_edit",
+            {
+                "target": target_from_rig(before),
+                "expected_rig_revision": before["rig_revision"],
+                "left_name": "Arm.L",
+                "right_name": "Arm.R",
+                "left_head": [3, 0, 0],
+                "left_tail": [4, 0, 0],
+            },
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert inspect_rig(registry, object_id)["rig_revision"] == before["rig_revision"]
+
+
+@pytest.mark.parametrize(
+    ("parser", "payload"),
+    [
+        (
+            BoneHierarchyEdit.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Bone",
+                "new_name": "Bone",
+                "parent_name": None,
+                "use_connect": True,
+            },
+        ),
+        (
+            BoneSymmetryEdit.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "left_name": "ArmLeft",
+                "right_name": "ArmRight",
+                "left_head": [1, 0, 0],
+                "left_tail": [2, 0, 0],
+            },
+        ),
+    ],
+)
+def test_level6_m3_contracts_reject_unsafe_payloads(parser, payload):
+    with pytest.raises(AgentError):
+        parser(payload)
