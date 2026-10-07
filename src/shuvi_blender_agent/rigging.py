@@ -1490,7 +1490,6 @@ class RiggingOperations:
                     pass
             raise
 
-
     def _binding_targets(self, action: MeshArmatureBinding):
         mesh, mesh_before = self.inspector.target(action.mesh_target)
         armature, armature_object_before = self.inspector.target(action.armature_target)
@@ -1502,9 +1501,10 @@ class RiggingOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Binding target must be an armature object")
         if mesh is armature:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Mesh and armature targets must differ")
-        if getattr(mesh.data, "library", None) is not None or getattr(
-            armature.data, "library", None
-        ) is not None:
+        if (
+            getattr(mesh.data, "library", None) is not None
+            or getattr(armature.data, "library", None) is not None
+        ):
             raise AgentError(
                 ErrorCode.SAFETY_DENIED,
                 "Binding requires local mesh and armature data",
