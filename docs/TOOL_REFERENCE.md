@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 194 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 197 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -44,6 +44,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | rig.pose_constraint_remove | target, expected_rig_revision, bone_name, constraint_name, expected_constraint_type | mutation | remove only an explicit bounded final managed constraint with exact absence/count readback and append-safe recreation recovery |
 | rig.mesh_armature_bind | mesh_target, armature_target, expected_rig_revision, modifier_name | mutation | bind one bounded unparented zero-group mesh to one explicit armature through a single managed ARMATURE modifier with exact target/settings readback and removal recovery |
 | rig.mesh_armature_unbind | mesh_target, armature_target, expected_rig_revision, modifier_name | mutation | remove the exact sole managed ARMATURE modifier from a bounded zero-group mesh with exact absence readback and modifier recreation recovery |
+| rig.mesh_weights_inspect | mesh_object_id, armature_object_id | read_only | inspect one managed M6-bound mesh/armature pair with exact group order, sparse weights, mismatch diagnostics and deterministic weight_revision |
+| rig.vertex_group_weights_set | mesh_target, armature_target, expected_rig_revision, expected_weight_revision, bone_name, weights | mutation | fully replace one deform-bone-matched vertex group's bounded sparse weights with exact readback and recovery |
+| rig.vertex_group_remove | mesh_target, armature_target, expected_rig_revision, expected_weight_revision, bone_name | mutation | remove only the final deform-bone-matched vertex group with exact absence/count readback and append-safe recreation recovery |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1205,3 +1208,32 @@ Current Level 3 source progress: **100%**.
   tools, taking the execution factory from 192 to **194 typed tools**.
 - Real Blender deformation, modifier evaluation, dependency-graph interaction and later weight
   behavior remain runtime-unverified.
+
+
+### Level 6 milestone 7 limits
+
+- Weight inspection/mutation operates only on a mesh + armature pair already connected by the
+  exact managed Milestone 6 ARMATURE modifier state.
+- Inspection is bounded to 4096 mesh vertices, 4096 polygons, 32768 polygon indices, **64 vertex
+  groups**, **64 group memberships per vertex**, and **16,384 total sparse assignments**.
+- Group indices must be unique and contiguous from 0; memberships must reference a known group;
+  weights must be finite inside [0, 1].
+- `weight_revision` fingerprints the exact vertex count, group order/names/indices and all sparse
+  assignments. Mutations require this revision in addition to fresh mesh/armature ObjectTargets
+  and fresh `rig_revision`.
+- Weight mutation only accepts an existing **deform-enabled armature bone** as the group name.
+  Existing groups must all match deform-enabled bones before mutation proceeds.
+- `rig.vertex_group_weights_set` accepts 1..4096 unique explicit vertex indices, each inside
+  actual mesh bounds, with weights in 0.000001..1.0. It replaces the complete sparse map for that
+  one group rather than applying a hidden partial patch.
+- No arbitrary group names, zero-weight placeholder memberships, automatic weights, envelope
+  weighting, generic Weight Paint operations, weight normalization/transfer or fuzzy bone lookup
+  is exposed.
+- Set verification mismatch removes a newly created group or restores the previous exact weights,
+  then checks recovery against the original `weight_revision`.
+- Group removal is restricted to the final group in Blender group-index order so append-based
+  recovery preserves exact ordering. Mismatch recreates the exact sparse group state.
+- Milestone 7 adds three tools, taking the execution factory from 194 to **197 typed tools** under
+  the bounded **200-tool** registry/client cap.
+- Real Blender skin deformation, dependency-graph evaluation, weight-paint behavior and modifier
+  evaluation remain runtime-unverified.

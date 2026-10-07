@@ -18,6 +18,8 @@ from shuvi_blender_agent.rigging import (
     PoseConstraintCreate,
     PoseConstraintRemove,
     RiggingOperations,
+    VertexGroupRemove,
+    VertexGroupWeightsSet,
 )
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
@@ -128,7 +130,7 @@ def setup():
 
 def test_factory_registers_level6_armature_inspection_under_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
     item = next(entry for entry in registry.catalog() if entry["name"] == "rig.armature_inspect")
@@ -566,7 +568,7 @@ def inspect_rig(registry, object_id):
 
 def test_factory_registers_level6_m3_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.bone_hierarchy_edit", "rig.bone_symmetry_edit"} <= names
@@ -841,7 +843,7 @@ def pose_payload(rig, bone_name="Root", rotation_mode="XYZ", rotation=(0.1, 0.2,
 
 def test_factory_registers_level6_m4_pose_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.pose_bone_transform", "rig.pose_bone_reset"} <= names
@@ -1080,7 +1082,7 @@ def ik_constraint_payload(rig, bone_name="Arm.L", target_bone_name="Root"):
 
 def test_factory_registers_level6_m5_constraint_tools_at_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.pose_constraint_create", "rig.pose_constraint_remove"} <= names
@@ -1380,7 +1382,7 @@ def binding_payload(mesh_state, rig_state, modifier_name="Shuvi Armature"):
 
 def test_factory_registers_level6_m6_binding_tools_below_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
     names = {item["name"] for item in registry.catalog()}
@@ -1552,3 +1554,398 @@ def test_mesh_armature_binding_contract_rejects_invalid_modifier_name():
     }
     with pytest.raises(AgentError):
         MeshArmatureBinding.parse(payload)
+
+
+def inspect_weights(registry, mesh_state, rig_state):
+    result = registry.dispatch(
+        Request(
+            "rig.mesh_weights_inspect",
+            {
+                "mesh_object_id": mesh_state["object_id"],
+                "armature_object_id": rig_state["object_id"],
+            },
+        )
+    )
+    assert result.status == Status.SUCCEEDED
+    return result.data
+
+
+def setup_weight_rig():
+    bpy, mesh, rig, registry, _, rig_state = setup_binding_rig()
+    mesh.data.from_pydata(
+        [(0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0)],
+        [],
+        [(0, 1, 2), (0, 2, 3)],
+    )
+    mesh.data.update()
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    bound = registry.dispatch(
+        Request("rig.mesh_armature_bind", binding_payload(mesh_state, rig_state))
+    )
+    assert bound.status == Status.VERIFIED
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    weights = inspect_weights(registry, mesh_state, rig_state)
+    return bpy, mesh, rig, registry, mesh_state, rig_state, weights
+
+
+def weight_set_payload(mesh_state, rig_state, weights_state, bone_name="Spine", weights=None):
+    if weights is None:
+        weights = [
+            {"vertex_index": 0, "weight": 1.0},
+            {"vertex_index": 1, "weight": 0.75},
+            {"vertex_index": 2, "weight": 0.25},
+        ]
+    return {
+        "mesh_target": target_from_object(mesh_state),
+        "armature_target": target_from_rig(rig_state),
+        "expected_rig_revision": rig_state["rig_revision"],
+        "expected_weight_revision": weights_state["weight_revision"],
+        "bone_name": bone_name,
+        "weights": weights,
+    }
+
+
+def weight_remove_payload(mesh_state, rig_state, weights_state, bone_name="Spine"):
+    return {
+        "mesh_target": target_from_object(mesh_state),
+        "armature_target": target_from_rig(rig_state),
+        "expected_rig_revision": rig_state["rig_revision"],
+        "expected_weight_revision": weights_state["weight_revision"],
+        "bone_name": bone_name,
+    }
+
+
+def test_factory_registers_level6_m7_weight_tools_under_cap():
+    registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
+    assert len(registry.catalog()) == 197
+    assert MAX_REGISTERED_TOOLS == 200
+    assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
+    names = {item["name"] for item in registry.catalog()}
+    assert {
+        "rig.mesh_weights_inspect",
+        "rig.vertex_group_weights_set",
+        "rig.vertex_group_remove",
+    } <= names
+
+
+def test_mesh_weights_inspect_reports_empty_bound_weight_state():
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+
+    assert weights["mesh_object_id"] == mesh_state["object_id"]
+    assert weights["armature_object_id"] == rig_state["object_id"]
+    assert weights["modifier_name"] == "Shuvi Armature"
+    assert weights["vertex_count"] == 4
+    assert weights["group_count"] == 0
+    assert weights["assignment_count"] == 0
+    assert weights["groups"] == []
+    assert weights["unmatched_group_names"] == []
+    assert weights["nondeform_group_names"] == []
+    assert len(weights["weight_revision"]) == 64
+    assert weights["rig_revision"] == rig_state["rig_revision"]
+    assert weights["source_only"] is True
+    assert weights["real_runtime_verified"] is False
+
+
+def test_vertex_group_weights_set_creates_bone_matched_group_with_exact_weights():
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+
+    result = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights),
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]
+    assert after["group_count"] == 1
+    assert after["assignment_count"] == 3
+    assert after["groups"] == [
+        {
+            "name": "Spine",
+            "index": 0,
+            "weights": [
+                {"vertex_index": 0, "weight": 1.0},
+                {"vertex_index": 1, "weight": 0.75},
+                {"vertex_index": 2, "weight": 0.25},
+            ],
+        }
+    ]
+    assert after["rig_revision"] == rig_state["rig_revision"]
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_vertex_group_weights_set_replaces_entire_existing_group_map():
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+    created = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights),
+        )
+    )
+    assert created.status == Status.VERIFIED
+
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    weights = inspect_weights(registry, mesh_state, rig_state)
+    result = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(
+                mesh_state,
+                rig_state,
+                weights,
+                weights=[
+                    {"vertex_index": 1, "weight": 0.5},
+                    {"vertex_index": 3, "weight": 1.0},
+                ],
+            ),
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    group = result.data["after"]["groups"][0]
+    assert group["weights"] == [
+        {"vertex_index": 1, "weight": 0.5},
+        {"vertex_index": 3, "weight": 1.0},
+    ]
+    assert result.data["after"]["assignment_count"] == 2
+
+
+def test_vertex_group_weights_set_rejects_stale_weight_revision_and_missing_bone():
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+    external = mesh.vertex_groups.new(name="Spine")
+    external.add([0], 1.0, "REPLACE")
+
+    stale = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights),
+        )
+    )
+    assert stale.status == Status.FAILED
+    assert stale.error.code == ErrorCode.STALE_STATE
+
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    weights = inspect_weights(registry, mesh_state, rig_state)
+    missing = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights, bone_name="Missing"),
+        )
+    )
+    assert missing.status == Status.FAILED
+    assert missing.error.code == ErrorCode.NOT_FOUND
+
+
+def test_vertex_group_remove_removes_final_group_and_all_memberships():
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+    created = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights),
+        )
+    )
+    assert created.status == Status.VERIFIED
+
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    weights = inspect_weights(registry, mesh_state, rig_state)
+    result = registry.dispatch(
+        Request(
+            "rig.vertex_group_remove",
+            weight_remove_payload(mesh_state, rig_state, weights),
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    assert result.data["after"]["group_count"] == 0
+    assert result.data["after"]["assignment_count"] == 0
+    assert result.data["after"]["groups"] == []
+    assert len(mesh.vertex_groups) == 0
+
+
+def test_vertex_group_remove_rejects_nonfinal_group_for_exact_recovery():
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+    first = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights, bone_name="Spine"),
+        )
+    )
+    assert first.status == Status.VERIFIED
+
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    weights = inspect_weights(registry, mesh_state, rig_state)
+    second = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(
+                mesh_state,
+                rig_state,
+                weights,
+                bone_name="Arm.L",
+                weights=[{"vertex_index": 3, "weight": 1.0}],
+            ),
+        )
+    )
+    assert second.status == Status.VERIFIED
+
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    weights = inspect_weights(registry, mesh_state, rig_state)
+    result = registry.dispatch(
+        Request(
+            "rig.vertex_group_remove",
+            weight_remove_payload(mesh_state, rig_state, weights, bone_name="Spine"),
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert (
+        inspect_weights(registry, mesh_state, rig_state)["weight_revision"]
+        == weights["weight_revision"]
+    )
+
+
+def test_vertex_group_weights_set_verification_failure_restores_weights(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights),
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    recovered = inspect_weights(registry, mesh_state, rig_state)
+    assert recovered["weight_revision"] == weights["weight_revision"]
+    assert recovered["groups"] == []
+
+
+def test_vertex_group_remove_verification_failure_recreates_group(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
+    created = registry.dispatch(
+        Request(
+            "rig.vertex_group_weights_set",
+            weight_set_payload(mesh_state, rig_state, weights),
+        )
+    )
+    assert created.status == Status.VERIFIED
+
+    mesh_state = object_state(registry, "Body")
+    rig_state = inspect_rig(registry, rig_state["object_id"])
+    weights = inspect_weights(registry, mesh_state, rig_state)
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request(
+            "rig.vertex_group_remove",
+            weight_remove_payload(mesh_state, rig_state, weights),
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    recovered = inspect_weights(registry, mesh_state, rig_state)
+    assert recovered["weight_revision"] == weights["weight_revision"]
+    assert recovered["groups"] == weights["groups"]
+
+
+@pytest.mark.parametrize(
+    ("parser", "payload"),
+    [
+        (
+            VertexGroupWeightsSet.parse,
+            {
+                "mesh_target": {
+                    "object_id": "mesh",
+                    "expected_name": "Body",
+                    "expected_revision": "x" * 64,
+                },
+                "armature_target": {
+                    "object_id": "rig",
+                    "expected_name": "Rig",
+                    "expected_revision": "y" * 64,
+                },
+                "expected_rig_revision": "z" * 64,
+                "expected_weight_revision": "w" * 64,
+                "bone_name": "Root",
+                "weights": [{"vertex_index": 0, "weight": 0.0}],
+            },
+        ),
+        (
+            VertexGroupWeightsSet.parse,
+            {
+                "mesh_target": {
+                    "object_id": "mesh",
+                    "expected_name": "Body",
+                    "expected_revision": "x" * 64,
+                },
+                "armature_target": {
+                    "object_id": "rig",
+                    "expected_name": "Rig",
+                    "expected_revision": "y" * 64,
+                },
+                "expected_rig_revision": "z" * 64,
+                "expected_weight_revision": "w" * 64,
+                "bone_name": "Root",
+                "weights": [
+                    {"vertex_index": 0, "weight": 1.0},
+                    {"vertex_index": 0, "weight": 0.5},
+                ],
+            },
+        ),
+        (
+            VertexGroupRemove.parse,
+            {
+                "mesh_target": {
+                    "object_id": "mesh",
+                    "expected_name": "Body",
+                    "expected_revision": "x" * 64,
+                },
+                "armature_target": {
+                    "object_id": "rig",
+                    "expected_name": "Rig",
+                    "expected_revision": "y" * 64,
+                },
+                "expected_rig_revision": "z" * 64,
+                "expected_weight_revision": "w" * 64,
+                "bone_name": "",
+            },
+        ),
+    ],
+)
+def test_level6_m7_weight_contracts_reject_unsafe_payloads(parser, payload):
+    with pytest.raises(AgentError):
+        parser(payload)

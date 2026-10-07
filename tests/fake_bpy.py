@@ -4,6 +4,60 @@ import copy
 from types import SimpleNamespace as NS
 
 
+class FakeVertexGroup:
+    def __init__(self, owner, name, index):
+        self.owner = owner
+        self.name = name
+        self.index = index
+
+    def add(self, indices, weight, mode):
+        if mode != "REPLACE":
+            raise RuntimeError("Only REPLACE is supported in fake vertex groups")
+        for index in indices:
+            vertex = self.owner.data.vertices[index]
+            member = next((item for item in vertex.groups if item.group == self.index), None)
+            if member is None:
+                vertex.groups.append(NS(group=self.index, weight=float(weight)))
+            else:
+                member.weight = float(weight)
+
+    def remove(self, indices):
+        for index in indices:
+            vertex = self.owner.data.vertices[index]
+            vertex.groups[:] = [item for item in vertex.groups if item.group != self.index]
+
+
+class FakeVertexGroups(list):
+    def __init__(self, owner):
+        super().__init__()
+        self.owner = owner
+
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def new(self, name):
+        if self.get(name) is not None:
+            raise RuntimeError("Vertex group already exists")
+        group = FakeVertexGroup(self.owner, name, len(self))
+        self.append(group)
+        return group
+
+    def remove(self, group):
+        index = group.index
+        for vertex in getattr(self.owner.data, "vertices", ()):
+            kept = []
+            for item in vertex.groups:
+                if item.group == index:
+                    continue
+                if item.group > index:
+                    item.group -= 1
+                kept.append(item)
+            vertex.groups[:] = kept
+        super().remove(group)
+        for new_index, item in enumerate(self):
+            item.index = new_index
+
+
 class FakeUVLayers(list):
     def __init__(self, mesh):
         super().__init__()
@@ -39,7 +93,7 @@ class FakeMesh:
         self.materials = FakeMaterialLinks()
 
     def from_pydata(self, vertices, edges, faces):
-        self.vertices = [NS(co=list(vertex)) for vertex in vertices]
+        self.vertices = [NS(co=list(vertex), groups=[]) for vertex in vertices]
         self.faces = [list(face) for face in faces]
         pairs = {tuple(sorted(edge)) for edge in edges}
         loop_start = 0
@@ -690,6 +744,7 @@ class FakeObject:
         self.parent = None
         self.users_collection = []
         self.modifiers = FakeModifiers()
+        self.vertex_groups = FakeVertexGroups(self)
         self.material_slots = []
         self.animation_data = None
         self.library = None

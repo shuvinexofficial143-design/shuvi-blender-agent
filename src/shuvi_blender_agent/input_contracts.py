@@ -85,10 +85,13 @@ from .rigging import (
     BoneHierarchyEdit,
     BoneSymmetryEdit,
     MeshArmatureBinding,
+    MeshWeightInspect,
     PoseBoneReset,
     PoseBoneTransform,
     PoseConstraintCreate,
     PoseConstraintRemove,
+    VertexGroupRemove,
+    VertexGroupWeightsSet,
 )
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
@@ -135,6 +138,9 @@ def builtin_contracts() -> dict:
         "rig.pose_constraint_remove": (mutation, PoseConstraintRemove.parse),
         "rig.mesh_armature_bind": (mutation, MeshArmatureBinding.parse),
         "rig.mesh_armature_unbind": (mutation, MeshArmatureBinding.parse),
+        "rig.mesh_weights_inspect": (read, MeshWeightInspect.parse),
+        "rig.vertex_group_weights_set": (mutation, VertexGroupWeightsSet.parse),
+        "rig.vertex_group_remove": (mutation, VertexGroupRemove.parse),
         "character.workflow_preview": (read, CharacterWorkflowPreview.parse),
         "character.level3_acceptance": (read, Level3Acceptance.parse),
         "character.proportion_guide": (read, ProportionGuide.parse),
