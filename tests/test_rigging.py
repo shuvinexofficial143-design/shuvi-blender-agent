@@ -1180,7 +1180,6 @@ def test_pose_constraint_remove_verifies_absence_and_counts():
     )
 
 
-
 def test_pose_constraint_remove_rejects_nonfinal_constraint_for_exact_recovery():
     bpy, obj, registry, object_id = setup_pose_rig()
     before = inspect_rig(registry, object_id)
