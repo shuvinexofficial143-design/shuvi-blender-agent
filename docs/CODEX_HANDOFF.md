@@ -1,9 +1,9 @@
 # Codex handoff
 
-Updated: 2026-10-06. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
+Updated: 2026-10-07. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 5 source/test commit: 8b1f51facf2b523c3c220236e0a8dbe15e28cdcf.
+Latest verified pushed Level 6 source/test commit: 5f2d4d29d61e47313a6862212311e32a20fb41dc.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -206,11 +206,43 @@ runtime verification remains 0% and production readiness remains No.
 Milestone 10 — Geometry Nodes QA / recovery / acceptance — is complete. Do not begin Level 6
 without explicit user permission.
 
+## Level 6 active checkpoint
+Latest verified Level 6 source/test checkpoint: 5f2d4d29d61e47313a6862212311e32a20fb41dc.
+CI run 37580472350 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **720 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **75 package modules**.
+
+Level 6 Rigging is now **10% source complete** (Milestone 1 of 10).
+
+Milestone 1 adds:
+- `rig.armature_inspect`: one bounded read-only armature/pose inspection surface using a
+  current-session object ID.
+- exact bounded armature hierarchy readback: names, parents, local head/tail, optional local
+  matrix, connect/deform flags and inherit-scale mode.
+- bounded pose readback: location, Euler/quaternion rotation, scale and pose-constraint
+  name/type/mute/influence metadata.
+- root-bone reporting, hierarchy-cycle diagnostic, pose/data name mismatch diagnostics and one
+  deterministic `rig_revision`.
+- fail-closed limits of 256 armature bones, 256 pose bones, 64 constraints per pose bone and
+  512 total pose constraints.
+- non-finite coordinate/matrix/influence values fail closed.
+- no armature/bone creation, edit/pose mutation, constraint creation, IK, skin binding, weight
+  editing, arbitrary Python or unrestricted bpy operation was added.
+- Milestone 1 adds one read-only tool, taking the factory from 183 to **184 tools**.
+- the centralized registry/client hard cap is raised from 184 to **192** for later bounded
+  Level 6 milestones.
+
+Level 6 real Blender runtime verification remains 0%. Production readiness remains No.
+
+Milestone 2 — Armature creation + bounded edit-bone creation — is next, but must not start
+without explicit user permission.
+
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
 Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
 Level 4 UV / Texture / Materials source is **100% complete** (Milestones 1-10 of 10).
 Level 5 Geometry Nodes source is **100% complete** (Milestones 1-10 of 10).
+Level 6 Rigging source is **10% complete** (Milestone 1 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted pending explicit authorization.
 
 ## Completed and verified
@@ -245,7 +277,7 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 183 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 184 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -272,22 +304,22 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
 - Final response boundaries clone validated result data before comparison/return, bound
   structured public errors, sanitize capability exceptions, and flag partial mutation
   exceptions as unknown outcomes. PNG palette/reserved-bit validation strengthened.
-- Wheel/sdist built from source; all 74 package modules, bootstrap, docs/tests/scripts/CI
+- Wheel/sdist built from source; all 75 package modules, bootstrap, docs/tests/scripts/CI
   verified in archives. Fresh offline wheel install/imports/CLI smoke passed without bpy.
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 183 typed host contracts/tools under the bounded 184-tool cap. Level 1 source: **100%**.
+Source: 184 typed host contracts/tools under the bounded 192-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
-Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**
-(Milestones 1-10 of 10). Verified Level 5 source/test checkpoint:
-8b1f51facf2b523c3c220236e0a8dbe15e28cdcf. CI run 37501230888 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 711 tests, lint/format, package build,
-74-module distribution audit and clean install/import without bpy.
+Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
+Level 6 Rigging source: **10%** (Milestone 1 of 10). Verified Level 6 source/test checkpoint:
+5f2d4d29d61e47313a6862212311e32a20fb41dc. CI run 37580472350 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 720 tests, lint/format, package build,
+75-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 5 Milestones 1-10 are complete at 100%. Stop here. Do not begin Level 6 without explicit
+Level 6 Milestone 1 is complete at 10%. Stop here. Do not begin Milestone 2 without explicit
 user permission. Keep source/fake evidence separate from real Blender runtime verification.
 
 ## Decisions
@@ -306,12 +338,13 @@ user permission. Keep source/fake evidence separate from real Blender runtime ve
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed 100% source checkpoint. The registry/client cap remains bounded at 184
-with 183 tools registered. Heavy Blender runtime actions still require separate user
+None for the completed Level 6 10% source checkpoint. The registry/client cap is bounded at 192
+with 184 tools registered. Heavy Blender runtime actions still require separate user
 authorization.
 
 ## Exact next task
-Wait for explicit user permission. Level 5 source work is complete. If the user asks to continue
-the roadmap, the next source scope is Level 6 — Rigging. Do not begin Level 6 automatically.
-Keep real Blender runtime acceptance at 0% unless the user separately authorizes
-installation/probe/launch/runtime execution.
+Wait for explicit user permission. If the user asks to continue Level 6, start only Milestone 2:
+Armature creation + bounded edit-bone creation. Keep creation typed and bounded, require exact
+readback/recovery evidence for mutations, keep real Blender runtime acceptance at 0% unless the
+user separately authorizes installation/probe/launch/runtime execution, and do not begin
+Milestone 3 automatically.
