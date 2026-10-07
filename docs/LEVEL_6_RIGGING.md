@@ -294,13 +294,13 @@ Constraint authoring and IK remain Milestone 5 scope.
 
 ### Milestone 4 source checkpoint
 
-Code/test checkpoint: `8000276f8cde893bde2df184c4d0aa221f939033`.
+Code/test checkpoint: `38dddb6a8282a7be487fe3bc62522823bc02da2d`.
 
-CI run `37605280427` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+CI run `37605704490` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
 
 - Ruff lint
 - Ruff format check
-- **747 tests**
+- **748 tests**
 - package build
 - distribution audit
 - clean install/import without bpy
