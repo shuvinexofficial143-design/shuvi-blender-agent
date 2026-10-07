@@ -7,8 +7,8 @@ from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.operations import ObjectOperations
 from shuvi_blender_agent.rigging import (
-    MAX_RIG_BONES,
     ArmatureInspect,
+    MAX_RIG_BONES,
     RiggingOperations,
 )
 from shuvi_blender_agent.safety import SafetyPolicy
