@@ -811,9 +811,7 @@ def test_pose_bone_transform_sets_xyz_channels_with_exact_readback():
     bpy, obj, registry, object_id = setup_pose_rig()
     before = inspect_rig(registry, object_id)
 
-    result = registry.dispatch(
-        Request("rig.pose_bone_transform", pose_payload(before))
-    )
+    result = registry.dispatch(Request("rig.pose_bone_transform", pose_payload(before)))
 
     assert result.status == Status.VERIFIED
     after = result.data["after"]
@@ -839,9 +837,7 @@ def test_pose_bone_transform_normalizes_quaternion_and_verifies_it():
     assert result.status == Status.VERIFIED
     root = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Root")
     assert root["rotation_mode"] == "QUATERNION"
-    assert root["rotation_quaternion"] == pytest.approx(
-        [2**-0.5, 2**-0.5, 0.0, 0.0]
-    )
+    assert root["rotation_quaternion"] == pytest.approx([2**-0.5, 2**-0.5, 0.0, 0.0])
 
 
 def test_pose_bone_reset_restores_identity_channels():
@@ -865,9 +861,7 @@ def test_pose_bone_reset_restores_identity_channels():
     )
 
     assert result.status == Status.VERIFIED
-    root_after = next(
-        item for item in result.data["after"]["pose_bones"] if item["name"] == "Root"
-    )
+    root_after = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Root")
     assert root_after["rotation_mode"] == "QUATERNION"
     assert root_after["location"] == [0.0, 0.0, 0.0]
     assert root_after["rotation_euler"] == [0.0, 0.0, 0.0]
@@ -881,9 +875,7 @@ def test_pose_bone_transform_rejects_stale_rig_revision_and_missing_bone():
     root = next(item for item in obj.pose.bones if item.name == "Root")
     root.location = [0.25, 0.0, 0.0]
 
-    stale_result = registry.dispatch(
-        Request("rig.pose_bone_transform", pose_payload(stale))
-    )
+    stale_result = registry.dispatch(Request("rig.pose_bone_transform", pose_payload(stale)))
     assert stale_result.status == Status.FAILED
     assert stale_result.error.code == ErrorCode.STALE_STATE
 
@@ -916,9 +908,7 @@ def test_pose_bone_transform_verification_failure_restores_pose(monkeypatch):
         return real_compare(expected, actual)
 
     monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
-    result = registry.dispatch(
-        Request("rig.pose_bone_transform", pose_payload(before))
-    )
+    result = registry.dispatch(Request("rig.pose_bone_transform", pose_payload(before)))
 
     assert result.status == Status.FAILED
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
