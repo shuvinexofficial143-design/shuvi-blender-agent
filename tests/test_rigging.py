@@ -947,6 +947,22 @@ def test_pose_bone_transform_verification_failure_restores_pose(monkeypatch):
                 "expected_rig_revision": "y" * 64,
                 "bone_name": "Root",
                 "location": [0, 0, 0],
+                "rotation_mode": [],
+                "rotation": [0, 0, 0],
+                "scale": [1, 1, 1],
+            },
+        ),
+        (
+            PoseBoneTransform.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Root",
+                "location": [0, 0, 0],
                 "rotation_mode": "QUATERNION",
                 "rotation": [0, 0, 0, 0],
                 "scale": [1, 1, 1],
