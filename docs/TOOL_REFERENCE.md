@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 192 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 194 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -42,6 +42,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | rig.pose_bone_reset | target, expected_rig_revision, bone_name | mutation | reset one explicit pose bone to identity quaternion/location/scale with exact readback and recovery |
 | rig.pose_constraint_create | target, expected_rig_revision, bone_name, constraint_name, constraint_type, influence, mute, plus type-specific bounded fields | mutation | create one unique LIMIT_ROTATION or same-armature IK pose constraint with exact state/count readback and verified removal recovery |
 | rig.pose_constraint_remove | target, expected_rig_revision, bone_name, constraint_name, expected_constraint_type | mutation | remove only an explicit bounded final managed constraint with exact absence/count readback and append-safe recreation recovery |
+| rig.mesh_armature_bind | mesh_target, armature_target, expected_rig_revision, modifier_name | mutation | bind one bounded unparented zero-group mesh to one explicit armature through a single managed ARMATURE modifier with exact target/settings readback and removal recovery |
+| rig.mesh_armature_unbind | mesh_target, armature_target, expected_rig_revision, modifier_name | mutation | remove the exact sole managed ARMATURE modifier from a bounded zero-group mesh with exact absence readback and modifier recreation recovery |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1177,3 +1179,29 @@ Current Level 3 source progress: **100%**.
   at the current bounded **192-tool** registry/client cap.
 - Real Blender constraint evaluation, IK solver behavior, dependency-graph cycles and viewport
   deformation remain runtime-unverified.
+
+
+### Level 6 milestone 6 limits
+
+- Both binding mutations require fresh mesh and armature ObjectTargets plus a fresh
+  `rig_revision`. Objects/data must be local and editable in Object mode.
+- Mesh work is bounded to 4096 vertices, 4096 polygons and 32768 polygon indices.
+- Milestone 6 requires an unparented mesh with no shape keys and no pre-existing vertex groups.
+- Bind additionally requires an empty modifier stack and one explicit unique modifier name.
+- The only created modifier type is `ARMATURE`, targeted to the explicit armature object.
+  `use_vertex_groups=true`, `use_bone_envelopes=false`, and viewport/render visibility are
+  fixed managed settings.
+- No automatic parenting, automatic weights, bone-envelope binding, generic modifier settings,
+  arbitrary target discovery or weight mutation is exposed.
+- Successful bind readback verifies the exact armature object ID behind the modifier target,
+  exact managed modifier settings/count, unchanged parent state and unchanged `rig_revision`.
+- Bind verification mismatch removes the exact created modifier and checks recovery of both the
+  mesh object revision and armature `rig_revision`.
+- Unbind requires exactly one modifier and only accepts the exact M6-managed ARMATURE state.
+  The zero-vertex-group restriction remains intentional until Milestone 7.
+- Unbind verification mismatch recreates the managed Armature modifier and checks recovery of
+  both original revisions.
+- Milestone 6 raises the bounded registry/client cap from 192 to **200** and adds two mutation
+  tools, taking the execution factory from 192 to **194 typed tools**.
+- Real Blender deformation, modifier evaluation, dependency-graph interaction and later weight
+  behavior remain runtime-unverified.
