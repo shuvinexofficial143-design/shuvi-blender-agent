@@ -167,6 +167,15 @@ def test_armature_inspection_is_deterministic_and_reports_hierarchy_pose_state()
             "type": "LIMIT_ROTATION",
             "mute": False,
             "influence": 0.75,
+            "use_limit_x": False,
+            "min_x": 0.0,
+            "max_x": 0.0,
+            "use_limit_y": False,
+            "min_y": 0.0,
+            "max_y": 0.0,
+            "use_limit_z": False,
+            "min_z": 0.0,
+            "max_z": 0.0,
         }
     ]
     assert data["pose_missing_bones"] == []
