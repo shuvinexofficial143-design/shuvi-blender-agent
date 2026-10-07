@@ -189,7 +189,7 @@ class PoseBoneTransform:
             },
         )
         rotation_mode = data["rotation_mode"]
-        if rotation_mode not in {"XYZ", "QUATERNION"}:
+        if not isinstance(rotation_mode, str) or rotation_mode not in {"XYZ", "QUATERNION"}:
             raise invalid("rotation_mode must be XYZ or QUATERNION")
         location = vector3(data["location"], "location", MAX_POSE_LOCATION)
         scale_raw = data["scale"]
