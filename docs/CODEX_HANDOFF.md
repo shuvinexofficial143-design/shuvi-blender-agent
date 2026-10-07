@@ -3,7 +3,7 @@
 Updated: 2026-10-07. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 6 source/test commit: 8000276f8cde893bde2df184c4d0aa221f939033.
+Latest verified pushed Level 6 source/test commit: 38dddb6a8282a7be487fe3bc62522823bc02da2d.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -207,9 +207,9 @@ Milestone 10 — Geometry Nodes QA / recovery / acceptance — is complete. Do n
 without explicit user permission.
 
 ## Level 6 active checkpoint
-Latest verified Level 6 source/test checkpoint: 8000276f8cde893bde2df184c4d0aa221f939033.
-CI run 37605280427 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **747 tests**, package build, distribution audit and clean install/import without bpy.
+Latest verified Level 6 source/test checkpoint: 38dddb6a8282a7be487fe3bc62522823bc02da2d.
+CI run 37605704490 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **748 tests**, package build, distribution audit and clean install/import without bpy.
 The distribution audit verified **75 package modules**.
 
 Level 6 Rigging is now **40% source complete** (Milestones 1-4 of 10).
@@ -365,8 +365,8 @@ Source: 190 typed host contracts/tools under the bounded 192-tool cap. Level 1 s
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
 Level 6 Rigging source: **40%** (Milestones 1-4 of 10). Verified Level 6 source/test checkpoint:
-8000276f8cde893bde2df184c4d0aa221f939033. CI run 37605280427 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 747 tests, lint/format, package build,
+38dddb6a8282a7be487fe3bc62522823bc02da2d. CI run 37605704490 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 748 tests, lint/format, package build,
 75-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
