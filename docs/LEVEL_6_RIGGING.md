@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **90%**.
+Current Level 6 source progress: **100%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -25,7 +25,7 @@ Production ready: **No**.
 | 7 | Vertex groups + bounded weight workflows | complete |
 | 8 | IK/FK control-rig helpers | complete |
 | 9 | Versioned rig recipe library | complete |
-| 10 | Rigging QA / recovery / acceptance | pending |
+| 10 | Rigging QA / recovery / acceptance | complete |
 
 ## Milestone 1 — 10% complete
 
@@ -698,9 +698,54 @@ Current registry/catalog hard maximum: **203**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+## Milestone 10 — 100% complete
+
+Milestone 10 closes the current Level 6 source roadmap with a bounded internal
+source/fake-bpy acceptance harness over the completed M1-M9 rigging surfaces.
+
+The acceptance harness deliberately adds **no new public tool**. The execution factory remains at
+**203 typed tools** under the existing **203-tool** registry/client cap instead of expanding the
+public API solely for QA.
+
+Final source acceptance requires all of the following evidence in one active inspector/session:
+
+- a bounded local armature with matching data/pose bones, at least one root and no hierarchy cycle;
+- one exact managed M6 mesh-to-armature binding;
+- non-empty bounded M7 deform-bone-matched skin weights with no unmatched/non-deform groups;
+- the fixed version-1 M9 three-recipe catalog;
+- a fresh managed M8/M9 three-bone IK/FK preview using upper → middle → end deform bones and a
+  distinct non-deforming control target;
+- explicit source-only/runtime-unverified metadata across rig, weights, catalog and recipe
+  evidence.
+
+Negative-path coverage proves stale rig state fails closed. Recovery coverage deliberately forces
+an IK/FK verification mismatch through the existing recipe/delegate path, requires
+`rolled_back=true` and `recovery_verified=true`, confirms the created constraint is removed,
+and then requires the recovered rig to pass acceptance again.
+
+### Milestone 10 source checkpoint
+
+Verified source/test checkpoint: `8b1f76baebcb02bd285e95dd8754df4fb9e787d4`.
+
+CI run `37657039445` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **807 tests**
+- package build
+- distribution audit
+- clean offline install/import without bpy
+- **77 package modules**
+
+Factory typed tools: **203**.
+Current registry/catalog hard maximum: **203**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-9 are complete at 90%. Do not begin Milestone 10 without explicit user permission.
+Milestones 1-10 are complete at 100%. Do not begin Level 7 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.
