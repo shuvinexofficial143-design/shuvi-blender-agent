@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **80%**.
+Current Level 6 source progress: **90%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -24,7 +24,7 @@ Production ready: **No**.
 | 6 | Mesh-to-armature binding + Armature modifier | complete |
 | 7 | Vertex groups + bounded weight workflows | complete |
 | 8 | IK/FK control-rig helpers | complete |
-| 9 | Versioned rig recipe library | pending |
+| 9 | Versioned rig recipe library | complete |
 | 10 | Rigging QA / recovery / acceptance | pending |
 
 ## Milestone 1 — 10% complete
@@ -629,9 +629,78 @@ Current registry/catalog hard maximum: **200**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+## Milestone 9 — 90% complete
+
+Milestone 9 adds a compact versioned recipe layer over the already bounded Level 6 rigging
+operations. It does not expose arbitrary Python, generic bpy operators or user-defined executable
+recipes.
+
+### `rig.recipe_catalog`
+
+The catalog is deterministic and currently contains exactly three fixed managed recipes:
+
+- `constraint.limit_rotation`
+- `constraint.same_armature_ik`
+- `control.three_bone_ik_fk`
+
+Every entry reports recipe/library version, minimum Blender version, compatibility marker,
+delegate operation, exact parameter schema, supported `preview`/`apply` operations and the
+explicit source-only/runtime-unverified boundary. The catalog itself has a deterministic
+`catalog_revision`.
+
+### `rig.recipe_preview`
+
+Preview accepts one fixed recipe ID, fresh ObjectTarget, fresh `expected_rig_revision` and the
+exact typed parameter object for that recipe. Unknown/missing recipe parameters fail closed.
+
+Constraint recipes reuse the existing Milestone 5 bounded LIMIT_ROTATION/same-armature IK
+validation. The three-bone recipe reuses the Milestone 8 upper → middle → end deform-chain plus
+non-deforming control-target validation. Preview performs no mutation and reports deterministic
+blockers/plan/current revision.
+
+### `rig.recipe_apply`
+
+Apply parses through the same exact recipe schema and delegates only to the existing verified
+Milestone 5 constraint creation or Milestone 8 IK/FK setup mutation paths. Their exact readback,
+stale-revision rejection and rollback/recovery evidence remain authoritative; the recipe layer
+does not bypass or duplicate those safety gates.
+
+### Versioning and safety boundary
+
+- recipe library version: **1**
+- each current recipe version: **1**
+- minimum declared Blender version: **4.2**
+- compatibility: `SOURCE_VALIDATED_RUNTIME_UNVERIFIED`
+- fixed recipe count: **3**
+- no dynamic/custom executable recipes
+- no arbitrary target objects for IK
+- no pole targets, drivers, custom properties or generic solver payloads
+- no automatic weight guessing or full-auto rig generation
+- no real Blender runtime claim
+
+### Milestone 9 source checkpoint
+
+Verified source/test checkpoint: `eb6c00aa6e591fa0aa073c879044037decabc78d`.
+
+CI run `37642857534` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **803 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **76 package modules**
+
+Factory typed tools: **203**.
+Current registry/catalog hard maximum: **203**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-8 are complete at 80%. Do not begin Milestone 9 without explicit user permission.
+Milestones 1-9 are complete at 90%. Do not begin Milestone 10 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.

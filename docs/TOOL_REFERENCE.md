@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 200 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 203 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -50,6 +50,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | rig.ik_fk_preview | object_id, upper_bone, middle_bone, end_bone, target_bone, constraint_name | read_only | validate one explicit upper→middle→end deform chain plus non-deforming control target and report managed IK/FK helper state/mode |
 | rig.ik_fk_setup | target, expected_rig_revision, upper_bone, middle_bone, end_bone, target_bone, constraint_name, initial_mode | mutation | create one managed same-armature IK constraint with chain_count=3 and deterministic initial IK/FK mute state with rollback |
 | rig.ik_fk_switch | target, expected_rig_revision, upper_bone, middle_bone, end_bone, target_bone, constraint_name, mode | mutation | switch only the managed IK helper mute state between IK and FK with exact readback/recovery |
+| rig.recipe_catalog | none | read_only | deterministic versioned catalog of the fixed managed Level 6 recipes, exact schemas and catalog revision |
+| rig.recipe_preview | recipe_id, target, expected_rig_revision, parameters | read_only | fresh-state preview of one fixed recipe using existing bounded constraint or IK/FK validation without mutation |
+| rig.recipe_apply | recipe_id, target, expected_rig_revision, parameters | mutation | apply one fixed recipe through existing verified constraint/IK-FK mutation, exact readback and recovery paths |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1262,3 +1265,26 @@ Current Level 3 source progress: **100%**.
   current **200-tool** registry/client cap.
 - Real Blender IK solve behavior, evaluated transforms, dependency-graph behavior and animation
   interpolation remain runtime-unverified.
+
+
+### Level 6 milestone 9 limits
+
+- The recipe library is fixed and versioned: library version **1**, current recipe version **1**,
+  minimum declared Blender version **4.2**, compatibility
+  `SOURCE_VALIDATED_RUNTIME_UNVERIFIED`.
+- Exactly three recipe IDs are exposed: `constraint.limit_rotation`,
+  `constraint.same_armature_ik` and `control.three_bone_ik_fk`.
+- `parameters` must match the selected recipe's exact schema; unknown, missing, untyped or
+  out-of-bound fields fail closed before execution.
+- Catalog and preview are read-only. Preview requires fresh target/revision state and returns a
+  deterministic plan/blocker report instead of mutating the rig.
+- Apply delegates only to the already bounded Milestone 5 pose-constraint creation or Milestone 8
+  IK/FK setup implementation. It inherits their exact readback, stale-state rejection and
+  rollback/recovery behavior.
+- No user-defined executable recipe, arbitrary Python, unrestricted bpy operator/property path,
+  automatic control-rig generation, pole target, driver, custom property or solver payload is
+  exposed.
+- Milestone 9 adds three tools, taking the factory from 200 to **203 typed tools** and deliberately
+  raises the bounded registry/client cap to **203**.
+- Real Blender constraint solving, evaluated transforms, dependency-graph behavior and runtime
+  compatibility remain unverified.
