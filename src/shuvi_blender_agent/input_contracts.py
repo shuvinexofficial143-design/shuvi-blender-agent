@@ -78,6 +78,9 @@ from .modeling_topology import (
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
+from .rig_recipe_library import RecipeApply as RigRecipeApply
+from .rig_recipe_library import RecipeCatalog as RigRecipeCatalog
+from .rig_recipe_library import RecipePreview as RigRecipePreview
 from .rigging import (
     ArmatureCreate,
     ArmatureInspect,
@@ -147,6 +150,9 @@ def builtin_contracts() -> dict:
         "rig.ik_fk_preview": (read, IKFKPreview.parse),
         "rig.ik_fk_setup": (mutation, IKFKSetup.parse),
         "rig.ik_fk_switch": (mutation, IKFKSwitch.parse),
+        "rig.recipe_catalog": (read, RigRecipeCatalog.parse),
+        "rig.recipe_preview": (read, RigRecipePreview.parse),
+        "rig.recipe_apply": (mutation, RigRecipeApply.parse),
         "character.workflow_preview": (read, CharacterWorkflowPreview.parse),
         "character.level3_acceptance": (read, Level3Acceptance.parse),
         "character.proportion_guide": (read, ProportionGuide.parse),
