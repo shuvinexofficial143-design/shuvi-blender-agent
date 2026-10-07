@@ -491,6 +491,120 @@ class VertexGroupRemove:
         )
 
 
+@dataclass(frozen=True)
+class IKFKPreview:
+    object_id: str
+    upper_bone: str
+    middle_bone: str
+    end_bone: str
+    target_bone: str
+    constraint_name: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "object_id",
+                "upper_bone",
+                "middle_bone",
+                "end_bone",
+                "target_bone",
+                "constraint_name",
+            },
+        )
+        return cls(
+            string(data["object_id"], "object_id", limit=128),
+            object_name(data["upper_bone"]),
+            object_name(data["middle_bone"]),
+            object_name(data["end_bone"]),
+            object_name(data["target_bone"]),
+            object_name(data["constraint_name"]),
+        )
+
+
+@dataclass(frozen=True)
+class IKFKSetup:
+    target: ObjectTarget
+    expected_rig_revision: str
+    upper_bone: str
+    middle_bone: str
+    end_bone: str
+    target_bone: str
+    constraint_name: str
+    initial_mode: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "target",
+                "expected_rig_revision",
+                "upper_bone",
+                "middle_bone",
+                "end_bone",
+                "target_bone",
+                "constraint_name",
+                "initial_mode",
+            },
+        )
+        mode = data["initial_mode"]
+        if not isinstance(mode, str) or mode not in {"IK", "FK"}:
+            raise invalid("initial_mode must be IK or FK")
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            object_name(data["upper_bone"]),
+            object_name(data["middle_bone"]),
+            object_name(data["end_bone"]),
+            object_name(data["target_bone"]),
+            object_name(data["constraint_name"]),
+            mode,
+        )
+
+
+@dataclass(frozen=True)
+class IKFKSwitch:
+    target: ObjectTarget
+    expected_rig_revision: str
+    upper_bone: str
+    middle_bone: str
+    end_bone: str
+    target_bone: str
+    constraint_name: str
+    mode: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "target",
+                "expected_rig_revision",
+                "upper_bone",
+                "middle_bone",
+                "end_bone",
+                "target_bone",
+                "constraint_name",
+                "mode",
+            },
+        )
+        mode = data["mode"]
+        if not isinstance(mode, str) or mode not in {"IK", "FK"}:
+            raise invalid("mode must be IK or FK")
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            object_name(data["upper_bone"]),
+            object_name(data["middle_bone"]),
+            object_name(data["end_bone"]),
+            object_name(data["target_bone"]),
+            object_name(data["constraint_name"]),
+            mode,
+        )
+
+
 def _finite(value, label):
     value = float(value)
     if not isfinite(value):
@@ -2196,6 +2310,228 @@ class RiggingOperations:
                     pass
             raise
 
+
+    @staticmethod
+    def _ik_fk_names(action):
+        return (
+            action.upper_bone,
+            action.middle_bone,
+            action.end_bone,
+            action.target_bone,
+        )
+
+    def _ik_fk_state(self, obj, snapshot, action):
+        names = self._ik_fk_names(action)
+        if len(set(names)) != 4:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "IK/FK bone names must be distinct")
+        bones = {item["name"]: item for item in snapshot["bones"]}
+        poses = {item["name"]: item for item in snapshot["pose_bones"]}
+        missing = [name for name in names if name not in bones or name not in poses]
+        if missing:
+            raise AgentError(ErrorCode.NOT_FOUND, "IK/FK chain bone not found")
+        upper = bones[action.upper_bone]
+        middle = bones[action.middle_bone]
+        end = bones[action.end_bone]
+        target = bones[action.target_bone]
+        if middle["parent"] != action.upper_bone or end["parent"] != action.middle_bone:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "IK/FK chain must be upper -> middle -> end",
+            )
+        if not upper["use_deform"] or not middle["use_deform"] or not end["use_deform"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "IK/FK chain bones must be deform-enabled")
+        if target["use_deform"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "IK target control bone must be non-deforming")
+        end_pose = poses[action.end_bone]
+        constraint = self._constraint_from_snapshot(end_pose, action.constraint_name)
+        managed = False
+        mode = None
+        if constraint is not None:
+            managed = (
+                constraint["type"] == "IK"
+                and constraint["target_object_name"] == obj.name
+                and constraint["target_bone_name"] == action.target_bone
+                and constraint["chain_count"] == 3
+                and constraint["influence"] == 1.0
+            )
+            if managed:
+                mode = "FK" if constraint["mute"] else "IK"
+        return {
+            "upper_bone": action.upper_bone,
+            "middle_bone": action.middle_bone,
+            "end_bone": action.end_bone,
+            "target_bone": action.target_bone,
+            "constraint_name": action.constraint_name,
+            "constraint": constraint,
+            "managed": managed,
+            "mode": mode,
+        }
+
+    def preview_ik_fk(self, request: Request, action: IKFKPreview):
+        obj = self.inspector.resolve(action.object_id)
+        snapshot = self._snapshot(obj)
+        state = self._ik_fk_state(obj, snapshot, action)
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.SUCCEEDED,
+            {
+                **state,
+                "object_id": snapshot["object_id"],
+                "rig_revision": snapshot["rig_revision"],
+                "source_only": True,
+                "real_runtime_verified": False,
+            },
+        )
+
+    def setup_ik_fk(self, request: Request, action: IKFKSetup):
+        obj, target_before = self._require_editable_active_armature(action.target)
+        before = self._snapshot(obj)
+        require_revision(action.expected_rig_revision, before["rig_revision"])
+        state_before = self._ik_fk_state(obj, before, action)
+        if state_before["constraint"] is not None:
+            raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "IK/FK constraint name already exists")
+        end_pose = self._pose_bone_object(obj, action.end_bone)
+        pose_before = next(item for item in before["pose_bones"] if item["name"] == action.end_bone)
+        if pose_before["constraint_count"] >= MAX_POSE_CONSTRAINTS_PER_BONE:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Pose bone constraint limit reached")
+        if before["total_pose_constraint_count"] >= MAX_POSE_CONSTRAINTS:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Total pose constraint limit reached")
+
+        created = None
+        try:
+            created = end_pose.constraints.new("IK")
+            managed_state = {
+                "name": action.constraint_name,
+                "type": "IK",
+                "mute": action.initial_mode == "FK",
+                "influence": 1.0,
+                "target_object_name": obj.name,
+                "target_bone_name": action.target_bone,
+                "chain_count": 3,
+            }
+            self._apply_constraint_state(created, managed_state, obj)
+            self.bpy.context.view_layer.update()
+            after = self._snapshot(obj)
+            state_after = self._ik_fk_state(obj, after, action)
+            expected = {
+                "managed": True,
+                "mode": action.initial_mode,
+                "constraint": managed_state,
+                "object_id": target_before["object_id"],
+                "mode_context": "OBJECT",
+            }
+            actual = {
+                "managed": state_after["managed"],
+                "mode": state_after["mode"],
+                "constraint": state_after["constraint"],
+                "object_id": after["object_id"],
+                "mode_context": self.bpy.context.mode,
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after, "ik_fk": state_after},
+                    verification=verification.to_dict(),
+                )
+            if created in end_pose.constraints:
+                end_pose.constraints.remove(created)
+            self.bpy.context.view_layer.update()
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "IK/FK setup readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if created is not None:
+                try:
+                    if created in end_pose.constraints:
+                        end_pose.constraints.remove(created)
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
+    def switch_ik_fk(self, request: Request, action: IKFKSwitch):
+        obj, target_before = self._require_editable_active_armature(action.target)
+        before = self._snapshot(obj)
+        require_revision(action.expected_rig_revision, before["rig_revision"])
+        state_before = self._ik_fk_state(obj, before, action)
+        if not state_before["managed"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Managed IK/FK helper is required")
+        end_pose = self._pose_bone_object(obj, action.end_bone)
+        constraint = self._constraint_object(end_pose, action.constraint_name)
+        if constraint is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "IK/FK constraint unavailable")
+        old_mute = bool(constraint.mute)
+        try:
+            constraint.mute = action.mode == "FK"
+            self.bpy.context.view_layer.update()
+            after = self._snapshot(obj)
+            state_after = self._ik_fk_state(obj, after, action)
+            expected = {
+                "managed": True,
+                "mode": action.mode,
+                "object_id": target_before["object_id"],
+                "mode_context": "OBJECT",
+            }
+            actual = {
+                "managed": state_after["managed"],
+                "mode": state_after["mode"],
+                "object_id": after["object_id"],
+                "mode_context": self.bpy.context.mode,
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after, "ik_fk": state_after},
+                    verification=verification.to_dict(),
+                )
+            constraint.mute = old_mute
+            self.bpy.context.view_layer.update()
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "IK/FK switch readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            try:
+                constraint.mute = old_mute
+                self.bpy.context.view_layer.update()
+            except Exception:
+                pass
+            raise
+
     def tools(self):
         return [
             Tool(
@@ -2281,5 +2617,23 @@ class RiggingOperations:
                 SafetyClass.MUTATION,
                 VertexGroupRemove.parse,
                 self.remove_vertex_group,
+            ),
+            Tool(
+                "rig.ik_fk_preview",
+                SafetyClass.READ_ONLY,
+                IKFKPreview.parse,
+                self.preview_ik_fk,
+            ),
+            Tool(
+                "rig.ik_fk_setup",
+                SafetyClass.MUTATION,
+                IKFKSetup.parse,
+                self.setup_ik_fk,
+            ),
+            Tool(
+                "rig.ik_fk_switch",
+                SafetyClass.MUTATION,
+                IKFKSwitch.parse,
+                self.switch_ik_fk,
             ),
         ]
