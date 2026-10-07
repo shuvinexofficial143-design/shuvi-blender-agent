@@ -1590,7 +1590,7 @@ def setup_weight_rig():
     return bpy, mesh, rig, registry, mesh_state, rig_state, weights
 
 
-def weight_set_payload(mesh_state, rig_state, weights_state, bone_name="Root", weights=None):
+def weight_set_payload(mesh_state, rig_state, weights_state, bone_name="Spine", weights=None):
     if weights is None:
         weights = [
             {"vertex_index": 0, "weight": 1.0},
@@ -1607,7 +1607,7 @@ def weight_set_payload(mesh_state, rig_state, weights_state, bone_name="Root", w
     }
 
 
-def weight_remove_payload(mesh_state, rig_state, weights_state, bone_name="Root"):
+def weight_remove_payload(mesh_state, rig_state, weights_state, bone_name="Spine"):
     return {
         "mesh_target": target_from_object(mesh_state),
         "armature_target": target_from_rig(rig_state),
@@ -1664,7 +1664,7 @@ def test_vertex_group_weights_set_creates_bone_matched_group_with_exact_weights(
     assert after["assignment_count"] == 3
     assert after["groups"] == [
         {
-            "name": "Root",
+            "name": "Spine",
             "index": 0,
             "weights": [
                 {"vertex_index": 0, "weight": 1.0},
@@ -1716,7 +1716,7 @@ def test_vertex_group_weights_set_replaces_entire_existing_group_map():
 
 def test_vertex_group_weights_set_rejects_stale_weight_revision_and_missing_bone():
     bpy, mesh, rig, registry, mesh_state, rig_state, weights = setup_weight_rig()
-    external = mesh.vertex_groups.new(name="Root")
+    external = mesh.vertex_groups.new(name="Spine")
     external.add([0], 1.0, "REPLACE")
 
     stale = registry.dispatch(
@@ -1773,7 +1773,7 @@ def test_vertex_group_remove_rejects_nonfinal_group_for_exact_recovery():
     first = registry.dispatch(
         Request(
             "rig.vertex_group_weights_set",
-            weight_set_payload(mesh_state, rig_state, weights, bone_name="Root"),
+            weight_set_payload(mesh_state, rig_state, weights, bone_name="Spine"),
         )
     )
     assert first.status == Status.VERIFIED
@@ -1801,7 +1801,7 @@ def test_vertex_group_remove_rejects_nonfinal_group_for_exact_recovery():
     result = registry.dispatch(
         Request(
             "rig.vertex_group_remove",
-            weight_remove_payload(mesh_state, rig_state, weights, bone_name="Root"),
+            weight_remove_payload(mesh_state, rig_state, weights, bone_name="Spine"),
         )
     )
 
