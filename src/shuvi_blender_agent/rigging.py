@@ -520,7 +520,6 @@ class RiggingOperations:
                     pass
             raise
 
-
     def _require_editable_active_armature(self, target):
         obj, target_before = self.inspector.target(target)
         if obj.type != "ARMATURE" or obj.data is None:
