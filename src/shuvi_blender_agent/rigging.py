@@ -870,7 +870,6 @@ class RiggingOperations:
                     pass
             raise
 
-
     @staticmethod
     def _pose_bone_object(obj, name):
         pose = getattr(obj, "pose", None)
