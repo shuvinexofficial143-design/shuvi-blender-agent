@@ -20,6 +20,8 @@ MAX_BONE_COORDINATE = 100_000
 MAX_POSE_LOCATION = 100_000
 MAX_POSE_ROTATION = 1_000
 MAX_POSE_SCALE = 1_000
+MAX_WEIGHT_GROUPS = 64
+MAX_WEIGHT_ASSIGNMENTS = 16_384
 
 
 @dataclass(frozen=True)
@@ -398,6 +400,94 @@ class MeshArmatureBinding:
             ObjectTarget.parse(data["armature_target"]),
             string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
             object_name(data["modifier_name"]),
+        )
+
+
+@dataclass(frozen=True)
+class MeshWeightInspect:
+    mesh_object_id: str
+    armature_object_id: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(data, {"mesh_object_id", "armature_object_id"})
+        return cls(
+            string(data["mesh_object_id"], "mesh_object_id", limit=128),
+            string(data["armature_object_id"], "armature_object_id", limit=128),
+        )
+
+
+@dataclass(frozen=True)
+class VertexGroupWeightsSet:
+    mesh_target: ObjectTarget
+    armature_target: ObjectTarget
+    expected_rig_revision: str
+    expected_weight_revision: str
+    bone_name: str
+    weights: tuple[tuple[int, float], ...]
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "mesh_target",
+                "armature_target",
+                "expected_rig_revision",
+                "expected_weight_revision",
+                "bone_name",
+                "weights",
+            },
+        )
+        raw = data["weights"]
+        if not isinstance(raw, list) or not 1 <= len(raw) <= 4096:
+            raise invalid("weights must contain 1..4096 explicit vertex assignments")
+        weights = []
+        seen = set()
+        for item in raw:
+            fields(item, {"vertex_index", "weight"})
+            index = integer(item["vertex_index"], "vertex_index", 0, 4095)
+            if index in seen:
+                raise invalid("weight vertex indices must be unique")
+            seen.add(index)
+            weights.append((index, number(item["weight"], "weight", 0.000001, 1.0)))
+        weights.sort(key=lambda item: item[0])
+        return cls(
+            ObjectTarget.parse(data["mesh_target"]),
+            ObjectTarget.parse(data["armature_target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            string(data["expected_weight_revision"], "expected_weight_revision", limit=64),
+            object_name(data["bone_name"]),
+            tuple(weights),
+        )
+
+
+@dataclass(frozen=True)
+class VertexGroupRemove:
+    mesh_target: ObjectTarget
+    armature_target: ObjectTarget
+    expected_rig_revision: str
+    expected_weight_revision: str
+    bone_name: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "mesh_target",
+                "armature_target",
+                "expected_rig_revision",
+                "expected_weight_revision",
+                "bone_name",
+            },
+        )
+        return cls(
+            ObjectTarget.parse(data["mesh_target"]),
+            ObjectTarget.parse(data["armature_target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            string(data["expected_weight_revision"], "expected_weight_revision", limit=64),
+            object_name(data["bone_name"]),
         )
 
 
@@ -1744,6 +1834,367 @@ class RiggingOperations:
                     pass
             raise
 
+
+    def _weight_mesh_base(self, mesh, armature):
+        self.objects._editable(mesh)
+        self.objects._editable(armature)
+        if mesh.type != "MESH" or mesh.data is None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Weight workflow requires a mesh object")
+        if armature.type != "ARMATURE" or armature.data is None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Weight workflow requires an armature object")
+        if (
+            getattr(mesh.data, "library", None) is not None
+            or getattr(armature.data, "library", None) is not None
+        ):
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Weight workflow requires local mesh and armature data",
+            )
+        if mesh.data.shape_keys is not None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Weight workflow rejects shape-key meshes")
+        if mesh.parent is not None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "M7 requires the M6 unparented binding model")
+        if (
+            len(mesh.data.vertices) > 4096
+            or len(mesh.data.polygons) > 4096
+            or sum(len(face.vertices) for face in mesh.data.polygons) > 32768
+        ):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Weight mesh exceeds work bounds")
+        if len(mesh.modifiers) != 1:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "M7 requires exactly one managed Armature modifier",
+            )
+        modifier = mesh.modifiers[0]
+        if getattr(modifier, "type", None) != "ARMATURE":
+            raise AgentError(ErrorCode.SAFETY_DENIED, "M7 requires an ARMATURE modifier")
+        if getattr(modifier, "object", None) is not armature:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Armature modifier target differs")
+        expected_modifier = self._managed_armature_modifier_state(modifier.name, armature.name)
+        if modifier_snapshot(modifier) != expected_modifier:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Armature modifier is outside the managed M6/M7 state",
+            )
+        return modifier
+
+    def _weight_snapshot(self, mesh, armature, rig_state=None):
+        modifier = self._weight_mesh_base(mesh, armature)
+        groups = list(getattr(mesh, "vertex_groups", ()))
+        if len(groups) > MAX_WEIGHT_GROUPS:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Vertex group limit exceeded")
+
+        indexed = {}
+        for group in groups:
+            name = bounded_text(getattr(group, "name", ""), limit=256)
+            index = getattr(group, "index", None)
+            if type(index) is not int or not 0 <= index < MAX_WEIGHT_GROUPS or index in indexed:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "Vertex group indices are invalid")
+            indexed[index] = {"name": name, "index": index, "weights": []}
+        if set(indexed) != set(range(len(groups))):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Vertex group indices must be contiguous")
+
+        assignment_count = 0
+        for vertex_index, vertex in enumerate(mesh.data.vertices):
+            memberships = list(getattr(vertex, "groups", ()))
+            if len(memberships) > MAX_WEIGHT_GROUPS:
+                raise AgentError(
+                    ErrorCode.SAFETY_DENIED,
+                    "One vertex exceeds the vertex-group membership limit",
+                )
+            seen = set()
+            for membership in memberships:
+                group_index = getattr(membership, "group", None)
+                if type(group_index) is not int or group_index not in indexed:
+                    raise AgentError(ErrorCode.SAFETY_DENIED, "Vertex group membership is invalid")
+                if group_index in seen:
+                    raise AgentError(
+                        ErrorCode.SAFETY_DENIED,
+                        "Duplicate vertex-group membership detected",
+                    )
+                seen.add(group_index)
+                weight = _finite(getattr(membership, "weight", None), "vertex weight")
+                if not 0.0 <= weight <= 1.0:
+                    raise AgentError(ErrorCode.SAFETY_DENIED, "Vertex weight is outside [0, 1]")
+                indexed[group_index]["weights"].append(
+                    {"vertex_index": vertex_index, "weight": weight}
+                )
+                assignment_count += 1
+                if assignment_count > MAX_WEIGHT_ASSIGNMENTS:
+                    raise AgentError(ErrorCode.SAFETY_DENIED, "Weight assignment limit exceeded")
+
+        ordered = [indexed[index] for index in range(len(groups))]
+        state_for_revision = {
+            "vertex_count": len(mesh.data.vertices),
+            "groups": ordered,
+        }
+        rig_state = self._snapshot(armature) if rig_state is None else rig_state
+        bone_map = {item["name"]: item for item in rig_state["bones"]}
+        unmatched = [item["name"] for item in ordered if item["name"] not in bone_map]
+        nondeform = [
+            item["name"]
+            for item in ordered
+            if item["name"] in bone_map and not bone_map[item["name"]]["use_deform"]
+        ]
+        return {
+            "mesh_object_id": self.inspector.identity(mesh),
+            "armature_object_id": self.inspector.identity(armature),
+            "modifier_name": modifier.name,
+            "vertex_count": len(mesh.data.vertices),
+            "group_count": len(ordered),
+            "assignment_count": assignment_count,
+            "groups": ordered,
+            "unmatched_group_names": unmatched,
+            "nondeform_group_names": nondeform,
+            "weight_revision": revision(state_for_revision),
+            "rig_revision": rig_state["rig_revision"],
+            "source_only": True,
+            "real_runtime_verified": False,
+        }
+
+    def inspect_mesh_weights(self, request: Request, action: MeshWeightInspect):
+        mesh = self.inspector.resolve(action.mesh_object_id)
+        armature = self.inspector.resolve(action.armature_object_id)
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.SUCCEEDED,
+            self._weight_snapshot(mesh, armature),
+        )
+
+    def _weight_targets(self, action):
+        mesh, mesh_before = self.inspector.target(action.mesh_target)
+        armature, armature_object_before = self.inspector.target(action.armature_target)
+        rig_before = self._snapshot(armature)
+        require_revision(action.expected_rig_revision, rig_before["rig_revision"])
+        before = self._weight_snapshot(mesh, armature, rig_before)
+        require_revision(action.expected_weight_revision, before["weight_revision"])
+
+        bone = next((item for item in rig_before["bones"] if item["name"] == action.bone_name), None)
+        if bone is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Weight target bone not found")
+        if not bone["use_deform"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Weights require a deform-enabled bone")
+        if before["unmatched_group_names"] or before["nondeform_group_names"]:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Existing vertex groups must all match deform-enabled armature bones",
+            )
+        return mesh, mesh_before, armature, armature_object_before, rig_before, before
+
+    @staticmethod
+    def _group_state(snapshot, name):
+        return next((item for item in snapshot["groups"] if item["name"] == name), None)
+
+    @staticmethod
+    def _clear_group_weights(mesh, group):
+        group.remove(list(range(len(mesh.data.vertices))))
+
+    def _restore_group_weights(self, mesh, name, state, created):
+        current = mesh.vertex_groups.get(name)
+        if created:
+            if current is not None:
+                mesh.vertex_groups.remove(current)
+            return
+        if current is None:
+            raise AgentError(ErrorCode.VERIFICATION_FAILED, "Vertex group recovery target missing")
+        self._clear_group_weights(mesh, current)
+        for item in state["weights"]:
+            current.add([item["vertex_index"]], item["weight"], "REPLACE")
+
+    def set_vertex_group_weights(self, request: Request, action: VertexGroupWeightsSet):
+        (
+            mesh,
+            mesh_before,
+            armature,
+            armature_object_before,
+            rig_before,
+            before,
+        ) = self._weight_targets(action)
+        for index, _ in action.weights:
+            if index >= before["vertex_count"]:
+                raise AgentError(ErrorCode.INVALID_REQUEST, "Weight vertex index does not exist")
+
+        group = mesh.vertex_groups.get(action.bone_name)
+        created = group is None
+        if created:
+            if before["group_count"] >= MAX_WEIGHT_GROUPS:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "Vertex group limit reached")
+            group = mesh.vertex_groups.new(name=action.bone_name)
+        group_before = self._group_state(before, action.bone_name)
+
+        try:
+            self._clear_group_weights(mesh, group)
+            for index, weight in action.weights:
+                group.add([index], weight, "REPLACE")
+            self.bpy.context.view_layer.update()
+            after = self._weight_snapshot(mesh, armature, rig_before)
+            group_after = self._group_state(after, action.bone_name)
+            expected_group = {
+                "name": action.bone_name,
+                "index": before["group_count"] if created else group_before["index"],
+                "weights": [
+                    {"vertex_index": index, "weight": weight}
+                    for index, weight in action.weights
+                ],
+            }
+            actual = {
+                "group": group_after,
+                "group_count": after["group_count"],
+                "assignment_count": after["assignment_count"],
+                "mesh_object_id": after["mesh_object_id"],
+                "armature_object_id": after["armature_object_id"],
+                "rig_revision": after["rig_revision"],
+                "mode": self.bpy.context.mode,
+            }
+            old_count = len(group_before["weights"]) if group_before is not None else 0
+            expected = {
+                "group": expected_group,
+                "group_count": before["group_count"] + (1 if created else 0),
+                "assignment_count": before["assignment_count"] - old_count + len(action.weights),
+                "mesh_object_id": mesh_before["object_id"],
+                "armature_object_id": armature_object_before["object_id"],
+                "rig_revision": rig_before["rig_revision"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {
+                        "before": before,
+                        "after": after,
+                        "mesh_before": mesh_before,
+                        "armature_before": rig_before,
+                    },
+                    verification=verification.to_dict(),
+                )
+
+            self._restore_group_weights(mesh, action.bone_name, group_before, created)
+            self.bpy.context.view_layer.update()
+            recovered = self._weight_snapshot(mesh, armature, rig_before)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": (
+                        recovered["weight_revision"] == before["weight_revision"]
+                        and recovered["rig_revision"] == rig_before["rig_revision"]
+                    ),
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Vertex-group weight readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            try:
+                self._restore_group_weights(mesh, action.bone_name, group_before, created)
+                self.bpy.context.view_layer.update()
+            except Exception:
+                pass
+            raise
+
+    def remove_vertex_group(self, request: Request, action: VertexGroupRemove):
+        (
+            mesh,
+            mesh_before,
+            armature,
+            armature_object_before,
+            rig_before,
+            before,
+        ) = self._weight_targets(action)
+        group = mesh.vertex_groups.get(action.bone_name)
+        if group is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Vertex group not found")
+        group_before = self._group_state(before, action.bone_name)
+        if group.index != before["group_count"] - 1:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Only the final vertex group can be removed with exact recovery",
+            )
+
+        removed = False
+        try:
+            mesh.vertex_groups.remove(group)
+            removed = True
+            self.bpy.context.view_layer.update()
+            after = self._weight_snapshot(mesh, armature, rig_before)
+            actual = {
+                "group_absent": self._group_state(after, action.bone_name) is None,
+                "group_count": after["group_count"],
+                "assignment_count": after["assignment_count"],
+                "mesh_object_id": after["mesh_object_id"],
+                "armature_object_id": after["armature_object_id"],
+                "rig_revision": after["rig_revision"],
+                "mode": self.bpy.context.mode,
+            }
+            expected = {
+                "group_absent": True,
+                "group_count": before["group_count"] - 1,
+                "assignment_count": before["assignment_count"] - len(group_before["weights"]),
+                "mesh_object_id": mesh_before["object_id"],
+                "armature_object_id": armature_object_before["object_id"],
+                "rig_revision": rig_before["rig_revision"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {
+                        "before": before,
+                        "after": after,
+                        "mesh_before": mesh_before,
+                        "armature_before": rig_before,
+                    },
+                    verification=verification.to_dict(),
+                )
+
+            restored = mesh.vertex_groups.new(name=action.bone_name)
+            for item in group_before["weights"]:
+                restored.add([item["vertex_index"]], item["weight"], "REPLACE")
+            self.bpy.context.view_layer.update()
+            recovered = self._weight_snapshot(mesh, armature, rig_before)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": (
+                        recovered["weight_revision"] == before["weight_revision"]
+                        and recovered["rig_revision"] == rig_before["rig_revision"]
+                    ),
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Vertex-group removal readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if removed and mesh.vertex_groups.get(action.bone_name) is None:
+                try:
+                    restored = mesh.vertex_groups.new(name=action.bone_name)
+                    for item in group_before["weights"]:
+                        restored.add([item["vertex_index"]], item["weight"], "REPLACE")
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
     def tools(self):
         return [
             Tool(
@@ -1811,5 +2262,23 @@ class RiggingOperations:
                 SafetyClass.MUTATION,
                 MeshArmatureBinding.parse,
                 self.unbind_mesh_armature,
+            ),
+            Tool(
+                "rig.mesh_weights_inspect",
+                SafetyClass.READ_ONLY,
+                MeshWeightInspect.parse,
+                self.inspect_mesh_weights,
+            ),
+            Tool(
+                "rig.vertex_group_weights_set",
+                SafetyClass.MUTATION,
+                VertexGroupWeightsSet.parse,
+                self.set_vertex_group_weights,
+            ),
+            Tool(
+                "rig.vertex_group_remove",
+                SafetyClass.MUTATION,
+                VertexGroupRemove.parse,
+                self.remove_vertex_group,
             ),
         ]
