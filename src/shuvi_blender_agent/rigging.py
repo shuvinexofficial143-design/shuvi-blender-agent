@@ -570,9 +570,15 @@ class RiggingOperations:
         original = self._bone_from_snapshot(before, action.bone_name)
         if original is None:
             raise AgentError(ErrorCode.NOT_FOUND, "Bone not found")
-        if action.parent_name is not None and self._bone_from_snapshot(before, action.parent_name) is None:
+        if (
+            action.parent_name is not None
+            and self._bone_from_snapshot(before, action.parent_name) is None
+        ):
             raise AgentError(ErrorCode.NOT_FOUND, "Parent bone not found")
-        if action.new_name != action.bone_name and self._bone_from_snapshot(before, action.new_name):
+        if (
+            action.new_name != action.bone_name
+            and self._bone_from_snapshot(before, action.new_name)
+        ):
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Bone name already exists")
 
         parent_by_name = {item["name"]: item["parent"] for item in before["bones"]}
@@ -774,9 +780,15 @@ class RiggingOperations:
                     left = obj.data.edit_bones.get(action.left_name)
                     right = obj.data.edit_bones.get(action.right_name)
                     if left is not None:
-                        left.head, left.tail = left_before["head_local"], left_before["tail_local"]
+                        left.head, left.tail = (
+                            left_before["head_local"],
+                            left_before["tail_local"],
+                        )
                     if right is not None:
-                        right.head, right.tail = right_before["head_local"], right_before["tail_local"]
+                        right.head, right.tail = (
+                            right_before["head_local"],
+                            right_before["tail_local"],
+                        )
                     self._set_mode("OBJECT")
                 except Exception:
                     pass
