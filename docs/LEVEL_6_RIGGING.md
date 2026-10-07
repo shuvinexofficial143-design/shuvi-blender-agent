@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **10%**.
+Current Level 6 source progress: **20%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -17,7 +17,7 @@ Production ready: **No**.
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | 1 | Armature + bone hierarchy inspection | complete |
-| 2 | Armature creation + bounded edit-bone creation | pending |
+| 2 | Armature creation + bounded edit-bone creation | complete |
 | 3 | Bone parenting / connect / rename / symmetry-safe editing | pending |
 | 4 | Pose transforms + bounded pose controls | pending |
 | 5 | Rig constraints + IK foundations | pending |
@@ -91,9 +91,95 @@ Real Blender armature API behavior, edit-bone lifetime rules, pose evaluation, d
 updates, constraints, deformation, skinning, weight normalization and viewport behavior remain
 runtime-unverified.
 
+
+## Milestone 2 — 20% complete
+
+Milestone 2 adds two bounded mutation tools over the Milestone 1 inspection/revision surface.
+
+### `rig.armature_create`
+
+Armature creation accepts:
+
+- unique object name
+- bounded object transform
+- fresh scene revision
+
+It requires Object mode and creates one local armature datablock named from the object plus one
+scene-linked ARMATURE object. Successful verification checks:
+
+- exact requested object name/type/transform
+- scene membership
+- exact armature datablock name
+- zero initial bones and pose bones
+- local/unlinked object and armature data
+
+Known verification mismatch removes the created object and armature datablock.
+
+### `rig.bone_create`
+
+Bone creation accepts:
+
+- fresh ObjectTarget
+- fresh `expected_rig_revision`
+- unique bone name
+- bounded head and tail coordinates
+- optional `use_deform` boolean
+
+The target must be an editable local ARMATURE in Object mode and must already be selected and
+active. Shuvi then performs only the bounded internal mode transition required by Blender:
+
+Object → Edit Armature → create one edit bone → Object.
+
+Milestone 2 intentionally creates only a standalone root bone:
+
+- parent = null
+- use_connect = false
+- no rename
+- no mirror
+- no hierarchy edit
+- no constraints or IK
+
+These remain Milestone 3+ scope.
+
+Head and tail coordinates are each bounded to ±100000 Blender units and must differ.
+
+Successful readback verifies:
+
+- exact +1 bone count
+- exact bone name
+- exact local head/tail
+- root parent state
+- fixed disconnected state
+- requested deform flag
+- same armature object identity
+- final Object mode
+
+Known verification mismatch re-enters bounded armature Edit mode, removes only the just-created
+bone, returns to Object mode and verifies recovery to the original `rig_revision`.
+
+### Milestone 2 source checkpoint
+
+Code/test checkpoint: `2bdef6e4f3d20f59bad97191a677878a97eff7a8`.
+
+CI run `37582553780` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **729 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **75 package modules**
+
+Factory typed tools: **186**.
+Current registry/catalog hard maximum: **192**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestone 1 is complete at 10%. Do not begin Milestone 2 without explicit user permission.
+Milestones 1-2 are complete at 20%. Do not begin Milestone 3 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.

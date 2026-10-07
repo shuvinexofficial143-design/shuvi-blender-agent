@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 184 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 186 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -34,6 +34,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | system.capabilities | none | read_only | protocol/session/Blender version and operation catalog |
 | scene.inspect | none | read_only | scene/file/render/frames, context, cursor, units, pivot, type counts, world presence, revision |
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
+| rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
+| rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1080,3 +1082,25 @@ Current Level 3 source progress: **100%**.
   future Level 6 milestones.
 - Real Blender edit-bone lifetimes, pose evaluation, constraints, IK, skinning, deformation,
   vertex-weight behavior and dependency-graph results remain runtime-unverified.
+
+
+### Level 6 milestone 2 limits
+
+- `rig.armature_create` requires a fresh scene revision, Object mode, an unused object name
+  and an unused derived armature-data name. It creates one empty local armature datablock and
+  one scene-linked ARMATURE object, applies the requested bounded transform and verifies both
+  object and rig readback. Verification mismatch removes both created resources.
+- `rig.bone_create` requires a fresh ObjectTarget, a fresh `expected_rig_revision`, an
+  editable local armature, Object mode, and the target selected and active.
+- Bone names are unique and bounded by the existing 63-byte object-name contract.
+- Bone head/tail coordinates are bounded to ±100000 Blender units and must differ.
+- Milestone 2 creates only standalone root bones: parent is fixed null and
+  `use_connect=false`. Parenting/connect/rename are intentionally deferred to Milestone 3.
+- Bone creation enters only the internal allowlisted ARMATURE Edit mode, creates one edit bone,
+  returns to Object mode, then verifies count/name/head/tail/deform state and object identity.
+- Verification mismatch removes only the just-created bone, returns to Object mode and checks
+  recovery against the original `rig_revision`.
+- Milestone 2 adds two mutation tools, taking the factory from 184 to **186 typed tools**
+  under the existing bounded **192-tool** registry/client cap.
+- Real Blender edit-bone lifetime behavior, mode/context quirks, pose-channel regeneration,
+  dependency-graph updates and deformation remain runtime-unverified.
