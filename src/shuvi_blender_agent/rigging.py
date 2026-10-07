@@ -1665,7 +1665,7 @@ class RiggingOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Armature modifier target differs")
         state = modifier_snapshot(modifier)
         expected_state = self._managed_armature_modifier_state(action.modifier_name, armature.name)
-        if not compare(expected_state, state).matched:
+        if state != expected_state:
             raise AgentError(
                 ErrorCode.SAFETY_DENIED,
                 "Armature modifier is outside M6 managed state",
