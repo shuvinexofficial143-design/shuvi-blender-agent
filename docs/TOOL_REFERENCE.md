@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 197 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 200 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -47,6 +47,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | rig.mesh_weights_inspect | mesh_object_id, armature_object_id | read_only | inspect one managed M6-bound mesh/armature pair with exact group order, sparse weights, mismatch diagnostics and deterministic weight_revision |
 | rig.vertex_group_weights_set | mesh_target, armature_target, expected_rig_revision, expected_weight_revision, bone_name, weights | mutation | fully replace one deform-bone-matched vertex group's bounded sparse weights with exact readback and recovery |
 | rig.vertex_group_remove | mesh_target, armature_target, expected_rig_revision, expected_weight_revision, bone_name | mutation | remove only the final deform-bone-matched vertex group with exact absence/count readback and append-safe recreation recovery |
+| rig.ik_fk_preview | object_id, upper_bone, middle_bone, end_bone, target_bone, constraint_name | read_only | validate one explicit upper→middle→end deform chain plus non-deforming control target and report managed IK/FK helper state/mode |
+| rig.ik_fk_setup | target, expected_rig_revision, upper_bone, middle_bone, end_bone, target_bone, constraint_name, initial_mode | mutation | create one managed same-armature IK constraint with chain_count=3 and deterministic initial IK/FK mute state with rollback |
+| rig.ik_fk_switch | target, expected_rig_revision, upper_bone, middle_bone, end_bone, target_bone, constraint_name, mode | mutation | switch only the managed IK helper mute state between IK and FK with exact readback/recovery |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1237,3 +1240,25 @@ Current Level 3 source progress: **100%**.
   the bounded **200-tool** registry/client cap.
 - Real Blender skin deformation, dependency-graph evaluation, weight-paint behavior and modifier
   evaluation remain runtime-unverified.
+
+
+### Level 6 milestone 8 limits
+
+- Preview/setup/switch require four explicit distinct bone names: upper, middle, end and target.
+- The armature hierarchy must be exactly upper → middle → end. All three chain bones must be
+  deform-enabled and the target/control bone must be non-deforming.
+- Setup requires fresh ObjectTarget + fresh `rig_revision`, Object mode, selected/active local
+  editable armature state and the existing pose-constraint count bounds.
+- The only helper constraint created is same-armature `IK` on the end bone with influence 1.0,
+  target = the explicit control bone and fixed chain count **3**.
+- Initial `IK` mode leaves the managed IK constraint unmuted; initial `FK` mode mutes it.
+- Switch accepts only a fully recognized M8-managed helper and changes only its `mute` field.
+- Setup mismatch removes the exact created constraint; switch mismatch restores the previous mute
+  state. Both verify recovery to the original `rig_revision`.
+- No pole target, driver, custom property, generic constraint type, automatic control-bone
+  generation, arbitrary solver option or automatic IK/FK matching is exposed.
+- Existing `rig.pose_constraint_remove` remains the bounded cleanup path.
+- Milestone 8 adds three tools, taking the factory from 197 to **200 typed tools**, exactly at the
+  current **200-tool** registry/client cap.
+- Real Blender IK solve behavior, evaluated transforms, dependency-graph behavior and animation
+  interpolation remain runtime-unverified.
