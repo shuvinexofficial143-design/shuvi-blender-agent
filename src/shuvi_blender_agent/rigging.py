@@ -345,7 +345,10 @@ class RiggingOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Editable local armature required")
         if self.bpy.context.mode != "OBJECT":
             raise AgentError(ErrorCode.SAFETY_DENIED, "Object mode required")
-        if getattr(self.bpy.context.view_layer.objects, "active", None) != obj or not obj.select_get():
+        if (
+            getattr(self.bpy.context.view_layer.objects, "active", None) != obj
+            or not obj.select_get()
+        ):
             raise AgentError(
                 ErrorCode.SAFETY_DENIED,
                 "Bone creation requires the target armature selected and active",
