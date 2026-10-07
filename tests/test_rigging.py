@@ -128,7 +128,7 @@ def setup():
 
 def test_factory_registers_level6_armature_inspection_under_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
     item = next(entry for entry in registry.catalog() if entry["name"] == "rig.armature_inspect")
@@ -566,7 +566,7 @@ def inspect_rig(registry, object_id):
 
 def test_factory_registers_level6_m3_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.bone_hierarchy_edit", "rig.bone_symmetry_edit"} <= names
@@ -841,7 +841,7 @@ def pose_payload(rig, bone_name="Root", rotation_mode="XYZ", rotation=(0.1, 0.2,
 
 def test_factory_registers_level6_m4_pose_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.pose_bone_transform", "rig.pose_bone_reset"} <= names
@@ -1080,7 +1080,7 @@ def ik_constraint_payload(rig, bone_name="Arm.L", target_bone_name="Root"):
 
 def test_factory_registers_level6_m5_constraint_tools_at_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.pose_constraint_create", "rig.pose_constraint_remove"} <= names
@@ -1380,7 +1380,7 @@ def binding_payload(mesh_state, rig_state, modifier_name="Shuvi Armature"):
 
 def test_factory_registers_level6_m6_binding_tools_below_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 194
+    assert len(registry.catalog()) == 197
     assert MAX_REGISTERED_TOOLS == 200
     assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
     names = {item["name"] for item in registry.catalog()}
