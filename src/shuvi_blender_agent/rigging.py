@@ -1217,7 +1217,6 @@ class RiggingOperations:
                     pass
             raise
 
-
     @staticmethod
     def _constraint_object(pose_bone, name):
         return next(
@@ -1259,11 +1258,7 @@ class RiggingOperations:
             for axis in ("x", "y", "z"):
                 low = state[f"min_{axis}"]
                 high = state[f"max_{axis}"]
-                if (
-                    low < -MAX_POSE_ROTATION
-                    or high > MAX_POSE_ROTATION
-                    or low > high
-                ):
+                if low < -MAX_POSE_ROTATION or high > MAX_POSE_ROTATION or low > high:
                     raise AgentError(
                         ErrorCode.SAFETY_DENIED,
                         "Limit Rotation settings are outside managed bounds",
