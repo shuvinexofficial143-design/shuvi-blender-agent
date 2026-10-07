@@ -78,6 +78,7 @@ from .modeling_topology import (
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
+from .rigging import ArmatureInspect
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .sculpting import SculptBrush, SculptSmooth
@@ -112,6 +113,7 @@ def builtin_contracts() -> dict:
         "system.ping": (read, empty),
         "system.capabilities": (read, empty),
         "scene.inspect": (read, empty),
+        "rig.armature_inspect": (read, ArmatureInspect.parse),
         "character.workflow_preview": (read, CharacterWorkflowPreview.parse),
         "character.level3_acceptance": (read, Level3Acceptance.parse),
         "character.proportion_guide": (read, ProportionGuide.parse),
