@@ -575,9 +575,8 @@ class RiggingOperations:
             and self._bone_from_snapshot(before, action.parent_name) is None
         ):
             raise AgentError(ErrorCode.NOT_FOUND, "Parent bone not found")
-        if (
-            action.new_name != action.bone_name
-            and self._bone_from_snapshot(before, action.new_name)
+        if action.new_name != action.bone_name and self._bone_from_snapshot(
+            before, action.new_name
         ):
             raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Bone name already exists")
 
