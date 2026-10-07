@@ -6,7 +6,7 @@ from fake_bpy import FakeObject, fake_bpy
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.operations import ObjectOperations
-from shuvi_blender_agent.rigging import ArmatureInspect, RiggingOperations
+from shuvi_blender_agent.rigging import ArmatureCreate, ArmatureInspect, BoneCreate, RiggingOperations
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
 from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS, ToolRegistry
@@ -88,7 +88,7 @@ def setup():
 
 def test_factory_registers_level6_armature_inspection_under_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 184
+    assert len(registry.catalog()) == 186
     assert MAX_REGISTERED_TOOLS == 192
     assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
     item = next(entry for entry in registry.catalog() if entry["name"] == "rig.armature_inspect")
@@ -201,3 +201,282 @@ def test_armature_inspection_rejects_bone_count_above_bound():
 def test_armature_inspection_contract_rejects_invalid_payload(payload):
     with pytest.raises(AgentError):
         ArmatureInspect.parse(payload)
+
+
+
+def transform():
+    return {
+        "location": [0, 0, 0],
+        "rotation_euler": [0, 0, 0],
+        "scale": [1, 1, 1],
+    }
+
+
+def scene_revision(registry):
+    return registry.dispatch(Request("scene.inspect")).data["revision"]
+
+
+def install_armature_mode_ops(bpy):
+    def mode_set(*, mode):
+        active = bpy.context.view_layer.objects.active
+        if active is None or active.type != "ARMATURE":
+            return {"CANCELLED"}
+        if mode == "EDIT":
+            bpy.context.mode = "EDIT_ARMATURE"
+        elif mode == "OBJECT":
+            bpy.context.mode = "OBJECT"
+        else:
+            return {"CANCELLED"}
+        return {"FINISHED"}
+
+    bpy.ops = NS(object=NS(mode_set=mode_set))
+
+
+def create_armature(registry, name="NewRig"):
+    return registry.dispatch(
+        Request(
+            "rig.armature_create",
+            {
+                "name": name,
+                "transform": transform(),
+                "expected_scene_revision": scene_revision(registry),
+            },
+        )
+    )
+
+
+def target_from_rig(rig):
+    return {
+        "object_id": rig["object_id"],
+        "expected_name": rig["name"],
+        "expected_revision": rig["object_revision"],
+    }
+
+
+def test_armature_create_is_verified_empty_local_rig():
+    bpy = fake_bpy()
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+
+    result = create_armature(registry)
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]
+    assert after["object"]["name"] == "NewRig"
+    assert after["object"]["type"] == "ARMATURE"
+    assert after["object"]["scene_member"] is True
+    assert after["rig"]["armature_name"] == "NewRigArmature"
+    assert after["rig"]["bone_count"] == 0
+    assert after["rig"]["pose_bone_count"] == 0
+    assert after["rig"]["linked_object"] is False
+    assert after["rig"]["linked_armature_data"] is False
+    assert bpy.data.objects.get("NewRig") is not None
+    assert bpy.data.armatures.get("NewRigArmature") is not None
+
+
+def test_bone_create_requires_fresh_rig_and_verifies_exact_created_bone():
+    bpy = fake_bpy()
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    created = create_armature(registry)
+    rig = created.data["after"]["rig"]
+    obj = bpy.data.objects.get("NewRig")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    install_armature_mode_ops(bpy)
+
+    result = registry.dispatch(
+        Request(
+            "rig.bone_create",
+            {
+                "target": target_from_rig(rig),
+                "expected_rig_revision": rig["rig_revision"],
+                "name": "Root",
+                "head": [0, 0, 0],
+                "tail": [0, 0, 2],
+                "use_deform": False,
+            },
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]
+    assert after["bone_count"] == 1
+    assert after["root_bones"] == ["Root"]
+    root = after["bones"][0]
+    assert root["name"] == "Root"
+    assert root["parent"] is None
+    assert root["head_local"] == [0.0, 0.0, 0.0]
+    assert root["tail_local"] == [0.0, 0.0, 2.0]
+    assert root["use_connect"] is False
+    assert root["use_deform"] is False
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_bone_create_rejects_stale_rig_revision_and_duplicate_name():
+    bpy = fake_bpy()
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    created = create_armature(registry)
+    rig = created.data["after"]["rig"]
+    obj = bpy.data.objects.get("NewRig")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    install_armature_mode_ops(bpy)
+
+    external = obj.data.edit_bones.new("External")
+    external.head = [0, 0, 0]
+    external.tail = [0, 1, 0]
+    stale = registry.dispatch(
+        Request(
+            "rig.bone_create",
+            {
+                "target": target_from_rig(rig),
+                "expected_rig_revision": rig["rig_revision"],
+                "name": "Root",
+                "head": [0, 0, 0],
+                "tail": [0, 0, 1],
+            },
+        )
+    )
+    assert stale.status == Status.FAILED
+    assert stale.error.code == ErrorCode.STALE_STATE
+
+    current = registry.dispatch(
+        Request("rig.armature_inspect", {"object_id": rig["object_id"]})
+    ).data
+    duplicate = registry.dispatch(
+        Request(
+            "rig.bone_create",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "name": "External",
+                "head": [0, 0, 0],
+                "tail": [0, 0, 1],
+            },
+        )
+    )
+    assert duplicate.status == Status.FAILED
+    assert duplicate.error.code == ErrorCode.AMBIGUOUS_TARGET
+
+
+def test_bone_create_requires_target_selected_and_active():
+    bpy = fake_bpy()
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    created = create_armature(registry)
+    rig = created.data["after"]["rig"]
+    install_armature_mode_ops(bpy)
+
+    result = registry.dispatch(
+        Request(
+            "rig.bone_create",
+            {
+                "target": target_from_rig(rig),
+                "expected_rig_revision": rig["rig_revision"],
+                "name": "Root",
+                "head": [0, 0, 0],
+                "tail": [0, 0, 1],
+            },
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_bone_create_rolls_back_on_verification_failure(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy = fake_bpy()
+    inspector = BpyInspector(bpy)
+    operations = RiggingOperations(ObjectOperations(inspector))
+    registry = ToolRegistry(operations.tools(), SafetyPolicy(allow_mutations=True))
+
+    full = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    created = create_armature(full)
+    rig = created.data["after"]["rig"]
+    obj = bpy.data.objects.get("NewRig")
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    install_armature_mode_ops(bpy)
+
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request(
+            "rig.bone_create",
+            {
+                "target": target_from_rig(rig),
+                "expected_rig_revision": rig["rig_revision"],
+                "name": "RollbackBone",
+                "head": [0, 0, 0],
+                "tail": [1, 0, 0],
+            },
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert obj.data.bones == []
+    assert bpy.context.mode == "OBJECT"
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "name": "Rig",
+            "transform": transform(),
+            "expected_scene_revision": "x" * 64,
+            "extra": True,
+        },
+        {
+            "name": "",
+            "transform": transform(),
+            "expected_scene_revision": "x" * 64,
+        },
+    ],
+)
+def test_armature_create_contract_rejects_invalid_payload(payload):
+    with pytest.raises(AgentError):
+        ArmatureCreate.parse(payload)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {
+            "target": {
+                "object_id": "id",
+                "expected_name": "Rig",
+                "expected_revision": "x" * 64,
+            },
+            "expected_rig_revision": "y" * 64,
+            "name": "Bone",
+            "head": [0, 0, 0],
+            "tail": [0, 0, 0],
+        },
+        {
+            "target": {
+                "object_id": "id",
+                "expected_name": "Rig",
+                "expected_revision": "x" * 64,
+            },
+            "expected_rig_revision": "y" * 64,
+            "name": "Bone",
+            "head": [0, 0, 0],
+            "tail": [0, 0, 1],
+            "use_deform": "yes",
+        },
+    ],
+)
+def test_bone_create_contract_rejects_invalid_payload(payload):
+    with pytest.raises(AgentError):
+        BoneCreate.parse(payload)
