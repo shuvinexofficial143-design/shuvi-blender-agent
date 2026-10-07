@@ -294,8 +294,8 @@ def test_bone_create_requires_fresh_rig_and_verifies_exact_created_bone():
         Request(
             "rig.bone_create",
             {
-                "target": target_from_rig(selected),
-                "expected_rig_revision": selected["rig_revision"],
+                "target": target_from_rig(rig),
+                "expected_rig_revision": rig["rig_revision"],
                 "name": "Root",
                 "head": [0, 0, 0],
                 "tail": [0, 0, 2],
@@ -338,8 +338,8 @@ def test_bone_create_rejects_stale_rig_revision_and_duplicate_name():
         Request(
             "rig.bone_create",
             {
-                "target": target_from_rig(rig),
-                "expected_rig_revision": rig["rig_revision"],
+                "target": target_from_rig(selected),
+                "expected_rig_revision": selected["rig_revision"],
                 "name": "Root",
                 "head": [0, 0, 0],
                 "tail": [0, 0, 1],
