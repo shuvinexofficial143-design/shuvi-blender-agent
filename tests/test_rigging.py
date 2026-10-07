@@ -11,7 +11,6 @@ from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
 from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS, ToolRegistry
 
-
 IDENTITY = [[float(row == col) for col in range(4)] for row in range(4)]
 
 
