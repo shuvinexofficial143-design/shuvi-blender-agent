@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **30%**.
+Current Level 6 source progress: **40%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -19,7 +19,7 @@ Production ready: **No**.
 | 1 | Armature + bone hierarchy inspection | complete |
 | 2 | Armature creation + bounded edit-bone creation | complete |
 | 3 | Bone parenting / connect / rename / symmetry-safe editing | complete |
-| 4 | Pose transforms + bounded pose controls | pending |
+| 4 | Pose transforms + bounded pose controls | complete |
 | 5 | Rig constraints + IK foundations | pending |
 | 6 | Mesh-to-armature binding + Armature modifier | pending |
 | 7 | Vertex groups + bounded weight workflows | pending |
@@ -242,9 +242,79 @@ Current registry/catalog hard maximum: **192**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+
+## Milestone 4 — 40% complete
+
+Milestone 4 adds two bounded pose-channel mutation tools over the fresh `rig_revision` surface.
+
+### `rig.pose_bone_transform`
+
+Pose transforms accept:
+
+- fresh ObjectTarget
+- fresh `expected_rig_revision`
+- explicit pose-bone name
+- bounded location
+- rotation mode `XYZ` or `QUATERNION`
+- bounded rotation payload
+- bounded positive scale
+
+The target must be an editable local armature in Object mode, selected and active. The pose bone
+must already exist in the inspected pose map. Milestone 4 writes only the explicit raw pose
+channels; it does not add constraints, IK, drivers or a generic pose operator surface.
+
+Location components are bounded to ±100000 Blender units. XYZ Euler components are bounded to
+±1000 radians. Quaternion payloads contain exactly four finite components in [-1, 1], must be
+non-zero, and are deterministically normalized before write/readback verification. Scale has
+exactly three finite components in [0.001, 1000].
+
+Successful readback verifies the same armature object, Object mode, exact requested location and
+scale, requested rotation mode, and the corresponding Euler or normalized quaternion channel.
+Known verification mismatch restores the original rotation mode, location, Euler rotation,
+quaternion rotation and scale, updates the view layer and verifies recovery to the original
+`rig_revision`.
+
+### `rig.pose_bone_reset`
+
+Pose reset accepts a fresh ObjectTarget, fresh `expected_rig_revision` and one explicit pose-bone
+name. It restores only that bone to deterministic identity pose channels:
+
+- rotation mode = `QUATERNION`
+- location = [0, 0, 0]
+- Euler rotation = [0, 0, 0]
+- quaternion rotation = [1, 0, 0, 0]
+- scale = [1, 1, 1]
+
+Successful readback verifies the exact identity state, same armature object and Object mode.
+Known verification mismatch restores the complete pre-call pose state and verifies recovery to
+the original `rig_revision`.
+
+Pre-existing pose constraints are inspected but not created, changed or removed by Milestone 4.
+Constraint authoring and IK remain Milestone 5 scope.
+
+### Milestone 4 source checkpoint
+
+Code/test checkpoint: `8000276f8cde893bde2df184c4d0aa221f939033`.
+
+CI run `37605280427` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **747 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **75 package modules**
+
+Factory typed tools: **190**.
+Current registry/catalog hard maximum: **192**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-3 are complete at 30%. Do not begin Milestone 4 without explicit user permission.
+Milestones 1-4 are complete at 40%. Do not begin Milestone 5 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.
