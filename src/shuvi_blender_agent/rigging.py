@@ -1505,7 +1505,10 @@ class RiggingOperations:
         if getattr(mesh.data, "library", None) is not None or getattr(
             armature.data, "library", None
         ) is not None:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Binding requires local mesh and armature data")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Binding requires local mesh and armature data",
+            )
         if mesh.data.shape_keys is not None:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Binding does not accept shape-key meshes")
         if mesh.parent is not None:
@@ -1573,7 +1576,9 @@ class RiggingOperations:
                 "armature_object_id": armature_object_before["object_id"],
                 "parent_id": mesh_after["parent_id"],
                 "modifier_count": mesh_after["modifier_count"],
-                "modifier": modifier_snapshot(actual_modifier) if actual_modifier is not None else None,
+                "modifier": (
+                    modifier_snapshot(actual_modifier) if actual_modifier is not None else None
+                ),
                 "modifier_target_object_id": (
                     self.inspector.identity(actual_modifier.object)
                     if actual_modifier is not None and getattr(actual_modifier, "object", None)
