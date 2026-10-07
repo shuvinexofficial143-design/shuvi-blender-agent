@@ -6,11 +6,7 @@ from fake_bpy import FakeObject, fake_bpy
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.operations import ObjectOperations
-from shuvi_blender_agent.rigging import (
-    MAX_RIG_BONES,
-    ArmatureInspect,
-    RiggingOperations,
-)
+from shuvi_blender_agent.rigging import MAX_RIG_BONES, ArmatureInspect, RiggingOperations
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
 from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS, ToolRegistry
