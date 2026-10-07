@@ -2341,7 +2341,10 @@ class RiggingOperations:
         if not upper["use_deform"] or not middle["use_deform"] or not end["use_deform"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "IK/FK chain bones must be deform-enabled")
         if target["use_deform"]:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "IK target control bone must be non-deforming")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "IK target control bone must be non-deforming",
+            )
         end_pose = poses[action.end_bone]
         constraint = self._constraint_from_snapshot(end_pose, action.constraint_name)
         managed = False
