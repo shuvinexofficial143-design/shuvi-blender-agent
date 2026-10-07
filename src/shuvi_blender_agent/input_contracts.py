@@ -78,7 +78,13 @@ from .modeling_topology import (
 from .models import CreateObject, DuplicateObject, PageQuery, SetTransform
 from .object_core import RenameObject, SetProperties
 from .rendering import FileAction, RenderConfig
-from .rigging import ArmatureCreate, ArmatureInspect, BoneCreate, BoneHierarchyEdit, BoneSymmetryEdit
+from .rigging import (
+    ArmatureCreate,
+    ArmatureInspect,
+    BoneCreate,
+    BoneHierarchyEdit,
+    BoneSymmetryEdit,
+)
 from .safety import SafetyClass
 from .scene_state import CursorSet, SceneRename, SetPivot, SetUnits
 from .sculpting import SculptBrush, SculptSmooth
