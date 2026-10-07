@@ -1180,6 +1180,39 @@ def test_pose_constraint_remove_verifies_absence_and_counts():
     )
 
 
+
+def test_pose_constraint_remove_rejects_nonfinal_constraint_for_exact_recovery():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    first = registry.dispatch(
+        Request("rig.pose_constraint_create", limit_constraint_payload(before))
+    )
+    assert first.status == Status.VERIFIED
+
+    current = inspect_rig(registry, object_id)
+    second = registry.dispatch(
+        Request("rig.pose_constraint_create", ik_constraint_payload(current))
+    )
+    assert second.status == Status.VERIFIED
+
+    current = inspect_rig(registry, object_id)
+    result = registry.dispatch(
+        Request(
+            "rig.pose_constraint_remove",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Arm.L",
+                "constraint_name": "Shuvi Limit",
+                "expected_constraint_type": "LIMIT_ROTATION",
+            },
+        )
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+    assert inspect_rig(registry, object_id)["rig_revision"] == current["rig_revision"]
+
 def test_pose_constraint_create_verification_failure_removes_created_constraint(monkeypatch):
     from shuvi_blender_agent.verification import compare as real_compare
 
