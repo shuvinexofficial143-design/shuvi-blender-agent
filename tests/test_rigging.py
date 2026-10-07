@@ -286,9 +286,7 @@ def test_bone_create_requires_fresh_rig_and_verifies_exact_created_bone():
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     install_armature_mode_ops(bpy)
-    rig = registry.dispatch(
-        Request("rig.armature_inspect", {"object_id": rig["object_id"]})
-    ).data
+    rig = registry.dispatch(Request("rig.armature_inspect", {"object_id": rig["object_id"]})).data
 
     result = registry.dispatch(
         Request(
@@ -403,9 +401,7 @@ def test_bone_create_rolls_back_on_verification_failure(monkeypatch):
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     install_armature_mode_ops(bpy)
-    rig = registry.dispatch(
-        Request("rig.armature_inspect", {"object_id": rig["object_id"]})
-    ).data
+    rig = registry.dispatch(Request("rig.armature_inspect", {"object_id": rig["object_id"]})).data
 
     calls = {"count": 0}
 
