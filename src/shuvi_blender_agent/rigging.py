@@ -1,7 +1,7 @@
-"""Level 6 rigging: bounded inspection, armature creation and hierarchy editing."""
+"""Level 6 rigging: bounded inspection, hierarchy editing and pose controls."""
 
 from dataclasses import dataclass
-from math import isfinite
+from math import isfinite, sqrt
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
@@ -10,13 +10,16 @@ from .models import ObjectTarget, Transform, object_name, vector3
 from .operations import ObjectOperations
 from .safety import SafetyClass, require_revision
 from .tools import Tool
-from .validation import fields, invalid, string
+from .validation import fields, invalid, number, string
 from .verification import compare
 
 MAX_RIG_BONES = 256
 MAX_POSE_CONSTRAINTS_PER_BONE = 64
 MAX_POSE_CONSTRAINTS = 512
 MAX_BONE_COORDINATE = 100_000
+MAX_POSE_LOCATION = 100_000
+MAX_POSE_ROTATION = 1_000
+MAX_POSE_SCALE = 1_000
 
 
 @dataclass(frozen=True)
@@ -158,6 +161,76 @@ class BoneSymmetryEdit:
             right_name,
             left_head,
             left_tail,
+        )
+
+
+@dataclass(frozen=True)
+class PoseBoneTransform:
+    target: ObjectTarget
+    expected_rig_revision: str
+    bone_name: str
+    location: tuple[float, float, float]
+    rotation_mode: str
+    rotation: tuple[float, ...]
+    scale: tuple[float, float, float]
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {
+                "target",
+                "expected_rig_revision",
+                "bone_name",
+                "location",
+                "rotation_mode",
+                "rotation",
+                "scale",
+            },
+        )
+        rotation_mode = data["rotation_mode"]
+        if not isinstance(rotation_mode, str) or rotation_mode not in {"XYZ", "QUATERNION"}:
+            raise invalid("rotation_mode must be XYZ or QUATERNION")
+        location = vector3(data["location"], "location", MAX_POSE_LOCATION)
+        scale_raw = data["scale"]
+        if not isinstance(scale_raw, (list, tuple)) or len(scale_raw) != 3:
+            raise invalid("scale must have exactly three components")
+        scale = tuple(number(item, "scale", 0.001, MAX_POSE_SCALE) for item in scale_raw)
+        rotation_raw = data["rotation"]
+        if rotation_mode == "XYZ":
+            rotation = vector3(rotation_raw, "rotation", MAX_POSE_ROTATION)
+        else:
+            if not isinstance(rotation_raw, (list, tuple)) or len(rotation_raw) != 4:
+                raise invalid("Quaternion rotation must have exactly four components")
+            quaternion = tuple(number(item, "rotation", -1.0, 1.0) for item in rotation_raw)
+            magnitude = sqrt(sum(item * item for item in quaternion))
+            if magnitude < 1e-8:
+                raise invalid("Quaternion rotation must be non-zero")
+            rotation = tuple(item / magnitude for item in quaternion)
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            object_name(data["bone_name"]),
+            location,
+            rotation_mode,
+            rotation,
+            scale,
+        )
+
+
+@dataclass(frozen=True)
+class PoseBoneReset:
+    target: ObjectTarget
+    expected_rig_revision: str
+    bone_name: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(data, {"target", "expected_rig_revision", "bone_name"})
+        return cls(
+            ObjectTarget.parse(data["target"]),
+            string(data["expected_rig_revision"], "expected_rig_revision", limit=64),
+            object_name(data["bone_name"]),
         )
 
 
@@ -797,6 +870,184 @@ class RiggingOperations:
                     pass
             raise
 
+    @staticmethod
+    def _pose_bone_object(obj, name):
+        pose = getattr(obj, "pose", None)
+        bones = list(getattr(pose, "bones", ())) if pose is not None else []
+        return next((item for item in bones if getattr(item, "name", None) == name), None)
+
+    @staticmethod
+    def _restore_pose_state(pose_bone, state):
+        pose_bone.rotation_mode = state["rotation_mode"]
+        pose_bone.location = list(state["location"])
+        pose_bone.rotation_euler = list(state["rotation_euler"])
+        pose_bone.rotation_quaternion = list(state["rotation_quaternion"])
+        pose_bone.scale = list(state["scale"])
+
+    def _pose_target(self, action):
+        obj, target_before = self._require_editable_active_armature(action.target)
+        before = self._snapshot(obj)
+        require_revision(action.expected_rig_revision, before["rig_revision"])
+        pose_state = next(
+            (item for item in before["pose_bones"] if item["name"] == action.bone_name),
+            None,
+        )
+        if pose_state is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Pose bone not found")
+        pose_bone = self._pose_bone_object(obj, action.bone_name)
+        if pose_bone is None:
+            raise AgentError(ErrorCode.NOT_FOUND, "Pose bone unavailable")
+        return obj, target_before, before, pose_bone, pose_state
+
+    def set_pose_bone_transform(self, request: Request, action: PoseBoneTransform):
+        obj, target_before, before, pose_bone, pose_before = self._pose_target(action)
+        changed = False
+        try:
+            pose_bone.location = list(action.location)
+            pose_bone.scale = list(action.scale)
+            pose_bone.rotation_mode = action.rotation_mode
+            if action.rotation_mode == "XYZ":
+                pose_bone.rotation_euler = list(action.rotation)
+            else:
+                pose_bone.rotation_quaternion = list(action.rotation)
+            changed = True
+            self.bpy.context.view_layer.update()
+
+            after = self._snapshot(obj)
+            pose_after = next(
+                (item for item in after["pose_bones"] if item["name"] == action.bone_name),
+                None,
+            )
+            expected_pose = {
+                "name": action.bone_name,
+                "rotation_mode": action.rotation_mode,
+                "location": list(action.location),
+                "scale": list(action.scale),
+            }
+            if action.rotation_mode == "XYZ":
+                expected_pose["rotation_euler"] = list(action.rotation)
+            else:
+                expected_pose["rotation_quaternion"] = list(action.rotation)
+            actual = {
+                "pose_bone": pose_after,
+                "object_id": after["object_id"],
+                "mode": self.bpy.context.mode,
+            }
+            expected = {
+                "pose_bone": expected_pose,
+                "object_id": target_before["object_id"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after},
+                    verification=verification.to_dict(),
+                )
+
+            self._restore_pose_state(pose_bone, pose_before)
+            self.bpy.context.view_layer.update()
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Pose transform readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if changed:
+                try:
+                    self._restore_pose_state(pose_bone, pose_before)
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
+    def reset_pose_bone(self, request: Request, action: PoseBoneReset):
+        obj, target_before, before, pose_bone, pose_before = self._pose_target(action)
+        changed = False
+        try:
+            pose_bone.rotation_mode = "QUATERNION"
+            pose_bone.location = [0.0, 0.0, 0.0]
+            pose_bone.rotation_euler = [0.0, 0.0, 0.0]
+            pose_bone.rotation_quaternion = [1.0, 0.0, 0.0, 0.0]
+            pose_bone.scale = [1.0, 1.0, 1.0]
+            changed = True
+            self.bpy.context.view_layer.update()
+
+            after = self._snapshot(obj)
+            pose_after = next(
+                (item for item in after["pose_bones"] if item["name"] == action.bone_name),
+                None,
+            )
+            actual = {
+                "pose_bone": pose_after,
+                "object_id": after["object_id"],
+                "mode": self.bpy.context.mode,
+            }
+            expected = {
+                "pose_bone": {
+                    "name": action.bone_name,
+                    "rotation_mode": "QUATERNION",
+                    "location": [0.0, 0.0, 0.0],
+                    "rotation_euler": [0.0, 0.0, 0.0],
+                    "rotation_quaternion": [1.0, 0.0, 0.0, 0.0],
+                    "scale": [1.0, 1.0, 1.0],
+                },
+                "object_id": target_before["object_id"],
+                "mode": "OBJECT",
+            }
+            verification = compare(expected, actual)
+            if verification.matched:
+                return Result(
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {"before": before, "after": after},
+                    verification=verification.to_dict(),
+                )
+
+            self._restore_pose_state(pose_bone, pose_before)
+            self.bpy.context.view_layer.update()
+            recovered = self._snapshot(obj)
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {
+                    "before": before,
+                    "after": after,
+                    "rolled_back": True,
+                    "recovery_verified": recovered["rig_revision"] == before["rig_revision"],
+                },
+                AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Pose reset readback differs from requested state",
+                ),
+                verification.to_dict(),
+            )
+        except Exception:
+            if changed:
+                try:
+                    self._restore_pose_state(pose_bone, pose_before)
+                    self.bpy.context.view_layer.update()
+                except Exception:
+                    pass
+            raise
+
     def tools(self):
         return [
             Tool(
@@ -828,5 +1079,17 @@ class RiggingOperations:
                 SafetyClass.MUTATION,
                 BoneSymmetryEdit.parse,
                 self.edit_bone_symmetry,
+            ),
+            Tool(
+                "rig.pose_bone_transform",
+                SafetyClass.MUTATION,
+                PoseBoneTransform.parse,
+                self.set_pose_bone_transform,
+            ),
+            Tool(
+                "rig.pose_bone_reset",
+                SafetyClass.MUTATION,
+                PoseBoneReset.parse,
+                self.reset_pose_bone,
             ),
         ]
