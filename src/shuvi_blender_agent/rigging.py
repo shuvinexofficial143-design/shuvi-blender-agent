@@ -74,7 +74,9 @@ class RiggingOperations:
             "parent": parent_name,
             "head_local": _vector(bone.head_local, "bone head", 3),
             "tail_local": _vector(bone.tail_local, "bone tail", 3),
-            "matrix_local": _matrix(matrix_local, "bone matrix") if matrix_local is not None else None,
+            "matrix_local": (
+                _matrix(matrix_local, "bone matrix") if matrix_local is not None else None
+            ),
             "use_connect": bool(getattr(bone, "use_connect", False)),
             "use_deform": bool(getattr(bone, "use_deform", True)),
             "inherit_scale": bounded_text(
@@ -130,7 +132,10 @@ class RiggingOperations:
 
         bones = list(getattr(obj.data, "bones", ()))
         if len(bones) > MAX_RIG_BONES:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Armature bone count exceeds inspection bound")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Armature bone count exceeds inspection bound",
+            )
 
         pose = getattr(obj, "pose", None)
         pose_bones = list(getattr(pose, "bones", ())) if pose is not None else []
