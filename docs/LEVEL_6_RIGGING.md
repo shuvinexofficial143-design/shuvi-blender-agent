@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **60%**.
+Current Level 6 source progress: **70%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -22,7 +22,7 @@ Production ready: **No**.
 | 4 | Pose transforms + bounded pose controls | complete |
 | 5 | Rig constraints + IK foundations | complete |
 | 6 | Mesh-to-armature binding + Armature modifier | complete |
-| 7 | Vertex groups + bounded weight workflows | pending |
+| 7 | Vertex groups + bounded weight workflows | complete |
 | 8 | IK/FK control-rig helpers | pending |
 | 9 | Versioned rig recipe library | pending |
 | 10 | Rigging QA / recovery / acceptance | pending |
@@ -464,9 +464,101 @@ Current registry/catalog hard maximum: **200**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+
+## Milestone 7 — 70% complete
+
+Milestone 7 adds one bounded read-only skin-weight inspection surface plus two explicit
+vertex-group mutation tools over the Milestone 6 managed Armature binding.
+
+### `rig.mesh_weights_inspect`
+
+Weight inspection accepts one current-session mesh object ID and one current-session armature
+object ID. The pair must already use the exact managed Milestone 6 `ARMATURE` modifier state.
+
+The inspection reports:
+
+- mesh object ID and armature object ID
+- managed Armature modifier name
+- mesh vertex count
+- vertex-group count
+- total sparse weight-assignment count
+- each vertex group in exact contiguous Blender group-index order
+- each group's explicit sparse `vertex_index + weight` assignments
+- group names that do not match armature bones
+- group names that match non-deform bones
+- deterministic `weight_revision`
+- current armature `rig_revision`
+- `source_only=true`
+- `real_runtime_verified=false`
+
+Inspection fails closed above **64 vertex groups**, above **16,384 total weight assignments**,
+above **64 memberships per vertex**, or when group indices/memberships/weights are malformed.
+Weights must be finite and remain inside [0, 1].
+
+### `rig.vertex_group_weights_set`
+
+Weight replacement requires:
+
+- fresh mesh ObjectTarget
+- fresh armature ObjectTarget
+- fresh `expected_rig_revision`
+- fresh `expected_weight_revision`
+- one explicit existing deform-enabled bone name
+- **1..4096** unique explicit sparse vertex assignments
+- each assignment's vertex index in 0..4095 and actual mesh bounds
+- each requested weight in **0.000001..1.0**
+
+The mesh must remain local, editable, Object-mode, unparented, without shape keys, within the
+existing 4096-vertex / 4096-polygon / 32768-loop bounds, and bound through exactly one managed
+Milestone 6 Armature modifier targeting the explicit armature.
+
+The operation is a **full replacement of one bone-matched vertex group's sparse weight map**.
+If the group is absent it is appended, subject to the 64-group cap. It does not guess bone names,
+create arbitrary groups, normalize across neighboring groups, invoke automatic weights, or expose
+Weight Paint operators.
+
+Successful readback verifies the exact group name/index/weight map, group count, assignment count,
+mesh and armature identities, unchanged `rig_revision`, and Object mode. Known verification
+mismatch restores the exact prior group state and verifies the original `weight_revision`.
+
+### `rig.vertex_group_remove`
+
+Removal uses the same fresh target/revision gates and only permits a group whose name matches an
+existing deform-enabled bone. For deterministic append-based recovery, only the **final vertex
+group** in Blender group-index order can be removed.
+
+Successful readback verifies exact group absence, decremented group/assignment counts, unchanged
+object identities, unchanged `rig_revision`, and Object mode. Known verification mismatch
+recreates the group and exact sparse weights and verifies recovery to the original
+`weight_revision`.
+
+Milestone 7 deliberately does not add automatic skinning, envelope weighting, normalization,
+weight mirroring, weight-paint brush control, weight transfer or IK/FK rig generation. Those remain
+outside this milestone.
+
+### Milestone 7 source checkpoint
+
+Code/test checkpoint: `b5639b28bde191ad6e98036a465bf470d4e123ea`.
+
+CI run `37634813759` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **779 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **75 package modules**
+
+Factory typed tools: **197**.
+Current registry/catalog hard maximum: **200**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-6 are complete at 60%. Do not begin Milestone 7 without explicit user permission.
+Milestones 1-7 are complete at 70%. Do not begin Milestone 8 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.
