@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 190 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 192 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -40,6 +40,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | rig.bone_symmetry_edit | target, expected_rig_revision, left_name, right_name, left_head, left_tail | mutation | explicit matching .L/.R pair coordinate edit mirrored across local X with exact dual-bone readback and recovery |
 | rig.pose_bone_transform | target, expected_rig_revision, bone_name, location, rotation_mode, rotation, scale | mutation | set one explicit pose bone's bounded raw transform channels with quaternion normalization, exact readback and full pose-state recovery |
 | rig.pose_bone_reset | target, expected_rig_revision, bone_name | mutation | reset one explicit pose bone to identity quaternion/location/scale with exact readback and recovery |
+| rig.pose_constraint_create | target, expected_rig_revision, bone_name, constraint_name, constraint_type, influence, mute, plus type-specific bounded fields | mutation | create one unique LIMIT_ROTATION or same-armature IK pose constraint with exact state/count readback and verified removal recovery |
+| rig.pose_constraint_remove | target, expected_rig_revision, bone_name, constraint_name, expected_constraint_type | mutation | remove only an explicit bounded final managed constraint with exact absence/count readback and append-safe recreation recovery |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1150,3 +1152,28 @@ Current Level 3 source progress: **100%**.
   the existing bounded **192-tool** registry/client cap.
 - Real Blender pose evaluation, dependency-graph behavior, constraint interaction, animation/
   keyframe interaction and viewport behavior remain runtime-unverified.
+
+
+### Level 6 milestone 5 limits
+
+- Both constraint mutations require a fresh ObjectTarget, fresh `rig_revision`, an editable
+  local armature, Object mode, and the target selected and active.
+- Creation accepts only `LIMIT_ROTATION` and `IK`; names are explicit and unique per pose bone.
+- Influence is finite in [0, 1], mute is explicit, and the existing inspection bounds remain
+  64 constraints per pose bone and 512 total pose constraints.
+- `LIMIT_ROTATION` requires all X/Y/Z enable/min/max fields. Limits are bounded to ±1000
+  radians and each minimum must not exceed its maximum.
+- `IK` targets only one explicit different pose bone in the same armature, requires the target
+  in both armature and pose data, and bounds chain count to 1..64.
+- No arbitrary target object, pole target, solver option, driver, generic constraint type or
+  unrestricted constraint settings surface is exposed.
+- Creation mismatch removes the exact just-created constraint object and verifies recovery to
+  the original `rig_revision`.
+- Removal requires the expected constraint type and bounded managed state. Only the final
+  constraint on a pose bone can be removed so append-based rollback preserves ordering.
+- Removal mismatch recreates the bounded constraint snapshot and verifies recovery to the
+  original `rig_revision`.
+- Milestone 5 adds two mutation tools, taking the factory from 190 to **192 typed tools**, exactly
+  at the current bounded **192-tool** registry/client cap.
+- Real Blender constraint evaluation, IK solver behavior, dependency-graph cycles and viewport
+  deformation remain runtime-unverified.
