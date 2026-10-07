@@ -12,6 +12,8 @@ from shuvi_blender_agent.rigging import (
     BoneCreate,
     BoneHierarchyEdit,
     BoneSymmetryEdit,
+    PoseBoneReset,
+    PoseBoneTransform,
     RiggingOperations,
 )
 from shuvi_blender_agent.safety import SafetyPolicy
@@ -770,5 +772,226 @@ def test_bone_symmetry_edit_verification_failure_restores_both_bones(
     ],
 )
 def test_level6_m3_contracts_reject_unsafe_payloads(parser, payload):
+    with pytest.raises(AgentError):
+        parser(payload)
+
+
+def setup_pose_rig():
+    obj = rig_fixture()
+    bpy = fake_bpy([obj])
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    inspector = BpyInspector(bpy)
+    object_id = inspector.identity(obj)
+    return bpy, obj, registry, object_id
+
+
+def pose_payload(rig, bone_name="Root", rotation_mode="XYZ", rotation=(0.1, 0.2, 0.3)):
+    return {
+        "target": target_from_rig(rig),
+        "expected_rig_revision": rig["rig_revision"],
+        "bone_name": bone_name,
+        "location": [1.0, 2.0, 3.0],
+        "rotation_mode": rotation_mode,
+        "rotation": list(rotation),
+        "scale": [1.2, 0.8, 1.1],
+    }
+
+
+def test_factory_registers_level6_m4_pose_tools_under_cap():
+    registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
+    assert len(registry.catalog()) == 190
+    assert MAX_REGISTERED_TOOLS == 192
+    names = {item["name"] for item in registry.catalog()}
+    assert {"rig.pose_bone_transform", "rig.pose_bone_reset"} <= names
+
+
+def test_pose_bone_transform_sets_xyz_channels_with_exact_readback():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+
+    result = registry.dispatch(
+        Request("rig.pose_bone_transform", pose_payload(before))
+    )
+
+    assert result.status == Status.VERIFIED
+    after = result.data["after"]
+    root = next(item for item in after["pose_bones"] if item["name"] == "Root")
+    assert root["rotation_mode"] == "XYZ"
+    assert root["location"] == [1.0, 2.0, 3.0]
+    assert root["rotation_euler"] == [0.1, 0.2, 0.3]
+    assert root["scale"] == [1.2, 0.8, 1.1]
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_pose_bone_transform_normalizes_quaternion_and_verifies_it():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    payload = pose_payload(
+        before,
+        rotation_mode="QUATERNION",
+        rotation=(0.5, 0.5, 0.0, 0.0),
+    )
+
+    result = registry.dispatch(Request("rig.pose_bone_transform", payload))
+
+    assert result.status == Status.VERIFIED
+    root = next(item for item in result.data["after"]["pose_bones"] if item["name"] == "Root")
+    assert root["rotation_mode"] == "QUATERNION"
+    assert root["rotation_quaternion"] == pytest.approx(
+        [2**-0.5, 2**-0.5, 0.0, 0.0]
+    )
+
+
+def test_pose_bone_reset_restores_identity_channels():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    root = next(item for item in obj.pose.bones if item.name == "Root")
+    root.location = [4.0, 5.0, 6.0]
+    root.rotation_mode = "XYZ"
+    root.rotation_euler = [0.4, 0.5, 0.6]
+    root.scale = [2.0, 3.0, 4.0]
+    before = inspect_rig(registry, object_id)
+
+    result = registry.dispatch(
+        Request(
+            "rig.pose_bone_reset",
+            {
+                "target": target_from_rig(before),
+                "expected_rig_revision": before["rig_revision"],
+                "bone_name": "Root",
+            },
+        )
+    )
+
+    assert result.status == Status.VERIFIED
+    root_after = next(
+        item for item in result.data["after"]["pose_bones"] if item["name"] == "Root"
+    )
+    assert root_after["rotation_mode"] == "QUATERNION"
+    assert root_after["location"] == [0.0, 0.0, 0.0]
+    assert root_after["rotation_euler"] == [0.0, 0.0, 0.0]
+    assert root_after["rotation_quaternion"] == [1.0, 0.0, 0.0, 0.0]
+    assert root_after["scale"] == [1.0, 1.0, 1.0]
+
+
+def test_pose_bone_transform_rejects_stale_rig_revision_and_missing_bone():
+    bpy, obj, registry, object_id = setup_pose_rig()
+    stale = inspect_rig(registry, object_id)
+    root = next(item for item in obj.pose.bones if item.name == "Root")
+    root.location = [0.25, 0.0, 0.0]
+
+    stale_result = registry.dispatch(
+        Request("rig.pose_bone_transform", pose_payload(stale))
+    )
+    assert stale_result.status == Status.FAILED
+    assert stale_result.error.code == ErrorCode.STALE_STATE
+
+    current = inspect_rig(registry, object_id)
+    missing = registry.dispatch(
+        Request(
+            "rig.pose_bone_reset",
+            {
+                "target": target_from_rig(current),
+                "expected_rig_revision": current["rig_revision"],
+                "bone_name": "Missing",
+            },
+        )
+    )
+    assert missing.status == Status.FAILED
+    assert missing.error.code == ErrorCode.NOT_FOUND
+
+
+def test_pose_bone_transform_verification_failure_restores_pose(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, obj, registry, object_id = setup_pose_rig()
+    before = inspect_rig(registry, object_id)
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(
+        Request("rig.pose_bone_transform", pose_payload(before))
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    assert inspect_rig(registry, object_id)["rig_revision"] == before["rig_revision"]
+
+
+@pytest.mark.parametrize(
+    ("parser", "payload"),
+    [
+        (
+            PoseBoneTransform.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Root",
+                "location": [0, 0, 0],
+                "rotation_mode": "AXIS_ANGLE",
+                "rotation": [0, 0, 0],
+                "scale": [1, 1, 1],
+            },
+        ),
+        (
+            PoseBoneTransform.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Root",
+                "location": [0, 0, 0],
+                "rotation_mode": "QUATERNION",
+                "rotation": [0, 0, 0, 0],
+                "scale": [1, 1, 1],
+            },
+        ),
+        (
+            PoseBoneTransform.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "Root",
+                "location": [0, 0, 0],
+                "rotation_mode": "XYZ",
+                "rotation": [0, 0, 0],
+                "scale": [0, 1, 1],
+            },
+        ),
+        (
+            PoseBoneReset.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                "bone_name": "",
+            },
+        ),
+    ],
+)
+def test_level6_m4_contracts_reject_unsafe_payloads(parser, payload):
     with pytest.raises(AgentError):
         parser(payload)
