@@ -126,8 +126,8 @@ def setup_acceptance_rig():
     )
     acceptance = RigAcceptanceOperations(objects)
 
-    mesh_state = object_state(registry, "Body")
-    rig_state = inspect_rig(registry, object_state(registry, "AcceptanceRig")["object_id"])
+    mesh_state = objects._readback(mesh)
+    rig_state = rigging._snapshot(rig)
     bound = registry.dispatch(
         Request(
             "rig.mesh_armature_bind",
@@ -141,8 +141,8 @@ def setup_acceptance_rig():
     )
     assert bound.status == Status.VERIFIED
 
-    mesh_state = object_state(registry, "Body")
-    rig_state = inspect_rig(registry, rig_state["object_id"])
+    mesh_state = objects._readback(mesh)
+    rig_state = rigging._snapshot(rig)
     weights = registry.dispatch(
         Request(
             "rig.mesh_weights_inspect",
@@ -170,7 +170,7 @@ def setup_acceptance_rig():
         )
     )
     assert weighted.status == Status.VERIFIED
-    rig_state = inspect_rig(registry, rig_state["object_id"])
+    rig_state = rigging._snapshot(rig)
     return bpy, rig, mesh, registry, acceptance, rig_state, mesh_state
 
 
