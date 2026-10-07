@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **40%**.
+Current Level 6 source progress: **50%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -20,7 +20,7 @@ Production ready: **No**.
 | 2 | Armature creation + bounded edit-bone creation | complete |
 | 3 | Bone parenting / connect / rename / symmetry-safe editing | complete |
 | 4 | Pose transforms + bounded pose controls | complete |
-| 5 | Rig constraints + IK foundations | pending |
+| 5 | Rig constraints + IK foundations | complete |
 | 6 | Mesh-to-armature binding + Armature modifier | pending |
 | 7 | Vertex groups + bounded weight workflows | pending |
 | 8 | IK/FK control-rig helpers | pending |
@@ -312,9 +312,76 @@ Current registry/catalog hard maximum: **192**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+
+## Milestone 5 — 50% complete
+
+Milestone 5 adds two bounded mutation tools for pose constraints and same-armature IK foundations.
+
+### `rig.pose_constraint_create`
+
+Constraint creation requires:
+
+- fresh ObjectTarget
+- fresh `expected_rig_revision`
+- one explicit existing pose-bone owner
+- a unique bounded constraint name
+- constraint type `LIMIT_ROTATION` or `IK`
+- influence in [0, 1]
+- explicit mute state
+
+The target must remain an editable local armature in Object mode, selected and active. Creation
+fails closed at the existing bounds of **64 constraints per pose bone** and **512 total pose
+constraints**.
+
+For `LIMIT_ROTATION`, all X/Y/Z enable flags and min/max values are explicit. Limits are finite,
+bounded to ±1000 radians, and each minimum must not exceed its maximum.
+
+For `IK`, the target is restricted to one explicit pose bone in the same armature. The target
+bone must exist in both armature and pose data, must differ from the owner bone, and chain count
+is bounded to **1..64**. No arbitrary target object, pole target, solver settings, Python, driver
+or unrestricted constraint payload is exposed.
+
+Successful readback verifies the full managed constraint state, per-bone and total constraint
+counts, the same armature object and final Object mode. Known verification mismatch removes the
+exact created constraint object and verifies recovery to the original `rig_revision`.
+
+### `rig.pose_constraint_remove`
+
+Constraint removal requires the same fresh target/revision gates plus an explicit constraint name
+and expected type. Only managed `LIMIT_ROTATION` / same-armature `IK` state within the same
+bounds is removable.
+
+Removal is intentionally limited to the **final constraint on that pose bone**. This preserves
+constraint ordering during append-based recovery. Successful readback verifies exact absence and
+the decremented per-bone/total counts. Known verification mismatch recreates the removed
+constraint from the bounded snapshot and verifies recovery to the original `rig_revision`.
+
+Milestone 5 does not bind meshes, add Armature modifiers, edit vertex groups/weights, or expose
+general IK/FK control-rig generation. Those remain Milestones 6+.
+
+### Milestone 5 source checkpoint
+
+Code/test checkpoint: `7732e365f7259cc9dfb951ac25517b6f439ecfda`.
+
+CI run `37607776888` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **759 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **75 package modules**
+
+Factory typed tools: **192**.
+Current registry/catalog hard maximum: **192**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-4 are complete at 40%. Do not begin Milestone 5 without explicit user permission.
+Milestones 1-5 are complete at 50%. Do not begin Milestone 6 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.
