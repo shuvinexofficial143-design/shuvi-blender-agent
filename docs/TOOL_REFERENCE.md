@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 183 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 184 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -33,6 +33,7 @@ clients should retain the filter, session ID and revision while continuing a pag
 | system.ping | none | read_only | `ready=true` after a roundtrip |
 | system.capabilities | none | read_only | protocol/session/Blender version and operation catalog |
 | scene.inspect | none | read_only | scene/file/render/frames, context, cursor, units, pivot, type counts, world presence, revision |
+| rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | objects.list | PageQuery | read_only | sorted object snapshots, total, offset, next_offset, session_id, revision |
 | collections.list | PageQuery without object_type | read_only | sorted names and object/child counts, total, offset, next_offset, session_id, revision |
 | object.inspect | object_id | read_only | current-scene object snapshot and revision |
@@ -1059,3 +1060,23 @@ Current Level 3 source progress: **100%**.
 - Source/fake-bpy/CI acceptance does not prove real Blender Geometry Nodes evaluation,
   dependency-graph behavior, viewport output, memory/GPU behavior or rendering.
 - Level 5 source roadmap is complete at 100%. Real Blender runtime verification remains 0%.
+
+
+### Level 6 milestone 1 limits
+
+- `rig.armature_inspect` is read-only and requires one current-session ARMATURE object.
+- Armature data and pose data are each capped at **256 bones**.
+- Per-pose-bone constraints are capped at **64**, with **512 total pose constraints**.
+- Bone hierarchy readback includes parent, local head/tail, optional 4x4 local matrix,
+  connect/deform flags and inherit-scale mode.
+- Pose readback includes location, Euler/quaternion rotation, scale and bounded
+  name/type/mute/influence constraint metadata.
+- The result reports root bones, hierarchy-cycle diagnostics, pose/data name mismatches,
+  exact linked-data flags, `source_only=true`, `real_runtime_verified=false` and a
+  deterministic `rig_revision`.
+- Non-armatures, over-bound rigs and non-finite coordinate/matrix/influence values fail closed.
+- Milestone 1 adds one read-only tool, taking the factory from 183 to **184 typed tools**.
+  The centralized registry/client hard maximum is raised from **184 to 192** for bounded
+  future Level 6 milestones.
+- Real Blender edit-bone lifetimes, pose evaluation, constraints, IK, skinning, deformation,
+  vertex-weight behavior and dependency-graph results remain runtime-unverified.
