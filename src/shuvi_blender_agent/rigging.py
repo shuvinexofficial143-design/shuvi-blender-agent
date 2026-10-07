@@ -1350,9 +1350,8 @@ class RiggingOperations:
                     verification=verification.to_dict(),
                 )
 
-            current = self._constraint_object(pose_bone, action.constraint_name)
-            if current is not None:
-                pose_bone.constraints.remove(current)
+            if created in pose_bone.constraints:
+                pose_bone.constraints.remove(created)
             self.bpy.context.view_layer.update()
             recovered = self._snapshot(obj)
             return Result(
@@ -1374,9 +1373,8 @@ class RiggingOperations:
         except Exception:
             if created is not None:
                 try:
-                    current = self._constraint_object(pose_bone, action.constraint_name)
-                    if current is not None:
-                        pose_bone.constraints.remove(current)
+                    if created in pose_bone.constraints:
+                        pose_bone.constraints.remove(created)
                     self.bpy.context.view_layer.update()
                 except Exception:
                     pass
@@ -1393,6 +1391,12 @@ class RiggingOperations:
         current = self._constraint_object(pose_bone, action.constraint_name)
         if current is None:
             raise AgentError(ErrorCode.NOT_FOUND, "Constraint unavailable")
+        constraints = list(getattr(pose_bone, "constraints", ()))
+        if not constraints or constraints[-1] is not current:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Only the final pose constraint can be removed with exact recovery",
+            )
 
         removed = False
         try:
