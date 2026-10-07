@@ -207,12 +207,12 @@ Milestone 10 — Geometry Nodes QA / recovery / acceptance — is complete. Do n
 without explicit user permission.
 
 ## Level 6 active checkpoint
-Latest verified Level 6 source/test checkpoint: b5639b28bde191ad6e98036a465bf470d4e123ea.
-CI run 37634813759 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **779 tests**, package build, distribution audit and clean install/import without bpy.
+Latest verified Level 6 source/test checkpoint: 5dad53c97596daa131dce1ca847d819ceaf36ab1.
+CI run 37636963291 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **790 tests**, package build, distribution audit and clean install/import without bpy.
 The distribution audit verified **75 package modules**.
 
-Level 6 Rigging is now **70% source complete** (Milestones 1-7 of 10).
+Level 6 Rigging is now **80% source complete** (Milestones 1-8 of 10).
 
 Milestone 1 adds:
 - `rig.armature_inspect`: one bounded read-only armature/pose inspection surface using a
@@ -345,17 +345,37 @@ Milestone 7 adds:
 - Milestone 7 adds three tools, taking the factory from 194 to **197 tools** under the existing
   bounded **200-tool** registry/client cap.
 
+Milestone 8 adds:
+- `rig.ik_fk_preview`: read-only validation/reporting for one explicit upper → middle → end
+  deform chain plus one distinct non-deforming control target, including managed helper state,
+  current IK/FK mode and current `rig_revision`.
+- chain names must be four distinct existing data+pose bones; hierarchy must be exact and the
+  control target must be non-deforming.
+- `rig.ik_fk_setup`: fresh ObjectTarget + fresh `rig_revision` gated creation of exactly one
+  managed same-armature IK constraint on the end bone with influence 1.0 and chain count 3.
+- setup accepts explicit initial mode: IK leaves the constraint unmuted; FK mutes it.
+- helper setup does not create bones, pole targets, drivers, custom properties, arbitrary
+  constraint types or automatic rig structures. Existing bounded bone creation can create the
+  non-deforming target/control bone when needed.
+- `rig.ik_fk_switch`: accepts only the recognized managed helper and changes only its mute field
+  between IK and FK. No pose channels, weights, hierarchy or constraint topology are changed.
+- setup mismatch removes the exact created constraint; switch mismatch restores the original mute
+  state; both verify recovery to the original `rig_revision`.
+- existing `rig.pose_constraint_remove` is the cleanup path.
+- Milestone 8 adds three tools, taking the factory from 197 to **200 tools**, exactly at the
+  current bounded **200-tool** registry/client cap.
+
 Level 6 real Blender runtime verification remains 0%. Production readiness remains No.
 
-Milestone 7 — Vertex groups + bounded weight workflows — is complete. Do not begin
-Milestone 8 without explicit user permission.
+Milestone 8 — IK/FK control-rig helpers — is complete. Do not begin Milestone 9 without
+explicit user permission.
 
 ## Current phase
 Level 1 source is complete at 100%. Level 2 Professional Modeling source is 100% complete.
 Level 3 Sculpting + Character Modeling source is **100% complete** (Milestones 1-10 of 10).
 Level 4 UV / Texture / Materials source is **100% complete** (Milestones 1-10 of 10).
 Level 5 Geometry Nodes source is **100% complete** (Milestones 1-10 of 10).
-Level 6 Rigging source is **70% complete** (Milestones 1-7 of 10).
+Level 6 Rigging source is **80% complete** (Milestones 1-8 of 10).
 Real Blender runtime acceptance remains prepared but unexecuted pending explicit authorization.
 
 ## Completed and verified
@@ -390,7 +410,7 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   detail work have explicit limits. Collection pagination added; continuation pages require
   revisions. Scene text/page bytes/total animation points bounded. Foreign IDs resolve
   without allocating identities. Geometry loops preflight before materialization.
-- Host payload/safety allowlist mirrors all 197 registered tools; remote catalog cannot
+- Host payload/safety allowlist mirrors all 200 registered tools; remote catalog cannot
   downgrade safety. Plan destinations preflight, overlapping bindings and reused IDs fail,
   total binding/result budgets enforced, unbound payloads preflight, deadlines include
   capabilities. Partial reports retain prior results/unexecuted steps/unknown outcome.
@@ -422,17 +442,17 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Status
-Source: 197 typed host contracts/tools under the bounded 200-tool cap. Level 1 source: **100%**.
+Source: 200 typed host contracts/tools at the bounded 200-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
-Level 6 Rigging source: **70%** (Milestones 1-7 of 10). Verified Level 6 source/test checkpoint:
-b5639b28bde191ad6e98036a465bf470d4e123ea. CI run 37634813759 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 779 tests, lint/format, package build,
+Level 6 Rigging source: **80%** (Milestones 1-8 of 10). Verified Level 6 source/test checkpoint:
+5dad53c97596daa131dce1ca847d819ceaf36ab1. CI run 37636963291 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 790 tests, lint/format, package build,
 75-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 6 Milestones 1-7 are complete at 70%. Stop here. Do not begin Milestone 8 without
+Level 6 Milestones 1-8 are complete at 80%. Stop here. Do not begin Milestone 9 without
 explicit user permission. Keep source/fake evidence separate from real Blender runtime
 verification.
 
@@ -452,13 +472,15 @@ verification.
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed Level 6 70% source checkpoint. The registry/client cap is bounded at
-200 with 197 tools registered. Heavy Blender runtime actions still require separate user
+None for the completed Level 6 80% source checkpoint. The registry/client is exactly at the
+200-tool cap, so Milestone 9 must deliberately raise the cap or reuse/consolidate existing
+surfaces before adding tools. Heavy Blender runtime actions still require separate user
 authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 6, start only Milestone 8:
-IK/FK control-rig helpers. Reconcile the remaining 197/200 tool budget before adding surfaces,
-keep helpers typed, bounded and fresh-rig-revision gated with exact readback/recovery evidence,
-keep real Blender runtime acceptance at 0% unless the user separately authorizes
-installation/probe/launch/runtime execution, and do not begin Milestone 9 automatically.
+Wait for explicit user permission. If the user asks to continue Level 6, start only Milestone 9:
+Versioned rig recipe library. First reconcile the current 200/200 registry/client cap, then keep
+recipe catalog/preview/apply surfaces typed, bounded, versioned and fresh-revision gated with
+exact readback/recovery evidence. Keep real Blender runtime acceptance at 0% unless the user
+separately authorizes installation/probe/launch/runtime execution, and do not begin Milestone 10
+automatically.

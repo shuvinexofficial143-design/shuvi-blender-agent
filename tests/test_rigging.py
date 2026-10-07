@@ -12,6 +12,8 @@ from shuvi_blender_agent.rigging import (
     BoneCreate,
     BoneHierarchyEdit,
     BoneSymmetryEdit,
+    IKFKSetup,
+    IKFKSwitch,
     MeshArmatureBinding,
     PoseBoneReset,
     PoseBoneTransform,
@@ -130,9 +132,9 @@ def setup():
 
 def test_factory_registers_level6_armature_inspection_under_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 197
+    assert len(registry.catalog()) == 200
     assert MAX_REGISTERED_TOOLS == 200
-    assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
     item = next(entry for entry in registry.catalog() if entry["name"] == "rig.armature_inspect")
     assert item["classification"] == "read_only"
     assert item["verification_required"] is False
@@ -568,7 +570,7 @@ def inspect_rig(registry, object_id):
 
 def test_factory_registers_level6_m3_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 197
+    assert len(registry.catalog()) == 200
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.bone_hierarchy_edit", "rig.bone_symmetry_edit"} <= names
@@ -843,7 +845,7 @@ def pose_payload(rig, bone_name="Root", rotation_mode="XYZ", rotation=(0.1, 0.2,
 
 def test_factory_registers_level6_m4_pose_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 197
+    assert len(registry.catalog()) == 200
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.pose_bone_transform", "rig.pose_bone_reset"} <= names
@@ -1082,7 +1084,7 @@ def ik_constraint_payload(rig, bone_name="Arm.L", target_bone_name="Root"):
 
 def test_factory_registers_level6_m5_constraint_tools_at_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 197
+    assert len(registry.catalog()) == 200
     assert MAX_REGISTERED_TOOLS == 200
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.pose_constraint_create", "rig.pose_constraint_remove"} <= names
@@ -1382,9 +1384,9 @@ def binding_payload(mesh_state, rig_state, modifier_name="Shuvi Armature"):
 
 def test_factory_registers_level6_m6_binding_tools_below_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 197
+    assert len(registry.catalog()) == 200
     assert MAX_REGISTERED_TOOLS == 200
-    assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.mesh_armature_bind", "rig.mesh_armature_unbind"} <= names
 
@@ -1619,9 +1621,9 @@ def weight_remove_payload(mesh_state, rig_state, weights_state, bone_name="Spine
 
 def test_factory_registers_level6_m7_weight_tools_under_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 197
+    assert len(registry.catalog()) == 200
     assert MAX_REGISTERED_TOOLS == 200
-    assert len(registry.catalog()) < MAX_REGISTERED_TOOLS
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
     names = {item["name"] for item in registry.catalog()}
     assert {
         "rig.mesh_weights_inspect",
@@ -1947,5 +1949,261 @@ def test_vertex_group_remove_verification_failure_recreates_group(monkeypatch):
     ],
 )
 def test_level6_m7_weight_contracts_reject_unsafe_payloads(parser, payload):
+    with pytest.raises(AgentError):
+        parser(payload)
+
+
+def ik_fk_rig_fixture():
+    upper = bone("Upper", head=(0, 0, 0), tail=(0, 0, 1), deform=True)
+    middle = bone("Middle", parent=upper, head=(0, 0, 1), tail=(0, 0, 2), deform=True)
+    end = bone("End", parent=middle, head=(0, 0, 2), tail=(0, 0, 3), deform=True)
+    target = bone("IK.Target", head=(1, 0, 3), tail=(1, 0, 4), deform=False)
+    obj = FakeObject("IKFKRig", "ARMATURE")
+    obj.data = NS(
+        name="IKFKRigData",
+        users=0,
+        library=None,
+        bones=[upper, middle, end, target],
+    )
+    obj.pose = NS(
+        bones=[
+            pose_bone("Upper"),
+            pose_bone("Middle"),
+            pose_bone("End"),
+            pose_bone("IK.Target"),
+        ]
+    )
+    return obj
+
+
+def setup_ik_fk_rig():
+    obj = ik_fk_rig_fixture()
+    bpy = fake_bpy([obj])
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    object_id = object_state(registry, "IKFKRig")["object_id"]
+    rig = inspect_rig(registry, object_id)
+    return bpy, obj, registry, object_id, rig
+
+
+def ik_fk_chain_fields():
+    return {
+        "upper_bone": "Upper",
+        "middle_bone": "Middle",
+        "end_bone": "End",
+        "target_bone": "IK.Target",
+        "constraint_name": "Shuvi IKFK",
+    }
+
+
+def ik_fk_setup_payload(rig, mode="IK"):
+    return {
+        "target": target_from_rig(rig),
+        "expected_rig_revision": rig["rig_revision"],
+        **ik_fk_chain_fields(),
+        "initial_mode": mode,
+    }
+
+
+def ik_fk_switch_payload(rig, mode):
+    return {
+        "target": target_from_rig(rig),
+        "expected_rig_revision": rig["rig_revision"],
+        **ik_fk_chain_fields(),
+        "mode": mode,
+    }
+
+
+def test_factory_registers_level6_m8_ik_fk_tools_at_cap():
+    registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
+    assert len(registry.catalog()) == 200
+    assert MAX_REGISTERED_TOOLS == 200
+    names = {item["name"] for item in registry.catalog()}
+    assert {"rig.ik_fk_preview", "rig.ik_fk_setup", "rig.ik_fk_switch"} <= names
+
+
+def test_ik_fk_preview_validates_chain_before_setup():
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    result = registry.dispatch(
+        Request(
+            "rig.ik_fk_preview",
+            {"object_id": object_id, **ik_fk_chain_fields()},
+        )
+    )
+
+    assert result.status == Status.SUCCEEDED
+    assert result.data["managed"] is False
+    assert result.data["mode"] is None
+    assert result.data["constraint"] is None
+    assert result.data["rig_revision"] == rig["rig_revision"]
+    assert result.data["source_only"] is True
+    assert result.data["real_runtime_verified"] is False
+
+
+def test_ik_fk_setup_creates_managed_ik_constraint_in_ik_mode():
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    result = registry.dispatch(Request("rig.ik_fk_setup", ik_fk_setup_payload(rig, "IK")))
+
+    assert result.status == Status.VERIFIED
+    state = result.data["ik_fk"]
+    assert state["managed"] is True
+    assert state["mode"] == "IK"
+    assert state["constraint"] == {
+        "name": "Shuvi IKFK",
+        "type": "IK",
+        "mute": False,
+        "influence": 1.0,
+        "target_object_name": "IKFKRig",
+        "target_bone_name": "IK.Target",
+        "chain_count": 3,
+    }
+    assert bpy.context.mode == "OBJECT"
+
+
+def test_ik_fk_setup_can_start_in_fk_mode_with_muted_ik():
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    result = registry.dispatch(Request("rig.ik_fk_setup", ik_fk_setup_payload(rig, "FK")))
+
+    assert result.status == Status.VERIFIED
+    assert result.data["ik_fk"]["managed"] is True
+    assert result.data["ik_fk"]["mode"] == "FK"
+    end = next(item for item in obj.pose.bones if item.name == "End")
+    assert end.constraints[0].mute is True
+
+
+def test_ik_fk_switch_toggles_only_managed_constraint_mute():
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    setup_result = registry.dispatch(Request("rig.ik_fk_setup", ik_fk_setup_payload(rig, "IK")))
+    assert setup_result.status == Status.VERIFIED
+
+    current = inspect_rig(registry, object_id)
+    to_fk = registry.dispatch(Request("rig.ik_fk_switch", ik_fk_switch_payload(current, "FK")))
+    assert to_fk.status == Status.VERIFIED
+    assert to_fk.data["ik_fk"]["mode"] == "FK"
+
+    current = inspect_rig(registry, object_id)
+    to_ik = registry.dispatch(Request("rig.ik_fk_switch", ik_fk_switch_payload(current, "IK")))
+    assert to_ik.status == Status.VERIFIED
+    assert to_ik.data["ik_fk"]["mode"] == "IK"
+
+
+def test_ik_fk_setup_rejects_invalid_chain_and_deforming_target():
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    payload = ik_fk_setup_payload(rig)
+    payload["middle_bone"] = "End"
+    payload["end_bone"] = "Middle"
+    bad_chain = registry.dispatch(Request("rig.ik_fk_setup", payload))
+    assert bad_chain.status == Status.FAILED
+    assert bad_chain.error.code == ErrorCode.SAFETY_DENIED
+
+    target = next(item for item in obj.data.bones if item.name == "IK.Target")
+    target.use_deform = True
+    current = inspect_rig(registry, object_id)
+    bad_target = registry.dispatch(Request("rig.ik_fk_setup", ik_fk_setup_payload(current)))
+    assert bad_target.status == Status.FAILED
+    assert bad_target.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_ik_fk_switch_rejects_unmanaged_constraint():
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    end = next(item for item in obj.pose.bones if item.name == "End")
+    constraint = end.constraints.new("IK")
+    constraint.name = "Shuvi IKFK"
+    constraint.target = obj
+    constraint.subtarget = "IK.Target"
+    constraint.chain_count = 2
+    constraint.influence = 1.0
+
+    current = inspect_rig(registry, object_id)
+    result = registry.dispatch(Request("rig.ik_fk_switch", ik_fk_switch_payload(current, "FK")))
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_ik_fk_setup_verification_failure_rolls_back(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(Request("rig.ik_fk_setup", ik_fk_setup_payload(rig)))
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    end = next(item for item in obj.pose.bones if item.name == "End")
+    assert len(end.constraints) == 0
+    assert inspect_rig(registry, object_id)["rig_revision"] == rig["rig_revision"]
+
+
+def test_ik_fk_switch_verification_failure_restores_mode(monkeypatch):
+    from shuvi_blender_agent.verification import compare as real_compare
+
+    bpy, obj, registry, object_id, rig = setup_ik_fk_rig()
+    setup_result = registry.dispatch(Request("rig.ik_fk_setup", ik_fk_setup_payload(rig, "IK")))
+    assert setup_result.status == Status.VERIFIED
+    current = inspect_rig(registry, object_id)
+    calls = {"count": 0}
+
+    def fail_once(expected, actual):
+        calls["count"] += 1
+        if calls["count"] == 1:
+            return real_compare({"forced": 1}, {"forced": 2})
+        return real_compare(expected, actual)
+
+    monkeypatch.setattr("shuvi_blender_agent.rigging.compare", fail_once)
+    result = registry.dispatch(Request("rig.ik_fk_switch", ik_fk_switch_payload(current, "FK")))
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.VERIFICATION_FAILED
+    assert result.data["rolled_back"] is True
+    assert result.data["recovery_verified"] is True
+    end = next(item for item in obj.pose.bones if item.name == "End")
+    constraint = next(item for item in end.constraints if item.name == "Shuvi IKFK")
+    assert constraint.mute is False
+
+
+@pytest.mark.parametrize(
+    ("parser", "payload"),
+    [
+        (
+            IKFKSetup.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                **ik_fk_chain_fields(),
+                "initial_mode": "BLEND",
+            },
+        ),
+        (
+            IKFKSwitch.parse,
+            {
+                "target": {
+                    "object_id": "id",
+                    "expected_name": "Rig",
+                    "expected_revision": "x" * 64,
+                },
+                "expected_rig_revision": "y" * 64,
+                **ik_fk_chain_fields(),
+                "mode": 1,
+            },
+        ),
+    ],
+)
+def test_level6_m8_contracts_reject_invalid_modes(parser, payload):
     with pytest.raises(AgentError):
         parser(payload)

@@ -6,7 +6,7 @@ source/fake-bpy/CI evidence is not real Blender runtime verification.
 Goal: give Shuvi bounded armature, bone, posing, constraint, skinning and rig-workflow control
 without exposing arbitrary Python, unrestricted bpy operators or a generic rig mutation surface.
 
-Current Level 6 source progress: **70%**.
+Current Level 6 source progress: **80%**.
 
 Real Blender runtime verification for Level 6: **0%**.
 
@@ -23,7 +23,7 @@ Production ready: **No**.
 | 5 | Rig constraints + IK foundations | complete |
 | 6 | Mesh-to-armature binding + Armature modifier | complete |
 | 7 | Vertex groups + bounded weight workflows | complete |
-| 8 | IK/FK control-rig helpers | pending |
+| 8 | IK/FK control-rig helpers | complete |
 | 9 | Versioned rig recipe library | pending |
 | 10 | Rigging QA / recovery / acceptance | pending |
 
@@ -556,9 +556,82 @@ Current registry/catalog hard maximum: **200**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+
+## Milestone 8 — 80% complete
+
+Milestone 8 adds a compact three-tool IK/FK helper surface that uses the existing bounded
+pose-constraint primitives instead of introducing a generic control-rig mutation API.
+
+### `rig.ik_fk_preview`
+
+Preview accepts one current-session armature object ID plus four explicit distinct bone names:
+
+- upper deform bone
+- middle deform bone
+- end deform bone
+- non-deforming IK target/control bone
+- explicit managed constraint name
+
+The chain must be exactly upper → middle → end in the existing armature hierarchy, all three
+chain bones must be deform-enabled, and the target control bone must be non-deforming. Preview
+reports the current matching constraint, whether it is recognized as the managed M8 helper, and
+the resulting mode (`IK`, `FK`, or null), together with the current `rig_revision`.
+
+### `rig.ik_fk_setup`
+
+Setup requires a fresh ObjectTarget and fresh `expected_rig_revision`, validates the same
+explicit chain, and creates exactly one managed same-armature `IK` constraint on the end bone:
+
+- constraint target = the same armature object
+- target bone = explicit non-deforming control bone
+- chain count = **3**
+- influence = **1.0**
+- initial mode `IK` => constraint unmuted
+- initial mode `FK` => constraint muted
+
+The helper does not create control bones, pole targets, drivers, custom properties, arbitrary
+constraint types or automatic rig generation. Existing `rig.bone_create` can create a bounded
+non-deforming control bone, and existing `rig.pose_constraint_remove` remains the cleanup path.
+
+Successful readback verifies the exact managed constraint, object identity, requested IK/FK mode
+and final Object mode. Known verification mismatch removes the exact just-created constraint and
+verifies recovery to the original `rig_revision`.
+
+### `rig.ik_fk_switch`
+
+Switch requires the same explicit chain and fresh ObjectTarget/`rig_revision`. It only accepts
+a constraint already recognized as the M8-managed helper. Switching changes one field only:
+
+- `IK` => `mute=false`
+- `FK` => `mute=true`
+
+No pose channels, weights, bone hierarchy, target bone or constraint topology are changed by the
+switch. Exact readback verifies the managed helper and requested mode; mismatch restores the
+previous mute state and verifies recovery to the original `rig_revision`.
+
+### Milestone 8 source checkpoint
+
+Code/test checkpoint: `5dad53c97596daa131dce1ca847d819ceaf36ab1`.
+
+CI run `37636963291` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **790 tests**
+- package build
+- distribution audit
+- clean install/import without bpy
+- **75 package modules**
+
+Factory typed tools: **200**.
+Current registry/catalog hard maximum: **200**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-7 are complete at 70%. Do not begin Milestone 8 without explicit user permission.
+Milestones 1-8 are complete at 80%. Do not begin Milestone 9 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real rigging runtime
 acceptance without separate explicit runtime authorization.
