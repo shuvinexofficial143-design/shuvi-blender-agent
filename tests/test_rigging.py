@@ -386,12 +386,8 @@ def test_bone_create_rolls_back_on_verification_failure(monkeypatch):
     from shuvi_blender_agent.verification import compare as real_compare
 
     bpy = fake_bpy()
-    inspector = BpyInspector(bpy)
-    operations = RiggingOperations(ObjectOperations(inspector))
-    registry = ToolRegistry(operations.tools(), SafetyPolicy(allow_mutations=True))
-
-    full = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    created = create_armature(full)
+    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    created = create_armature(registry)
     rig = created.data["after"]["rig"]
     obj = bpy.data.objects.get("NewRig")
     obj.select_set(True)
