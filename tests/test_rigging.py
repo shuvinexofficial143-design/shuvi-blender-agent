@@ -1212,6 +1212,7 @@ def test_pose_constraint_remove_rejects_nonfinal_constraint_for_exact_recovery()
     assert result.error.code == ErrorCode.SAFETY_DENIED
     assert inspect_rig(registry, object_id)["rig_revision"] == current["rig_revision"]
 
+
 def test_pose_constraint_create_verification_failure_removes_created_constraint(monkeypatch):
     from shuvi_blender_agent.verification import compare as real_compare
 
