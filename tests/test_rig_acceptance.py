@@ -9,9 +9,11 @@ from shuvi_blender_agent.rig_acceptance import (
     Level6AcceptanceRequest,
     RigAcceptanceOperations,
 )
+from shuvi_blender_agent.rig_recipe_library import RigRecipeLibraryOperations
+from shuvi_blender_agent.rigging import RiggingOperations
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
-from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS
+from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS, ToolRegistry
 from shuvi_blender_agent.verification import compare as real_compare
 
 IDENTITY = [[float(row == col) for col in range(4)] for row in range(4)]
@@ -114,7 +116,15 @@ def setup_acceptance_rig():
     mesh.data.update()
     rig.select_set(True)
     bpy.context.view_layer.objects.active = rig
-    registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
+    inspector = BpyInspector(bpy)
+    objects = ObjectOperations(inspector)
+    rigging = RiggingOperations(objects)
+    recipes = RigRecipeLibraryOperations(objects)
+    registry = ToolRegistry(
+        [*objects.tools(), *rigging.tools(), *recipes.tools()],
+        SafetyPolicy(allow_mutations=True),
+    )
+    acceptance = RigAcceptanceOperations(objects)
 
     mesh_state = object_state(registry, "Body")
     rig_state = inspect_rig(registry, object_state(registry, "AcceptanceRig")["object_id"])
@@ -161,7 +171,7 @@ def setup_acceptance_rig():
     )
     assert weighted.status == Status.VERIFIED
     rig_state = inspect_rig(registry, rig_state["object_id"])
-    return bpy, rig, mesh, registry, rig_state, mesh_state
+    return bpy, rig, mesh, registry, acceptance, rig_state, mesh_state
 
 
 def acceptance_payload(rig_state, mesh_state):
@@ -181,9 +191,8 @@ def acceptance_payload(rig_state, mesh_state):
     }
 
 
-def evaluate(bpy, payload):
-    ops = RigAcceptanceOperations(ObjectOperations(BpyInspector(bpy)))
-    return ops.evaluate(Level6AcceptanceRequest.parse(payload))
+def evaluate(acceptance, payload):
+    return acceptance.evaluate(Level6AcceptanceRequest.parse(payload))
 
 
 def test_m10_reconciles_cap_without_new_public_tools():
@@ -195,8 +204,8 @@ def test_m10_reconciles_cap_without_new_public_tools():
 
 
 def test_level6_acceptance_passes_full_m1_m9_source_state():
-    bpy, _, _, _, rig_state, mesh_state = setup_acceptance_rig()
-    data = evaluate(bpy, acceptance_payload(rig_state, mesh_state))
+    _, _, _, _, acceptance, rig_state, mesh_state = setup_acceptance_rig()
+    data = evaluate(acceptance, acceptance_payload(rig_state, mesh_state))
 
     assert data["source_acceptance_status"] == "READY"
     assert data["check_count"] == 6
@@ -212,12 +221,12 @@ def test_level6_acceptance_passes_full_m1_m9_source_state():
 
 
 def test_level6_acceptance_fails_closed_on_stale_rig_state():
-    bpy, rig, _, _, rig_state, mesh_state = setup_acceptance_rig()
+    _, rig, _, _, acceptance, rig_state, mesh_state = setup_acceptance_rig()
     payload = acceptance_payload(rig_state, mesh_state)
     rig.pose.bones[0].location = [0.25, 0.0, 0.0]
 
     try:
-        evaluate(bpy, payload)
+        evaluate(acceptance, payload)
     except Exception as exc:
         assert getattr(exc, "code", None) == ErrorCode.STALE_STATE
     else:
@@ -225,7 +234,7 @@ def test_level6_acceptance_fails_closed_on_stale_rig_state():
 
 
 def test_failed_ik_fk_apply_recovers_then_acceptance_still_passes(monkeypatch):
-    bpy, rig, _, registry, rig_state, mesh_state = setup_acceptance_rig()
+    _, rig, _, registry, acceptance, rig_state, mesh_state = setup_acceptance_rig()
     calls = {"count": 0}
 
     def fail_once(expected, actual):
@@ -247,6 +256,6 @@ def test_failed_ik_fk_apply_recovers_then_acceptance_still_passes(monkeypatch):
     end = next(item for item in rig.pose.bones if item.name == "End")
     assert len(end.constraints) == 0
 
-    recovered = evaluate(bpy, payload)
+    recovered = evaluate(acceptance, payload)
     assert recovered["source_acceptance_status"] == "READY"
     assert all(item["status"] == "PASS" for item in recovered["checks"])
