@@ -534,8 +534,14 @@ def test_factory_registers_level6_m3_tools_under_cap():
 
 def test_bone_hierarchy_edit_parents_connects_and_renames_with_exact_readback():
     bpy, obj, registry, object_id = prepare_editable_rig()
-    assert add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status == Status.VERIFIED
-    assert add_rig_bone(registry, object_id, "Child", [1, 0, 0], [1, 0, 1]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status
+        == Status.VERIFIED
+    )
+    assert (
+        add_rig_bone(registry, object_id, "Child", [1, 0, 0], [1, 0, 1]).status
+        == Status.VERIFIED
+    )
     before = inspect_rig(registry, object_id)
 
     result = registry.dispatch(
@@ -565,8 +571,14 @@ def test_bone_hierarchy_edit_parents_connects_and_renames_with_exact_readback():
 
 def test_bone_hierarchy_edit_rejects_cycle_and_duplicate_rename():
     bpy, obj, registry, object_id = prepare_editable_rig()
-    assert add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status == Status.VERIFIED
-    assert add_rig_bone(registry, object_id, "Child", [0, 0, 2], [0, 0, 3]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status
+        == Status.VERIFIED
+    )
+    assert (
+        add_rig_bone(registry, object_id, "Child", [0, 0, 2], [0, 0, 3]).status
+        == Status.VERIFIED
+    )
     current = inspect_rig(registry, object_id)
     parented = registry.dispatch(
         Request(
@@ -617,12 +629,20 @@ def test_bone_hierarchy_edit_rejects_cycle_and_duplicate_rename():
     assert duplicate.error.code == ErrorCode.AMBIGUOUS_TARGET
 
 
-def test_bone_hierarchy_edit_verification_failure_restores_original_rig(monkeypatch):
+def test_bone_hierarchy_edit_verification_failure_restores_original_rig(
+    monkeypatch,
+):
     from shuvi_blender_agent.verification import compare as real_compare
 
     bpy, obj, registry, object_id = prepare_editable_rig()
-    assert add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status == Status.VERIFIED
-    assert add_rig_bone(registry, object_id, "Child", [1, 0, 0], [1, 0, 1]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Root", [0, 0, 0], [0, 0, 2]).status
+        == Status.VERIFIED
+    )
+    assert (
+        add_rig_bone(registry, object_id, "Child", [1, 0, 0], [1, 0, 1]).status
+        == Status.VERIFIED
+    )
     before = inspect_rig(registry, object_id)
     calls = {"count": 0}
 
@@ -656,8 +676,14 @@ def test_bone_hierarchy_edit_verification_failure_restores_original_rig(monkeypa
 
 def test_bone_symmetry_edit_mirrors_left_coordinates_across_local_x():
     bpy, obj, registry, object_id = prepare_editable_rig()
-    assert add_rig_bone(registry, object_id, "Arm.L", [1, 0, 0], [2, 0, 0]).status == Status.VERIFIED
-    assert add_rig_bone(registry, object_id, "Arm.R", [-1, 0, 0], [-2, 0, 0]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Arm.L", [1, 0, 0], [2, 0, 0]).status
+        == Status.VERIFIED
+    )
+    assert (
+        add_rig_bone(registry, object_id, "Arm.R", [-1, 0, 0], [-2, 0, 0]).status
+        == Status.VERIFIED
+    )
     before = inspect_rig(registry, object_id)
 
     result = registry.dispatch(
@@ -685,12 +711,20 @@ def test_bone_symmetry_edit_mirrors_left_coordinates_across_local_x():
     assert bpy.context.mode == "OBJECT"
 
 
-def test_bone_symmetry_edit_verification_failure_restores_both_bones(monkeypatch):
+def test_bone_symmetry_edit_verification_failure_restores_both_bones(
+    monkeypatch,
+):
     from shuvi_blender_agent.verification import compare as real_compare
 
     bpy, obj, registry, object_id = prepare_editable_rig()
-    assert add_rig_bone(registry, object_id, "Arm.L", [1, 0, 0], [2, 0, 0]).status == Status.VERIFIED
-    assert add_rig_bone(registry, object_id, "Arm.R", [-1, 0, 0], [-2, 0, 0]).status == Status.VERIFIED
+    assert (
+        add_rig_bone(registry, object_id, "Arm.L", [1, 0, 0], [2, 0, 0]).status
+        == Status.VERIFIED
+    )
+    assert (
+        add_rig_bone(registry, object_id, "Arm.R", [-1, 0, 0], [-2, 0, 0]).status
+        == Status.VERIFIED
+    )
     before = inspect_rig(registry, object_id)
 
     monkeypatch.setattr(
