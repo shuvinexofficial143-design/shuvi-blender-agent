@@ -125,9 +125,7 @@ def test_m6_apply_adds_real_constraint_and_moves_camera_to_safe_framing_pose():
 
 def test_m6_animated_subject_supported_as_tracking_target_without_animation_edit():
     _, camera, subject, inspector, _, registry = setup()
-    subject.animation_data = NS(
-        action=None, action_slot=None, nla_tracks=[], drivers=[]
-    )
+    subject.animation_data = NS(action=None, action_slot=None, nla_tracks=[], drivers=[])
     data = params(inspector, camera, subject)
     plan = preview(registry, data)
     assert plan["subject_animation_present"] is True
@@ -191,18 +189,29 @@ def test_m6_double_release_and_unknown_session_owner_fail_closed():
     assert not ops._owned
 
 
-@pytest.mark.parametrize("blocker", [
-    "parent", "constraint", "existing_animation", "shared", "linked", "locked",
-    "sensor_fit", "lens_shift", "clip", "mode",
-])
+@pytest.mark.parametrize(
+    "blocker",
+    [
+        "parent",
+        "constraint",
+        "existing_animation",
+        "shared",
+        "linked",
+        "locked",
+        "sensor_fit",
+        "lens_shift",
+        "clip",
+        "mode",
+    ],
+)
 def test_m6_denies_unsafe_camera_before_creating_track(blocker):
     bpy, camera, subject, inspector, _, registry = setup()
     if blocker == "parent":
         camera.parent = subject
     elif blocker == "constraint":
-        camera.constraints.append(NS(
-            type="COPY_LOCATION", name="Other", target=subject, influence=1, mute=False
-        ))
+        camera.constraints.append(
+            NS(type="COPY_LOCATION", name="Other", target=subject, influence=1, mute=False)
+        )
     elif blocker == "existing_animation":
         camera.animation_data = NS(action=None, action_slot=None, nla_tracks=[], drivers=[])
     elif blocker == "shared":
@@ -238,8 +247,9 @@ def test_m6_subject_parent_chain_cycle_prevents_tracking():
 
 def test_m6_subject_constraint_dependency_prevents_tracking():
     _, camera, subject, inspector, _, registry = setup()
-    subject.constraints.append(NS(name="FollowCam", type="COPY_LOCATION",
-                                  target=camera, mute=False, influence=1.0))
+    subject.constraints.append(
+        NS(name="FollowCam", type="COPY_LOCATION", target=camera, mute=False, influence=1.0)
+    )
     data = params(inspector, camera, subject)
     plan = preview(registry, data)
     assert "TARGET_DEPENDS_ON_CAMERA_CONSTRAINT" in plan["blockers"]
