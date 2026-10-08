@@ -132,7 +132,6 @@ def test_animation_bounds():
         InsertKeyframe.parse(payload)
 
 
-
 def test_level7_m1_animation_inspect_reports_empty_exact_state():
     bpy, inspector, registry = setup()
     obj = bpy.context.scene.objects[0]

@@ -116,8 +116,7 @@ class AnimationOperations:
                     not isinstance(co, list)
                     or len(co) != 2
                     or not all(
-                        type(value) in (int, float)
-                        and -float("inf") < value < float("inf")
+                        type(value) in (int, float) and -float("inf") < value < float("inf")
                         for value in co
                     )
                 ):
