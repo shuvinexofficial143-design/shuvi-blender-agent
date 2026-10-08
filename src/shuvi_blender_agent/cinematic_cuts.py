@@ -364,11 +364,7 @@ class CameraCutOperations:
         def restore_release():
             # Only recreate our two originally owned markers when a removal
             # partially succeeded; never mutate any foreign marker.
-            retained = [
-                marker
-                for marker in markers
-                if not self._contains((first, second), marker)
-            ]
+            retained = [marker for marker in markers if not self._contains((first, second), marker)]
             original_foreign = owned["original"]["markers"]
             foreign_now = self._state(scene)["markers"]
             foreign_expected = [row for row in foreign_now if row["name"] not in (FIRST, SECOND)]
