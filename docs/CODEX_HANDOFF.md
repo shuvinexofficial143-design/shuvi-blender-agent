@@ -903,3 +903,30 @@ runtime acceptance **0%**, production ready **No**.
 
 STOP before M10, actual Blender runtime/render work and main Shuvi
 integration unless separately user-authorized.
+
+
+## Level 8 M10 — Integrated camera shot sequence (source-only 100%)
+
+Atomic three-tool workflow: `cinema.sequence_preview`,
+`cinema.sequence_apply`, `cinema.sequence_release`.
+The preview joins two M1 bounded subject-centered camera framing
+calculations and one M9 two-shot marker cut plan, with exact object,
+subject, marker, scene-camera and playhead revisions, independent
+azimuth/elevation shots, shared margin and 4+ frames per shot.
+
+The mutation frames both cameras and creates two source-verified
+camera-bound timeline markers at start/cut. It verifies both camera
+XYZ poses/lenses, marker pointers/frame/names and unchanged subject,
+foreign markers, active scene camera and frame. Failure restores both
+camera poses, removes only newly created markers and verifies
+original state. Release requires same-session ownership and restores
+both pre-sequence camera poses, with guarded owned-marker rebuild
+on interrupted release. No existing camera Actions or foreign markers
+are mutated.
+
+Do not claim real Blender animated playback, GUI-tested visuals,
+occlusion safety or optical accuracy; only fake-bpy/source acceptance
+and CI are supported. Level 8 **100% source-side (10/10 milestones)**;
+public tools **249**, Blender runtime acceptance **0%**,
+production ready **No**. Do not launch Blender, render, work on
+Level 9, or merge into master Shuvi without separate permission.
