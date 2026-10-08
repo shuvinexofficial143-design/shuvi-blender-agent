@@ -1,6 +1,7 @@
 """One factory for Blender execution and fake-adapter integration tests."""
 
 from .animation import AnimationOperations
+from .animation_acceptance import AnimationAcceptanceOperations
 from .animation_camera import CameraAnimationOperations
 from .animation_controls import AnimationControlOperations
 from .animation_keyframes import AdvancedAnimationOperations
@@ -79,6 +80,8 @@ def create_registry(
     advanced_animation = AdvancedAnimationOperations(animation)
     timeline_animation = AnimationTimelineOperations(advanced_animation)
     rigging = RiggingOperations(objects)
+    recipe_animation = AnimationRecipeLibraryOperations(timeline_animation)
+    nla_animation = ManagedNLAOperations(animation)
     adapters = [
         inspector,
         objects,
@@ -113,8 +116,9 @@ def create_registry(
         advanced_animation,
         AnimationStyleOperations(advanced_animation),
         timeline_animation,
-        AnimationRecipeLibraryOperations(timeline_animation),
-        ManagedNLAOperations(animation),
+        recipe_animation,
+        nla_animation,
+        AnimationAcceptanceOperations(advanced_animation, recipe_animation, nla_animation),
         PoseBoneAnimationOperations(animation, rigging),
         CameraAnimationOperations(objects),
         AnimationControlOperations(animation, rigging),
