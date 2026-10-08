@@ -1,7 +1,7 @@
 """Timeline controls and bounded keyframes on actions created by this session."""
 
+import math
 from dataclasses import dataclass
-from math import isfinite
 
 from .animation_state import action_curves
 from .contracts import Request, Result, Status
@@ -118,7 +118,7 @@ class AnimationOperations:
                     not isinstance(co, list)
                     or len(co) != 2
                     or not all(
-                        isinstance(value, (int, float)) and isfinite(value) for value in co
+                        isinstance(value, (int, float)) and math.isfinite(value) for value in co
                     )
                 ):
                     raise AgentError(ErrorCode.SAFETY_DENIED, "Animation point is invalid")
@@ -148,7 +148,10 @@ class AnimationOperations:
         drivers_count = len(getattr(ad, "drivers", ())) if ad is not None else 0
         nla_track_count = len(getattr(ad, "nla_tracks", ())) if ad is not None else 0
         if drivers_count > MAX_ANIMATION_AUX_ITEMS or nla_track_count > MAX_ANIMATION_AUX_ITEMS:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Animation auxiliary structure limit exceeded")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "Animation auxiliary structure limit exceeded",
+            )
 
         action_users = getattr(action_obj, "users", 0) if action_obj is not None else 0
         if type(action_users) is not int or action_users < 0:
