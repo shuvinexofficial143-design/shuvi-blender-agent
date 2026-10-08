@@ -164,6 +164,8 @@ class CameraFollowOperations:
         blockers = set(base["blockers"])
         if len(camera.constraints):
             blockers.add("CAMERA_CONSTRAINTS_PRESENT")
+        if subject.parent is not None:
+            blockers.add("PARENTED_SUBJECT_WORLD_OFFSET_UNSUPPORTED")
         if before["object_id"] in self._owned:
             blockers.add("CAMERA_ALREADY_FOLLOWING")
         offset = [base["camera_location"][axis] - base["subject_center"][axis] for axis in range(3)]
