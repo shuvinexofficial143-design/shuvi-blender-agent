@@ -228,7 +228,9 @@ class StudioLightingOperations:
         return subject, snap, plan
 
     def preview(self, request: Request, action: RigPreview):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[2])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[2]
+        )
 
     def _cleanup(self, created, before_scene_revision):
         for obj, data in reversed(created):
