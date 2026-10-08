@@ -104,9 +104,9 @@ def test_m5_all_three_easing_styles_create_verified_bezier_handles(style):
     for channel in after["animation"]["channels"]:
         assert len(channel["points"]) == 5
         for index, point in enumerate(channel["points"]):
-            expected = plan["key_poses"][index]["key_handles"][
-                channel["data_path"]
-            ][channel["index"]]
+            expected = plan["key_poses"][index]["key_handles"][channel["data_path"]][
+                channel["index"]
+            ]
             assert point["interpolation"] == "BEZIER"
             assert point["handle_left_type"] == "FREE"
             assert point["handle_right_type"] == "FREE"
