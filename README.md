@@ -51,6 +51,8 @@ Level 8 Cinematography source roadmap is **40% complete** (Milestones 1-4 of 10)
 Level 7 Milestone 10 adds bounded animation structure QA, current-session managed Action recovery capture/restore with readback verification and rollback, and scoped source-only acceptance. These source capabilities are not live Blender acceptance.
 Level 8 Milestone 1 adds bounded subject-centered camera shot planning and verified camera framing using lens, sensor width, render aspect, conservative subject bounds, explicit angles and safety checks.
 Level 8 Milestone 2 adds nine fixed Rule-of-Thirds composition anchors, actual camera plane repositioning, adaptive clipping/framing clearance and shared verified camera rollback.
+Level 8 Milestone 3 adds bounded ORBIT, DOLLY_IN and DOLLY_OUT camera Action keyframes (6 channels, 3 poses) with exact source readback.
+Level 8 Milestone 4 adds five-pose cubic Bézier camera rails (6 channels, 30 keys), revisioned previews and guarded rollback; actual Blender evaluated motion is unverified.
 Source and fake-data tests are available; real Blender runtime verification remains 0% and production readiness is still not claimed.
 Production ready: no. Real launch, bpy, render and recovery behavior need the separately
 authorized acceptance procedure. No Blender is installed or launched by package import.
