@@ -11,7 +11,7 @@ from .safety import SafetyClass, SafetyPolicy
 from .validation import fields, string
 from .verification import compare
 
-MAX_REGISTERED_TOOLS = 231
+MAX_REGISTERED_TOOLS = 233
 
 
 @dataclass(frozen=True)
