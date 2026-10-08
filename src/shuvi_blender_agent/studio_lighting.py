@@ -37,9 +37,7 @@ class RigPreview:
 
     @classmethod
     def parse(cls, data):
-        fields(
-            data, {"subject", "name_prefix", "preset", "distance_scale", "intensity_scale"}
-        )
+        fields(data, {"subject", "name_prefix", "preset", "distance_scale", "intensity_scale"})
         preset = string(data["preset"], "preset", limit=32)
         if preset not in PRESETS:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown studio lighting preset")
@@ -65,8 +63,12 @@ class RigApply:
         fields(
             data,
             {
-                "subject", "name_prefix", "preset", "distance_scale",
-                "intensity_scale", "expected_lighting_revision",
+                "subject",
+                "name_prefix",
+                "preset",
+                "distance_scale",
+                "intensity_scale",
+                "expected_lighting_revision",
             },
         )
         return cls(
@@ -84,9 +86,7 @@ class RigRelease:
     @classmethod
     def parse(cls, data):
         fields(data, {"expected_lighting_token"})
-        return cls(
-            string(data["expected_lighting_token"], "expected_lighting_token", limit=64)
-        )
+        return cls(string(data["expected_lighting_token"], "expected_lighting_token", limit=64))
 
 
 class StudioLightingOperations:
@@ -243,9 +243,8 @@ class StudioLightingOperations:
                     )
                 self.bpy.data.lights.remove(data)
         self.bpy.context.view_layer.update()
-        if (
-            self.inspector.summary()["revision"] != before_scene_revision
-            or any(self._in_table(obj) or self._in_lights(data) for obj, data in created)
+        if self.inspector.summary()["revision"] != before_scene_revision or any(
+            self._in_table(obj) or self._in_lights(data) for obj, data in created
         ):
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Studio lighting cleanup unverified")
 
