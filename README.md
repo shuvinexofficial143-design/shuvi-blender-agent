@@ -13,7 +13,7 @@ The package imports without Blender. No unrestricted Python execution tool is ex
 Planning, model providers, authentication, billing, and frontend belong to the main Shuvi
 project and are outside this repository.
 
-The execution factory currently registers 203 typed tools. The host client validates its own
+The execution factory currently registers 204 typed tools. The host client validates its own
 allowlist and safety classes, verifies response correlation/readback and executes bounded
 declarative plans. Scene queries stream revision construction and cap nested work, page
 bytes and metadata. File outputs use exclusive reservations and verified readback.
@@ -26,6 +26,7 @@ bytes and metadata. File outputs use exclusive reservations and verified readbac
 - [Level 4 UV / texture / materials roadmap/status](docs/LEVEL_4_UV_MATERIALS.md)
 - [Level 5 Geometry Nodes roadmap/status](docs/LEVEL_5_GEOMETRY_NODES.md)
 - [Level 6 Rigging roadmap/status](docs/LEVEL_6_RIGGING.md)
+- [Level 7 Advanced Animation roadmap/status](docs/LEVEL_7_ANIMATION.md)
 - [Tool reference and exact limits](docs/TOOL_REFERENCE.md)
 - [Host client and stable integration interface](docs/CLIENT.md)
 - [Source audit and practical limits](docs/SOURCE_AUDIT.md)
@@ -44,7 +45,8 @@ Level 3 sculpting + character-modeling source roadmap is **100% complete**.
 Level 4 UV / texture / materials source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 5 Geometry Nodes source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 6 Rigging source roadmap is **100% complete** (Milestones 1-10 of 10).
-Milestone 10 closes the source roadmap with bounded rigging QA/recovery/acceptance over the existing M1-M9 surfaces while keeping the public registry at 203 tools.
+Level 7 Advanced Animation source roadmap is **10% complete** (Milestone 1 of 10).
+Level 7 Milestone 1 adds bounded read-only Action/FCurve/keyframe inspection with a deterministic animation revision and explicit safety blockers.
 Source and fake-data tests are available; real Blender runtime verification remains 0% and production readiness is still not claimed.
 Production ready: no. Real launch, bpy, render and recovery behavior need the separately
 authorized acceptance procedure. No Blender is installed or launched by package import.

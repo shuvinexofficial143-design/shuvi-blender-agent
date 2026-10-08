@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 203 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 204 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -33,6 +33,7 @@ clients should retain the filter, session ID and revision while continuing a pag
 | system.ping | none | read_only | `ready=true` after a roundtrip |
 | system.capabilities | none | read_only | protocol/session/Blender version and operation catalog |
 | scene.inspect | none | read_only | scene/file/render/frames, context, cursor, units, pivot, type counts, world presence, revision |
+| animation.inspect | object_id | read_only | exact bounded Action/FCurve/keyframe state, unique frames/interpolation counts, driver/NLA/shared/foreign blockers and deterministic animation_revision |
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
@@ -1301,3 +1302,21 @@ Current Level 3 source progress: **100%**.
   rig state with verified recovery before the recovered state can pass acceptance.
 - The acceptance result remains explicitly source-only: real Blender runtime verification is
   **0%** and production readiness is **No**.
+
+
+
+### Level 7 milestone 1 limits
+
+- `animation.inspect` is read-only and resolves only a current-session object ID.
+- Exact inspection supports at most **64 FCurves**, **1024 keyframe points**, **64 drivers** and
+  **64 NLA tracks**. Truncated or unsupported layered Action structures fail closed.
+- The response reports Action API/name/users/session ownership, bounded per-channel points,
+  unique keyed frames, interpolation counts and a deterministic `animation_revision`.
+- Later mutation readiness is blocked for non-local/read-only objects, object constraints,
+  non-Object mode, drivers, NLA tracks, foreign Actions or shared Actions.
+- Existing foreign/shared animation may be inspected but is not silently adopted as a
+  Shuvi-managed Action.
+- Milestone 1 adds one public read-only tool, taking the factory from 203 to **204 typed tools**
+  and raising the bounded registry/client cap to **204**.
+- Real Blender curve evaluation, dependency-graph behavior and runtime compatibility remain
+  unverified.
