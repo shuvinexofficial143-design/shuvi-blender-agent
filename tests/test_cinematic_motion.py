@@ -70,9 +70,13 @@ def preview(registry, params):
 
 def apply(registry, params, plan):
     return registry.dispatch(
-        Request("cinema.motion_apply", params | {
-            "expected_motion_revision": plan["motion_revision"],
-        })
+        Request(
+            "cinema.motion_apply",
+            params
+            | {
+                "expected_motion_revision": plan["motion_revision"],
+            },
+        )
     )
 
 
@@ -100,9 +104,7 @@ def test_m3_creates_three_real_camera_poses_with_eighteen_keyframes(mode):
     bpy, camera, subject, inspector, registry = setup()
     overrides = {}
     if mode != "ORBIT":
-        overrides = {
-            "mode": mode, "end_azimuth": 0, "end_elevation": 10, "dolly_factor": 1.6
-        }
+        overrides = {"mode": mode, "end_azimuth": 0, "end_elevation": 10, "dolly_factor": 1.6}
     params = args(inspector, camera, subject, **overrides)
     plan = preview(registry, params)
     result = apply(registry, params, plan)
@@ -136,8 +138,13 @@ def test_m3_preview_wraps_yaw_without_full_spin():
     plan = preview(
         registry,
         args(
-            inspector, camera, subject, start_azimuth=89, end_azimuth=110,
-            start_elevation=5, end_elevation=10,
+            inspector,
+            camera,
+            subject,
+            start_azimuth=89,
+            end_azimuth=110,
+            start_elevation=5,
+            end_elevation=10,
         ),
     )
     angles = [pose["rotation_euler"][2] for pose in plan["key_poses"]]
@@ -147,8 +154,13 @@ def test_m3_preview_wraps_yaw_without_full_spin():
 def test_m3_dolly_preview_nonzero_distance_across_midpoint():
     _, camera, subject, inspector, registry = setup()
     params = args(
-        inspector, camera, subject, mode="DOLLY_IN",
-        end_azimuth=0, end_elevation=10, dolly_factor=1.5,
+        inspector,
+        camera,
+        subject,
+        mode="DOLLY_IN",
+        end_azimuth=0,
+        end_elevation=10,
+        dolly_factor=1.5,
     )
     plan = preview(registry, params)
     distances = [p["distance"] for p in plan["key_poses"]]
@@ -181,10 +193,20 @@ def test_m3_stale_subject_target_refuses_mutation():
     assert camera.animation_data is None
 
 
-@pytest.mark.parametrize("blocker", [
-    "foreign", "shared", "parent", "constraint", "read_only", "camera_data_animated",
-    "shift", "clip", "wrong_mode",
-])
+@pytest.mark.parametrize(
+    "blocker",
+    [
+        "foreign",
+        "shared",
+        "parent",
+        "constraint",
+        "read_only",
+        "camera_data_animated",
+        "shift",
+        "clip",
+        "wrong_mode",
+    ],
+)
 def test_m3_safe_camera_guards_before_action_creation(blocker):
     bpy, camera, subject, inspector, registry = setup()
     if blocker == "foreign":
@@ -225,15 +247,18 @@ def test_m3_occupied_action_never_overwritten():
     assert len(camera.animation_data.action.fcurves) == 6
 
 
-@pytest.mark.parametrize("field,value", [
-    ("mode", "TRACKING"),
-    ("start_frame", 0),
-    ("end_frame", 800),
-    ("end_azimuth", 140),
-    ("end_elevation", -75),
-    ("dolly_factor", 1.5),
-    ("make_active", "yes"),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("mode", "TRACKING"),
+        ("start_frame", 0),
+        ("end_frame", 800),
+        ("end_azimuth", 140),
+        ("end_elevation", -75),
+        ("dolly_factor", 1.5),
+        ("make_active", "yes"),
+    ],
+)
 def test_m3_rejects_invalid_or_unsafe_motion_payload(field, value):
     _, camera, subject, inspector, _ = setup()
     params = args(inspector, camera, subject)
@@ -244,8 +269,13 @@ def test_m3_rejects_invalid_or_unsafe_motion_payload(field, value):
 def test_m3_dolly_requires_static_angles_and_factor():
     _, camera, subject, inspector, _ = setup()
     params = args(
-        inspector, camera, subject, mode="DOLLY_IN", dolly_factor=1.6,
-        end_azimuth=0, end_elevation=10,
+        inspector,
+        camera,
+        subject,
+        mode="DOLLY_IN",
+        dolly_factor=1.6,
+        end_azimuth=0,
+        end_elevation=10,
     )
     assert CameraMotionPreview.parse(params).mode == "DOLLY_IN"
     with pytest.raises(AgentError):
