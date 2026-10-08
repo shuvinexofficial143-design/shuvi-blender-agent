@@ -153,7 +153,9 @@ class CameraTrackingOperations:
         }
 
     def preview(self, request: Request, action: TrackingPreview):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[4])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[4]
+        )
 
     def apply(self, request: Request, action: TrackingApply):
         camera, subject, before, subject_before, plan = self._plan(action.preview)
@@ -223,7 +225,11 @@ class CameraTrackingOperations:
                 "camera_revision_changed": after["revision"] != before["revision"],
             }
             verification = compare(expected, actual)
-            if verification.matched and len(camera.constraints) == 1 and camera.constraints[0] is created:
+            if (
+                verification.matched
+                and len(camera.constraints) == 1
+                and camera.constraints[0] is created
+            ):
                 tracked_revision = revision(
                     {
                         "camera_revision": after["revision"],
@@ -329,7 +335,8 @@ class CameraTrackingOperations:
                 self.bpy.context.view_layer.update()
                 if self.inspector.snapshot(camera)["revision"] == before["revision"]:
                     raise AgentError(
-                        ErrorCode.EXECUTION_ERROR, "Tracking release interrupted; no change verified"
+                        ErrorCode.EXECUTION_ERROR,
+                        "Tracking release interrupted; no change verified",
                     ) from exc
             raise AgentError(
                 ErrorCode.VERIFICATION_FAILED, "Tracking release state uncertain; inspect manually"
@@ -342,7 +349,9 @@ class CameraTrackingOperations:
 
     def tools(self):
         return [
-            Tool("cinema.track_preview", SafetyClass.READ_ONLY, TrackingPreview.parse, self.preview),
+            Tool(
+                "cinema.track_preview", SafetyClass.READ_ONLY, TrackingPreview.parse, self.preview
+            ),
             Tool("cinema.track_apply", SafetyClass.MUTATION, TrackingApply.parse, self.apply),
             Tool("cinema.track_release", SafetyClass.MUTATION, TrackingRelease.parse, self.release),
         ]
