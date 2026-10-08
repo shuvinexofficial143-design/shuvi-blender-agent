@@ -60,6 +60,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.track_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active | read_only | deterministic TRACK_TO subject follow plan, safe initial framing, cycle checks and revision |
 | cinema.track_apply | all cinema.track_preview fields plus expected_tracking_revision | mutation | create one managed TRACK_TO camera constraint with target, axis readback and rollback |
 | cinema.track_release | camera, expected_tracking_revision | mutation | remove only same-session owned unmodified tracking constraint with readback verification |
+| cinema.follow_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active | read_only | bounded relative camera offset plan with world-space COPY_LOCATION and TRACK_TO chain |
+| cinema.follow_apply | all cinema.follow_preview fields plus expected_follow_revision | mutation | create owned COPY_LOCATION with offset and TRACK_TO constraints, verify both, rollback failed setups |
+| cinema.follow_release | camera, expected_follow_token | mutation | release only original same-session two constraints and restore saved camera pose, with recovery |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1671,3 +1674,24 @@ Current Level 3 source progress: **100%**.
   toward the changing subject; **camera translation is NOT followed**.
   No real Blender depsgraph, evaluated tracking, occlusion or render tests.
 - Typed factory/client cap: **238**. Real Blender runtime acceptance: **0%**.
+
+
+## Level 8 M7 — Translation-follow camera rig
+
+- Preview computes `stored_camera_offset = planned_world_camera_location -
+  subject_world_origin`, with exact fresh targets and M6 dependency cycle
+  checks; does not mutate.
+- Apply creates in order `COPY_LOCATION` (world/world, XYZ enabled,
+  offset enabled, inversions disabled) and `TRACK_TO` (local -Z, up +Y),
+  both targeting the same subject. It verifies target identity, precise
+  constraint settings and unchanged lens/subject; partial failure rolls
+  back only these new constraints and original camera pose.
+- Release requires a fresh ObjectTarget and same-session ownership token.
+  Removes exactly these two unmodified constraints and restores
+  pre-follow camera pose. Partial removal reconstructs only its own
+  constraints and checks rollback against the original revision.
+- Expected evaluated position tracks target displacement with constant
+  world-space offset; camera orientation continues pointing toward target.
+  This is not smooth/damped camera follow; real Blender depsgraph evaluated
+  translation/rotation, occlusion and rendered visuals are unverified.
+- No existing camera constraints are accepted. Registry/host tools: **241**.
