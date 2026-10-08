@@ -1,5 +1,7 @@
 """Level 8 M9: source-only scene marker camera cuts, ownership and rollback."""
 
+from copy import copy
+
 import pytest
 from fake_bpy import FakeObject, fake_bpy
 
@@ -322,6 +324,20 @@ def test_m9_release_refuses_modified_own_marker():
     assert rejected.status == Status.FAILED
     assert rejected.error.code == ErrorCode.SAFETY_DENIED
     assert len(bpy.context.scene.timeline_markers) == 2
+
+
+def test_m9_release_does_not_adopt_value_equal_foreign_marker():
+    bpy, a, b, _, inspector, _, reg = setup()
+    payload = params(inspector, a, b)
+    result = apply(reg, payload, preview(reg, payload))
+    markers = bpy.context.scene.timeline_markers
+    foreign = copy(markers[0])
+    assert foreign == markers[0] and foreign is not markers[0]
+    markers[0] = foreign
+    denied = release(reg, result.data["cut_token"])
+    assert denied.error.code == ErrorCode.SAFETY_DENIED
+    assert markers[0] is foreign
+    assert len(markers) == 2
 
 
 def test_m9_release_refuses_new_foreign_marker():
