@@ -470,12 +470,12 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Level 7 active checkpoint
-Latest verified Level 7 source/test checkpoint: 6bd1384583bc1b1255e62799314c18de04965275.
-CI run 37743968296 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **830 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **80 package modules**.
+Latest verified Level 7 source/test checkpoint: 0b7150b08caf19aea1671c7949adb2b2fcacdca9.
+CI run 37746328460 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **836 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **81 package modules**.
 
-Level 7 Advanced Animation is now **40% source complete** (Milestones 1-4 of 10).
+Level 7 Advanced Animation is now **50% source complete** (Milestones 1-5 of 10).
 
 Milestone 1 adds:
 - `animation.inspect`: one bounded read-only Action/FCurve/keyframe inspection surface using a
@@ -547,27 +547,46 @@ Milestone 4 adds:
 - fractional remapping, evaluated motion, pose animation, NLA editing and generic FCurve scripting
   remain out of scope.
 
+Milestone 5 adds:
+- `animation.pose_bone_inspect` for one exact named bone's raw animation channels, current
+  rig revision, full animation revision, channel completeness and pose-animation revision.
+- `animation.pose_bone_keyframe_insert` for one complete raw pose key using XYZ Euler or
+  normalized Quaternion rotation plus location/scale.
+- pose insertion requires a fresh ObjectTarget, exact rig revision and exact animation revision.
+- the first pose key may create a Shuvi-owned Action; subsequent pose keys may extend only an
+  unshared session-owned pose-only Action.
+- non-pose Action channels, foreign Actions, mixed alternate rotation channels, partial channel
+  sets and same-bone frame collisions fail closed.
+- existing global 64-FCurve / 1024-point limits remain authoritative.
+- source verification checks every inserted point, requested interpolation, Action ownership and
+  raw pose state.
+- forced verification failure is tested to remove the inserted key, restore pose state and recover
+  both the prior rig revision and prior animation revision, including clearing a newly-created
+  Action when the operation began with no Action.
+- M5 raises the registry/client cap from 210 to **212** and adds two typed tools.
+- evaluated pose/constraints/IK, pose-key edit/remove/retime, baking and NLA remain out of scope.
+
 Level 7 real Blender runtime verification remains 0%. Production readiness remains No.
 
-Milestone 4 — bounded multi-key / timeline animation workflows — is complete. Do not begin
-Milestone 5 without explicit user permission.
+Milestone 5 — pose-bone animation channels — is complete. Do not begin Milestone 6 without
+explicit user permission.
 
 ## Status
-Source: 210 typed host contracts/tools at the bounded 210-tool cap. Level 1 source: **100%**.
+Source: 212 typed host contracts/tools at the bounded 212-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
 Level 6 Rigging source: **100%** (Milestones 1-10 of 10). Verified Level 6 source/test checkpoint:
 8b1f76baebcb02bd285e95dd8754df4fb9e787d4. CI run 37657039445 passed all six
 Linux/Windows Python 3.11/3.12/3.13 jobs with 807 tests, lint/format, package build,
 77-module distribution audit and clean install/import without bpy.
-Level 7 Advanced Animation source: **40%** (Milestones 1-4 of 10). Verified Level 7 source/test
-checkpoint: 6bd1384583bc1b1255e62799314c18de04965275. CI run 37743968296 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 830 tests, lint/format, package build,
-80-module distribution audit and clean install/import without bpy.
+Level 7 Advanced Animation source: **50%** (Milestones 1-5 of 10). Verified Level 7 source/test
+checkpoint: 0b7150b08caf19aea1671c7949adb2b2fcacdca9. CI run 37746328460 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 836 tests, lint/format, package build,
+81-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 7 Milestones 1-4 are complete at 40%. Stop here. Do not begin Milestone 5 without explicit
+Level 7 Milestones 1-5 are complete at 50%. Stop here. Do not begin Milestone 6 without explicit
 user permission. Keep source/fake evidence separate from real Blender runtime verification.
 
 ## Decisions
@@ -586,12 +605,12 @@ user permission. Keep source/fake evidence separate from real Blender runtime ve
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed Level 7 40% source checkpoint. The registry/client is exactly at the
-210-tool cap, so Milestone 5 must deliberately reconcile capacity before adding any new tool.
+None for the completed Level 7 50% source checkpoint. The registry/client is exactly at the
+212-tool cap, so Milestone 6 must deliberately reconcile capacity before adding any new tool.
 Heavy Blender runtime actions still require separate user authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 5:
-pose-bone animation channels. First reconcile the current 210/210 registry cap, preserve exact
-animation_revision/readback/recovery evidence, keep real Blender runtime acceptance at 0% unless
-separately authorized, and do not begin Milestone 6 automatically.
+Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 6:
+camera / lens / focus animation workflows. First reconcile the current 212/212 registry cap,
+preserve exact animation_revision/readback/recovery evidence, keep real Blender runtime acceptance
+at 0% unless separately authorized, and do not begin Milestone 7 automatically.

@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **40%**.
+Current Level 7 source progress: **50%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -21,7 +21,7 @@ Production ready: **No**.
 | 2 | Revision-gated keyframe edit / remove / replace | complete |
 | 3 | Interpolation, easing and handle controls | complete |
 | 4 | Bounded multi-key / timeline animation workflows | complete |
-| 5 | Pose-bone animation channels | pending |
+| 5 | Pose-bone animation channels | complete |
 | 6 | Camera / lens / focus animation workflows | pending |
 | 7 | Constraint influence / visibility animation controls | pending |
 | 8 | Managed NLA clip / strip workflows | pending |
@@ -341,9 +341,101 @@ Current registry/catalog hard maximum: **210**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+## Milestone 5 — 50% complete
+
+Milestone 5 adds two bounded pose-animation surfaces:
+
+- `animation.pose_bone_inspect`
+- `animation.pose_bone_keyframe_insert`
+
+These surfaces operate on raw pose-bone transform channels only. They do not claim evaluated
+constraint/IK/dependency-graph motion.
+
+### `animation.pose_bone_inspect`
+
+Input: current-session armature `object_id` plus one explicit `bone_name`.
+
+The read-only result combines current rig and animation evidence:
+
+- current `rig_revision` and full `animation_revision`;
+- Action name/users and live-session ownership;
+- current pose rotation mode;
+- exact bounded channels for that bone;
+- expected channel count: **9** for XYZ or **10** for Quaternion;
+- exact per-bone keyframe point count and unique frames;
+- pose-bone constraint count;
+- deterministic `pose_animation_revision`;
+- explicit `raw_pose_channels_only=true` and runtime-unverified metadata.
+
+Inspection reports blockers for foreign/shared/unsafe Actions, any non-pose channels in the Action,
+alternate Euler/Quaternion channel remnants, or a partial channel set.
+
+### `animation.pose_bone_keyframe_insert`
+
+Mutation requires all three freshness guards:
+
+- a fresh `ObjectTarget`;
+- exact current `rig_revision`;
+- exact current `animation_revision`.
+
+The payload supplies one bone, frame, location, scale, interpolation and either:
+
+- XYZ Euler rotation (3 components); or
+- normalized Quaternion rotation (4 components, normalized by the existing rig contract).
+
+The first pose key may create a new Action; Shuvi marks that Action as session-owned. Later pose
+keys may extend only the same unshared, session-owned **pose-only** Action. An Action containing
+object-transform or other non-pose channels is not adopted.
+
+Existing pose animation cannot silently switch rotation representation after channels exist.
+A requested frame is rejected if that bone already has any keyed pose channel at the frame;
+overwrite remains disabled.
+
+The M1 global animation bounds remain authoritative:
+
+- at most **64 FCurves**;
+- at most **1024 keyframe points**.
+
+### Verification and recovery
+
+After insertion Shuvi reads the Action back and verifies every inserted location/rotation/scale
+point, requested interpolation, session ownership, changed animation revision and the bone's raw
+pose state.
+
+If verification fails, Shuvi removes the newly inserted frame, restores the previous raw pose
+state, clears a newly-created Action when the operation started from no Action, and verifies that
+both the original `rig_revision` and original `animation_revision` are recovered.
+
+Source tests cover empty inspection, XYZ insertion, normalized Quaternion insertion, duplicate
+frame rejection, foreign Action rejection, stale animation revision rejection, and forced
+verification-failure rollback.
+
+M5 does not yet add pose-key edit/remove/retime, evaluated pose verification, baking, constraint
+evaluation, NLA editing or arbitrary RNA/FCurve scripting.
+
+### Milestone 5 source checkpoint
+
+Verified source/test checkpoint: `0b7150b08caf19aea1671c7949adb2b2fcacdca9`.
+
+CI run `37746328460` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **836 tests**
+- package build
+- distribution audit
+- clean offline install/import without bpy
+- **81 package modules**
+
+Factory typed tools: **212**.
+Current registry/catalog hard maximum: **212**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-4 are complete at 40%. Do not begin Milestone 5 without explicit user permission.
+Milestones 1-5 are complete at 50%. Do not begin Milestone 6 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real animation runtime
 acceptance without separate explicit runtime authorization.

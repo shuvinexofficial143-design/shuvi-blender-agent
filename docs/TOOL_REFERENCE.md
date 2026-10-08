@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 210 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 212 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -40,6 +40,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.keyframe_style_set | target, expected_animation_revision, data_path, array_index, frame, interpolation, easing, handle_left_type, handle_right_type, optional handle_left/handle_right | mutation | set one exact managed key's interpolation/easing and bounded Bezier handle state with style-aware revision readback and verified rollback |
 | animation.retime_preview | target, expected_animation_revision, mappings | read_only | validate 1..32 complete managed transform-key source→target mappings, collision rules, resulting frame set and deterministic workflow revision without mutation |
 | animation.retime_apply | target, expected_animation_revision, mappings | mutation | retime 1..32 complete managed transform keys while preserving values/style/handle geometry, with exact frame/state readback and verified rollback |
+| animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
+| animation.pose_bone_keyframe_insert | target, expected_rig_revision, expected_animation_revision, bone_name, frame, location, rotation_mode, rotation, scale, interpolation | mutation | insert one complete raw XYZ/Quaternion pose-bone key with dual revision gating, pose-only Action ownership, exact readback and verified rig+animation rollback |
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
@@ -1399,3 +1401,28 @@ Current Level 3 source progress: **100%**.
   bounded registry/client cap to **210**.
 - Fractional remapping, arbitrary time-warp curves, evaluated motion, pose animation, NLA editing
   and generic FCurve scripting remain out of scope/runtime-unverified.
+
+
+
+### Level 7 milestone 5 limits
+
+- Pose animation is restricted to raw pose-bone location, rotation and scale channels.
+- `animation.pose_bone_inspect` reports exactly one named bone's current channels while carrying
+  both the full rig revision and full Action animation revision.
+- A complete XYZ key uses 9 FCurves; a Quaternion key uses 10.
+- `animation.pose_bone_keyframe_insert` requires a fresh ObjectTarget, exact rig revision and
+  exact animation revision.
+- Quaternion input is normalized by the existing bounded rig pose contract.
+- The first pose key may create a Shuvi-owned Action. Existing Actions are accepted only when they
+  are unshared, session-owned, safe and contain pose channels only.
+- Once a bone has pose animation channels, its Euler/Quaternion representation cannot silently
+  switch while those channels exist.
+- A bone/frame collision fails closed; M5 does not overwrite an existing pose key.
+- The existing global bounds remain **64 FCurves** and **1024 keyframe points**.
+- Verification reads back every inserted channel and raw pose state. Failure removes the inserted
+  key, restores raw pose state, clears a newly-created Action when necessary, and requires both the
+  prior rig revision and prior animation revision to be recovered.
+- M5 adds two public tools, taking the factory from 210 to **212 typed tools** and raising the
+  bounded registry/client cap to **212**.
+- Evaluated constraints/IK, pose-key edit/remove/retime, baking, NLA and real Blender runtime
+  behavior remain unverified/out of scope.
