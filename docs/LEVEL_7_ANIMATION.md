@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **90%**.
+Current Level 7 source progress: **100%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -26,7 +26,7 @@ Production ready: **No**.
 | 7 | Constraint influence / visibility animation controls | complete |
 | 8 | Managed NLA clip / strip workflows | complete |
 | 9 | Versioned animation recipe library | complete |
-| 10 | Animation QA / recovery / acceptance | pending |
+| 10 | Animation QA / recovery / acceptance | complete |
 
 ## Milestone 1 — 10% complete
 
@@ -618,8 +618,48 @@ verification-mismatch rollback. Runtime verification: **0%**; production ready: 
 
 Factory typed tool count and registry/client cap: **221**.
 
+## Milestone 10 — 100% source-side complete
+
+M10 adds four public typed operations for scoped, recoverable managed transform
+Actions. This does **not** claim all Blender animation types have passed acceptance.
+
+- `animation.qa_inspect(object_id)`: nonmutating bounded QA for session Action
+  ownership and sharing, exact nine-channel topology, complete unique frame keys,
+  integer frame bounds, mutation blockers and the source-vs-runtime boundary.
+  Reports deterministic checks, READY/BLOCKED status and a `qa_revision`.
+- `animation.recovery_capture(target, expected_animation_revision)`:
+  capture an exact bounded snapshot of **one current-session, session-owned
+  unshared nine-channel Action**. The capture stays in adapter memory and
+  does not modify Blender. At most 16 object captures are retained, replacing
+  older captures for the same object.
+- `animation.recovery_restore(target, expected_animation_revision,
+  recovery_revision)`: revision-gated, verified restore to a previous captured
+  managed Action state. The exact Action identity must still match, and
+  the target must remain safe, local and owned. The restore compares complete
+  keyframe values/interpolation/easing/handle state and previous revision.
+  On verification failure or interruption it attempts to restore the *immediately
+  preceding* Action snapshot; it reports recovery verified only when exact
+  revision and complete readback match. A successfully restored capture is consumed.
+- `animation.level7_acceptance(recipe_id, recipe_version, target,
+  expected_animation_revision, parameters)`: nonmutating, scoped source
+  acceptance combining the transform QA, version-1 managed recipe catalog,
+  fresh atomic recipe preview, NLA check and source/runtime evidence boundary.
+  It explicitly does not certify pose-bone playback, camera optics playback,
+  visibility/constraint influence evaluation or NLA evaluated playback.
+  READY refers only to this source/managed-transform recipe pathway.
+
+Tests use injected fake-bpy only. Negative cases cover incomplete keyframes,
+wrong recovery tokens, stale animation revisions, foreign Action ownership,
+recipe collision, forced restore-readback mismatch, interrupted restore and
+rollback to the actual pre-restore state.
+
+M10 raises the public typed registry/client cap from 221 to **225**.
+Level 7 source roadmap: **100%**. Real Blender runtime acceptance:
+**0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1–9 are source-side complete (90%). Do not start Milestone 10
-(Animation QA / Recovery / Acceptance) without separate explicit user permission.
-Do not install, launch, probe or render Blender without separately authorized runtime testing.
+Levels 1–7 are complete against their **source-side roadmaps only**.
+Do not begin Level 8 Cinematography or merge into the main Shuvi repository
+without explicit authorization. No real Blender launch, render or runtime test
+has been performed.
