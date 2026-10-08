@@ -3,6 +3,7 @@
 from .animation import AnimationOperations
 from .animation_keyframes import AdvancedAnimationOperations
 from .animation_style import AnimationStyleOperations
+from .animation_timeline import AnimationTimelineOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
 from .character_acceptance import CharacterAcceptanceOperations
@@ -104,6 +105,7 @@ def create_registry(
         animation,
         advanced_animation,
         AnimationStyleOperations(advanced_animation),
+        AnimationTimelineOperations(advanced_animation),
         RenderOperations(objects, policy, workspace),
         RiggingOperations(objects),
         RigRecipeLibraryOperations(objects),
