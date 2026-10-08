@@ -18,17 +18,30 @@ def setup(is_rig=False):
     constraint = None
     if is_rig:
         bone_data = NS(
-            name="Root", parent=None, head_local=[0, 0, 0], tail_local=[0, 0, 1],
-            matrix_local=None, use_connect=False, use_deform=True, inherit_scale="FULL",
+            name="Root",
+            parent=None,
+            head_local=[0, 0, 0],
+            tail_local=[0, 0, 1],
+            matrix_local=None,
+            use_connect=False,
+            use_deform=True,
+            inherit_scale="FULL",
         )
         constraint = NS(
-            name="Limit", type="LIMIT_ROTATION", influence=0.4, mute=False,
+            name="Limit",
+            type="LIMIT_ROTATION",
+            influence=0.4,
+            mute=False,
             path_from_id=lambda prop: 'pose.bones["Root"].constraints["Limit"].' + prop,
         )
         bone = NS(
-            name="Root", rotation_mode="XYZ", location=[0.0, 0.0, 0.0],
-            rotation_euler=[0.0, 0.0, 0.0], rotation_quaternion=[1.0, 0.0, 0.0, 0.0],
-            scale=[1.0, 1.0, 1.0], constraints=[constraint],
+            name="Root",
+            rotation_mode="XYZ",
+            location=[0.0, 0.0, 0.0],
+            rotation_euler=[0.0, 0.0, 0.0],
+            rotation_quaternion=[1.0, 0.0, 0.0, 0.0],
+            scale=[1.0, 1.0, 1.0],
+            constraints=[constraint],
         )
         obj.data = NS(name="RigData", users=0, library=None, bones=[bone_data])
         obj.pose = NS(bones=[bone])
@@ -56,9 +69,7 @@ def target(inspector, obj):
 
 def inspect(registry, inspector, obj):
     obj_id = inspector.snapshot(obj)["object_id"]
-    result = registry.dispatch(
-        Request("animation.control_inspect", {"object_id": obj_id})
-    )
+    result = registry.dispatch(Request("animation.control_inspect", {"object_id": obj_id}))
     assert result.status == Status.SUCCEEDED
     return result.data
 
@@ -74,10 +85,14 @@ def payload(inspector, obj, before, frame=10, kind="VISIBILITY", **overrides):
     if kind == "VISIBILITY":
         data.update({"hide_render": True, "hide_viewport": True})
     else:
-        data.update({
-            "bone_name": "Root", "constraint_name": "Limit",
-            "expected_rig_revision": before["rig_revision"], "influence": 0.8,
-        })
+        data.update(
+            {
+                "bone_name": "Root",
+                "constraint_name": "Limit",
+                "expected_rig_revision": before["rig_revision"],
+                "influence": 0.8,
+            }
+        )
     data.update(overrides)
     return data
 
@@ -103,7 +118,8 @@ def test_m7_inspect_empty_object_and_visibility_keyframe():
     assert after["managed_control_action"] is True
     assert after["point_count"] == 2
     assert {channel["data_path"] for channel in after["channels"]} == {
-        "hide_render", "hide_viewport",
+        "hide_render",
+        "hide_viewport",
     }
     assert after["animation_revision"] != before["animation_revision"]
     assert obj.hide_render is True and obj.hide_viewport is True
@@ -115,15 +131,22 @@ def test_m7_visibility_second_frame_retains_first_without_overwrite():
     assert insert(registry, inspector, obj, before).status == Status.VERIFIED
     middle = inspect(registry, inspector, obj)
     second = insert(
-        registry, inspector, obj, middle, frame=20,
-        hide_render=False, hide_viewport=False, interpolation="LINEAR",
+        registry,
+        inspector,
+        obj,
+        middle,
+        frame=20,
+        hide_render=False,
+        hide_viewport=False,
+        interpolation="LINEAR",
     )
     assert second.status == Status.VERIFIED
     after = inspect(registry, inspector, obj)
     assert after["point_count"] == 4
-    assert {
-        point["frame"] for channel in after["channels"] for point in channel["points"]
-    } == {10.0, 20.0}
+    assert {point["frame"] for channel in after["channels"] for point in channel["points"]} == {
+        10.0,
+        20.0,
+    }
 
 
 def test_m7_duplicate_visibility_frame_and_stale_revision_fail_closed():
@@ -154,8 +177,12 @@ def test_m7_constraint_influence_inserts_exact_key_and_tracks_rig_revision():
     before = inspect(registry, inspector, obj)
     assert before["rig_revision"]
     result = insert(
-        registry, inspector, obj, before,
-        kind="POSE_CONSTRAINT_INFLUENCE", interpolation="LINEAR",
+        registry,
+        inspector,
+        obj,
+        before,
+        kind="POSE_CONSTRAINT_INFLUENCE",
+        interpolation="LINEAR",
     )
     assert result.status == Status.VERIFIED
     after = inspect(registry, inspector, obj)
@@ -173,9 +200,7 @@ def test_m7_constraint_rig_stale_state_rejects_before_mutation():
     obj, constraint, inspector, registry = setup(is_rig=True)
     before = inspect(registry, inspector, obj)
     constraint.influence = 0.6
-    denied = insert(
-        registry, inspector, obj, before, kind="POSE_CONSTRAINT_INFLUENCE"
-    )
+    denied = insert(registry, inspector, obj, before, kind="POSE_CONSTRAINT_INFLUENCE")
     assert denied.status == Status.FAILED
     assert denied.error.code == ErrorCode.STALE_STATE
     assert obj.animation_data is None
@@ -216,9 +241,7 @@ def test_m7_constraint_verification_failure_restores_rig_and_action(monkeypatch)
         return real_compare(expected, actual)
 
     monkeypatch.setattr("shuvi_blender_agent.animation_controls.compare", fail_once)
-    result = insert(
-        registry, inspector, obj, before, kind="POSE_CONSTRAINT_INFLUENCE"
-    )
+    result = insert(registry, inspector, obj, before, kind="POSE_CONSTRAINT_INFLUENCE")
     assert result.status == Status.FAILED
     assert result.data["recovery_verified"] is True
     restored = inspect(registry, inspector, obj)
@@ -243,8 +266,13 @@ def test_m7_existing_action_rollback_keeps_previous_frames(monkeypatch):
 
     monkeypatch.setattr("shuvi_blender_agent.animation_controls.compare", fail_once)
     result = insert(
-        registry, inspector, obj, middle, frame=20,
-        hide_render=False, hide_viewport=False,
+        registry,
+        inspector,
+        obj,
+        middle,
+        frame=20,
+        hide_render=False,
+        hide_viewport=False,
     )
     assert result.status == Status.FAILED
     assert result.data["recovery_verified"] is True

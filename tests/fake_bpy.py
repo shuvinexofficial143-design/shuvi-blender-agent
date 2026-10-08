@@ -877,9 +877,7 @@ class FakeObject:
             segments = data_path.split('"')
             bone_name, constraint_name = segments[1], segments[3]
             bone = next(item for item in self.pose.bones if item.name == bone_name)
-            constraint = next(
-                item for item in bone.constraints if item.name == constraint_name
-            )
+            constraint = next(item for item in bone.constraints if item.name == constraint_name)
             values = [constraint.influence]
         else:
             values = getattr(self, data_path)

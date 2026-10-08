@@ -113,11 +113,7 @@ class AnimationControlOperations:
         obj = self.inspector.resolve(object_id)
         action = getattr(getattr(obj, "animation_data", None), "action", None)
         owned = action is not None and self._owned_actions.get(object_id) is action
-        blockers = [
-            item
-            for item in state["blockers"]
-            if not (item == "FOREIGN_ACTION" and owned)
-        ]
+        blockers = [item for item in state["blockers"] if not (item == "FOREIGN_ACTION" and owned)]
         if action is not None and not owned:
             blockers.append("FOREIGN_CONTROL_ACTION")
         if action is not None and getattr(obj.animation_data, "action_slot", None) is not None:
@@ -132,9 +128,7 @@ class AnimationControlOperations:
             ):
                 blockers.append("UNMANAGED_CONTROL_CHANNEL")
                 break
-        if len({(x["data_path"], x["index"]) for x in state["channels"]}) != len(
-            state["channels"]
-        ):
+        if len({(x["data_path"], x["index"]) for x in state["channels"]}) != len(state["channels"]):
             blockers.append("DUPLICATE_CONTROL_CHANNELS")
         state["managed_control_action"] = owned
         state["control_blockers"] = sorted(set(blockers))
