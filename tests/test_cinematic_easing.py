@@ -6,7 +6,7 @@ import pytest
 from fake_bpy import FakeObject, fake_bpy
 
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
-from shuvi_blender_agent.cinematic_easing import EasingApply, EasingPreview, CameraEasingOperations
+from shuvi_blender_agent.cinematic_easing import CameraEasingOperations, EasingApply, EasingPreview
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.operations import ObjectOperations
 from shuvi_blender_agent.safety import SafetyPolicy
