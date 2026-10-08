@@ -70,6 +70,7 @@ from .sculpting_detail import SculptDetailOperations
 from .sculpting_remesh import SculptRemeshPlanningOperations
 from .selection import SelectionOperations
 from .shape_ops import ShapeOperations
+from .studio_lighting import StudioLightingOperations
 from .texture_workflows import TextureWorkflowOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
@@ -141,6 +142,7 @@ def create_registry(
         CameraDampedFollowOperations(objects),
         CameraCutOperations(objects),
         CinematicSequenceOperations(objects),
+        StudioLightingOperations(objects),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),
         rigging,
