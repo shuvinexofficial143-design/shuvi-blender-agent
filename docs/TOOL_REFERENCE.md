@@ -1764,3 +1764,27 @@ Current Level 3 source progress: **100%**.
   evaluated camera cut playback still need live acceptance.
 - Registered typed tools **249**, Level 8 source complete **100%**,
   runtime accepted **0%**, production ready **No**.
+
+
+## Level 9 M1 — Real studio Key/Fill/Rim lighting rig
+
+- `lighting.studio_preview` (read-only): subject ObjectTarget, name_prefix,
+  preset (SOFT_STUDIO, DRAMATIC, WARM_PORTRAIT), distance_scale 2.5..6,
+  intensity_scale 0.25..3. Returns three actual AREA light creation
+  plans (locations, rotations, per-role Watts, RGB, disk size), exact
+  lighting_revision and blockers; does not change Blender state.
+- `lighting.studio_apply` (mutation): same fields plus
+  expected_lighting_revision. Creates three new Blender AREA light
+  datablocks and scene objects, sets their physical properties,
+  verifies real bpy-shaped readback, and rolls back any creation failure.
+- `lighting.studio_release` (mutation): expected_lighting_token
+  from this adapter's successful apply. Requires untouched scene and
+  exact owned light settings, then removes only the three new lights,
+  verifying original scene revision. Interrupted removal may require
+  manual inspection; release is not claimed atomic.
+- Subject must be an unanimated, unparented, unconstrained, unrotated
+  unit-scale MESH with safe dimensions. No render exposure/occlusion
+  or actual Blender runtime acceptance has been tested.
+
+Registered typed tools: **252**. Level 9 source: **10%**.
+Real runtime acceptance: **0%**. Production ready: **No**.
