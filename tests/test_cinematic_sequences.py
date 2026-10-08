@@ -84,9 +84,7 @@ def apply(registry, params, plan):
 
 
 def release(registry, token):
-    return registry.dispatch(
-        Request("cinema.sequence_release", {"expected_sequence_token": token})
-    )
+    return registry.dispatch(Request("cinema.sequence_release", {"expected_sequence_token": token}))
 
 
 def test_m10_preview_integrates_two_shots_and_hard_cut_without_changes():
@@ -191,9 +189,16 @@ def test_m10_host_factory_allows_full_preview_apply_release_pipeline():
 @pytest.mark.parametrize(
     "problem",
     [
-        "shared_camera", "parented_camera", "camera_animation",
-        "camera_constraint", "camera_linked", "locked_rotation",
-        "bad_clip", "wrong_mode", "shared_data", "wrong_lens_shift",
+        "shared_camera",
+        "parented_camera",
+        "camera_animation",
+        "camera_constraint",
+        "camera_linked",
+        "locked_rotation",
+        "bad_clip",
+        "wrong_mode",
+        "shared_data",
+        "wrong_lens_shift",
     ],
 )
 def test_m10_reuses_strict_M1_shot_safety(problem):
