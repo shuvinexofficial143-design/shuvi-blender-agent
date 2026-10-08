@@ -101,6 +101,13 @@ class AnimationAcceptanceOperations:
         }
 
     @staticmethod
+    def _serial_snapshot(snapshot):
+        return [
+            {"data_path":path, "index":index, "points":snapshot[(path, index)]}
+            for path, index in sorted(snapshot)
+        ]
+
+    @staticmethod
     def _frame_integrity(state):
         channels = state["channels"]
         mapping = [(channel["data_path"], channel["index"]) for channel in channels]
@@ -200,7 +207,7 @@ class AnimationAcceptanceOperations:
             {
                 "object_id": action.target.object_id,
                 "animation_revision": before["animation_revision"],
-                "snapshot": snapshot,
+                "snapshot": self._serial_snapshot(snapshot),
             }
         )
         self._recovery[action.target.object_id] = {
@@ -237,12 +244,12 @@ class AnimationAcceptanceOperations:
         if saved["action"] is not obj.animation_data.action:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Captured Action identity no longer matches")
         if before["animation_revision"] == saved["animation_revision"]:
-            raise AgentError(ErrorCode.INVALID_ARGUMENT, "Animation already matches captured revision")
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Animation already matches captured revision")
 
         prior_snapshot = self.advanced._snapshot(curves)
         expected = {
             "animation_revision": saved["animation_revision"],
-            "snapshot": saved["snapshot"],
+            "snapshot": self._serial_snapshot(saved["snapshot"]),
         }
         after = None
         try:
@@ -250,7 +257,9 @@ class AnimationAcceptanceOperations:
             after = self._state(action.target.object_id)
             actual = {
                 "animation_revision": after["animation_revision"],
-                "snapshot": self.advanced._snapshot(self.advanced._curve_map(obj)),
+                "snapshot": self._serial_snapshot(
+                    self.advanced._snapshot(self.advanced._curve_map(obj))
+                ),
             }
             verification = compare(expected, actual)
             if verification.matched:
@@ -280,11 +289,13 @@ class AnimationAcceptanceOperations:
             recovery = compare(
                 {
                     "animation_revision": before["animation_revision"],
-                    "snapshot": prior_snapshot,
+                    "snapshot": self._serial_snapshot(prior_snapshot),
                 },
                 {
                     "animation_revision": rolled["animation_revision"],
-                    "snapshot": self.advanced._snapshot(self.advanced._curve_map(obj)),
+                    "snapshot": self._serial_snapshot(
+                        self.advanced._snapshot(self.advanced._curve_map(obj))
+                    ),
                 },
             )
             if not recovery.matched:
