@@ -40,6 +40,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.keyframe_style_set | target, expected_animation_revision, data_path, array_index, frame, interpolation, easing, handle_left_type, handle_right_type, optional handle_left/handle_right | mutation | set one exact managed key's interpolation/easing and bounded Bezier handle state with style-aware revision readback and verified rollback |
 | animation.retime_preview | target, expected_animation_revision, mappings | read_only | validate 1..32 complete managed transform-key source→target mappings, collision rules, resulting frame set and deterministic workflow revision without mutation |
 | animation.retime_apply | target, expected_animation_revision, mappings | mutation | retime 1..32 complete managed transform keys while preserving values/style/handle geometry, with exact frame/state readback and verified rollback |
+| animation.recipe_catalog | none | read_only | deterministic versioned fixed catalog of three managed timeline recipes, parameter schemas and catalog revision |
+| animation.recipe_preview | recipe_id, recipe_version, target, expected_animation_revision, parameters | read_only | compile a validated shift/reverse/stretch recipe into an exact bounded M4 retime preview without mutation |
+| animation.recipe_apply | recipe_id, recipe_version, target, expected_animation_revision, parameters | mutation | apply one versioned recipe through the existing atomic M4 retime with exact readback and verified rollback |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1497,3 +1500,17 @@ Current Level 3 source progress: **100%**.
 - M8 adds two public typed tools, raising factory/catalog cap from 216 to **218**.
 - Multi-track creation/edit, layered Action playback, strip mixing, clip removal
   and real Blender evaluated NLA playback remain unverified/out of scope.
+
+
+## Level 7 M9 versioned animation recipe library
+
+- Three fixed version-1 recipes: `timeline.shift`, `timeline.reverse`, `timeline.stretch`.
+- All accept a fresh ObjectTarget, exact `expected_animation_revision`, and a strict `parameters` object.
+- Shift uses 1..32 unique integer source frames plus nonzero signed offset -10000..10000.
+- Reverse and stretch use 2..32 unique source frames; stretch uses integer factor 2..4.
+- All computed targets must be 1..100000 and free of collisions with unmoved keys.
+- A zero-change recipe is rejected. Delegation uses exactly one existing atomic M4 retime operation.
+- Preview changes nothing. Apply preserves values, easing/interpolation/handles and requires verified rollback on mismatched readback.
+- Existing guards reject foreign/shared/unsafe Actions and stale animation state.
+- No arbitrary Python/bpy, dynamic user recipes, real Blender runtime claims or M10 functionality.
+- M9 adds three public tools; registry/client limit is now **221**.

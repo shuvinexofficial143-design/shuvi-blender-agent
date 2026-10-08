@@ -6,6 +6,7 @@ from .animation_controls import AnimationControlOperations
 from .animation_keyframes import AdvancedAnimationOperations
 from .animation_nla import ManagedNLAOperations
 from .animation_pose import PoseBoneAnimationOperations
+from .animation_recipe_library import AnimationRecipeLibraryOperations
 from .animation_style import AnimationStyleOperations
 from .animation_timeline import AnimationTimelineOperations
 from .appearance import AppearanceOperations
@@ -76,6 +77,7 @@ def create_registry(
     objects = ObjectOperations(inspector)
     animation = AnimationOperations(objects)
     advanced_animation = AdvancedAnimationOperations(animation)
+    timeline_animation = AnimationTimelineOperations(advanced_animation)
     rigging = RiggingOperations(objects)
     adapters = [
         inspector,
@@ -110,7 +112,8 @@ def create_registry(
         animation,
         advanced_animation,
         AnimationStyleOperations(advanced_animation),
-        AnimationTimelineOperations(advanced_animation),
+        timeline_animation,
+        AnimationRecipeLibraryOperations(timeline_animation),
         ManagedNLAOperations(animation),
         PoseBoneAnimationOperations(animation, rigging),
         CameraAnimationOperations(objects),

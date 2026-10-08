@@ -651,13 +651,32 @@ user permission. Keep source/fake evidence separate from real Blender runtime ve
 - Timeouts cannot interrupt bpy calls: outcome may be unknown.
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
+## Level 7 Milestone 9 — Versioned Animation Recipe Library
+
+User-authorized M9 source work only. The versioned, fixed recipe library compiles
+`timeline.shift`, `timeline.reverse` and `timeline.stretch` into one existing
+M4 atomic retime call each. Three public tools were added:
+`animation.recipe_catalog`, `animation.recipe_preview`, `animation.recipe_apply`.
+All recipes require version 1, strict parameters, a fresh ObjectTarget, exact current
+`animation_revision` and M4 managed Action safety rules.
+
+Preview reports exact key mappings and never mutates. Apply reuses M4's
+keyframe value/interpolation/handle preservation, stale-state checks,
+collision guards, exact readback and verified rollback. M9-specific fake-bpy
+tests cover negative contracts, previews, real mutation, collision, stale state,
+and forced verification-mismatch recovery.
+
+Factory tool count and registry/client maximum are **221**. Source progress:
+Levels 1–6 100%; Level 7 90%. Runtime Blender verification **0%**;
+production ready **No**.
+
 ## Blockers
-None for the completed Level 7 80% source checkpoint. The registry/client is exactly at the
-218-tool cap, so Milestone 9 must deliberately reconcile capacity before adding any new tool.
-Heavy Blender runtime actions still require separate user authorization.
+
+Real Blender compatibility and evaluated playback remain unverified. Blender
+launch/runtime testing must not begin without separate explicit authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 9:
-versioned animation recipe library. First reconcile the current 218/218 registry cap,
-preserve exact revision/readback/recovery evidence, keep real Blender runtime acceptance at 0%
-unless separately authorized, and do not begin Milestone 10 automatically.
+
+Wait for explicit user permission before Level 7 M10 —
+Animation QA / Recovery / Acceptance. Do not start Level 8 or master
+Shuvi integration automatically.

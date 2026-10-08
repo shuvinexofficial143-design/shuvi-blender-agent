@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **80%**.
+Current Level 7 source progress: **90%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -25,7 +25,7 @@ Production ready: **No**.
 | 6 | Camera / lens / focus animation workflows | complete |
 | 7 | Constraint influence / visibility animation controls | complete |
 | 8 | Managed NLA clip / strip workflows | complete |
-| 9 | Versioned animation recipe library | pending |
+| 9 | Versioned animation recipe library | complete |
 | 10 | Animation QA / recovery / acceptance | pending |
 
 ## Milestone 1 — 10% complete
@@ -579,8 +579,47 @@ Ruff lint/format, package build and offline wheel import without bpy.
 Factory typed tools: **218**; bounded registry/client cap **218**.
 Real Blender runtime verification: **0%**. Production ready: **No**.
 
+## Milestone 9 — 90% source-side complete
+
+M9 adds a real, versioned animation recipe library with three typed public tools:
+
+- `animation.recipe_catalog`: read-only deterministic version-1 catalog with fixed
+  recipe IDs, exact parameter schemas, Blender minimum-version metadata and catalog revision.
+- `animation.recipe_preview`: validate a fixed versioned recipe and inspect its
+  resulting bounded retime plan without changing any keyframe.
+- `animation.recipe_apply`: run that exact type of fixed recipe through the existing
+  atomic M4 retime operation with fresh ObjectTarget, animation revision,
+  channel completeness/ownership checks, readback and verified rollback.
+
+The three managed recipes are:
+
+- `timeline.shift`: shift 1..32 explicitly selected complete transform keys
+  by a nonzero signed frame offset of -10000..10000.
+- `timeline.reverse`: reverse the times of 2..32 selected complete transform keys,
+  preserving values and the motion styling of each moved key. A center key may stay put.
+- `timeline.stretch`: stretch 2..32 selected complete transform keys
+  by an integer factor of 2..4 around their earliest selected frame.
+
+Only version 1 and the exact allowlisted parameter schemas are accepted. Source frames
+must be unique integers in 1..100000. All computed destination frames are bounded.
+Destinations occupied by non-moving keys are rejected. The existing M4 delegate
+protects session-owned, unshared, complete legacy transform Actions (nine channels),
+checks the exact animation revision and preserves keyframe values, interpolation,
+easing and Bezier handle geometry. Its verification failure path restores the original
+snapshot and checks the original revision before claiming recovery.
+
+M9 does not run user scripts, adopt foreign/shared Actions, dynamically register recipes,
+edit arbitrary NLA strips, perform Blender runtime acceptance or claim evaluated playback.
+The catalog/preview tools are read-only; apply is a MUTATION-classified operation.
+
+New fake-bpy source tests cover catalog determinism, preview purity, shift, reverse, stretch,
+unknown/versioned/invalid inputs, occupied targets, stale-state rejection and forced
+verification-mismatch rollback. Runtime verification: **0%**; production ready: **No**.
+
+Factory typed tool count and registry/client cap: **221**.
+
 ## Stop boundary
 
-Milestones 1–8 are complete at 80% source-side. Do not begin Milestone 9
-without explicit user permission. Do not install, launch, probe or render
-Blender without separate explicit runtime authorization.
+Milestones 1–9 are source-side complete (90%). Do not start Milestone 10
+(Animation QA / Recovery / Acceptance) without separate explicit user permission.
+Do not install, launch, probe or render Blender without separately authorized runtime testing.
