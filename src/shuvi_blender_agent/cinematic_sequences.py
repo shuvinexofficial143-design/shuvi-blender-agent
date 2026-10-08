@@ -177,6 +177,12 @@ class CinematicSequenceOperations:
             blockers.add("EXISTING_CAMERA_SEQUENCE_COLLISION")
         if self.bpy.context.mode != "OBJECT":
             blockers.add("OBJECT_MODE_REQUIRED")
+        if any(
+            abs(getattr(cam.data, axis, 0.0)) > 1e-8
+            for cam in (camera_a, camera_b)
+            for axis in ("shift_x", "shift_y")
+        ):
+            blockers.add("NONZERO_LENS_SHIFT_UNSUPPORTED")
         if self._owned:
             blockers.add("SEQUENCE_ALREADY_MANAGED_IN_SESSION")
         plan = {
@@ -271,7 +277,9 @@ class CinematicSequenceOperations:
                 or scene.camera is not old_active
                 or scene.frame_current != old_frame
             ):
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Sequence setup rollback unverified")
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Sequence setup rollback unverified"
+                )
 
         try:
             a.location = list(plan["shot_a_location"])
