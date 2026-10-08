@@ -619,6 +619,58 @@ class FakeDevices(list):
             energy=100,
             color=[1, 1, 1],
         )
+        if self.object_type == "CAMERA":
+            data.dof = NS(use_dof=False, focus_distance=10.0, focus_object=None)
+            data.animation_data = None
+            data.library = None
+
+            def keyframe_insert(data_path, frame):
+                if data_path not in ("lens", "dof.focus_distance"):
+                    raise ValueError("Unsupported fake camera data path")
+                value = data.lens if data_path == "lens" else data.dof.focus_distance
+                if data.animation_data is None:
+                    action = NS(name=data.name + "OpticsAction", users=1, fcurves=[])
+                    data.animation_data = NS(
+                        action=action, action_slot=None, drivers=[], nla_tracks=[]
+                    )
+                curves = data.animation_data.action.fcurves
+                curve = next(
+                    (item for item in curves if item.data_path == data_path),
+                    None,
+                )
+                if curve is None:
+                    curve = NS(
+                        data_path=data_path,
+                        array_index=0,
+                        keyframe_points=FakeKeyframePoints(),
+                        update=lambda: None,
+                    )
+                    curves.append(curve)
+                curve.keyframe_points.insert(frame, value)
+                return True
+
+            def keyframe_delete(data_path, frame):
+                if data.animation_data is None:
+                    return False
+                curves = data.animation_data.action.fcurves
+                found = False
+                for curve in list(curves):
+                    if curve.data_path != data_path:
+                        continue
+                    for point in list(curve.keyframe_points):
+                        if float(point.co[0]) == float(frame):
+                            curve.keyframe_points.remove(point)
+                            found = True
+                    if not curve.keyframe_points:
+                        curves.remove(curve)
+                return found
+
+            def animation_data_clear():
+                data.animation_data = None
+
+            data.keyframe_insert = keyframe_insert
+            data.keyframe_delete = keyframe_delete
+            data.animation_data_clear = animation_data_clear
         self.append(data)
         return data
 

@@ -1,6 +1,7 @@
 """One factory for Blender execution and fake-adapter integration tests."""
 
 from .animation import AnimationOperations
+from .animation_camera import CameraAnimationOperations
 from .animation_keyframes import AdvancedAnimationOperations
 from .animation_pose import PoseBoneAnimationOperations
 from .animation_style import AnimationStyleOperations
@@ -109,6 +110,7 @@ def create_registry(
         AnimationStyleOperations(advanced_animation),
         AnimationTimelineOperations(advanced_animation),
         PoseBoneAnimationOperations(animation, rigging),
+        CameraAnimationOperations(objects),
         RenderOperations(objects, policy, workspace),
         rigging,
         RigRecipeLibraryOperations(objects),

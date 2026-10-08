@@ -1,6 +1,7 @@
 """Host-side allowlist of payload parsers and safety classes; no bpy import."""
 
 from .animation import AnimationInspect, FrameRange, InsertKeyframe, SetFrame
+from .animation_camera import CameraAnimationInspect, CameraOpticsKeyframeInsert
 from .animation_keyframes import EditKeyframe, RemoveKeyframe, ReplaceKeyframe
 from .animation_pose import PoseBoneAnimationInspect, PoseBoneKeyframeInsert
 from .animation_style import KeyframeStyleSet
@@ -311,6 +312,8 @@ def builtin_contracts() -> dict:
         "animation.keyframe_style_set": (mutation, KeyframeStyleSet.parse),
         "animation.pose_bone_inspect": (read, PoseBoneAnimationInspect.parse),
         "animation.pose_bone_keyframe_insert": (mutation, PoseBoneKeyframeInsert.parse),
+        "camera.optics_animation_inspect": (read, CameraAnimationInspect.parse),
+        "camera.optics_keyframe_insert": (mutation, CameraOpticsKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),
         "animation.retime_apply": (mutation, TimelineRetime.parse),
         "render.configure": (mutation, RenderConfig.parse),
