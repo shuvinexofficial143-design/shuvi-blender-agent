@@ -328,6 +328,62 @@ def test_m6_interrupted_constraint_write_rolls_back_original_pose():
     assert camera.constraints == []
 
 
+def test_m6_release_interruption_restores_owned_constraint_with_verified_revision():
+    bpy, camera, subject, inspector, _, registry = setup()
+    data = params(inspector, camera, subject)
+    created = apply(registry, data, preview(registry, data))
+    assert created.status == Status.VERIFIED
+    before = inspector.snapshot(camera)
+    calls = {"n": 0}
+
+    def interrupt_once():
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise RuntimeError("Injected interruption after constraint removal")
+
+    bpy.context.view_layer.update = interrupt_once
+    recovered = release(registry, inspector, camera, created.data["tracking_revision"])
+    assert recovered.status == Status.FAILED
+    assert recovered.error.code == ErrorCode.EXECUTION_ERROR
+    assert len(camera.constraints) == 1
+    assert camera.constraints[0].target is subject
+    assert inspector.snapshot(camera)["revision"] == before["revision"]
+    # The restored constraint remains session-owned and can be released safely.
+    assert release(registry, inspector, camera, created.data["tracking_revision"]).status == (
+        Status.VERIFIED
+    )
+
+
+def test_m6_release_corrupt_readback_recreates_same_managed_tracking():
+    _, camera, subject, inspector, _, registry = setup()
+    data = params(inspector, camera, subject)
+    created = apply(registry, data, preview(registry, data))
+    assert created.status == Status.VERIFIED
+    original_snapshot = inspector.snapshot
+    before = original_snapshot(camera)
+    calls = {"n": 0}
+
+    def altered_once(obj):
+        state = original_snapshot(obj)
+        if obj is camera and len(camera.constraints) == 0:
+            calls["n"] += 1
+            if calls["n"] == 1:
+                state["constraint_count"] = 99
+        return state
+
+    inspector.snapshot = altered_once
+    interrupted = release(registry, inspector, camera, created.data["tracking_revision"])
+    assert interrupted.status == Status.FAILED
+    assert interrupted.error.code == ErrorCode.EXECUTION_ERROR
+    assert original_snapshot(camera)["revision"] == before["revision"]
+    assert len(camera.constraints) == 1
+    assert camera.constraints[0].target is subject
+    inspector.snapshot = original_snapshot
+    assert release(registry, inspector, camera, created.data["tracking_revision"]).status == (
+        Status.VERIFIED
+    )
+
+
 def test_m6_release_wrong_token_refused_without_mutation():
     _, camera, subject, inspector, _, registry = setup()
     data = params(inspector, camera, subject)
