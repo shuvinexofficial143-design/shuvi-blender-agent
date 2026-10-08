@@ -1,7 +1,6 @@
 """M8: source-side damped camera keyframe baking from moving subject's LINEAR Action."""
 
 import math
-from types import SimpleNamespace as NS
 
 import pytest
 from fake_bpy import FakeObject, fake_bpy
@@ -256,7 +255,7 @@ def test_m8_denies_unsafe_source_and_camera(change):
 
 
 def test_m8_rejects_subject_motion_damaging_framing():
-    _, camera, subject, inspector, registry = setup(travel=100)
+    _, camera, subject, inspector, registry = setup(travel=5000)
     params = payload(inspector, camera, subject)
     plan = preview(registry, params)
     assert plan["blockers"]
