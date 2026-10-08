@@ -242,9 +242,10 @@ class CameraMotionOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Unsupported camera path size")
         if camera.animation_data is not None:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Cannot overwrite existing animation")
-        if any(a["frame"] >= b["frame"] for a, b in zip(
-            plan["key_poses"], plan["key_poses"][1:], strict=False
-        )):
+        if any(
+            a["frame"] >= b["frame"]
+            for a, b in zip(plan["key_poses"], plan["key_poses"][1:], strict=False)
+        ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Camera frames must be increasing")
 
         old_location = list(camera.location)
