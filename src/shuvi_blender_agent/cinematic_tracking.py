@@ -288,13 +288,16 @@ class CameraTrackingOperations:
             or not compare(self._expected_constraint(), self._readback(constraint, subject)).matched
         ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Managed tracking constraint was modified")
-        if revision(
-            {
-                "camera_revision": before["revision"],
-                "subject_id": self.inspector.identity(subject),
-                "constraint": self._readback(constraint, subject),
-            }
-        ) != tracking_revision:
+        if (
+            revision(
+                {
+                    "camera_revision": before["revision"],
+                    "subject_id": self.inspector.identity(subject),
+                    "constraint": self._readback(constraint, subject),
+                }
+            )
+            != tracking_revision
+        ):
             raise AgentError(ErrorCode.STALE_STATE, "Tracking identity/readback is stale")
 
         old_active = self.bpy.context.scene.camera
