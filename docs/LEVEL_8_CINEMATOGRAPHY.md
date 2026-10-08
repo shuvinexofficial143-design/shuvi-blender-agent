@@ -342,7 +342,9 @@ TRACK_TO independently changes its direction to point at the subject.
 It does **not** promise visual smoothness, collision avoidance, render
 acceptance, damping, interpolation at animated frames or dynamic zoom.
 M7 setup is not automatically layered on top of M6 tracking; a camera
-with ANY existing constraint is deliberately refused.
+with ANY existing constraint is deliberately refused. Parented targets
+are also blocked because their local location cannot be treated as a
+world-space origin for this initial-offset formulation.
 
 IMPORTANT: This milestone is source/fake-bpy only. The fake fixture
 checks exact Blender-shaped constraint properties and predicts camera
