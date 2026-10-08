@@ -146,16 +146,20 @@ def test_m10_qa_reports_integrity_with_deterministic_revision():
     assert qa["check_count"] == 6
     assert all(item["status"] == "PASS" for item in qa["checks"])
     assert len(qa["qa_revision"]) == 64
-    assert registry.dispatch(
-        Request("animation.qa_inspect", {"object_id": before["object_id"]})
-    ).data["qa_revision"] == qa["qa_revision"]
+    assert (
+        registry.dispatch(Request("animation.qa_inspect", {"object_id": before["object_id"]})).data[
+            "qa_revision"
+        ]
+        == qa["qa_revision"]
+    )
     assert inspect(registry, inspector, obj)["animation_revision"] == before["animation_revision"]
 
 
 def test_m10_qa_detects_incomplete_channel_frames():
     inspector, registry, _, obj = setup()
     channel = next(
-        curve for curve in obj.animation_data.action.fcurves
+        curve
+        for curve in obj.animation_data.action.fcurves
         if curve.data_path == "location" and curve.array_index == 0
     )
     point = next(point for point in channel.keyframe_points if point.co[0] == 20)
@@ -166,10 +170,14 @@ def test_m10_qa_detects_incomplete_channel_frames():
     )
     assert result.status == Status.SUCCEEDED
     assert result.data["qa_status"] == "BLOCKED"
-    assert next(
-        check for check in result.data["checks"]
-        if check["name"] == "COMPLETE_UNIQUE_FRAME_KEYS"
-    )["status"] == "BLOCKED"
+    assert (
+        next(
+            check
+            for check in result.data["checks"]
+            if check["name"] == "COMPLETE_UNIQUE_FRAME_KEYS"
+        )["status"]
+        == "BLOCKED"
+    )
 
 
 def test_m10_capture_is_nonmutating_and_restore_actually_recovers_keys():
