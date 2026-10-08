@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from .animation import AnimationInspect, AnimationOperations, MAX_ANIMATION_POINTS
+from .animation import MAX_ANIMATION_POINTS, AnimationInspect, AnimationOperations
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .inspection import bounded_text
@@ -228,7 +228,7 @@ class AnimationControlOperations:
         mutated = False
         try:
             mutated = True
-            for path, value in zip(paths, values):
+            for path, value in zip(paths, values, strict=True):
                 if action.kind == "VISIBILITY":
                     setattr(obj, path, value)
                 else:
@@ -279,7 +279,7 @@ class AnimationControlOperations:
                             "interpolation": action.interpolation,
                         }
                     ]
-                    for path, value in zip(paths, values)
+                    for path, value in zip(paths, values, strict=True)
                 },
                 "point_count": state["point_count"] + len(paths),
                 "owned": True,
@@ -358,7 +358,12 @@ class AnimationControlOperations:
 
     def tools(self):
         return [
-            Tool("animation.control_inspect", SafetyClass.READ_ONLY, ControlInspect.parse, self.inspect),
+            Tool(
+                "animation.control_inspect",
+                SafetyClass.READ_ONLY,
+                ControlInspect.parse,
+                self.inspect,
+            ),
             Tool(
                 "animation.control_keyframe_insert",
                 SafetyClass.MUTATION,
