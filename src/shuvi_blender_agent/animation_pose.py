@@ -155,7 +155,9 @@ class PoseBoneAnimationOperations:
             self._path(pose_bone, "rotation_quaternion"),
             self._path(pose_bone, "scale"),
         }
-        channels = [channel for channel in animation["channels"] if channel["data_path"] in bone_paths]
+        channels = [
+            channel for channel in animation["channels"] if channel["data_path"] in bone_paths
+        ]
         channels.sort(key=lambda item: (item["data_path"], item["index"]))
         frames = sorted(
             {
