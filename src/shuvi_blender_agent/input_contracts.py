@@ -2,6 +2,7 @@
 
 from .animation import AnimationInspect, FrameRange, InsertKeyframe, SetFrame
 from .animation_keyframes import EditKeyframe, RemoveKeyframe, ReplaceKeyframe
+from .animation_pose import PoseBoneAnimationInspect, PoseBoneKeyframeInsert
 from .animation_style import KeyframeStyleSet
 from .animation_timeline import TimelineRetime
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
@@ -308,6 +309,8 @@ def builtin_contracts() -> dict:
         "animation.remove_keyframe": (mutation, RemoveKeyframe.parse),
         "animation.replace_keyframe": (mutation, ReplaceKeyframe.parse),
         "animation.keyframe_style_set": (mutation, KeyframeStyleSet.parse),
+        "animation.pose_bone_inspect": (read, PoseBoneAnimationInspect.parse),
+        "animation.pose_bone_keyframe_insert": (mutation, PoseBoneKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),
         "animation.retime_apply": (mutation, TimelineRetime.parse),
         "render.configure": (mutation, RenderConfig.parse),
