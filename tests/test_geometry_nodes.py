@@ -74,8 +74,8 @@ def link_payload(
 def test_factory_stays_within_bounded_registry_cap():
     bpy = fake_bpy()
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 241
-    assert MAX_REGISTERED_TOOLS == 241
+    assert len(registry.catalog()) == 243
+    assert MAX_REGISTERED_TOOLS == 243
     assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
 
 
