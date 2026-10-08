@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 207 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 208 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -37,6 +37,7 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.edit_keyframe | target, expected_animation_revision, data_path, array_index, frame, value, interpolation | mutation | edit one exact managed transform-channel point with fresh animation revision, exact point readback and verified rollback |
 | animation.remove_keyframe | target, expected_animation_revision, frame | mutation | remove one complete nine-channel managed transform key at an exact frame with count/absence readback and verified rollback |
 | animation.replace_keyframe | target, expected_animation_revision, frame, transform, interpolation | mutation | replace all nine values/interpolations of one existing complete managed transform frame with exact readback and verified rollback |
+| animation.keyframe_style_set | target, expected_animation_revision, data_path, array_index, frame, interpolation, easing, handle_left_type, handle_right_type, optional handle_left/handle_right | mutation | set one exact managed key's interpolation/easing and bounded Bezier handle state with style-aware revision readback and verified rollback |
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
@@ -1348,3 +1349,29 @@ Current Level 3 source progress: **100%**.
 - M2 adds three public mutation tools, taking the factory from 204 to **207 typed tools** and
   raising the bounded registry/client cap to **207**.
 - Real Blender Action/FCurve mutation semantics remain runtime-unverified.
+
+
+
+### Level 7 milestone 3 limits
+
+- `animation.inspect` now includes easing, handle types and handle coordinates in each exact
+  keyframe point and therefore in `animation_revision`.
+- `animation.keyframe_style_set` addresses one existing managed transform-channel point only.
+- Supported interpolation modes are CONSTANT, LINEAR, BEZIER, SINE, QUAD, CUBIC, QUART, QUINT,
+  EXPO, CIRC, BACK, BOUNCE and ELASTIC.
+- Supported easing values are AUTO, EASE_IN, EASE_OUT and EASE_IN_OUT. CONSTANT, LINEAR and
+  BEZIER require AUTO because their source contract does not apply easing equations.
+- Supported Bezier handle types are FREE, VECTOR, AUTO and AUTO_CLAMPED. Explicit handle
+  coordinates are accepted only for FREE handles.
+- FREE handle X coordinates are bounded to 10000 frames around the key and must remain on the
+  correct left/right side; handle Y values use the same bounded transform-channel limits as the
+  underlying location/rotation/scale value.
+- Non-Bezier interpolation rejects manual handle coordinates and requires AUTO handle types.
+- M2 recovery snapshots now preserve interpolation/easing/handle state, preventing style loss on
+  later rollback.
+- Stale animation revisions fail with STALE_STATE; verification mismatch restores the full
+  pre-mutation Action snapshot and must reproduce the original animation revision.
+- M3 adds one public mutation tool, taking the factory from 207 to **208 typed tools** and raising
+  the bounded registry/client cap to **208**.
+- FCurve modifiers, extrapolation, arbitrary data paths, evaluated animation and real Blender
+  runtime behavior remain unverified/out of scope.
