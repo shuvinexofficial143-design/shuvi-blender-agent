@@ -4,7 +4,12 @@ import pytest
 from fake_bpy import fake_bpy
 
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
-from shuvi_blender_agent.animation import AnimationOperations, FrameRange, InsertKeyframe
+from shuvi_blender_agent.animation import (
+    AnimationInspect,
+    AnimationOperations,
+    FrameRange,
+    InsertKeyframe,
+)
 from shuvi_blender_agent.animation_state import action_curves
 from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.operations import ObjectOperations
@@ -125,3 +130,114 @@ def test_animation_bounds():
     payload["interpolation"] = "eval"
     with pytest.raises(AgentError):
         InsertKeyframe.parse(payload)
+
+
+def test_level7_m1_animation_inspect_reports_empty_exact_state():
+    bpy, inspector, registry = setup()
+    obj = bpy.context.scene.objects[0]
+    result = registry.dispatch(
+        Request("animation.inspect", {"object_id": inspector.snapshot(obj)["object_id"]})
+    )
+
+    assert result.status == Status.SUCCEEDED
+    assert result.data["action_name"] is None
+    assert result.data["action_api"] == "NONE"
+    assert result.data["curve_count"] == 0
+    assert result.data["point_count"] == 0
+    assert result.data["unique_frames"] == []
+    assert result.data["frame_range"] is None
+    assert result.data["blockers"] == []
+    assert result.data["managed_mutation_ready"] is True
+    assert result.data["source_only"] is True
+    assert result.data["real_runtime_verified"] is False
+    assert len(result.data["animation_revision"]) == 64
+
+
+def test_level7_m1_animation_inspect_summarizes_owned_keyframes_deterministically():
+    bpy, inspector, registry = setup()
+    obj = bpy.context.scene.objects[0]
+    first_insert = registry.dispatch(
+        Request("animation.insert_keyframe", key_payload(inspector, obj, 10))
+    )
+    second_insert = registry.dispatch(
+        Request("animation.insert_keyframe", key_payload(inspector, obj, 20))
+    )
+    assert first_insert.status == Status.VERIFIED
+    assert second_insert.status == Status.VERIFIED
+
+    object_id = inspector.snapshot(obj)["object_id"]
+    first = registry.dispatch(Request("animation.inspect", {"object_id": object_id}))
+    second = registry.dispatch(Request("animation.inspect", {"object_id": object_id}))
+
+    assert first.status == Status.SUCCEEDED
+    assert first.data == second.data
+    assert first.data["action_name"] == obj.name + "Action"
+    assert first.data["action_api"] == "LEGACY"
+    assert first.data["action_users"] == 1
+    assert first.data["managed_session_action"] is True
+    assert first.data["curve_count"] == 9
+    assert first.data["point_count"] == 18
+    assert first.data["unique_frame_count"] == 2
+    assert first.data["unique_frames"] == [10.0, 20.0]
+    assert first.data["frame_range"] == {"start": 10.0, "end": 20.0}
+    assert first.data["interpolation_counts"] == {"LINEAR": 18}
+    assert first.data["drivers_count"] == 0
+    assert first.data["nla_track_count"] == 0
+    assert first.data["blockers"] == []
+    assert first.data["managed_mutation_ready"] is True
+
+
+def test_level7_m1_animation_inspect_reports_foreign_driver_nla_and_shared_blockers():
+    bpy, inspector, registry = setup()
+    obj = bpy.context.scene.objects[0]
+    obj.keyframe_insert("location", 1)
+    obj.animation_data.action.users = 2
+    obj.animation_data.drivers.append(object())
+    obj.animation_data.nla_tracks.append(object())
+
+    result = registry.dispatch(
+        Request("animation.inspect", {"object_id": inspector.snapshot(obj)["object_id"]})
+    )
+
+    assert result.status == Status.SUCCEEDED
+    assert result.data["managed_session_action"] is False
+    assert result.data["drivers_count"] == 1
+    assert result.data["nla_track_count"] == 1
+    assert result.data["blockers"] == [
+        "DRIVERS_PRESENT",
+        "NLA_TRACKS_PRESENT",
+        "FOREIGN_ACTION",
+        "SHARED_ACTION",
+    ]
+    assert result.data["managed_mutation_ready"] is False
+
+
+def test_level7_m1_animation_inspect_fails_closed_when_detail_budget_is_truncated():
+    bpy, inspector, registry = setup()
+    obj = bpy.context.scene.objects[0]
+    curves = [
+        NS(
+            data_path="location",
+            array_index=index,
+            keyframe_points=[NS(co=[1.0, 0.0], interpolation="LINEAR")],
+        )
+        for index in range(65)
+    ]
+    obj.animation_data = NS(
+        action=NS(name="TooManyCurves", users=1, fcurves=curves),
+        action_slot=None,
+        drivers=[],
+        nla_tracks=[],
+    )
+
+    result = registry.dispatch(
+        Request("animation.inspect", {"object_id": inspector.snapshot(obj)["object_id"]})
+    )
+
+    assert result.status == Status.FAILED
+    assert result.error.code == ErrorCode.SAFETY_DENIED
+
+
+def test_level7_m1_animation_inspect_contract_rejects_extra_fields():
+    with pytest.raises(AgentError):
+        AnimationInspect.parse({"object_id": "id", "extra": True})

@@ -1,6 +1,6 @@
 """Host-side allowlist of payload parsers and safety classes; no bpy import."""
 
-from .animation import FrameRange, InsertKeyframe, SetFrame
+from .animation import AnimationInspect, FrameRange, InsertKeyframe, SetFrame
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
 from .character_acceptance import CharacterWorkflowPreview, Level3Acceptance
@@ -297,6 +297,7 @@ def builtin_contracts() -> dict:
         "uv.texel_density_plan": (read, TexelDensityPlan.parse),
         "collection.create": (mutation, CreateCollection.parse),
         "asset.mark": (mutation, MarkAsset.parse),
+        "animation.inspect": (read, AnimationInspect.parse),
         "animation.set_range": (mutation, FrameRange.parse),
         "animation.set_frame": (mutation, SetFrame.parse),
         "animation.insert_keyframe": (mutation, InsertKeyframe.parse),
