@@ -787,3 +787,26 @@ progress **40%**. Real runtime acceptance **0%**, production ready No.
 
 **STOP** before Level 8 M5, real Blender runtime testing, rendering or
 main Shuvi integration without fresh explicit permission.
+
+
+## Level 8 M5 — Real camera BEZIER FCurve easing (source only)
+
+Two bounded operations `cinema.easing_preview` and
+`cinema.easing_apply` extend the M4 five-pose cubic rail. A strict
+`style` EASE_IN/EASE_OUT/EASE_IN_OUT and 0.25..1.0 `strength` blends
+linear vs quadratic/smoothstep timing, sampling the cubic camera rail
+at five reparameterized points. Analytic derivatives become explicit
+left/right FREE handles on six Blender object-transform FCurves,
+with 30 BEZIER keyframe points and exact handle/interpolation readback.
+M3/M4 LINEAR behavior remains unchanged.
+
+Only a fresh unanimated local single-user safe camera is eligible. No
+foreign Action adoption or arbitrary Blender Python. On failed FCurve
+writing or handle readback, cleanup restores pre-mutation camera revision
+and removes the newly created Action. Runtime API compatibility and
+evaluated in-between playback are **NOT** certified.
+
+Level 8 source roadmap **50%** (M1-M5). Public tools: **235**.
+Real Blender runtime verification **0%**, production ready **No**.
+STOP before M6, Blender launch/render, and main Shuvi integration unless
+the user grants explicit new authorization.
