@@ -221,9 +221,7 @@ class AnimationControlOperations:
                 continue
             if any(point["frame"] == float(action.frame) for point in channel["points"]):
                 raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Control frame already keyed")
-        existing_channels = {
-            (item["data_path"], item["index"]) for item in state["channels"]
-        }
+        existing_channels = {(item["data_path"], item["index"]) for item in state["channels"]}
         requested_channels = {(path, 0) for path in paths}
         if len(existing_channels | requested_channels) > MAX_ANIMATION_CURVES:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Control animation FCurve limit exceeded")
