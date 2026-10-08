@@ -17,6 +17,7 @@ from .character_blockout import CharacterBlockoutOperations
 from .character_body import CharacterBodyOperations
 from .character_face import CharacterFaceOperations
 from .character_sculpt_workflow import CharacterSculptWorkflowOperations
+from .cinematic_composition import CinematicCompositionOperations
 from .cinematic_shots import CinematicShotOperations
 from .collection_ops import CollectionOperations
 from .contracts import Result, Status
@@ -123,6 +124,7 @@ def create_registry(
         PoseBoneAnimationOperations(animation, rigging),
         CameraAnimationOperations(objects),
         CinematicShotOperations(objects),
+        CinematicCompositionOperations(objects),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),
         rigging,
