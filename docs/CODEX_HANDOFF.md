@@ -470,12 +470,12 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Level 7 active checkpoint
-Latest verified Level 7 source/test checkpoint: 000957eec6270c04342967ea88e0af0d8951aa27.
-CI run 37751435514 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **855 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **83 package modules**.
+Latest verified Level 7 source/test checkpoint: 9a8446ff949c7d0441106201bf96b3059c503ec2.
+CI run 37753381630 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **864 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **84 package modules**.
 
-Level 7 Advanced Animation is now **70% source complete** (Milestones 1-7 of 10).
+Level 7 Advanced Animation is now **80% source complete** (Milestones 1-8 of 10).
 
 Milestone 1 adds:
 - `animation.inspect`: one bounded read-only Action/FCurve/keyframe inspection surface using a
@@ -599,25 +599,41 @@ Milestone 7 adds:
 - M7 raises typed tools and registry cap from 214 to **216**.
 
 Level 7 runtime verification remains 0%; production readiness remains No.
-Milestone 7 — constraint influence and visibility animation — is complete. Do not begin
-Milestone 8 without explicit user permission.
+Milestone 7 — constraint influence and visibility animation — is complete.
+
+Milestone 8 adds:
+- `animation.nla_inspect` to inspect bounded NLA tracks and strips, Action keyframe fingerprints,
+  managed status and `nla_revision` through the same current-session object ID.
+- `animation.nla_strip_create` for one named NLA track and strip pushed down from a complete
+  session-owned nine-channel legacy transform Action (at least two common integer frames).
+- fresh ObjectTarget + exact NLA revision, no adoption of foreign/shared/layered Actions or
+  existing NLA tracks, and a strict 1..100000 strip timeline bound.
+- REPLACE blending, influence/scale/repeat=1, unmuted clip and exact Action-fingerprint readback.
+- verification mismatch removes the new NLA track, restores the exact original active Action
+  and checks the prior NLA revision; negative-path tests cover failures.
+- M8 adds two typed tools, raising factory/cap from 216 to **218**.
+- no arbitrary NLA editing, layer/slot handling, multi-strip blending or runtime playback claim.
+
+Level 7 real Blender runtime verification remains 0%; production ready remains No.
+Milestone 8 — managed NLA clip/strip push-down — is complete. Do not begin Milestone 9
+without explicit user permission.
 
 ## Status
-Source: 216 typed host contracts/tools at the bounded 216-tool cap. Level 1 source: **100%**.
+Source: 218 typed host contracts/tools at the bounded 218-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
 Level 6 Rigging source: **100%** (Milestones 1-10 of 10). Verified Level 6 source/test checkpoint:
 8b1f76baebcb02bd285e95dd8754df4fb9e787d4. CI run 37657039445 passed all six
 Linux/Windows Python 3.11/3.12/3.13 jobs with 807 tests, lint/format, package build,
 77-module distribution audit and clean install/import without bpy.
-Level 7 Advanced Animation source: **70%** (Milestones 1-7 of 10). Verified Level 7 source/test
-checkpoint: 000957eec6270c04342967ea88e0af0d8951aa27. CI run 37751435514 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 855 tests, lint/format, package build,
-83-module distribution audit and clean install/import without bpy.
+Level 7 Advanced Animation source: **80%** (Milestones 1-8 of 10). Verified Level 7 source/test
+checkpoint: 9a8446ff949c7d0441106201bf96b3059c503ec2. CI run 37753381630 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 864 tests, lint/format, package build,
+84-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 7 Milestones 1-7 are complete at 70%. Stop here. Do not begin Milestone 8 without explicit
+Level 7 Milestones 1-8 are complete at 80%. Stop here. Do not begin Milestone 9 without explicit
 user permission. Keep source/fake evidence separate from real Blender runtime verification.
 
 ## Decisions
@@ -636,12 +652,12 @@ user permission. Keep source/fake evidence separate from real Blender runtime ve
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed Level 7 70% source checkpoint. The registry/client is exactly at the
-216-tool cap, so Milestone 8 must deliberately reconcile capacity before adding any new tool.
+None for the completed Level 7 80% source checkpoint. The registry/client is exactly at the
+218-tool cap, so Milestone 9 must deliberately reconcile capacity before adding any new tool.
 Heavy Blender runtime actions still require separate user authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 8:
-managed NLA clip / strip workflows. First reconcile the current 216/216 registry cap,
+Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 9:
+versioned animation recipe library. First reconcile the current 218/218 registry cap,
 preserve exact revision/readback/recovery evidence, keep real Blender runtime acceptance at 0%
-unless separately authorized, and do not begin Milestone 9 automatically.
+unless separately authorized, and do not begin Milestone 10 automatically.
