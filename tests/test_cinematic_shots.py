@@ -100,8 +100,7 @@ def test_m1_frame_moves_real_camera_and_points_its_local_negative_z_to_subject()
         -cos(pitch),
     ]
     direction = [
-        (subject.location[i] - camera.location[i]) / plan["camera_distance"]
-        for i in range(3)
+        (subject.location[i] - camera.location[i]) / plan["camera_distance"] for i in range(3)
     ]
     assert all(isclose(look[i], direction[i], abs_tol=1e-9) for i in range(3))
     assert isclose(sqrt(sum(item * item for item in look)), 1, abs_tol=1e-9)
