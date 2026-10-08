@@ -191,7 +191,9 @@ def test_m5_stale_subject_revision_rejects_changes():
     assert camera.animation_data is None
 
 
-@pytest.mark.parametrize("blocker", ["occupied", "shared", "parent", "lens_shift", "clip", "locked"])
+@pytest.mark.parametrize(
+    "blocker", ["occupied", "shared", "parent", "lens_shift", "clip", "locked"]
+)
 def test_m5_reuses_rail_camera_safety_rules(blocker):
     _, camera, subject, inspector, registry = setup()
     if blocker == "occupied":
