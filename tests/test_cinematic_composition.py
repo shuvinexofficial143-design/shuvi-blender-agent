@@ -1,6 +1,7 @@
 """Level 8 M2: fixed screen-space camera compositions, safety and recovery."""
 
 from math import cos, isclose, sin
+from types import SimpleNamespace as NS
 
 import pytest
 from fake_bpy import FakeObject, fake_bpy
@@ -198,7 +199,7 @@ def test_m2_inherits_m1_mutation_guards_and_added_lens_shift_guard(blocker):
     elif blocker == "shared":
         camera.data.users = 2
     elif blocker == "action":
-        camera.animation_data = object()
+        camera.animation_data = NS(action=None, action_slot=None, drivers=[], nla_tracks=[])
     elif blocker == "lens_shift":
         camera.data.shift_x = 0.1
     elif blocker == "clip":
