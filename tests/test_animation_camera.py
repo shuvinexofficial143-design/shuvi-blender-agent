@@ -102,17 +102,22 @@ def test_m6_second_key_adds_without_replacing_first_key():
     assert insert(registry, inspector, obj, before).status == Status.VERIFIED
     middle = inspect(registry, inspector, obj)
     result = insert(
-        registry, inspector, obj, middle,
-        frame=20, lens=105.0, focus_distance=25.0, interpolation="BEZIER",
+        registry,
+        inspector,
+        obj,
+        middle,
+        frame=20,
+        lens=105.0,
+        focus_distance=25.0,
+        interpolation="BEZIER",
     )
     assert result.status == Status.VERIFIED
     after = inspect(registry, inspector, obj)
     assert after["point_count"] == 4
-    assert {
-        point["frame"]
-        for channel in after["channels"]
-        for point in channel["points"]
-    } == {10.0, 20.0}
+    assert {point["frame"] for channel in after["channels"] for point in channel["points"]} == {
+        10.0,
+        20.0,
+    }
     assert obj.data.lens == 105.0
     assert obj.data.dof.focus_distance == 25.0
 
@@ -125,9 +130,10 @@ def test_m6_duplicate_keyframe_fail_closed_without_data_mutation():
     denied = insert(registry, inspector, obj, fresh)
     assert denied.status == Status.FAILED
     assert denied.error.code == ErrorCode.AMBIGUOUS_TARGET
-    assert inspect(registry, inspector, obj)["camera_animation_revision"] == fresh[
-        "camera_animation_revision"
-    ]
+    assert (
+        inspect(registry, inspector, obj)["camera_animation_revision"]
+        == fresh["camera_animation_revision"]
+    )
 
 
 def test_m6_foreign_camera_data_action_is_never_adopted():

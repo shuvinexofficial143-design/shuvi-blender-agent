@@ -136,9 +136,9 @@ class CameraAnimationOperations:
         if max(drivers_count, nla_count) > MAX_ANIMATION_AUX_ITEMS:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Camera animation auxiliary limit exceeded")
 
-        owned = action is not None and self._owned_actions.get(
-            self.inspector.identity(obj)
-        ) is action
+        owned = (
+            action is not None and self._owned_actions.get(self.inspector.identity(obj)) is action
+        )
         users = getattr(action, "users", 0) if action is not None else 0
         if type(users) is not int or users < 0:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Invalid camera Action user count")
@@ -275,7 +275,8 @@ class CameraAnimationOperations:
                 if curve.data_path not in OPTICS_PATHS or curve.array_index != 0:
                     continue
                 matched = [
-                    point for point in curve.keyframe_points
+                    point
+                    for point in curve.keyframe_points
                     if float(point.co[0]) == float(action.frame)
                 ]
                 if len(matched) != 1:
