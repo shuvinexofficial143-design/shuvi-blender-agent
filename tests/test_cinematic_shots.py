@@ -19,7 +19,6 @@ def setup():
     subject = FakeObject("Subject", "MESH")
     bpy = fake_bpy([camera, subject])
     data = bpy.data.cameras.new("CinematicData")
-    data.users = 1
     data.sensor_width = 36.0
     data.sensor_fit = "HORIZONTAL"
     camera.data = data
