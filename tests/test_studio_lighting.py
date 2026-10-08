@@ -67,9 +67,7 @@ def apply(registry, data, plan):
 
 
 def release(registry, token):
-    return registry.dispatch(
-        Request("lighting.studio_release", {"expected_lighting_token": token})
-    )
+    return registry.dispatch(Request("lighting.studio_release", {"expected_lighting_token": token}))
 
 
 def test_l9_m1_preview_is_deterministic_and_never_mutates():
@@ -81,7 +79,9 @@ def test_l9_m1_preview_is_deterministic_and_never_mutates():
     assert plan["ready"], plan["blockers"]
     assert [entry["role"] for entry in plan["lights"]] == ["Key", "Fill", "Rim"]
     assert [entry["name"] for entry in plan["lights"]] == [
-        "StudioRig_Key", "StudioRig_Fill", "StudioRig_Rim"
+        "StudioRig_Key",
+        "StudioRig_Fill",
+        "StudioRig_Rim",
     ]
     assert [entry["energy"] for entry in plan["lights"]] == [1200.0, 500.0, 850.0]
     assert plan["source_only"] is True
@@ -135,9 +135,7 @@ def test_l9_m1_roles_have_real_angular_separation_and_subject_aim():
 def test_l9_m1_energy_and_distance_scaling_changes_real_values():
     _, subject, inspector, _, registry = setup()
     base = preview(registry, params(inspector, subject))
-    scaled = preview(
-        registry, params(inspector, subject, intensity_scale=2, distance_scale=5)
-    )
+    scaled = preview(registry, params(inspector, subject, intensity_scale=2, distance_scale=5))
     assert scaled["lighting_revision"] != base["lighting_revision"]
     for a, b in zip(base["lights"], scaled["lights"], strict=True):
         assert b["energy"] == 2 * a["energy"]
@@ -211,8 +209,14 @@ def test_l9_m1_changed_preset_after_preview_is_stale():
 @pytest.mark.parametrize(
     "problem",
     [
-        "parent", "constraint", "animated", "rotation", "scale",
-        "linked", "mode", "name_collision",
+        "parent",
+        "constraint",
+        "animated",
+        "rotation",
+        "scale",
+        "linked",
+        "mode",
+        "name_collision",
     ],
 )
 def test_l9_m1_unsafe_subject_or_reserved_light_names_fail_closed(problem):
@@ -232,9 +236,7 @@ def test_l9_m1_unsafe_subject_or_reserved_light_names_fail_closed(problem):
     elif problem == "mode":
         bpy.context.mode = "EDIT_MESH"
     else:
-        bpy.context.scene.collection.objects.link(
-            bpy.data.objects.new("StudioRig_Key", None)
-        )
+        bpy.context.scene.collection.objects.link(bpy.data.objects.new("StudioRig_Key", None))
     data = params(inspector, subject)
     plan = preview(registry, data)
     assert not plan["ready"], problem
@@ -353,8 +355,11 @@ def test_l9_m1_release_foreign_session_cannot_claim_original_rig():
 @pytest.mark.parametrize(
     "field,value",
     [
-        ("preset", "MOONLIGHT"), ("distance_scale", 0), ("intensity_scale", 10),
-        ("name_prefix", "A" * 41), ("intensity_scale", True),
+        ("preset", "MOONLIGHT"),
+        ("distance_scale", 0),
+        ("intensity_scale", 10),
+        ("name_prefix", "A" * 41),
+        ("intensity_scale", True),
     ],
 )
 def test_l9_m1_parser_strict_invalid_requests(field, value):
@@ -396,7 +401,10 @@ def test_l9_m1_host_registry_has_three_new_tools_and_permission_gate():
         StudioLightingOperations(ObjectOperations(BpyInspector(bpy))).tools(),
         SafetyPolicy(allow_mutations=False),
     )
-    denied = no_mutate.dispatch(Request("lighting.studio_apply", data | {
-        "expected_lighting_revision": planned["lighting_revision"]
-    }))
+    denied = no_mutate.dispatch(
+        Request(
+            "lighting.studio_apply",
+            data | {"expected_lighting_revision": planned["lighting_revision"]},
+        )
+    )
     assert denied.status == Status.FAILED
