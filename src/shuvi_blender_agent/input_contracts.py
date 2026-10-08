@@ -31,6 +31,7 @@ from .character_sculpt_workflow import (
     RecoverySnapshot,
     SculptRecipePreview,
 )
+from .cinematic_shots import ShotApply, ShotPreview
 from .collection_ops import (
     CollectionNameRequest,
     CollectionObjectChange,
@@ -327,6 +328,8 @@ def builtin_contracts() -> dict:
         "animation.pose_bone_keyframe_insert": (mutation, PoseBoneKeyframeInsert.parse),
         "camera.optics_animation_inspect": (read, CameraAnimationInspect.parse),
         "camera.optics_keyframe_insert": (mutation, CameraOpticsKeyframeInsert.parse),
+        "cinema.shot_preview": (read, ShotPreview.parse),
+        "cinema.shot_frame": (mutation, ShotApply.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),
