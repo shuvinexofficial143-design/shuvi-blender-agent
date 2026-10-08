@@ -111,9 +111,7 @@ class SequenceRelease:
     @classmethod
     def parse(cls, data):
         fields(data, {"expected_sequence_token"})
-        return cls(
-            string(data["expected_sequence_token"], "expected_sequence_token", limit=64)
-        )
+        return cls(string(data["expected_sequence_token"], "expected_sequence_token", limit=64))
 
 
 class CinematicSequenceOperations:
@@ -147,8 +145,11 @@ class CinematicSequenceOperations:
         camera_b, subject_b, before_b, subject_revision, plan_b = self.shots._plan(shot_b)
         scene, cut_camera_a, cut_camera_b, cut_plan = self.cuts._plan(
             CutPreview(
-                action.camera_a, action.camera_b,
-                action.start_frame, action.cut_frame, action.end_frame
+                action.camera_a,
+                action.camera_b,
+                action.start_frame,
+                action.cut_frame,
+                action.end_frame,
             )
         )
         if camera_a is camera_b or subject_a is not subject_b:
@@ -165,9 +166,7 @@ class CinematicSequenceOperations:
             *("SHOT_B_" + reason for reason in plan_b["blockers"]),
             *("CUT_" + reason for reason in cut_plan["blockers"]),
         }
-        if any(
-            item["name"] in (FIRST, SECOND) for item in cut_plan["scene_state"]["markers"]
-        ):
+        if any(item["name"] in (FIRST, SECOND) for item in cut_plan["scene_state"]["markers"]):
             blockers.add("SEQUENCE_MARKER_NAME_ALREADY_PRESENT")
         if any(
             item["camera_pointer"] is not None
@@ -220,8 +219,7 @@ class CinematicSequenceOperations:
 
     def preview(self, request: Request, action: SequencePreview):
         return Result(
-            request.request_id, request.command_id,
-            Status.SUCCEEDED, self._plan(action)[-1]
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[-1]
         )
 
     def _expected_marker_state(self, before, camera_a, camera_b, plan):
@@ -244,9 +242,9 @@ class CinematicSequenceOperations:
         return {**before, "markers": markers}
 
     def apply(self, request: Request, action: SequenceApply):
-        (
-            scene, a, b, subject, before_a, before_b, before_subject, plan
-        ) = self._plan(action.preview)
+        (scene, a, b, subject, before_a, before_b, before_subject, plan) = self._plan(
+            action.preview
+        )
         if plan["sequence_revision"] != action.expected_sequence_revision:
             raise AgentError(ErrorCode.STALE_STATE, "Sequence changed since preview")
         if not plan["ready"]:
@@ -360,7 +358,9 @@ class CinematicSequenceOperations:
                     ],
                 }
                 return Result(
-                    request.request_id, request.command_id, Status.VERIFIED,
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
                     {
                         "sequence_token": token,
                         "framed_cameras": 2,
@@ -383,7 +383,9 @@ class CinematicSequenceOperations:
 
         rollback()
         return Result(
-            request.request_id, request.command_id, Status.FAILED,
+            request.request_id,
+            request.command_id,
+            Status.FAILED,
             {"rolled_back": True, "recovery_verified": True},
             AgentError(ErrorCode.VERIFICATION_FAILED, "Sequence readback mismatch"),
             checked.to_dict(),
@@ -415,17 +417,11 @@ class CinematicSequenceOperations:
                     if marker is first
                     else (SECOND, owned["after_markers"]["markers"], b)
                 )
-                start = next(
-                    item["frame"]
-                    for item in frame
-                    if item["name"] == marker_name
-                )
+                start = next(item["frame"] for item in frame if item["name"] == marker_name)
                 fresh = scene.timeline_markers.new(marker_name, frame=start)
                 self.cuts._configure(fresh, marker_name, start, camera)
                 owned["markers"][0 if marker is first else 1] = fresh
-            for camera, (position, rotation) in zip(
-                (a, b), owned["after_poses"], strict=True
-            ):
+            for camera, (position, rotation) in zip((a, b), owned["after_poses"], strict=True):
                 camera.location, camera.rotation_euler = position, rotation
             self.bpy.context.view_layer.update()
             if (
@@ -442,9 +438,7 @@ class CinematicSequenceOperations:
         try:
             scene.timeline_markers.remove(second)
             scene.timeline_markers.remove(first)
-            for camera, (position, rotation) in zip(
-                (a, b), owned["original_poses"], strict=True
-            ):
+            for camera, (position, rotation) in zip((a, b), owned["original_poses"], strict=True):
                 camera.location, camera.rotation_euler = position, rotation
             self.bpy.context.view_layer.update()
             expected = {
@@ -465,9 +459,14 @@ class CinematicSequenceOperations:
             if checked.matched:
                 del self._owned[action.expected_sequence_token]
                 return Result(
-                    request.request_id, request.command_id, Status.VERIFIED,
-                    {"released_sequence": True, "restored_camera_poses": 2,
-                     "removed_owned_markers": 2},
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
+                    {
+                        "released_sequence": True,
+                        "restored_camera_poses": 2,
+                        "removed_owned_markers": 2,
+                    },
                     verification=checked.to_dict(),
                 )
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Sequence release readback mismatch")
@@ -485,15 +484,13 @@ class CinematicSequenceOperations:
     def tools(self):
         return [
             Tool(
-                "cinema.sequence_preview", SafetyClass.READ_ONLY,
-                SequencePreview.parse, self.preview
+                "cinema.sequence_preview",
+                SafetyClass.READ_ONLY,
+                SequencePreview.parse,
+                self.preview,
             ),
+            Tool("cinema.sequence_apply", SafetyClass.MUTATION, SequenceApply.parse, self.apply),
             Tool(
-                "cinema.sequence_apply", SafetyClass.MUTATION,
-                SequenceApply.parse, self.apply
-            ),
-            Tool(
-                "cinema.sequence_release", SafetyClass.MUTATION,
-                SequenceRelease.parse, self.release
+                "cinema.sequence_release", SafetyClass.MUTATION, SequenceRelease.parse, self.release
             ),
         ]
