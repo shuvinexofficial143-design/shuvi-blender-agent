@@ -133,8 +133,7 @@ class AnimationOperations:
                         not isinstance(handle, list)
                         or len(handle) != 2
                         or not all(
-                            type(value) in (int, float)
-                            and -float("inf") < value < float("inf")
+                            type(value) in (int, float) and -float("inf") < value < float("inf")
                             for value in handle
                         )
                     ):
