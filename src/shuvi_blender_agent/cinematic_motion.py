@@ -242,6 +242,11 @@ class CameraMotionOperations:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Unsupported camera path size")
         if camera.animation_data is not None:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Cannot overwrite existing animation")
+        interpolation = plan.get("interpolation", "LINEAR")
+        if interpolation not in ("LINEAR", "BEZIER"):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Unsupported camera key interpolation")
+        if interpolation == "BEZIER" and len(plan["key_poses"]) != 5:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Eased rail needs exactly five poses")
         if any(
             a["frame"] >= b["frame"]
             for a, b in zip(plan["key_poses"], plan["key_poses"][1:], strict=False)
@@ -307,8 +312,27 @@ class CameraMotionOperations:
             ):
                 raise AgentError(ErrorCode.SAFETY_DENIED, "Unsupported camera Action structure")
             for curve in created_action.fcurves:
+                if curve.data_path not in PATHS or not 0 <= curve.array_index < 3:
+                    raise AgentError(ErrorCode.SAFETY_DENIED, "Unexpected camera keyframe channel")
                 for point in curve.keyframe_points:
-                    point.interpolation = "LINEAR"
+                    point.interpolation = interpolation
+                    if interpolation == "BEZIER":
+                        pose = next(
+                            (
+                                item for item in plan["key_poses"]
+                                if float(item["frame"]) == float(point.co[0])
+                            ),
+                            None,
+                        )
+                        if pose is None:
+                            raise AgentError(
+                                ErrorCode.VERIFICATION_FAILED, "Unexpected camera keyframe point"
+                            )
+                        handle = pose["key_handles"][curve.data_path][curve.array_index]
+                        point.handle_left_type = "FREE"
+                        point.handle_right_type = "FREE"
+                        point.handle_left = handle["left"]
+                        point.handle_right = handle["right"]
                 curve.update()
             if make_active:
                 self.bpy.context.scene.camera = camera
@@ -343,7 +367,17 @@ class CameraMotionOperations:
                         {
                             "frame": float(pose["frame"]),
                             "value": float(pose[path][index]),
-                            "interpolation": "LINEAR",
+                            "interpolation": interpolation,
+                            **(
+                                {
+                                    "handle_left_type": "FREE",
+                                    "handle_right_type": "FREE",
+                                    "handle_left": pose["key_handles"][path][index]["left"],
+                                    "handle_right": pose["key_handles"][path][index]["right"],
+                                }
+                                if interpolation == "BEZIER"
+                                else {}
+                            ),
                         }
                         for pose in plan["key_poses"]
                     ],
@@ -362,6 +396,16 @@ class CameraMotionOperations:
                                 "frame": float(point["co"][0]),
                                 "value": float(point["co"][1]),
                                 "interpolation": point["interpolation"],
+                                **(
+                                    {
+                                        "handle_left_type": point["handle_left_type"],
+                                        "handle_right_type": point["handle_right_type"],
+                                        "handle_left": point["handle_left"],
+                                        "handle_right": point["handle_right"],
+                                    }
+                                    if interpolation == "BEZIER"
+                                    else {}
+                                ),
                             }
                             for point in curve["points"]
                         ],
