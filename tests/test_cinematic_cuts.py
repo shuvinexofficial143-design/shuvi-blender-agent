@@ -69,9 +69,7 @@ def apply(reg, payload, plan):
 
 
 def release(reg, token):
-    return reg.dispatch(
-        Request("cinema.cut_release", {"expected_cut_token": token})
-    )
+    return reg.dispatch(Request("cinema.cut_release", {"expected_cut_token": token}))
 
 
 def test_m9_preview_is_deterministic_and_read_only():
