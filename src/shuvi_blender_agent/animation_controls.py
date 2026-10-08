@@ -2,7 +2,12 @@
 
 from dataclasses import dataclass
 
-from .animation import MAX_ANIMATION_CURVES, MAX_ANIMATION_POINTS, AnimationInspect, AnimationOperations
+from .animation import (
+    MAX_ANIMATION_CURVES,
+    MAX_ANIMATION_POINTS,
+    AnimationInspect,
+    AnimationOperations,
+)
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .inspection import bounded_text
