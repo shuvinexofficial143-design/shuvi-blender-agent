@@ -168,7 +168,10 @@ class CameraEasingOperations:
                     handles[path].append(
                         {
                             "left": [float(pose["frame"] - left_span), value - slope * left_span],
-                            "right": [float(pose["frame"] + right_span), value + slope * right_span],
+                            "right": [
+                                float(pose["frame"] + right_span),
+                                value + slope * right_span,
+                            ],
                         }
                     )
             pose["key_handles"] = handles
