@@ -41,7 +41,12 @@ class TimelineRetime:
         raw = data["mappings"]
         if not isinstance(raw, list) or not 1 <= len(raw) <= MAX_RETIME_KEYS:
             raise invalid(f"mappings must contain 1..{MAX_RETIME_KEYS} frame pairs")
-        mappings = tuple(sorted((RetimePair.parse(item) for item in raw), key=lambda item: item.source_frame))
+        mappings = tuple(
+            sorted(
+                (RetimePair.parse(item) for item in raw),
+                key=lambda item: item.source_frame,
+            )
+        )
         sources = [item.source_frame for item in mappings]
         targets = [item.target_frame for item in mappings]
         if len(set(sources)) != len(sources):
