@@ -186,10 +186,16 @@ class CameraCutOperations:
             "cut_frame": action.cut_frame,
             "end_frame": action.end_frame,
             "segments": [
-                {"camera_id": before_a["object_id"], "start": action.start_frame,
-                 "end": action.cut_frame - 1},
-                {"camera_id": before_b["object_id"], "start": action.cut_frame,
-                 "end": action.end_frame},
+                {
+                    "camera_id": before_a["object_id"],
+                    "start": action.start_frame,
+                    "end": action.cut_frame - 1,
+                },
+                {
+                    "camera_id": before_b["object_id"],
+                    "start": action.cut_frame,
+                    "end": action.end_frame,
+                },
             ],
             "marker_names": [FIRST, SECOND],
             "transition": "HARD_CAMERA_CUT",
@@ -378,8 +384,8 @@ class CameraCutOperations:
                 if self._contains(markers, old):
                     fresh.append(old)
                     continue
-                target_frame = (
-                    next(row["frame"] for row in owned["after"]["markers"] if row["name"] == name)
+                target_frame = next(
+                    row["frame"] for row in owned["after"]["markers"] if row["name"] == name
                 )
                 new = self._create(scene, name, target_frame, camera)
                 self._configure(new, name, target_frame, camera)
