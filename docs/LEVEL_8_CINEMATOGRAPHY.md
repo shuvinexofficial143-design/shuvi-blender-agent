@@ -275,7 +275,9 @@ single static look-at rotation.
   constraint instance created by **this agent adapter in this runtime
   session**; it refuses nonowned, modified, stale or foreign constraints,
   verifies constraint removal and preserves the camera's current pose and
-  active camera setting.
+  active camera setting. If release is interrupted after removal, it
+  recreates only the owned TRACK_TO constraint and verifies the original
+  camera snapshot revision before reporting recovery.
 
 When Blender evaluates the new TRACK_TO constraint, it is expected to
 update the camera's *orientation* as the subject moves (including a
