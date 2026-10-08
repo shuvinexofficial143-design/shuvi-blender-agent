@@ -118,9 +118,9 @@ class CameraDampedFollowOperations:
         if getattr(ad.action, "users", 0) != 1:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Shared subject Actions unsupported")
         curves = action_curves(subject)
-        if len(curves) != 3 or {
-            (curve.data_path, curve.array_index) for curve in curves
-        } != {(PATH, index) for index in range(3)}:
+        if len(curves) != 3 or {(curve.data_path, curve.array_index) for curve in curves} != {
+            (PATH, index) for index in range(3)
+        }:
             raise AgentError(
                 ErrorCode.SAFETY_DENIED, "Target Action must contain only location XYZ channels"
             )
@@ -143,9 +143,10 @@ class CameraDampedFollowOperations:
                     raise AgentError(ErrorCode.SAFETY_DENIED, "Subframe targets not supported")
                 rows.append((int(frame), value))
             channel_frames = [item[0] for item in rows]
-            if any(a >= b or b - a > 60 for a, b in zip(
-                channel_frames, channel_frames[1:], strict=False
-            )):
+            if any(
+                a >= b or b - a > 60
+                for a, b in zip(channel_frames, channel_frames[1:], strict=False)
+            ):
                 raise AgentError(
                     ErrorCode.SAFETY_DENIED, "Target frames must increase with gap <=60"
                 )
