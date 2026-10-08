@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **30%**.
+Current Level 7 source progress: **40%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -20,7 +20,7 @@ Production ready: **No**.
 | 1 | Action / FCurve / keyframe inspection foundation | complete |
 | 2 | Revision-gated keyframe edit / remove / replace | complete |
 | 3 | Interpolation, easing and handle controls | complete |
-| 4 | Bounded multi-key / timeline animation workflows | pending |
+| 4 | Bounded multi-key / timeline animation workflows | complete |
 | 5 | Pose-bone animation channels | pending |
 | 6 | Camera / lens / focus animation workflows | pending |
 | 7 | Constraint influence / visibility animation controls | pending |
@@ -252,9 +252,98 @@ Current registry/catalog hard maximum: **208**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+## Milestone 4 — 40% complete
+
+Milestone 4 adds two bounded timeline workflow surfaces:
+
+- `animation.retime_preview`
+- `animation.retime_apply`
+
+Both take the same fresh `ObjectTarget`, exact current `animation_revision`, and an explicit list
+of source→target frame mappings.
+
+### Bounded multi-key retiming
+
+A single request may retime **1..32 complete transform keys**. Every source frame must contain
+exactly one key on all nine managed transform channels.
+
+Mappings are canonicalized by source frame and require:
+
+- unique source frames;
+- unique target frames;
+- source and target to differ;
+- integer frames in the existing bounded animation frame range;
+- no target collision with an unrelated existing key.
+
+A target frame may already be occupied only when that frame is itself included in the same move
+set as a source. This permits simultaneous swaps/chains without overwriting unrelated timeline
+keys.
+
+### `animation.retime_preview`
+
+The preview is read-only. It proves the requested source frames are complete, performs the same
+collision checks as apply, and reports:
+
+- canonical mapping list;
+- source/target frame sets;
+- mapping count;
+- exact moved-point count (9 per key);
+- resulting unique-frame set;
+- explicit value/style preservation guarantees;
+- deterministic workflow revision.
+
+Preview never mutates the Action.
+
+### `animation.retime_apply`
+
+Apply moves the nine point coordinates for every selected transform key as one bounded workflow.
+Each key's value, interpolation, easing and handle types are preserved.
+
+Bezier handle X coordinates move by the same frame delta as the owning key while handle Y values
+are preserved. This keeps M3 FREE-handle geometry attached to the moved key in source/fake-bpy
+evidence.
+
+After mutation Shuvi verifies:
+
+- total point count is unchanged;
+- the resulting unique-frame set exactly matches the previewed plan;
+- every moved channel reaches its requested target frame;
+- value/interpolation/easing/handle state matches the source key with the expected frame delta;
+- `animation_revision` changes.
+
+Verification mismatch restores the full pre-retime Action snapshot and requires the original
+animation revision to be recovered before rollback is reported as verified.
+
+Source tests cover preview no-mutation, multi-key style-preserving apply, simultaneous swaps,
+occupied-target rejection, stale revision rejection, duplicate mapping rejection and forced
+verification-failure rollback.
+
+M4 does not yet expose arbitrary time scaling curves, fractional frame remapping, evaluated motion,
+pose-bone channels, NLA editing or generic FCurve scripting.
+
+### Milestone 4 source checkpoint
+
+Verified source/test checkpoint: `6bd1384583bc1b1255e62799314c18de04965275`.
+
+CI run `37743968296` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **830 tests**
+- package build
+- distribution audit
+- clean offline install/import without bpy
+- **80 package modules**
+
+Factory typed tools: **210**.
+Current registry/catalog hard maximum: **210**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-3 are complete at 30%. Do not begin Milestone 4 without explicit user permission.
+Milestones 1-4 are complete at 40%. Do not begin Milestone 5 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real animation runtime
 acceptance without separate explicit runtime authorization.
