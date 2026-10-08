@@ -266,9 +266,7 @@ def test_m5_stale_animation_revision_fails_with_fresh_target_and_rig_revision():
 
     payload = insert_payload(inspector, obj, fresh, frame=20)
     payload["expected_animation_revision"] = before["animation_revision"]
-    stale = registry.dispatch(
-        Request("animation.pose_bone_keyframe_insert", payload)
-    )
+    stale = registry.dispatch(Request("animation.pose_bone_keyframe_insert", payload))
 
     assert stale.status == Status.FAILED
     assert stale.error.code == ErrorCode.STALE_STATE
