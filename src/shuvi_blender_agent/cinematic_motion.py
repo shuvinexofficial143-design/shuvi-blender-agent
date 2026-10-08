@@ -319,7 +319,8 @@ class CameraMotionOperations:
                     if interpolation == "BEZIER":
                         pose = next(
                             (
-                                item for item in plan["key_poses"]
+                                item
+                                for item in plan["key_poses"]
                                 if float(item["frame"]) == float(point.co[0])
                             ),
                             None,
