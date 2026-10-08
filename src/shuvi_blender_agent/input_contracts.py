@@ -2,6 +2,7 @@
 
 from .animation import AnimationInspect, FrameRange, InsertKeyframe, SetFrame
 from .animation_camera import CameraAnimationInspect, CameraOpticsKeyframeInsert
+from .animation_controls import ControlInspect, ControlKeyframeInsert
 from .animation_keyframes import EditKeyframe, RemoveKeyframe, ReplaceKeyframe
 from .animation_pose import PoseBoneAnimationInspect, PoseBoneKeyframeInsert
 from .animation_style import KeyframeStyleSet
@@ -314,6 +315,8 @@ def builtin_contracts() -> dict:
         "animation.pose_bone_keyframe_insert": (mutation, PoseBoneKeyframeInsert.parse),
         "camera.optics_animation_inspect": (read, CameraAnimationInspect.parse),
         "camera.optics_keyframe_insert": (mutation, CameraOpticsKeyframeInsert.parse),
+        "animation.control_inspect": (read, ControlInspect.parse),
+        "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),
         "animation.retime_apply": (mutation, TimelineRetime.parse),
         "render.configure": (mutation, RenderConfig.parse),

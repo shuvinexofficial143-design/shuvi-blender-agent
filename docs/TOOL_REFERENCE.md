@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 214 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 216 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -44,6 +44,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.pose_bone_keyframe_insert | target, expected_rig_revision, expected_animation_revision, bone_name, frame, location, rotation_mode, rotation, scale, interpolation | mutation | insert one complete raw XYZ/Quaternion pose-bone key with dual revision gating, pose-only Action ownership, exact readback and verified rig+animation rollback |
 | camera.optics_animation_inspect | object_id | read_only | inspect camera-data lens/DOF focus channels, Action ownership, safety blockers and deterministic camera_animation_revision |
 | camera.optics_keyframe_insert | target, expected_camera_animation_revision, frame, lens, focus_distance, interpolation | mutation | insert an exact two-channel lens/focus data Action keyframe with revision gating and recoverable readback |
+| animation.control_inspect | object_id | read_only | inspect bounded control Action, revision, owned/safety state, visibility/constraint FCurves and armature rig revision |
+| animation.control_keyframe_insert | target, expected_animation_revision, kind, frame, interpolation, hide_render/hide_viewport for visibility OR bone_name/constraint_name/expected_rig_revision/influence for pose constraint | mutation | key two object visibility booleans or one bounded pose-constraint influence channel, no overwrite, exact readback and verified recovery |
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
@@ -1448,3 +1450,25 @@ Current Level 3 source progress: **100%**.
   **214** registry/client cap.
 - Evaluated optics, focus targeting, cinematic composition and real Blender runtime behavior
   are not verified by the source/fake-bpy CI.
+
+
+### Level 7 milestone 7 limits
+
+- `animation.control_inspect` returns existing bounded object-Action evidence, managed
+  Action status, blockers and the armature's current `rig_revision` where applicable.
+- `animation.control_keyframe_insert` has only two fixed modes:
+  `VISIBILITY` and `POSE_CONSTRAINT_INFLUENCE`.
+- VISIBILITY inserts one `hide_render` and one `hide_viewport` scalar boolean key at the
+  same requested frame. Per-view-layer `hide_set` is not animated.
+- POSE_CONSTRAINT_INFLUENCE targets one exact named `LIMIT_ROTATION` or managed
+  same-armature `IK` pose constraint, and allows influence 0..1.
+- Mutation requires fresh ObjectTarget, full current `animation_revision`, and additionally
+  the current `rig_revision` for pose constraints. No existing key on the addressed
+  channel/frame may be overwritten.
+- Existing foreign/shared/slotted, driver/NLA or unmanaged Action channels cannot be
+  adopted. Boundaries remain 64 FCurves and 1024 points.
+- A mismatch restores values, clears a newly created Action or removes only new frame keys,
+  and verifies the original animation revision and original rig revision where applicable.
+- M7 adds two public typed tools and raises the factory/cap from 214 to **216**.
+- Evaluated viewport motion, constraint solving and live Blender runtime behaviour
+  remain unverified.

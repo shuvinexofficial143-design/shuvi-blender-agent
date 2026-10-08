@@ -871,7 +871,17 @@ class FakeObject:
             action = NS(name=self.name + "Action", users=1, fcurves=curves)
             self.animation_data = NS(action=action, action_slot=None, drivers=[], nla_tracks=[])
         curves = self.animation_data.action.fcurves
-        for index, value in enumerate(getattr(self, data_path)):
+        if data_path in ("hide_render", "hide_viewport"):
+            values = [getattr(self, data_path)]
+        elif data_path.startswith('pose.bones["') and data_path.endswith('"].influence'):
+            segments = data_path.split('"')
+            bone_name, constraint_name = segments[1], segments[3]
+            bone = next(item for item in self.pose.bones if item.name == bone_name)
+            constraint = next(item for item in bone.constraints if item.name == constraint_name)
+            values = [constraint.influence]
+        else:
+            values = getattr(self, data_path)
+        for index, value in enumerate(values):
             curve = next(
                 (
                     item
@@ -900,6 +910,22 @@ class FakeObject:
                 )
             )
         return True
+
+    def keyframe_delete(self, data_path, frame):
+        if self.animation_data is None:
+            return False
+        curves = self.animation_data.action.fcurves
+        found = False
+        for curve in list(curves):
+            if curve.data_path != data_path:
+                continue
+            for point in list(curve.keyframe_points):
+                if float(point.co[0]) == float(frame):
+                    curve.keyframe_points.remove(point)
+                    found = True
+            if not curve.keyframe_points:
+                curves.remove(curve)
+        return found
 
     def select_get(self):
         return self._selected

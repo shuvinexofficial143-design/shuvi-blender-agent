@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **60%**.
+Current Level 7 source progress: **70%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -23,7 +23,7 @@ Production ready: **No**.
 | 4 | Bounded multi-key / timeline animation workflows | complete |
 | 5 | Pose-bone animation channels | complete |
 | 6 | Camera / lens / focus animation workflows | complete |
-| 7 | Constraint influence / visibility animation controls | pending |
+| 7 | Constraint influence / visibility animation controls | complete |
 | 8 | Managed NLA clip / strip workflows | pending |
 | 9 | Versioned animation recipe library | pending |
 | 10 | Animation QA / recovery / acceptance | pending |
@@ -482,8 +482,57 @@ distribution/import validation.
 Factory typed tools: **214**. Current registry/client cap: **214**.
 Real Blender runtime verification: **0%**. Production ready: **No**.
 
+## Milestone 7 — 70% complete
+
+M7 adds two typed tools:
+
+- `animation.control_inspect`: read the current object's full bounded animation state,
+  Action ownership and safety blockers, and `rig_revision` when the target is an armature.
+- `animation.control_keyframe_insert`: insert a bounded keyframe in one of two explicit modes.
+
+### Mode 1 — Object visibility
+
+The `VISIBILITY` request inserts a paired boolean keyframe for `hide_render` and
+`hide_viewport` at one requested integer frame. Both visibility values are explicit booleans.
+This allows source-side animation of rendering/viewport visibility rather than manipulating
+the non-keyable per-view-layer `hide_set` state.
+
+### Mode 2 — Pose-constraint influence
+
+The `POSE_CONSTRAINT_INFLUENCE` request targets one named pose bone and named
+`LIMIT_ROTATION` or safely bounded same-armature `IK` constraint. It inserts one
+bounded 0..1 influence keyframe using the constraint's Blender RNA data path.
+The caller must present the exact current `rig_revision` and full
+`animation_revision`, as well as a fresh ObjectTarget.
+
+### Safety, verification and recovery
+
+Only a session-created unshared Action owned by the M7 adapter may be extended.
+Foreign/shared/slotted Actions, drivers/NLA, object constraints, non-Object mode and
+unrecognized animation channels fail closed. Existing channel/frame keys cannot be
+overwritten. M7 enforces the existing **64 FCurve** and **1024 keyframe-point** bounds.
+
+New keys are checked through exact channel/frame/value/interpolation readback, changed
+animation revision and Action ownership. Verification mismatch removes the inserted
+frame(s) or clears an Action created by the operation, restores visibility/influence
+values and verifies the previous animation revision. Constraint operations also verify
+the previous `rig_revision` on recovery.
+
+M7 does not assert evaluated constraint influence, IK solving, viewport playback
+behaviour or real Blender runtime compatibility. Tests use fake-bpy and CI only.
+
+### Milestone 7 source checkpoint
+
+Verified source/test checkpoint: `000957eec6270c04342967ea88e0af0d8951aa27`.
+Source CI run `37751435514` passed six Linux/Windows Python 3.11/3.12/3.13 jobs
+with Ruff lint/format, **855 tests**, package build, offline distribution audit
+and **83 package modules**.
+
+Factory typed tools: **216**. Registry/client cap: **216**.
+Real Blender runtime verification: **0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1–6 are complete at 60% on the source roadmap. Do not begin Milestone 7
-without explicit user permission. Do not launch/install/probe Blender or run real
-render/runtime acceptance without separate explicit authorization.
+Milestones 1–7 are complete at 70% source-side. Do not begin Milestone 8
+without explicit permission. Do not install, launch, probe or render Blender
+without separate explicit runtime authorization.
