@@ -171,7 +171,22 @@ class AnimationRecipeLibraryOperations:
 
     def tools(self):
         return [
-            Tool("animation.recipe_catalog", SafetyClass.READ_ONLY, AnimationRecipeCatalog.parse, self.catalog),
-            Tool("animation.recipe_preview", SafetyClass.READ_ONLY, AnimationRecipePreview.parse, self.preview),
-            Tool("animation.recipe_apply", SafetyClass.MUTATION, AnimationRecipeApply.parse, self.apply),
+            Tool(
+                "animation.recipe_catalog",
+                SafetyClass.READ_ONLY,
+                AnimationRecipeCatalog.parse,
+                self.catalog,
+            ),
+            Tool(
+                "animation.recipe_preview",
+                SafetyClass.READ_ONLY,
+                AnimationRecipePreview.parse,
+                self.preview,
+            ),
+            Tool(
+                "animation.recipe_apply",
+                SafetyClass.MUTATION,
+                AnimationRecipeApply.parse,
+                self.apply,
+            ),
         ]
