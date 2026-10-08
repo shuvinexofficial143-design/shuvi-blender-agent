@@ -53,6 +53,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.composition_apply | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, anchor, expected_composition_revision | mutation | reposition camera in its image plane to land subject on selected grid anchor, with stale plan protection and shared verified rollback |
 | cinema.motion_preview | camera, subject, start_frame, end_frame, mode, start_azimuth, end_azimuth, start_elevation, end_elevation, margin, dolly_factor, make_active | read_only | safe three-pose ORBIT or DOLLY trajectory with fresh target and deterministic revision |
 | cinema.motion_apply | all cinema.motion_preview fields plus expected_motion_revision | mutation | author exact new six-channel camera Action with 18 keyframe points, verified readback and cleanup on failure |
+| cinema.rail_preview | camera, subject, start_frame, end_frame, azimuth_degrees, elevation_degrees, margin, control_a, control_b, end_offset, make_active | read_only | bounded cubic Bézier image-plane rail with five samples and deterministic revision |
+| cinema.rail_apply | all cinema.rail_preview fields plus expected_rail_revision | mutation | create a fresh 30-key camera Action with safe readback and rollback; never adopt existing Action |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1604,3 +1606,24 @@ Current Level 3 source progress: **100%**.
   unsupported Action structures fail closed. Intermediate evaluated
   camera motion and real render visual quality remain unverified.
 - Public tools/client cap: **231**. Real Blender runtime acceptance: 0%.
+
+
+## Level 8 M4 — five-point image-plane camera rail
+
+- Three strict 2D Bézier offsets (control_a, control_b, end_offset) are
+  numeric lists with x and y each in [-0.25, 0.25]. Start offset is (0,0).
+- Camera orientation remains fixed. The subject's projected screen position
+  follows the opposite of the camera rail displacement; conservative
+  sphere clearance is approximated from current object dimensions.
+- Duration 8..720 frames; sample fractions 0/.25/.5/.75/1 give five
+  distinct integer frames. `rail_revision` binds scene, camera, subject,
+  optics, control points and planned poses.
+- A new Action writes 6 object transform curves × 5 LINEAR keys. This is a
+  five-sample approximation, not native spline interpolation between keys.
+- Exact source readback verifies all frame/value/interpolation keys, the
+  final pose, camera lens, subject, active scene camera and timeline.
+- Existing camera Actions, linked/shared data, lens shift, unsafe clipping
+  and unsafe/unverified Action structures are refused. Partial edits invoke
+  guarded cleanup; rollback is verified against original camera revision.
+- Registered typed tools/cap: **233**. Real Blender runtime and visual
+  evaluation: **0% verified**.

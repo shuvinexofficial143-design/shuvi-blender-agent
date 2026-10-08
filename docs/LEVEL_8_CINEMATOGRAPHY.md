@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **30%** (Milestones 1–3 of 10).
+Current Level 8 source progress: **40%** (Milestones 1–4 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -169,9 +169,52 @@ yaw continuity, stale plans, unsafe/foreign Actions, invalid requests,
 post-mutation readback failure and partial insertion cleanup.
 Real Blender runtime acceptance: **0%**. Production ready: **No**.
 
+## Milestone 4 — Bounded cubic Bézier camera rail (40% source-side)
+
+M4 adds two typed tools that use **one five-pose smooth-path approximation**,
+without opening Blender or running arbitrary bpy scripts:
+
+- `cinema.rail_preview` (READ_ONLY) receives fresh camera and distinct subject
+  ObjectTargets, camera azimuth/elevation, margin, 8..720 frame duration, three
+  2D image-plane handle offsets (`control_a`, `control_b`, `end_offset`)
+  in [-0.25,0.25], and optional active-camera selection. Generates a cubic
+  Bézier path with five samples at 0, .25, .5, .75, 1, deterministic pose
+  data and exact `rail_revision` without mutation.
+- `cinema.rail_apply` (MUTATION) requires the exact current
+  `expected_rail_revision`, refuses unsafe/occupied camera Actions and calls
+  the shared M3 verified, guarded Action authoring operation. Writes
+  **six FCurves (XYZ location/rotation), five keyframes per channel, 30
+  LINEAR keys**, with full readback and rollback on failure.
+
+The path is generated in the camera's image plane and uses bounded control
+points, a fixed camera orientation, pixel-corrected render aspect and
+margin-adjusted distance to maintain approximate origin-centered
+subject-sphere clearance. The planned subject screen position moves along
+the Bézier curve; it is not a real rendered visual proof.
+
+The final keyed motion is **piecewise LINEAR between five calculated samples**,
+not a Blender native Curve modifier, not a true continuously evaluated cubic
+Bézier animation. Additional path smoothing/easing, occlusion checks,
+evaluated mesh bounding-box coverage and visual acceptance require later
+separately authorized work.
+
+Safety continues to require local, unanimated, single-user, parentless,
+unconstrained, unlocked perspective camera without pre-existing Action
+or nonzero lens shift. An Action is never adopted or overwritten. Failed
+keyframe insertions, inconsistent Action identity/slotted behavior and
+readback mismatch trigger best-effort cleanup of only the newly created
+Action and exact pre-mutation object-revision recovery verification.
+Runtime Blender compatibility has not been established.
+
+Tests include 5 sample positions, projected subject screen offsets, 30
+actual source/fake-bpy keypoints, strict validation, stale plan/lens/render
+checks, shared/linked/animated Action refusal, partial-write failure and
+verification rollback. Factory/public host cap: **233 typed tools**.
+Real Blender runtime verification: **0%**; production ready: **No**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-side complete. Level 8 M1–M3 are source-side
-complete at **30%**. Do not begin Level 8 M4, run Blender, render,
-perform real runtime acceptance or integrate the main Shuvi repository
-without the user's separate explicit approval.
+Levels 1–7 remain source-side complete. Level 8 M1–M4 are source-side
+complete at **40%** only. Do not begin Level 8 M5, launch Blender, render,
+run live Blender compatibility checks or integrate the main Shuvi repository
+without separate explicit user permission.
