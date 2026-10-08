@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from .animation import MAX_ANIMATION_POINTS, AnimationInspect, AnimationOperations
+from .animation import MAX_ANIMATION_CURVES, MAX_ANIMATION_POINTS, AnimationInspect, AnimationOperations
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
 from .inspection import bounded_text
@@ -216,6 +216,12 @@ class AnimationControlOperations:
                 continue
             if any(point["frame"] == float(action.frame) for point in channel["points"]):
                 raise AgentError(ErrorCode.AMBIGUOUS_TARGET, "Control frame already keyed")
+        existing_channels = {
+            (item["data_path"], item["index"]) for item in state["channels"]
+        }
+        requested_channels = {(path, 0) for path in paths}
+        if len(existing_channels | requested_channels) > MAX_ANIMATION_CURVES:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Control animation FCurve limit exceeded")
         if state["point_count"] + len(paths) > MAX_ANIMATION_POINTS:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Control animation point limit exceeded")
         new_action = obj.animation_data is None

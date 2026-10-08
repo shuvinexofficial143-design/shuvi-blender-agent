@@ -281,3 +281,13 @@ def test_m7_existing_action_rollback_keeps_previous_frames(monkeypatch):
     assert restored["point_count"] == 2
     assert obj.hide_render is True
     assert obj.hide_viewport is True
+
+
+def test_m7_enforces_total_fcurve_capacity_before_visibility_mutation(monkeypatch):
+    obj, _, inspector, registry = setup()
+    before = inspect(registry, inspector, obj)
+    monkeypatch.setattr("shuvi_blender_agent.animation_controls.MAX_ANIMATION_CURVES", 1)
+    denied = insert(registry, inspector, obj, before)
+    assert denied.status == Status.FAILED
+    assert denied.error.code == ErrorCode.SAFETY_DENIED
+    assert obj.animation_data is None
