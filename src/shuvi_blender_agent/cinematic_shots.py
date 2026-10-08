@@ -1,7 +1,7 @@
 """Level 8 M1: bounded subject-centered perspective camera framing."""
 
 from dataclasses import dataclass
-from math import asin, atan, atan2, cos, degrees, radians, sin, sqrt
+from math import atan, atan2, cos, degrees, radians, sin, sqrt
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
