@@ -160,10 +160,17 @@ def test_m8_bakes_at_least_six_poses_to_exercise_extended_writer():
     assert outcome.data["keyframe_count"] == 36
 
 
-@pytest.mark.parametrize("bad", [
-    {"damping_alpha": True}, {"damping_alpha": 0}, {"damping_alpha": 1},
-    {"damping_alpha": -1}, {"damping_alpha": "0.4"}, {"make_active": "yes"},
-])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"damping_alpha": True},
+        {"damping_alpha": 0},
+        {"damping_alpha": 1},
+        {"damping_alpha": -1},
+        {"damping_alpha": "0.4"},
+        {"make_active": "yes"},
+    ],
+)
 def test_m8_strict_invalid_payloads(bad):
     _, camera, subject, inspector, _ = setup()
     with pytest.raises(AgentError):
@@ -199,12 +206,30 @@ def test_m8_changed_subject_action_invalidates_preview_before_mutation():
     assert camera.animation_data is None
 
 
-@pytest.mark.parametrize("change", [
-    "no_animation", "slot", "drivers", "nla", "shared_action",
-    "parent", "constraint", "rotated", "scaled", "camera_animated",
-    "nonlinear", "missing_axis", "wrong_path", "bad_first_pose", "wrong_scene_frame",
-    "unequal_frames", "wrong_frame_gap", "too_few_frames", "subframe",
-])
+@pytest.mark.parametrize(
+    "change",
+    [
+        "no_animation",
+        "slot",
+        "drivers",
+        "nla",
+        "shared_action",
+        "parent",
+        "constraint",
+        "rotated",
+        "scaled",
+        "camera_animated",
+        "nonlinear",
+        "missing_axis",
+        "wrong_path",
+        "bad_first_pose",
+        "wrong_scene_frame",
+        "unequal_frames",
+        "wrong_frame_gap",
+        "too_few_frames",
+        "subframe",
+    ],
+)
 def test_m8_denies_unsafe_source_and_camera(change):
     bpy, camera, subject, inspector, registry = setup()
     if change == "no_animation":
