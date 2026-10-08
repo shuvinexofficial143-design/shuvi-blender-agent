@@ -110,7 +110,9 @@ class RailApply:
             },
         )
         return cls(
-            RailPreview.parse({key: val for key, val in data.items() if key != "expected_rail_revision"}),
+            RailPreview.parse(
+                {key: val for key, val in data.items() if key != "expected_rail_revision"}
+            ),
             string(data["expected_rail_revision"], "expected_rail_revision", limit=64),
         )
 
@@ -149,8 +151,12 @@ class CameraRailOperations:
         vertical_tan = horizontal_tan / base["render_aspect"]
         radius = base["subject_enclosing_radius"]
         padded = radius * action.margin
-        outer_x = max(abs(point[0]) for point in (action.control_a, action.control_b, action.end_offset))
-        outer_y = max(abs(point[1]) for point in (action.control_a, action.control_b, action.end_offset))
+        outer_x = max(
+            abs(point[0]) for point in (action.control_a, action.control_b, action.end_offset)
+        )
+        outer_y = max(
+            abs(point[1]) for point in (action.control_a, action.control_b, action.end_offset)
+        )
         distance = max(
             base["camera_distance"],
             (padded + radius * horizontal_tan) / (horizontal_tan * (1 - 2 * outer_x)),
