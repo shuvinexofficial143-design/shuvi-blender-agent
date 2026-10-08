@@ -700,3 +700,25 @@ Real Blender runtime verification: **0%**. Production ready: **No**.
 
 STOP. Do not start Level 8 Cinematography, Blender runtime acceptance or
 main Shuvi integration without separate explicit user authorization.
+
+
+## Level 8 Milestone 1 — Subject-centered Cinematic Shot Framing
+
+User-authorized source expansion only. New tools:
+`cinema.shot_preview` and `cinema.shot_frame`. The first derives a bounded
+camera shot around a distinct subject from reported subject location/dimensions,
+camera lens/sensor, pixel-corrected aspect and azimuth/elevation. The second
+rechecks the deterministic plan revision, moves/rotates the camera directly,
+optionally activates it, verifies exact readback, and restores original
+camera/active-camera state on mismatch or interruption.
+
+The subject-center/origin assumption is explicitly documented; geometric
+evaluation of Blender meshes and final rendered visual quality are *not*
+certified. Blocks unsafe parented/constrained/animated/linked/shared cameras,
+out-of-range framing/clipping, stale state and unsupported sensor fits.
+Factory/client registry cap is **227** typed tools. Level 8 source roadmap
+is **10%** only. Levels 1–7 source-side remain complete.
+Real Blender runtime verification: **0%**; production ready: **No**.
+
+**STOP:** Do not begin Level 8 M2, Blender runtime tests or Shuvi integration
+without separate user authorization.
