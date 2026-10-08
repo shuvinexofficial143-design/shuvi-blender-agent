@@ -24,6 +24,7 @@ from .cinematic_easing import CameraEasingOperations
 from .cinematic_follow import CameraFollowOperations
 from .cinematic_motion import CameraMotionOperations
 from .cinematic_rail import CameraRailOperations
+from .cinematic_sequences import CinematicSequenceOperations
 from .cinematic_shots import CinematicShotOperations
 from .cinematic_tracking import CameraTrackingOperations
 from .collection_ops import CollectionOperations
@@ -139,6 +140,7 @@ def create_registry(
         CameraFollowOperations(objects),
         CameraDampedFollowOperations(objects),
         CameraCutOperations(objects),
+        CinematicSequenceOperations(objects),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),
         rigging,

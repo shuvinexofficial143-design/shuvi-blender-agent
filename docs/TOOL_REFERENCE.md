@@ -68,6 +68,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.cut_preview | camera_a, camera_b, start_frame, cut_frame, end_frame | read_only | exact two-camera hard cut preview with timeline conflicts, camera revisions and scene digest |
 | cinema.cut_apply | all cinema.cut_preview fields plus expected_cut_revision | mutation | bind two new timeline markers to cameras; verify pointers, preserve foreign markers and rollback partial writes |
 | cinema.cut_release | expected_cut_token | mutation | same-session owned removal of two cut markers only, with readback and interruption recovery |
+| cinema.sequence_preview | camera_a, camera_b, subject, azimuth_a, elevation_a, azimuth_b, elevation_b, margin, start_frame, cut_frame, end_frame | read_only | deterministic combined two-camera M1 framing and M9 hard-cut preview, safety blockers and sequence revision |
+| cinema.sequence_apply | all cinema.sequence_preview fields plus expected_sequence_revision | mutation | atomically frame both cameras and bind two timeline cut markers with readback and full rollback |
+| cinema.sequence_release | expected_sequence_token | mutation | restore both original camera poses and remove exactly two same-session owned markers, with interrupted-release recovery |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1737,3 +1740,27 @@ Current Level 3 source progress: **100%**.
 - Output is hard camera switching, not a dissolve or blended transition.
   No actual Blender rendering/evaluated shot-switching verified.
 - Host/factory registry: **246** tools. Real Blender acceptance **0%**.
+
+
+## Level 8 M10 — Atomic two-shot workflow source acceptance
+
+- `cinema.sequence_preview`: combines two perspective M1 shot plans
+  with a strict two-camera M9 cut plan. Both cameras require fresh
+  current-session ObjectTargets and share one valid noncamera subject.
+  Distinct views use separate azimuth/elevation values, one safe margin,
+  and bounded integer start/cut/end frames. Blocks foreign collisions,
+  animation, constraints, lens shift and unsafe framing. No mutation.
+- `cinema.sequence_apply`: exact revision required. Frames camera A and
+  B in one guarded transaction, inserts two independently bound
+  `scene.timeline_markers` camera cuts and verifies camera poses,
+  optics, subject, marker identities, active scene camera and frame.
+  Failure restores both original camera poses and foreign marker table.
+- `cinema.sequence_release`: same-session token required. Removes only
+  the two exact sequence-owned marker objects, returns both cameras
+  to their saved poses and verifies recovery; interrupted release
+  reconstructs only its own markers/camera poses or fails closed.
+- A hard camera cut between two framed views is a **real source-level
+  workflow**, not a crossfade. Real Blender runtime, rendering and
+  evaluated camera cut playback still need live acceptance.
+- Registered typed tools **249**, Level 8 source complete **100%**,
+  runtime accepted **0%**, production ready **No**.
