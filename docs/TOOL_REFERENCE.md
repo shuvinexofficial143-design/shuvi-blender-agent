@@ -63,6 +63,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.follow_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active | read_only | bounded relative camera offset plan with world-space COPY_LOCATION and TRACK_TO chain |
 | cinema.follow_apply | all cinema.follow_preview fields plus expected_follow_revision | mutation | create owned COPY_LOCATION with offset and TRACK_TO constraints, verify both, rollback failed setups |
 | cinema.follow_release | camera, expected_follow_token | mutation | release only original same-session two constraints and restore saved camera pose, with recovery |
+| cinema.damped_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, damping_alpha, make_active | read_only | bounded time-normalized EMA camera trajectory from existing LINEAR subject XYZ keys, exact revision |
+| cinema.damped_apply | all cinema.damped_preview fields plus expected_damped_revision | mutation | bake 5..24 verified camera XYZ position and rotation poses as 30..144 keyframes; clean rollback |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1695,3 +1697,21 @@ Current Level 3 source progress: **100%**.
   This is not smooth/damped camera follow; real Blender depsgraph evaluated
   translation/rotation, occlusion and rendered visuals are unverified.
 - No existing camera constraints are accepted. Registry/host tools: **241**.
+
+
+## Level 8 M8 — baked temporal camera damping
+
+- `cinema.damped_preview`: EMA coefficient 0.1–0.9, normalized by frame
+  gaps. Reads only a single-user local **subject** Action with 5–24
+  matching XYZ LINEAR position-key tuples and no other tracks/drivers.
+  Requires the scene at subject's first key with aligned pose. Computes
+  bounded camera position and rotation poses with safe M1 optics/clip.
+- `cinema.damped_apply`: requires exact preview revision, camera with
+  no existing animation/constraints, new single-user camera Action.
+  Writes six XYZ channels with 5..24 sample keys, 30..144 values.
+  Verifies exact frames/values/interpolation/lens/subject state and
+  restores pre-mutation state on partial failure.
+- This is sampled offline temporal smoothing, **not real-time target
+  tracking or live Blender evaluated spring damping**. Intermediate
+  frame interpolation and rendered quality remain unverified.
+- Registered tools: **243**. Real Blender runtime acceptance: **0%**.
