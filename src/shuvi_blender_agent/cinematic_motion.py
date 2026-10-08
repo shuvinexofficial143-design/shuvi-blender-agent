@@ -38,9 +38,18 @@ class CameraMotionPreview:
         fields(
             data,
             {
-                "camera", "subject", "start_frame", "end_frame", "mode",
-                "start_azimuth", "end_azimuth", "start_elevation", "end_elevation",
-                "margin", "dolly_factor", "make_active",
+                "camera",
+                "subject",
+                "start_frame",
+                "end_frame",
+                "mode",
+                "start_azimuth",
+                "end_azimuth",
+                "start_elevation",
+                "end_elevation",
+                "margin",
+                "dolly_factor",
+                "make_active",
             },
         )
         mode = string(data["mode"], "mode", limit=16)
@@ -57,28 +66,29 @@ class CameraMotionPreview:
         dolly_factor = number(data["dolly_factor"], "dolly_factor", 1, 2)
         if mode == "ORBIT":
             if (
-                max(abs(end_azimuth - start_azimuth), abs(end_elevation - start_elevation))
-                < 0.5
+                max(abs(end_azimuth - start_azimuth), abs(end_elevation - start_elevation)) < 0.5
                 or abs(end_azimuth - start_azimuth) > 60
                 or abs(end_elevation - start_elevation) > 35
                 or dolly_factor != 1
             ):
                 raise invalid("ORBIT needs 0.5..60 degree rotation and dolly_factor=1")
-        elif (
-            start_azimuth != end_azimuth
-            or start_elevation != end_elevation
-            or dolly_factor < 1.1
-        ):
+        elif start_azimuth != end_azimuth or start_elevation != end_elevation or dolly_factor < 1.1:
             raise invalid("DOLLY needs fixed angles and dolly_factor 1.1..2")
         if type(data["make_active"]) is not bool:
             raise invalid("make_active must be boolean")
         return cls(
             ObjectTarget.parse(data["camera"]),
             ObjectTarget.parse(data["subject"]),
-            start, end, mode, start_azimuth, end_azimuth,
-            start_elevation, end_elevation,
+            start,
+            end,
+            mode,
+            start_azimuth,
+            end_azimuth,
+            start_elevation,
+            end_elevation,
             number(data["margin"], "margin", 1.05, 2.5),
-            dolly_factor, data["make_active"],
+            dolly_factor,
+            data["make_active"],
         )
 
 
@@ -94,7 +104,10 @@ class CameraMotionApply:
             {
                 "camera", "subject", "start_frame", "end_frame", "mode",
                 "start_azimuth", "end_azimuth", "start_elevation", "end_elevation",
-                "margin", "dolly_factor", "make_active", "expected_motion_revision",
+                "margin",
+                "dolly_factor",
+                "make_active",
+                "expected_motion_revision",
             },
         )
         return cls(
@@ -119,14 +132,16 @@ class CameraMotionOperations:
         poses = []
         source_plans = []
         for position in (0, 0.5, 1):
-            azimuth = action.start_azimuth + position * (
-                action.end_azimuth - action.start_azimuth
-            )
+            azimuth = action.start_azimuth + position * (action.end_azimuth - action.start_azimuth)
             elevation = action.start_elevation + position * (
                 action.end_elevation - action.start_elevation
             )
             shot = ShotPreview(
-                action.camera, action.subject, azimuth, elevation, action.margin,
+                action.camera,
+                action.subject,
+                azimuth,
+                elevation,
+                action.margin,
                 action.make_active,
             )
             camera, subject, camera_before, subject_before, plan = self.shots._plan(shot)
@@ -289,12 +304,16 @@ class CameraMotionOperations:
                     "path": path,
                     "index": index,
                     "points": [
-                        {"frame": float(pose["frame"]), "value": float(pose[path][index]),
-                         "interpolation": "LINEAR"}
+                        {
+                            "frame": float(pose["frame"]),
+                            "value": float(pose[path][index]),
+                            "interpolation": "LINEAR",
+                        }
                         for pose in plan["key_poses"]
                     ],
                 }
-                for path in PATHS for index in range(3)
+                for path in PATHS
+                for index in range(3)
             ]
             actual_keys = []
             for curve in after["animation"]["channels"]:
@@ -320,9 +339,7 @@ class CameraMotionOperations:
                 "rotation": plan["key_poses"][-1]["rotation_euler"],
                 "lens": plan["camera_lens"],
                 "subject_revision": subject_before["revision"],
-                "active_camera": (
-                    True if action.preview.make_active else old_active is camera
-                ),
+                "active_camera": (True if action.preview.make_active else old_active is camera),
                 "frame": old_frame,
                 "created_action": created_action.name,
                 "revision_changed": True,
@@ -341,14 +358,16 @@ class CameraMotionOperations:
             verification = compare(expected, actual)
             if verification.matched and len(frame_values) == 18:
                 return Result(
-                    request.request_id, request.command_id, Status.VERIFIED,
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
                     {
                         "before": before,
                         "after": after,
                         "motion_revision": plan["motion_revision"],
-                        "keyframe_count": 18, "channel_count": 6, "keyframe_frames": [
-                            pose["frame"] for pose in plan["key_poses"]
-                        ],
+                        "keyframe_count": 18,
+                        "channel_count": 6,
+                        "keyframe_frames": [pose["frame"] for pose in plan["key_poses"]],
                         "real_runtime_verified": False,
                     },
                     verification=verification.to_dict(),
@@ -368,17 +387,27 @@ class CameraMotionOperations:
 
         rollback()
         return Result(
-            request.request_id, request.command_id, Status.FAILED,
-            {"before": before, "after": after, "rolled_back": True,
-             "recovery_verified": True, "real_runtime_verified": False},
+            request.request_id,
+            request.command_id,
+            Status.FAILED,
+            {
+                "before": before,
+                "after": after,
+                "rolled_back": True,
+                "recovery_verified": True,
+                "real_runtime_verified": False,
+            },
             AgentError(ErrorCode.VERIFICATION_FAILED, "Camera keyframe readback mismatch"),
             verification.to_dict(),
         )
 
     def tools(self):
         return [
-            Tool("cinema.motion_preview", SafetyClass.READ_ONLY,
-                 CameraMotionPreview.parse, self.preview),
-            Tool("cinema.motion_apply", SafetyClass.MUTATION,
-                 CameraMotionApply.parse, self.apply),
+            Tool(
+                "cinema.motion_preview",
+                SafetyClass.READ_ONLY,
+                CameraMotionPreview.parse,
+                self.preview,
+            ),
+            Tool("cinema.motion_apply", SafetyClass.MUTATION, CameraMotionApply.parse, self.apply),
         ]
