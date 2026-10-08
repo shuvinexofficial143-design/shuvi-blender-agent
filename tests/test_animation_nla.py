@@ -110,9 +110,9 @@ def test_m8_creates_exact_nla_track_and_strip_without_changing_action_keys():
     assert strip.frame_end == 40.0
     assert after["tracks"][0]["name"] == "Shuvi_Clip"
     assert after["tracks"][0]["strips"][0]["name"] == "Shot_A"
-    assert after["tracks"][0]["strips"][0]["action_fingerprint"] == before[
-        "source_action_fingerprint"
-    ]
+    assert (
+        after["tracks"][0]["strips"][0]["action_fingerprint"] == before["source_action_fingerprint"]
+    )
     assert after["managed_nla_ready"] is False
     assert after["real_runtime_verified"] is False
 
@@ -130,9 +130,7 @@ def test_m8_rejects_stale_nla_revision_even_with_fresh_target():
 def test_m8_rejects_foreign_action_and_preexisting_nla_tracks():
     _, inspector, registry, obj = setup()
     original = obj.animation_data.action
-    obj.animation_data.action = NS(
-        name="OtherAction", users=1, fcurves=list(original.fcurves)
-    )
+    obj.animation_data.action = NS(name="OtherAction", users=1, fcurves=list(original.fcurves))
     before = inspect(registry, inspector, obj)
     assert "FOREIGN_ACTION" in before["blockers"]
     denied = create(registry, inspector, obj, before)

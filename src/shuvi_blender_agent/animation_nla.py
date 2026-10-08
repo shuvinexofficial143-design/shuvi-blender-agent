@@ -15,11 +15,7 @@ from .verification import compare
 
 MAX_NLA_TRACKS = 64
 MAX_NLA_STRIPS = 64
-CHANNELS = {
-    (path, index)
-    for path in ("location", "rotation_euler", "scale")
-    for index in range(3)
-}
+CHANNELS = {(path, index) for path in ("location", "rotation_euler", "scale") for index in range(3)}
 
 
 @dataclass(frozen=True)
@@ -181,9 +177,7 @@ class ManagedNLAOperations:
         state["blockers"] = sorted(set(blockers))
         state["managed_nla_ready"] = not blockers
         state["source_action_fingerprint"] = (
-            self._action_evidence(ad.action)
-            if ad is not None and ad.action is not None
-            else None
+            self._action_evidence(ad.action) if ad is not None and ad.action is not None else None
         )
         state["source_frames"] = frames
         return state

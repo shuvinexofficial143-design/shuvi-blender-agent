@@ -800,11 +800,7 @@ class FakeKeyframePoints(list):
 
 class FakeNLAStrips(list):
     def new(self, name, start, action):
-        frames = [
-            float(point.co[0])
-            for curve in action.fcurves
-            for point in curve.keyframe_points
-        ]
+        frames = [float(point.co[0]) for curve in action.fcurves for point in curve.keyframe_points]
         if not frames:
             raise ValueError("NLA Action has no keys")
         first, last = min(frames), max(frames)
