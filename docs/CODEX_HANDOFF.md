@@ -722,3 +722,22 @@ Real Blender runtime verification: **0%**; production ready: **No**.
 
 **STOP:** Do not begin Level 8 M2, Blender runtime tests or Shuvi integration
 without separate user authorization.
+
+
+## Level 8 Milestone 2 — Advanced Camera Composition
+
+Source implementation only: added `cinema.composition_preview` and
+`cinema.composition_apply`, nine fixed Rule-of-Thirds anchors and actual
+image-plane camera repositioning with projected normalized subject center.
+M2 reuses exact M1 safety / revision checks and M1's verified atomic pose
+readback-and-rollback implementation. Target distance is adjusted to allow
+subject sphere clearance within horizontal/vertical FOV and clip limits;
+existing lens shifts and unsafe oversized camera coordinates are blocked.
+
+The center of reported subject dimensions is assumed at object origin;
+this is a safe source approximation, not visual or runtime proof. Tests use
+fake-bpy and CI only. Registered tools/cap: **229**, Level 8 source 20%.
+Blender runtime 0%, production ready No.
+
+STOP: Do not implement Level 8 M3, real Blender runtime/visual tests,
+rendering or main Shuvi integration without explicit user instruction.
