@@ -102,8 +102,15 @@ class CameraMotionApply:
         fields(
             data,
             {
-                "camera", "subject", "start_frame", "end_frame", "mode",
-                "start_azimuth", "end_azimuth", "start_elevation", "end_elevation",
+                "camera",
+                "subject",
+                "start_frame",
+                "end_frame",
+                "mode",
+                "start_azimuth",
+                "end_azimuth",
+                "start_elevation",
+                "end_elevation",
                 "margin",
                 "dolly_factor",
                 "make_active",
