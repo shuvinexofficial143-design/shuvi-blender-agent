@@ -1,7 +1,7 @@
 """Level 8 M3: bounded, verified three-pose camera orbit and dolly keyframes."""
 
 from dataclasses import dataclass
-from math import pi, radians
+from math import pi
 
 from .cinematic_shots import CinematicShotOperations, ShotPreview
 from .contracts import Request, Result, Status
@@ -343,7 +343,9 @@ class CameraMotionOperations:
                 return Result(
                     request.request_id, request.command_id, Status.VERIFIED,
                     {
-                        "before": before, "after": after, "motion_revision": plan["motion_revision"],
+                        "before": before,
+                        "after": after,
+                        "motion_revision": plan["motion_revision"],
                         "keyframe_count": 18, "channel_count": 6, "keyframe_frames": [
                             pose["frame"] for pose in plan["key_poses"]
                         ],
