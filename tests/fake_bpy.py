@@ -810,6 +810,9 @@ class FakeObject:
     def asset_mark(self):
         self.asset_data = NS(description="")
 
+    def animation_data_clear(self):
+        self.animation_data = None
+
     def keyframe_insert(self, data_path, frame):
         if self.animation_data is None:
             curves = []
