@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **60%** (Milestones 1–6 of 10).
+Current Level 8 source progress: **70%** (Milestones 1–7 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -305,9 +305,62 @@ Public typed tools / host cap: **238** (235 + 3).
 Source-side Level 8 roadmap: **60%**.
 Real Blender runtime acceptance: **0%**. Production ready: **No**.
 
+## Milestone 7 — Camera translation follow and target aim (70% source-side)
+
+Three new typed public operations, all grounded in exact current-session
+camera/subject revisions and M6 safe initial framing:
+
+- `cinema.follow_preview` (READ_ONLY): plans the world-space camera
+  position for a subject-centered shot, then derives the camera's local
+  offset vector `planned_world_camera - initial_subject_location`.
+  Validates parent/constraint dependency cycles, safe perspective camera,
+  no existing Action/constraint, clipping, lens shift and current scene
+  state. Returns exact `follow_revision` and explicit safety blockers.
+- `cinema.follow_apply` (MUTATION): rechecks the exact plan, places the
+  camera object's stored location at the **relative offset**, then
+  creates exactly two object constraints **in order**:
+  `COPY_LOCATION` of subject with `use_offset=True`, all XYZ axes,
+  no inversions, owner/target in WORLD space, followed by `TRACK_TO`
+  the same subject with camera's local -Z and +Y up. Both use influence 1,
+  mute=False. Verifies every constraint property and target identity,
+  original subject revision, unchanged lens, camera raw position/rotation
+  and optional scene-camera activation. On partial creation or a failed
+  readback, removes only the new constraints and restores the original
+  unmodified camera pose and activation with revision-confirmed rollback.
+- `cinema.follow_release` (MUTATION): requires current camera target and
+  session-specific `follow_token`; only releases the **exact two
+  same-session owned constraints** if both still match their full
+  readback. It restores the **pre-follow camera pose** and verifies exact
+  constraint removal. If release is interrupted mid-way, it can reconstruct
+  only these two original managed constraints and verify the same tracked
+  revision; foreign constraints are never adopted or intentionally removed.
+
+Under Blender's documented COPY_LOCATION offset mechanism, evaluated
+position is expected to be `subject_world_location + stored_offset`.
+This lets the camera **translate along with subject movement** while
+TRACK_TO independently changes its direction to point at the subject.
+It does **not** promise visual smoothness, collision avoidance, render
+acceptance, damping, interpolation at animated frames or dynamic zoom.
+M7 setup is not automatically layered on top of M6 tracking; a camera
+with ANY existing constraint is deliberately refused. Parented targets
+are also blocked because their local location cannot be treated as a
+world-space origin for this initial-offset formulation.
+
+IMPORTANT: This milestone is source/fake-bpy only. The fake fixture
+checks exact Blender-shaped constraint properties and predicts camera
+position mathematically; it does not evaluate Blender's dependency graph.
+Blender version compatibility and evaluated world transforms require
+actual runtime verification. Releasing after a moving subject has shifted
+restores the **saved pre-follow pose**, not the camera's last evaluated
+render pose, so an instantaneous jump is possible.
+
+Factory/client tools: **241** (238 + 3).
+Source completion Level 8 M1–M7: **70%**. Real Blender runtime
+acceptance: **0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-side complete. Level 8 M1–M6 are source-side
-complete at **60%** only. Do not begin Level 8 M7, launch Blender,
-render, conduct live acceptance or integrate the main Shuvi repository
-without separate explicit user permission.
+Levels 1–7 remain source-side complete. Level 8 M1–M7 are source-side
+complete at **70%** only. Do not begin Level 8 M8, launch Blender,
+render, conduct live Blender acceptance or integrate the main Shuvi
+repository without the user's separate explicit approval.

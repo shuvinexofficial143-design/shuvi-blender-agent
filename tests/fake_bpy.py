@@ -832,14 +832,23 @@ class FakeObjectConstraints(list):
     """Minimal object-level bpy constraint collection for camera TRACK_TO tests."""
 
     def new(self, type):
-        if type != "TRACK_TO":
-            raise ValueError("Fake object tracking supports TRACK_TO only")
+        if type not in ("TRACK_TO", "COPY_LOCATION"):
+            raise ValueError("Fake object constraints support TRACK_TO or COPY_LOCATION only")
         constraint = NS(
-            name="Track To",
+            name="Track To" if type == "TRACK_TO" else "Copy Location",
             type=type,
             target=None,
             track_axis="TRACK_NEGATIVE_Z",
             up_axis="UP_Y",
+            target_space="WORLD",
+            owner_space="WORLD",
+            use_x=True,
+            use_y=True,
+            use_z=True,
+            invert_x=False,
+            invert_y=False,
+            invert_z=False,
+            use_offset=False,
             influence=1.0,
             mute=False,
         )

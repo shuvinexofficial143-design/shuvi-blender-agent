@@ -33,6 +33,7 @@ from .character_sculpt_workflow import (
 )
 from .cinematic_composition import CompositionApply, CompositionPreview
 from .cinematic_easing import EasingApply, EasingPreview
+from .cinematic_follow import FollowApply, FollowPreview, FollowRelease
 from .cinematic_motion import CameraMotionApply, CameraMotionPreview
 from .cinematic_rail import RailApply, RailPreview
 from .cinematic_shots import ShotApply, ShotPreview
@@ -346,6 +347,9 @@ def builtin_contracts() -> dict:
         "cinema.track_preview": (read, TrackingPreview.parse),
         "cinema.track_apply": (mutation, TrackingApply.parse),
         "cinema.track_release": (mutation, TrackingRelease.parse),
+        "cinema.follow_preview": (read, FollowPreview.parse),
+        "cinema.follow_apply": (mutation, FollowApply.parse),
+        "cinema.follow_release": (mutation, FollowRelease.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),
