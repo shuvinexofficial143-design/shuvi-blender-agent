@@ -3,6 +3,7 @@
 from .animation import AnimationInspect, FrameRange, InsertKeyframe, SetFrame
 from .animation_keyframes import EditKeyframe, RemoveKeyframe, ReplaceKeyframe
 from .animation_style import KeyframeStyleSet
+from .animation_timeline import TimelineRetime
 from .appearance import CreateDevice, MaterialAssign, UpdateDevice
 from .assets import AddModifier, CreateCollection, MarkAsset
 from .character_acceptance import CharacterWorkflowPreview, Level3Acceptance
@@ -307,6 +308,8 @@ def builtin_contracts() -> dict:
         "animation.remove_keyframe": (mutation, RemoveKeyframe.parse),
         "animation.replace_keyframe": (mutation, ReplaceKeyframe.parse),
         "animation.keyframe_style_set": (mutation, KeyframeStyleSet.parse),
+        "animation.retime_preview": (read, TimelineRetime.parse),
+        "animation.retime_apply": (mutation, TimelineRetime.parse),
         "render.configure": (mutation, RenderConfig.parse),
         "render.execute": (SafetyClass.RENDER, FileAction.parse_png),
         "file.checkpoint": (SafetyClass.FILE_WRITE, FileAction.parse_blend),
