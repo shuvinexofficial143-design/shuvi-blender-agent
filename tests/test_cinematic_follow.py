@@ -208,6 +208,7 @@ def test_m7_without_activation_keeps_prior_camera_selection():
         "clip",
         "mode",
         "locked",
+        "parented_subject",
         "target_cycle",
     ],
 )
@@ -231,6 +232,8 @@ def test_m7_fails_closed_on_unsafe_camera_and_target(blocker):
         bpy.context.mode = "EDIT_MESH"
     elif blocker == "locked":
         camera.lock_location = [True, False, False]
+    elif blocker == "parented_subject":
+        subject.parent = FakeObject("Parent")
     else:
         subject.parent = camera
     data = payload(inspector, camera, subject)
