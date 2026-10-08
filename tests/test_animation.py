@@ -156,12 +156,14 @@ def test_level7_m1_animation_inspect_reports_empty_exact_state():
 def test_level7_m1_animation_inspect_summarizes_owned_keyframes_deterministically():
     bpy, inspector, registry = setup()
     obj = bpy.context.scene.objects[0]
-    assert registry.dispatch(
+    first_insert = registry.dispatch(
         Request("animation.insert_keyframe", key_payload(inspector, obj, 10))
-    ).status == Status.VERIFIED
-    assert registry.dispatch(
+    )
+    second_insert = registry.dispatch(
         Request("animation.insert_keyframe", key_payload(inspector, obj, 20))
-    ).status == Status.VERIFIED
+    )
+    assert first_insert.status == Status.VERIFIED
+    assert second_insert.status == Status.VERIFIED
 
     object_id = inspector.snapshot(obj)["object_id"]
     first = registry.dispatch(Request("animation.inspect", {"object_id": object_id}))
