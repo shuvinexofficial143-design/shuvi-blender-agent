@@ -57,6 +57,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.rail_apply | all cinema.rail_preview fields plus expected_rail_revision | mutation | create a fresh 30-key camera Action with safe readback and rollback; never adopt existing Action |
 | cinema.easing_preview | all cinema.rail_preview fields plus style and strength | read_only | deterministic five-pose eased camera rail preview with analytic FCurve handles and exact easing revision |
 | cinema.easing_apply | all cinema.easing_preview fields plus expected_easing_revision | mutation | author fresh Action with 30 BEZIER FREE-handled location/rotation keys, verify every handle and rollback on mismatch |
+| cinema.track_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active | read_only | deterministic TRACK_TO subject follow plan, safe initial framing, cycle checks and revision |
+| cinema.track_apply | all cinema.track_preview fields plus expected_tracking_revision | mutation | create one managed TRACK_TO camera constraint with target, axis readback and rollback |
+| cinema.track_release | camera, expected_tracking_revision | mutation | remove only same-session owned unmodified tracking constraint with readback verification |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1648,3 +1651,23 @@ Current Level 3 source progress: **100%**.
   as M3/M4. Foreign/existing actions are never altered or adopted.
 - Source/fake-bpy only. Real Blender evaluated playback and visual
   motion smoothness have **not** been established. Public tools: **235**.
+
+
+## Level 8 M6 — dynamic camera look-at tracking
+
+- `cinema.track_preview` uses fresh camera/target ObjectTargets and the
+  same azimuth/elevation, margin, sensor-fit and clip validations as M1.
+  It additionally blocks tracking cycles through parent chains and
+  direct dependencies, unsupported lens shift and any camera constraints.
+- `cinema.track_apply` creates one new TRACK_TO camera object constraint:
+  `target=<subject>`, `track_axis=TRACK_NEGATIVE_Z`, `up_axis=UP_Y`,
+  `influence=1`, `mute=False`. It moves the camera to a safe initial pose.
+  Verifies fresh subject/camera state and exact constraint pointer/axes.
+- `cinema.track_release` accepts a fresh tracked-camera ObjectTarget and
+  exact successful tracking token; only the same adapter/session-owned
+  unmodified constraint may be removed. Foreign or stale constraints are
+  not adopted. It preserves the camera's location, rotation and activation.
+- The evaluated Blender constraint should continually orient the camera
+  toward the changing subject; **camera translation is NOT followed**.
+  No real Blender depsgraph, evaluated tracking, occlusion or render tests.
+- Typed factory/client cap: **238**. Real Blender runtime acceptance: **0%**.
