@@ -267,7 +267,9 @@ class CameraAnimationOperations:
             camera.dof.focus_distance = action.focus_distance
             for path in OPTICS_PATHS:
                 if not camera.keyframe_insert(data_path=path, frame=action.frame):
-                    raise AgentError(ErrorCode.EXECUTION_ERROR, "Camera optics key insertion failed")
+                    raise AgentError(
+                        ErrorCode.EXECUTION_ERROR, "Camera optics key insertion failed"
+                    )
                 self._owned_actions[action.target.object_id] = camera.animation_data.action
             for curve in action_curves(camera):
                 if curve.data_path not in OPTICS_PATHS or curve.array_index != 0:
