@@ -17,7 +17,6 @@ from shuvi_blender_agent.operations import ObjectOperations
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
 from shuvi_blender_agent.tools import MAX_REGISTERED_TOOLS, ToolRegistry
-from shuvi_blender_agent.verification import compare as real_compare
 
 
 def setup():
