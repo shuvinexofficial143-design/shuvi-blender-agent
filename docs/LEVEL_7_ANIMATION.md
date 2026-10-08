@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **20%**.
+Current Level 7 source progress: **30%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -19,7 +19,7 @@ Production ready: **No**.
 | --- | --- | --- |
 | 1 | Action / FCurve / keyframe inspection foundation | complete |
 | 2 | Revision-gated keyframe edit / remove / replace | complete |
-| 3 | Interpolation, easing and handle controls | pending |
+| 3 | Interpolation, easing and handle controls | complete |
 | 4 | Bounded multi-key / timeline animation workflows | pending |
 | 5 | Pose-bone animation channels | pending |
 | 6 | Camera / lens / focus animation workflows | pending |
@@ -178,9 +178,83 @@ Current registry/catalog hard maximum: **207**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+## Milestone 3 — 30% complete
+
+Milestone 3 adds one bounded style mutation surface:
+
+- `animation.keyframe_style_set`
+
+It addresses one exact managed transform-channel keyframe using a fresh `ObjectTarget` plus the
+exact current `animation_revision`.
+
+### Style controls
+
+The tool can set:
+
+- interpolation: `CONSTANT`, `LINEAR`, `BEZIER`, `SINE`, `QUAD`, `CUBIC`, `QUART`,
+  `QUINT`, `EXPO`, `CIRC`, `BACK`, `BOUNCE`, or `ELASTIC`;
+- easing: `AUTO`, `EASE_IN`, `EASE_OUT`, or `EASE_IN_OUT` where the interpolation family
+  actually uses easing;
+- bounded Bezier handle types: `FREE`, `VECTOR`, `AUTO`, or `AUTO_CLAMPED`;
+- exact left/right handle coordinates only when that side is explicitly `FREE`.
+
+`CONSTANT`, `LINEAR` and `BEZIER` require `easing=AUTO`. Non-Bezier interpolation rejects
+manual handle coordinates and requires automatic handle types. FREE Bezier handles must stay on
+their respective side of the keyframe and within the bounded frame/value work limits.
+
+### Style-aware inspection and revisions
+
+M1 inspection now includes per-key:
+
+- easing;
+- left/right handle type;
+- left/right handle coordinates.
+
+Those fields are included in `animation_revision`. A handle/easing-only change therefore makes
+old animation revisions stale instead of silently bypassing the M2 freshness gate.
+
+M2 recovery snapshots were also extended to preserve these style fields, so later keyframe
+edit/remove/replace rollback does not discard M3 curve style.
+
+### Verification and recovery
+
+The M3 mutation is restricted to the same session-owned, local, editable, unshared nine-transform
+curve Action accepted by M2. It does not adopt arbitrary foreign FCurves.
+
+After mutation Shuvi reads the exact point back and verifies requested interpolation/easing,
+handle types and any explicit FREE handle coordinates. Verification mismatch restores the complete
+pre-mutation Action snapshot and only reports recovery success when the original
+`animation_revision` is reproduced.
+
+Source tests cover exact FREE Bezier handle readback, eased non-Bezier interpolation, invalid
+style combinations, stale revision rejection, and forced verification-failure rollback.
+
+M3 does not expose FCurve modifiers, extrapolation, arbitrary data paths, evaluated motion,
+pose-bone animation, NLA mutation, or unrestricted bpy/Python.
+
+### Milestone 3 source checkpoint
+
+Verified source/test checkpoint: `c4b2e0865f5909546f1281762a34f5736c44a466`.
+
+CI run `37741672615` passed all six Linux/Windows Python 3.11/3.12/3.13 jobs with:
+
+- Ruff lint
+- Ruff format check
+- **823 tests**
+- package build
+- distribution audit
+- clean offline install/import without bpy
+- **79 package modules**
+
+Factory typed tools: **208**.
+Current registry/catalog hard maximum: **208**.
+
+Real Blender runtime verification remains **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-2 are complete at 20%. Do not begin Milestone 3 without explicit user permission.
+Milestones 1-3 are complete at 30%. Do not begin Milestone 4 without explicit user permission.
 
 Do not install, probe, launch or render Blender and do not execute real animation runtime
 acceptance without separate explicit runtime authorization.
