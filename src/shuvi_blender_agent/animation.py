@@ -12,7 +12,6 @@ from .safety import SafetyClass, require_revision
 from .tools import Tool
 from .validation import fields, integer, invalid, string
 
-
 MAX_ANIMATION_CURVES = 64
 MAX_ANIMATION_POINTS = 1024
 MAX_ANIMATION_AUX_ITEMS = 64
@@ -117,7 +116,9 @@ class AnimationOperations:
                     not isinstance(co, list)
                     or len(co) != 2
                     or not all(
-                        type(value) in (int, float) and -float("inf") < value < float("inf") for value in co
+                        type(value) in (int, float)
+                        and -float("inf") < value < float("inf")
+                        for value in co
                     )
                 ):
                     raise AgentError(ErrorCode.SAFETY_DENIED, "Animation point is invalid")
