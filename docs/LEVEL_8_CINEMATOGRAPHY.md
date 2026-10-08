@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **90%** (Milestones 1–9 of 10).
+Current Level 8 source progress: **100%** (Milestones 1–10 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -446,9 +446,64 @@ Factory/host cap: **246** typed tools (243+3). Source milestone
 progress: **90%** (M1–M9 complete). Real Blender runtime acceptance:
 **0%**. Production ready: **No**.
 
+## Milestone 10 — Atomic two-shot cinematic workflow integration
+
+M10 connects existing M1 perspective framing and M9 camera-bound timeline
+hard cuts in one actual transaction over two existing camera objects and
+one subject, rather than declaring Level 8 complete from only roadmap
+documents.
+
+Three typed public tools:
+
+- `cinema.sequence_preview` (READ_ONLY): accepts exact fresh ObjectTargets
+  for camera A, camera B and a common noncamera subject, two separate
+  azimuth/elevation shot angles, a shared safe margin and
+  start/cut/end frames. It independently computes two M1 camera framing
+  plans and an M9 camera-cut plan, reusing their aspect/lens/clip and
+  timeline collision blockers. Nonzero lens shift, existing animations,
+  constrained/parented/shared camera data, duplicate/reserved markers,
+  wrong scene mode and any already-managed sequence fail closed.
+  Deterministic `sequence_revision` binds **both shot plans, both
+  cameras, subject, scene markers, active camera and playhead**.
+- `cinema.sequence_apply` (MUTATION): requires the exact preview token,
+  applies **both independent world-space camera framing poses**, then
+  creates and binds two new scene timeline markers to the two cameras
+  at start_frame and cut_frame. It verifies actual camera XYZ locations
+  and rotations, both lenses, target subject revision, exact marker
+  frame/name/camera pointers and count, and unchanged scene camera and
+  playhead. No existing camera Actions or unrelated marker are edited.
+  If a camera write, marker creation or readback fails, only the new
+  markers are removed and **both camera poses** are restored; original
+  camera/object revisions and timeline/scene state must match before
+  verified recovery can be reported.
+- `cinema.sequence_release` (MUTATION): accepts the same-session
+  `sequence_token`. Releases only the exact two owned markers and
+  restores both saved pre-sequence camera poses. Rejects any foreign
+  edits, replacement marker identities, changed camera revisions, or
+  wrong session token. Interruptions reconstruct only its own bound
+  markers, reapply its owned camera poses and verify the prior
+  sequence state before reporting failure and allowing a retry.
+
+Example workflow: create two empty safe perspective camera objects and
+one bounded visible subject, preview the wide/close viewpoints with
+the desired cut timing, review blockers, apply the confirmed revision
+to frame both cameras and add their timeline camera cuts, then optionally
+release the result with its ownership token.
+
+**Final acceptance is SOURCE-ONLY.** A passing CI and fake-bpy suite
+demonstrate typed contracts, guarded state changes, rollback and package
+integrity. They do **not** prove compatibility with a real Blender
+version, actual rendered switching, camera framing, optical accuracy or
+cinematic smoothness. No GUI, live rendering or main Shuvi integration was
+authorized for this milestone.
+
+Level 8 source roadmap: **100% (10/10 milestones)**. Public tool cap
+**249**. Real Blender runtime acceptance: **0%**.
+Production ready: **No**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-side complete. Level 8 M1–M9 are
-source-side complete at **90%** only. Do not start M10, launch Blender,
-render, perform live Blender compatibility checks or merge into the
-main Shuvi repository without explicit new user permission.
+Levels 1–8 are marked complete **source-side only**. Stop before
+Level 9 Lighting & Look Development, real Blender runtime acceptance,
+rendering or integration into the master Shuvi agent repository
+unless the user explicitly authorizes the next action.
