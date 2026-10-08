@@ -299,7 +299,7 @@ def test_m5_without_activation_retains_existing_scene_camera():
 
 def test_m5_factory_tool_and_host_allowlist_count():
     factory = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(factory.catalog()) == MAX_REGISTERED_TOOLS == 243
+    assert len(factory.catalog()) == MAX_REGISTERED_TOOLS == 246
     assert {"cinema.easing_preview", "cinema.easing_apply"} <= {
         row["name"] for row in factory.catalog()
     }

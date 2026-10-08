@@ -284,6 +284,6 @@ def test_m2_without_activation_retains_previous_scene_camera():
 
 def test_m2_factory_registers_host_contracts_at_229():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 243
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 246
     names = {item["name"] for item in registry.catalog()}
     assert {"cinema.composition_preview", "cinema.composition_apply"} <= names

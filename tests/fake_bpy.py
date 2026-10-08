@@ -828,6 +828,15 @@ class FakeNLATracks(list):
         return track
 
 
+class FakeTimelineMarkers(list):
+    """Scene timeline marker collection for API-shaped camera binding tests."""
+
+    def new(self, name, frame=1):
+        marker = NS(name=name, frame=int(frame), camera=None, select=False)
+        self.append(marker)
+        return marker
+
+
 class FakeObjectConstraints(list):
     """Minimal object-level bpy constraint collection for camera TRACK_TO tests."""
 
@@ -1034,6 +1043,7 @@ def fake_bpy(objects=None):
         name="Scene",
         objects=table,
         camera=None,
+        timeline_markers=FakeTimelineMarkers(),
         frame_start=1,
         frame_end=250,
         frame_current=1,

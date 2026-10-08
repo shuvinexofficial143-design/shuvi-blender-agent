@@ -65,6 +65,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.follow_release | camera, expected_follow_token | mutation | release only original same-session two constraints and restore saved camera pose, with recovery |
 | cinema.damped_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, damping_alpha, make_active | read_only | bounded time-normalized EMA camera trajectory from existing LINEAR subject XYZ keys, exact revision |
 | cinema.damped_apply | all cinema.damped_preview fields plus expected_damped_revision | mutation | bake 5..24 verified camera XYZ position and rotation poses as 30..144 keyframes; clean rollback |
+| cinema.cut_preview | camera_a, camera_b, start_frame, cut_frame, end_frame | read_only | exact two-camera hard cut preview with timeline conflicts, camera revisions and scene digest |
+| cinema.cut_apply | all cinema.cut_preview fields plus expected_cut_revision | mutation | bind two new timeline markers to cameras; verify pointers, preserve foreign markers and rollback partial writes |
+| cinema.cut_release | expected_cut_token | mutation | same-session owned removal of two cut markers only, with readback and interruption recovery |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1715,3 +1718,22 @@ Current Level 3 source progress: **100%**.
   tracking or live Blender evaluated spring damping**. Intermediate
   frame interpolation and rendered quality remain unverified.
 - Registered tools: **243**. Real Blender runtime acceptance: **0%**.
+
+
+## Level 8 M9 — bound timeline camera hard cuts
+
+- `cinema.cut_preview`: two distinct current-session CAMERA targets and
+  scene-local integer start/cut/end frames, 4+ frames per shot,
+  no more than 720 overall. Refuses reserved names, marker collision,
+  existing camera-marker overlap and out-of-range scene timeline.
+- `cinema.cut_apply`: needs exact preview cut_revision. Directly creates
+  `scene.timeline_markers.new` markers at start and cut, binds
+  `marker.camera` to both camera objects and verifies exact readback.
+  No camera Action, existing marker, scene.camera or playhead edits.
+- `cinema.cut_release`: needs successful ownership token from this
+  adapter session. Removes only the same two bound markers, rejects
+  changed/foreign timeline state and restores owned markers after
+  interrupted release with readback.
+- Output is hard camera switching, not a dissolve or blended transition.
+  No actual Blender rendering/evaluated shot-switching verified.
+- Host/factory registry: **246** tools. Real Blender acceptance **0%**.

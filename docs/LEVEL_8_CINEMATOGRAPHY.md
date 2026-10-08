@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **80%** (Milestones 1–8 of 10).
+Current Level 8 source progress: **90%** (Milestones 1–9 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -401,9 +401,54 @@ As in previous milestones, **real Blender runtime acceptance remains
 0%, and production ready is No**. M8 adds exactly two public typed tools,
 bringing the factory/host registry cap to **243**.
 
+## Milestone 9 — Verified scene camera-binding hard cuts (90% source-side)
+
+M9 adds actual scene timeline camera bindings rather than another
+planning-only or documentation layer. Its source implementation uses
+Blender's documented `scene.timeline_markers.new(name, frame=...)`,
+`TimelineMarker.camera`, and `scene.timeline_markers.remove(marker)`
+API, without operator context/selection hacks.
+
+Three bounded public tools:
+
+- `cinema.cut_preview` (READ_ONLY): accepts two **distinct existing
+  camera** ObjectTargets (camera_a, camera_b), integer start/cut/end
+  frames with at least four frames per shot and <=720 frame total.
+  Produces a deterministic preview for camera A at start..cut-1,
+  camera B at cut..end, checking scene frame range, exact camera state,
+  existing camera-bound marker overlap, reserved marker names and
+  collisions at both new marker frames.
+- `cinema.cut_apply` (MUTATION): requires a matching
+  `expected_cut_revision`, creates **exactly two new scene timeline
+  markers**, at start_frame and cut_frame. Each is explicitly bound
+  to its specified camera with `marker.camera = camera`, and marker
+  name/frame/selected state is set. Exact readback checks both
+  pointers, names, frames, marker count, unchanged earlier scene
+  marker state, unchanged camera revisions, active scene camera and
+  playhead. Partial creation or mismatched readback removes **only**
+  the newly created markers, with source-state recovery checks.
+- `cinema.cut_release` (MUTATION): removes only the two exact
+  markers created by the current agent adapter in the same runtime
+  session, authenticated by a successful cut token. It refuses
+  external edits, foreign new markers, missing/replaced markers and
+  a changed scene; interrupted removal reconstructs only its owned
+  bound markers and verifies exact marker-state recovery.
+
+These are **HARD CUTS**: they switch active camera on the specified
+timeline frame. They do **not** interpolate, crossfade, blend image
+pixels or add a dissolve; actual Blender rendered frame-by-frame
+switching has not been tested. Camera object transforms, Actions,
+lens settings, the current playhead and existing markers remain
+untouched by successful application. A saved Blender scene reopened
+in a new session loses the runtime's release ownership by design.
+
+Factory/host cap: **246** typed tools (243+3). Source milestone
+progress: **90%** (M1–M9 complete). Real Blender runtime acceptance:
+**0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-side complete. Level 8 M1–M8 are source-side
-complete at **80%** only. Do not begin Level 8 M9, launch Blender,
-render, conduct live Blender compatibility tests or integrate the main
-Shuvi repository without separate explicit user permission.
+Levels 1–7 remain source-side complete. Level 8 M1–M9 are
+source-side complete at **90%** only. Do not start M10, launch Blender,
+render, perform live Blender compatibility checks or merge into the
+main Shuvi repository without explicit new user permission.
