@@ -232,6 +232,20 @@ class CameraMotionOperations:
             raise AgentError(ErrorCode.STALE_STATE, "Camera motion plan changed after preview")
         if not plan["ready"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Camera movement safety blockers present")
+        return self._commit_poses(
+            request, camera, subject, before, subject_before, plan, action.preview.make_active
+        )
+
+    def _commit_poses(self, request, camera, subject, before, subject_before, plan, make_active):
+        """M3/M4 shared fresh-Action creation, exact readback and rollback."""
+        if len(plan["key_poses"]) not in (3, 5):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Unsupported camera path size")
+        if camera.animation_data is not None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Cannot overwrite existing animation")
+        if any(a["frame"] >= b["frame"] for a, b in zip(
+            plan["key_poses"], plan["key_poses"][1:], strict=False
+        )):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Camera frames must be increasing")
 
         old_location = list(camera.location)
         old_rotation = list(camera.rotation_euler)
@@ -295,7 +309,7 @@ class CameraMotionOperations:
                 for point in curve.keyframe_points:
                     point.interpolation = "LINEAR"
                 curve.update()
-            if action.preview.make_active:
+            if make_active:
                 self.bpy.context.scene.camera = camera
             self.bpy.context.view_layer.update()
             current_ad = camera.animation_data
@@ -360,7 +374,7 @@ class CameraMotionOperations:
                 "rotation": plan["key_poses"][-1]["rotation_euler"],
                 "lens": plan["camera_lens"],
                 "subject_revision": subject_before["revision"],
-                "active_camera": (True if action.preview.make_active else old_active is camera),
+                "active_camera": (True if make_active else old_active is camera),
                 "frame": old_frame,
                 "created_action": created_action.name,
                 "revision_changed": True,
@@ -377,7 +391,7 @@ class CameraMotionOperations:
                 "revision_changed": after["revision"] != before["revision"],
             }
             verification = compare(expected, actual)
-            if verification.matched and len(frame_values) == 18:
+            if verification.matched and len(frame_values) == 6 * len(plan["key_poses"]):
                 return Result(
                     request.request_id,
                     request.command_id,
@@ -386,7 +400,7 @@ class CameraMotionOperations:
                         "before": before,
                         "after": after,
                         "motion_revision": plan["motion_revision"],
-                        "keyframe_count": 18,
+                        "keyframe_count": len(frame_values),
                         "channel_count": 6,
                         "keyframe_frames": [pose["frame"] for pose in plan["key_poses"]],
                         "real_runtime_verified": False,
