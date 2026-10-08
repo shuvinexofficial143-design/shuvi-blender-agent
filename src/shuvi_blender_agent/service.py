@@ -1,6 +1,7 @@
 """One factory for Blender execution and fake-adapter integration tests."""
 
 from .animation import AnimationOperations
+from .animation_keyframes import AdvancedAnimationOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
 from .character_acceptance import CharacterAcceptanceOperations
@@ -67,6 +68,7 @@ def create_registry(
     policy = policy or SafetyPolicy()
     inspector = BpyInspector(bpy)
     objects = ObjectOperations(inspector)
+    animation = AnimationOperations(objects)
     adapters = [
         inspector,
         objects,
@@ -97,7 +99,8 @@ def create_registry(
         MaterialNodeOperations(objects),
         TextureWorkflowOperations(objects),
         AssetOperations(objects),
-        AnimationOperations(objects),
+        animation,
+        AdvancedAnimationOperations(animation),
         RenderOperations(objects, policy, workspace),
         RiggingOperations(objects),
         RigRecipeLibraryOperations(objects),

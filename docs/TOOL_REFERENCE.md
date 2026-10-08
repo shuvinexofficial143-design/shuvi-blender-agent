@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 204 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 207 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -34,6 +34,9 @@ clients should retain the filter, session ID and revision while continuing a pag
 | system.capabilities | none | read_only | protocol/session/Blender version and operation catalog |
 | scene.inspect | none | read_only | scene/file/render/frames, context, cursor, units, pivot, type counts, world presence, revision |
 | animation.inspect | object_id | read_only | exact bounded Action/FCurve/keyframe state, unique frames/interpolation counts, driver/NLA/shared/foreign blockers and deterministic animation_revision |
+| animation.edit_keyframe | target, expected_animation_revision, data_path, array_index, frame, value, interpolation | mutation | edit one exact managed transform-channel point with fresh animation revision, exact point readback and verified rollback |
+| animation.remove_keyframe | target, expected_animation_revision, frame | mutation | remove one complete nine-channel managed transform key at an exact frame with count/absence readback and verified rollback |
+| animation.replace_keyframe | target, expected_animation_revision, frame, transform, interpolation | mutation | replace all nine values/interpolations of one existing complete managed transform frame with exact readback and verified rollback |
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
@@ -1320,3 +1323,28 @@ Current Level 3 source progress: **100%**.
   and raising the bounded registry/client cap to **204**.
 - Real Blender curve evaluation, dependency-graph behavior and runtime compatibility remain
   unverified.
+
+
+
+### Level 7 milestone 2 limits
+
+- M2 exposes only managed transform keyframes: location XYZ, rotation_euler XYZ and scale XYZ.
+- All three mutation tools require both a fresh `ObjectTarget` and the exact current
+  `animation_revision`.
+- The Action must be session-created, local, editable, unshared, in Object mode and free of
+  object constraints, drivers and NLA tracks.
+- The managed Action must contain exactly the nine expected transform FCurves; arbitrary data
+  paths and partially managed Action layouts are rejected.
+- `animation.edit_keyframe` addresses one exact channel/frame point and only changes its value
+  and allowlisted interpolation.
+- `animation.remove_keyframe` requires all nine points at the requested frame and removes that
+  complete transform key only.
+- `animation.replace_keyframe` requires all nine points at the requested frame and changes only
+  their values/interpolation; it does not create or move frames.
+- Missing points fail with `NOT_FOUND`; duplicate same-frame channel points fail with
+  `AMBIGUOUS_TARGET`; stale animation revisions fail with `STALE_STATE`.
+- Verification mismatch restores the complete pre-mutation point snapshot and requires recovery
+  to reproduce the original `animation_revision`.
+- M2 adds three public mutation tools, taking the factory from 204 to **207 typed tools** and
+  raising the bounded registry/client cap to **207**.
+- Real Blender Action/FCurve mutation semantics remain runtime-unverified.
