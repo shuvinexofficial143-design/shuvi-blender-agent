@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **40%** (Milestones 1–4 of 10).
+Current Level 8 source progress: **50%** (Milestones 1–5 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -212,9 +212,46 @@ checks, shared/linked/animated Action refusal, partial-write failure and
 verification rollback. Factory/public host cap: **233 typed tools**.
 Real Blender runtime verification: **0%**; production ready: **No**.
 
+## Milestone 5 — Eased camera motion and Bézier FCurve handles
+
+M5 adds real source-side keyframe interpolation and handle authoring to the
+existing bounded five-pose M4 rail, rather than another animation registry.
+
+- `cinema.easing_preview` (READ_ONLY): accepts a validated M4 rail with
+  style `EASE_IN`, `EASE_OUT` or `EASE_IN_OUT` and strength 0.25..1.
+  Reparameterizes the cubic image-plane path at five bounded samples,
+  computes analytic path and timing derivatives, and previews the target
+  camera positions and **explicit LEFT/RIGHT BEZIER keyframe handles**.
+- `cinema.easing_apply` (MUTATION): requires an exact current
+  `expected_easing_revision`, fresh object targets and M4 camera safety
+  checks, creates one new Action with six camera XYZ location/rotation FCurves,
+  five keys per channel, **BEZIER interpolation and FREE handles** at all
+  30 points. Verifies the exact frame/value/interpolation/handle types and
+  coordinates against readback; restores original camera pose and removes
+  only the newly created Action if any verification or authoring fails.
+
+The three timing profiles blend with linear timing by `strength`:
+EASE_IN progressively accelerates; EASE_OUT decelerates; EASE_IN_OUT does
+both. At full strength, endpoint motion speed becomes zero on the
+applicable endpoints. An analytic derivative of the planned image-plane
+cubic path supplies the y slopes of Blender's FCurve handles, while
+neighboring frame separations constrain the handle x coordinates.
+
+M3 remains 18 LINEAR transform keys; M4 remains 30 LINEAR keys. M5
+creates 30 BEZIER keys with separately verified handles. A camera must
+have **no existing Action or animation**; linked/shared, constrained,
+parented, locked, non-perspective or unsafe-camera cases remain blocked.
+Subject framing bounds are still the M1-origin-centered approximation.
+Interpolation **between** samples, evaluated frames, actual Blender
+API compatibility, render output and visual smoothness remain untested.
+No user-supplied Python or arbitrary bpy operators are introduced.
+
+Registry/host cap: **235 typed tools**; Level 8 M1–M5 source-side 50%.
+Real Blender runtime acceptance: **0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-side complete. Level 8 M1–M4 are source-side
-complete at **40%** only. Do not begin Level 8 M5, launch Blender, render,
-run live Blender compatibility checks or integrate the main Shuvi repository
-without separate explicit user permission.
+Levels 1–7 remain source-side complete. Level 8 M1–M5 are source-side
+complete at **50%** only. Do not begin Level 8 M6, launch Blender, render,
+run live runtime checks or integrate the main Shuvi repository without
+separate explicit user permission.

@@ -55,6 +55,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.motion_apply | all cinema.motion_preview fields plus expected_motion_revision | mutation | author exact new six-channel camera Action with 18 keyframe points, verified readback and cleanup on failure |
 | cinema.rail_preview | camera, subject, start_frame, end_frame, azimuth_degrees, elevation_degrees, margin, control_a, control_b, end_offset, make_active | read_only | bounded cubic Bézier image-plane rail with five samples and deterministic revision |
 | cinema.rail_apply | all cinema.rail_preview fields plus expected_rail_revision | mutation | create a fresh 30-key camera Action with safe readback and rollback; never adopt existing Action |
+| cinema.easing_preview | all cinema.rail_preview fields plus style and strength | read_only | deterministic five-pose eased camera rail preview with analytic FCurve handles and exact easing revision |
+| cinema.easing_apply | all cinema.easing_preview fields plus expected_easing_revision | mutation | author fresh Action with 30 BEZIER FREE-handled location/rotation keys, verify every handle and rollback on mismatch |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1627,3 +1629,22 @@ Current Level 3 source progress: **100%**.
   guarded cleanup; rollback is verified against original camera revision.
 - Registered typed tools/cap: **233**. Real Blender runtime and visual
   evaluation: **0% verified**.
+
+
+## Level 8 M5 — BEZIER camera easing
+
+- Three fixed temporal styles: EASE_IN, EASE_OUT and EASE_IN_OUT, with
+  strength 0.25..1.0 interpolated against linear time.
+- Requires the full M4 rail input: 5 keyed samples and fresh camera/subject.
+  Camera remains at constant optical orientation along the bounded rail.
+- Preview computes reparameterized five-point positions and explicit
+  left/right keyframe handles from the analytic cubic derivative and
+  timing profile; its exact deterministic `easing_revision` must be
+  provided unchanged to the apply tool.
+- Apply authors 6 transform FCurves × 5 BEZIER keys each (30 points),
+  with both handle types FREE. Exact frame, value, interpolation, handle
+  types and handle coordinates are checked against source readback.
+- Uses the same verified single-user new Action and exact camera rollback
+  as M3/M4. Foreign/existing actions are never altered or adopted.
+- Source/fake-bpy only. Real Blender evaluated playback and visual
+  motion smoothness have **not** been established. Public tools: **235**.

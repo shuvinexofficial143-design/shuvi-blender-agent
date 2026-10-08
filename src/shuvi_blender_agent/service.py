@@ -18,6 +18,7 @@ from .character_body import CharacterBodyOperations
 from .character_face import CharacterFaceOperations
 from .character_sculpt_workflow import CharacterSculptWorkflowOperations
 from .cinematic_composition import CinematicCompositionOperations
+from .cinematic_easing import CameraEasingOperations
 from .cinematic_motion import CameraMotionOperations
 from .cinematic_rail import CameraRailOperations
 from .cinematic_shots import CinematicShotOperations
@@ -129,6 +130,7 @@ def create_registry(
         CinematicCompositionOperations(objects),
         CameraMotionOperations(objects),
         CameraRailOperations(objects),
+        CameraEasingOperations(objects),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),
         rigging,
