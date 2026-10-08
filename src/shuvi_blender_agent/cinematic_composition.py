@@ -76,9 +76,15 @@ class CompositionApply:
         )
         return cls(
             CompositionPreview.parse(
-                {key: value for key, value in data.items() if key != "expected_composition_revision"}
+                {
+                    key: value
+                    for key, value in data.items()
+                    if key != "expected_composition_revision"
+                }
             ),
-            string(data["expected_composition_revision"], "expected_composition_revision", limit=64),
+            string(
+                data["expected_composition_revision"], "expected_composition_revision", limit=64
+            ),
         )
 
 
