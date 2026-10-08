@@ -1,6 +1,12 @@
 """Host-side allowlist of payload parsers and safety classes; no bpy import."""
 
 from .animation import AnimationInspect, FrameRange, InsertKeyframe, SetFrame
+from .animation_acceptance import (
+    AnimationQAInspect,
+    AnimationRecoveryCapture,
+    AnimationRecoveryRestore,
+    Level7Acceptance,
+)
 from .animation_camera import CameraAnimationInspect, CameraOpticsKeyframeInsert
 from .animation_controls import ControlInspect, ControlKeyframeInsert
 from .animation_keyframes import EditKeyframe, RemoveKeyframe, ReplaceKeyframe
@@ -328,6 +334,10 @@ def builtin_contracts() -> dict:
         "animation.recipe_catalog": (read, AnimationRecipeCatalog.parse),
         "animation.recipe_preview": (read, AnimationRecipePreview.parse),
         "animation.recipe_apply": (mutation, AnimationRecipeApply.parse),
+        "animation.qa_inspect": (read, AnimationQAInspect.parse),
+        "animation.recovery_capture": (read, AnimationRecoveryCapture.parse),
+        "animation.recovery_restore": (mutation, AnimationRecoveryRestore.parse),
+        "animation.level7_acceptance": (read, Level7Acceptance.parse),
         "animation.nla_inspect": (read, NLAInspect.parse),
         "animation.nla_strip_create": (mutation, NLAStripCreate.parse),
         "render.configure": (mutation, RenderConfig.parse),

@@ -43,6 +43,10 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.recipe_catalog | none | read_only | deterministic versioned fixed catalog of three managed timeline recipes, parameter schemas and catalog revision |
 | animation.recipe_preview | recipe_id, recipe_version, target, expected_animation_revision, parameters | read_only | compile a validated shift/reverse/stretch recipe into an exact bounded M4 retime preview without mutation |
 | animation.recipe_apply | recipe_id, recipe_version, target, expected_animation_revision, parameters | mutation | apply one versioned recipe through the existing atomic M4 retime with exact readback and verified rollback |
+| animation.qa_inspect | object_id | read_only | source QA for owned Action, complete nine-channel keys, integer bounds, blockers and deterministic qa_revision |
+| animation.recovery_capture | target, expected_animation_revision | read_only | current-session bounded in-memory snapshot of one managed transform Action, revision-keyed and no Blender mutation |
+| animation.recovery_restore | target, expected_animation_revision, recovery_revision | mutation | restore matching Action from current-session capture with fresh revision, exact readback, and verified rollback of failed restore |
+| animation.level7_acceptance | recipe_id, recipe_version, target, expected_animation_revision, parameters | read_only | scoped source-only acceptance over QA, fixed versioned recipe preview, NLA state, and runtime evidence boundary |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1514,3 +1518,21 @@ Current Level 3 source progress: **100%**.
 - Existing guards reject foreign/shared/unsafe Actions and stale animation state.
 - No arbitrary Python/bpy, dynamic user recipes, real Blender runtime claims or M10 functionality.
 - M9 adds three public tools; registry/client limit is now **221**.
+
+
+## Level 7 M10 animation QA and recovery
+
+- QA checks session ownership, nine transform channels, unique complete keyframes,
+  integer frame bounds, external blockers and runtime-evidence truthfulness.
+- Capture uses an exact expected animation revision and a fresh ObjectTarget; no
+  raw keyframe snapshot is accepted from the user.
+- Up to 16 current-session in-memory captures are retained, one per object ID.
+  A capture is not persistent across restart/session rotation.
+- Restore requires current revision, capture revision and identical Action object
+  identity. Shared/foreign/slotted/NLA-constrained Action edits remain disallowed.
+- Exact readback compares values, easing, interpolation, handles and revision.
+  Failed readback/interrupted mutation triggers rollback to immediate pre-restore
+  snapshot with verified rollback evidence; no blind success.
+- Source acceptance checks the managed transform and recipe preview pathway only,
+  not evaluated motion, pose/camera/control runtime behavior or NLA playback.
+- M10 raises registered typed tools/host cap to **225**, without any Blender runtime testing.

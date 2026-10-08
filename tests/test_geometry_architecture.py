@@ -76,8 +76,8 @@ def apply_payload(registry, recipe="MODULAR_WALL", prefix="ArchitectureDemo"):
 
 def test_factory_has_architecture_tools_within_raised_bounded_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 221
-    assert MAX_REGISTERED_TOOLS == 221
+    assert len(registry.catalog()) == 225
+    assert MAX_REGISTERED_TOOLS == 225
     assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
     names = {item["name"] for item in registry.catalog()}
     assert {
