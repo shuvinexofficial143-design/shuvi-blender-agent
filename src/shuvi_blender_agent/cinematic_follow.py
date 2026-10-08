@@ -166,10 +166,7 @@ class CameraFollowOperations:
             blockers.add("CAMERA_CONSTRAINTS_PRESENT")
         if before["object_id"] in self._owned:
             blockers.add("CAMERA_ALREADY_FOLLOWING")
-        offset = [
-            base["camera_location"][axis] - base["subject_center"][axis]
-            for axis in range(3)
-        ]
+        offset = [base["camera_location"][axis] - base["subject_center"][axis] for axis in range(3)]
         if any(abs(component) > 1_000_000 for component in offset):
             blockers.add("FOLLOW_OFFSET_OUT_OF_RANGE")
         result = dict(base)
@@ -297,7 +294,12 @@ class CameraFollowOperations:
                     }
                 )
                 self._owned[after["object_id"]] = (
-                    copy, aim, subject, token, original_location, original_rotation
+                    copy,
+                    aim,
+                    subject,
+                    token,
+                    original_location,
+                    original_rotation,
                 )
                 return Result(
                     request.request_id,
@@ -380,7 +382,12 @@ class CameraFollowOperations:
                     ErrorCode.VERIFICATION_FAILED, "Follow release recovery unverified"
                 )
             self._owned[before["object_id"]] = (
-                new_copy, new_aim, subject, token, original_location, original_rotation
+                new_copy,
+                new_aim,
+                subject,
+                token,
+                original_location,
+                original_rotation,
             )
 
         try:
