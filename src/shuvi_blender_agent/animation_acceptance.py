@@ -103,7 +103,7 @@ class AnimationAcceptanceOperations:
     @staticmethod
     def _serial_snapshot(snapshot):
         return [
-            {"data_path":path, "index":index, "points":snapshot[(path, index)]}
+            {"data_path": path, "index": index, "points": snapshot[(path, index)]}
             for path, index in sorted(snapshot)
         ]
 
@@ -122,8 +122,7 @@ class AnimationAcceptanceOperations:
             ):
                 complete = False
         bounded = all(
-            frame.is_integer() and 1 <= frame <= 100_000
-            for frame in state["unique_frames"]
+            frame.is_integer() and 1 <= frame <= 100_000 for frame in state["unique_frames"]
         )
         return topology, complete, bounded
 
