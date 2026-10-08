@@ -3,7 +3,7 @@
 Updated: 2026-10-08. Remote: shuvinexofficial143-design/shuvi-blender-agent, branch main.
 
 ## Checkpoint
-Latest verified pushed Level 7 source/test commit: e1ecabf4b6d8a15dd7b0891fa3c36cd066f71b89.
+Latest verified pushed Level 7 source/test commit: 5f6bb906b2c344c7b15dd4da44a3e359098ba70e.
 The commit containing this file is the current checkpoint; resolve it with git log -1.
 A commit cannot contain its own SHA. Later checkpoints record the preceding verified pushed SHA.
 
@@ -470,12 +470,12 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Level 7 active checkpoint
-Latest verified Level 7 source/test checkpoint: e1ecabf4b6d8a15dd7b0891fa3c36cd066f71b89.
-CI run 37725756781 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **812 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **77 package modules**.
+Latest verified Level 7 source/test checkpoint: 5f6bb906b2c344c7b15dd4da44a3e359098ba70e.
+CI run 37726818467 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **818 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **78 package modules**.
 
-Level 7 Advanced Animation is now **10% source complete** (Milestone 1 of 10).
+Level 7 Advanced Animation is now **20% source complete** (Milestones 1-2 of 10).
 
 Milestone 1 adds:
 - `animation.inspect`: one bounded read-only Action/FCurve/keyframe inspection surface using a
@@ -492,27 +492,45 @@ Milestone 1 adds:
 - Milestone 1 raises the registry/client cap from 203 to **204** and adds one read-only tool,
   taking the factory from 203 to **204 tools**.
 
+Milestone 2 adds:
+- three bounded public mutation surfaces: `animation.edit_keyframe`,
+  `animation.remove_keyframe` and `animation.replace_keyframe`.
+- all M2 mutations require a fresh ObjectTarget plus exact current `animation_revision`.
+- mutation is restricted to one session-created unshared Action containing exactly the nine
+  managed transform FCurves (location/rotation_euler/scale XYZ).
+- single-channel edit changes only value/interpolation at one exact existing frame.
+- remove requires all nine transform points at a frame and proves exact frame absence plus a
+  nine-point count reduction.
+- replace requires all nine points and changes only values/interpolation at the existing frame.
+- stale animation revisions fail closed even with a newly refreshed ObjectTarget.
+- forced verification mismatch is tested to restore the complete pre-mutation keyframe snapshot,
+  recover the original `animation_revision` and report verified rollback.
+- generic FCurve scripting, arbitrary data paths, handles/easing controls, pose animation and NLA
+  mutation remain out of scope for M2.
+- Milestone 2 raises the registry/client cap from 204 to **207** and adds three typed mutation
+  tools, taking the factory from 204 to **207 tools**.
+
 Level 7 real Blender runtime verification remains 0%. Production readiness remains No.
 
-Milestone 1 — Advanced Animation inspection foundation — is complete. Do not begin Milestone 2
+Milestone 2 — revision-gated keyframe edit/remove/replace — is complete. Do not begin Milestone 3
 without explicit user permission.
 
 ## Status
-Source: 204 typed host contracts/tools at the bounded 204-tool cap. Level 1 source: **100%**.
+Source: 207 typed host contracts/tools at the bounded 207-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
 Level 6 Rigging source: **100%** (Milestones 1-10 of 10). Verified Level 6 source/test checkpoint:
 8b1f76baebcb02bd285e95dd8754df4fb9e787d4. CI run 37657039445 passed all six
 Linux/Windows Python 3.11/3.12/3.13 jobs with 807 tests, lint/format, package build,
 77-module distribution audit and clean install/import without bpy.
-Level 7 Advanced Animation source: **10%** (Milestone 1 of 10). Verified Level 7 source/test
-checkpoint: e1ecabf4b6d8a15dd7b0891fa3c36cd066f71b89. CI run 37725756781 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 812 tests, lint/format, package build,
-77-module distribution audit and clean install/import without bpy.
+Level 7 Advanced Animation source: **20%** (Milestones 1-2 of 10). Verified Level 7 source/test
+checkpoint: 5f6bb906b2c344c7b15dd4da44a3e359098ba70e. CI run 37726818467 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 818 tests, lint/format, package build,
+78-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 7 Milestone 1 is complete at 10%. Stop here. Do not begin Milestone 2 without explicit
+Level 7 Milestones 1-2 are complete at 20%. Stop here. Do not begin Milestone 3 without explicit
 user permission. Keep source/fake evidence separate from real Blender runtime verification.
 
 ## Decisions
@@ -531,12 +549,12 @@ user permission. Keep source/fake evidence separate from real Blender runtime ve
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed Level 7 10% source checkpoint. The registry/client is exactly at the
-204-tool cap, so Milestone 2 must deliberately reconcile capacity before adding any new tool.
+None for the completed Level 7 20% source checkpoint. The registry/client is exactly at the
+207-tool cap, so Milestone 3 must deliberately reconcile capacity before adding any new tool.
 Heavy Blender runtime actions still require separate user authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 2:
-revision-gated keyframe edit / remove / replace. First reconcile the current 204/204 registry
-cap, preserve exact animation_revision/readback/recovery evidence, keep real Blender runtime
-acceptance at 0% unless separately authorized, and do not begin Milestone 3 automatically.
+Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 3:
+interpolation, easing and handle controls. First reconcile the current 207/207 registry cap,
+preserve exact animation_revision/readback/recovery evidence, keep real Blender runtime
+acceptance at 0% unless separately authorized, and do not begin Milestone 4 automatically.
