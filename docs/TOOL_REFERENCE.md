@@ -47,6 +47,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.recovery_capture | target, expected_animation_revision | read_only | current-session bounded in-memory snapshot of one managed transform Action, revision-keyed and no Blender mutation |
 | animation.recovery_restore | target, expected_animation_revision, recovery_revision | mutation | restore matching Action from current-session capture with fresh revision, exact readback, and verified rollback of failed restore |
 | animation.level7_acceptance | recipe_id, recipe_version, target, expected_animation_revision, parameters | read_only | scoped source-only acceptance over QA, fixed versioned recipe preview, NLA state, and runtime evidence boundary |
+| cinema.shot_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active | read_only | compute subject-centered perspective camera pose, bounding-sphere clearance, clip and safety blockers and deterministic plan revision |
+| cinema.shot_frame | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, expected_plan_revision | mutation | revision-gated camera placement and aiming with subject readback, optional activation and verified failure rollback |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1536,3 +1538,24 @@ Current Level 3 source progress: **100%**.
 - Source acceptance checks the managed transform and recipe preview pathway only,
   not evaluated motion, pose/camera/control runtime behavior or NLA playback.
 - M10 raises registered typed tools/host cap to **225**, without any Blender runtime testing.
+
+
+## Level 8 milestone 1 — cinematic shot framing
+
+- `cinema.shot_preview` performs zero mutation: fresh camera+subject targets,
+  bounded framing margin 1.05..2.5, azimuth -180..180°, elevation -75..75°.
+- Subject location is treated as its center, with `dimensions` as an approximate
+  world-axis-aligned enclosing sphere. Off-center origins and evaluated geometry
+  are not verified; do not claim pixel-perfect real-world bounds.
+- Existing camera lens, sensor width, render aspect and clipping determine
+  the conservative perspective distance. The narrower FOV is used.
+- Only safe local, single-user, unanimated perspective cameras without parent,
+  constraints, transform locks or nonunit scale are eligible.
+- The preview revision incorporates exact current object revisions, camera optics,
+  sensor fit, active camera, output aspect and action parameters.
+- `cinema.shot_frame` requires that same plan revision and verifies camera pose,
+  subject unchanged, focal length unchanged and activation state.
+- On mismatch or interruption the original pose/scene camera are restored, with
+  a matching original camera revision required for verified recovery.
+- Real Blender runtime / output rendering: **not tested**.
+- M1 increases the factory and host cap from **225** to **227** typed tools.
