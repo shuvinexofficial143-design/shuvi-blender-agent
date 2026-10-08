@@ -49,6 +49,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.level7_acceptance | recipe_id, recipe_version, target, expected_animation_revision, parameters | read_only | scoped source-only acceptance over QA, fixed versioned recipe preview, NLA state, and runtime evidence boundary |
 | cinema.shot_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active | read_only | compute subject-centered perspective camera pose, bounding-sphere clearance, clip and safety blockers and deterministic plan revision |
 | cinema.shot_frame | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, expected_plan_revision | mutation | revision-gated camera placement and aiming with subject readback, optional activation and verified failure rollback |
+| cinema.composition_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, anchor | read_only | deterministic rule-of-thirds composition plan for nine allowlisted image positions, with safe distance and revision |
+| cinema.composition_apply | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, anchor, expected_composition_revision | mutation | reposition camera in its image plane to land subject on selected grid anchor, with stale plan protection and shared verified rollback |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1559,3 +1561,21 @@ Current Level 3 source progress: **100%**.
   a matching original camera revision required for verified recovery.
 - Real Blender runtime / output rendering: **not tested**.
 - M1 increases the factory and host cap from **225** to **227** typed tools.
+
+
+## Level 8 M2 — nine-anchor screen-space composition
+
+- Supported anchors are fixed: CENTER, LEFT_THIRD, RIGHT_THIRD,
+  TOP_THIRD, BOTTOM_THIRD, UPPER_LEFT_THIRD, UPPER_RIGHT_THIRD,
+  LOWER_LEFT_THIRD, LOWER_RIGHT_THIRD.
+- Camera is moved oppositely along local right/up axes; optical orientation
+  remains unchanged. Calculated projection uses a conservative bounding
+  sphere, margin and horizontal-fit lens/sensor geometry, not evaluated meshes.
+- Preview exposes target normalized coordinates, predicted camera pose and
+  clearance blockers. Apply requires exact current composition revision.
+- Existing M1 local editable camera, fresh subject, no animation/constraints,
+  no parent and single-user data restrictions remain. Existing lens shifts
+  are explicitly blocked for M2.
+- Camera pose/active camera and original camera snapshot are restored after
+  failed readback or interruption; no arbitrary bpy execution and no renders.
+- Tool count and client cap: **229**. Real Blender runtime verification: 0%.

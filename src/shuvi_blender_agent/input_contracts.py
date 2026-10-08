@@ -31,6 +31,7 @@ from .character_sculpt_workflow import (
     RecoverySnapshot,
     SculptRecipePreview,
 )
+from .cinematic_composition import CompositionApply, CompositionPreview
 from .cinematic_shots import ShotApply, ShotPreview
 from .collection_ops import (
     CollectionNameRequest,
@@ -330,6 +331,8 @@ def builtin_contracts() -> dict:
         "camera.optics_keyframe_insert": (mutation, CameraOpticsKeyframeInsert.parse),
         "cinema.shot_preview": (read, ShotPreview.parse),
         "cinema.shot_frame": (mutation, ShotApply.parse),
+        "cinema.composition_preview": (read, CompositionPreview.parse),
+        "cinema.composition_apply": (mutation, CompositionApply.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

@@ -219,7 +219,12 @@ class CinematicShotOperations:
             raise AgentError(ErrorCode.STALE_STATE, "Camera shot plan changed since preview")
         if not plan["ready"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Camera shot has unresolved safety blockers")
+        return self._apply_pose(
+            request, camera, subject, before, subject_before, plan, action.preview.make_active
+        )
 
+    def _apply_pose(self, request, camera, subject, before, subject_before, plan, make_active):
+        """One M1/M2 atomic camera-pose readback and verified rollback path."""
         old_location = list(camera.location)
         old_rotation = list(camera.rotation_euler)
         old_active = self.bpy.context.scene.camera
@@ -238,7 +243,7 @@ class CinematicShotOperations:
         try:
             camera.location = plan["camera_location"]
             camera.rotation_euler = plan["camera_rotation_euler"]
-            if action.preview.make_active:
+            if make_active:
                 self.bpy.context.scene.camera = camera
             self.bpy.context.view_layer.update()
             after = self.inspector.snapshot(camera)
@@ -249,7 +254,7 @@ class CinematicShotOperations:
                 "rotation_mode": "XYZ",
                 "subject_revision": subject_before["revision"],
                 "lens_mm": plan["lens_mm"],
-                "active_camera": (True if action.preview.make_active else old_active is camera),
+                "active_camera": (True if make_active else old_active is camera),
                 "revision_changed": True,
             }
             actual = {
