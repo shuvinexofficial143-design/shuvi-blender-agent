@@ -470,12 +470,12 @@ Real Blender runtime acceptance remains prepared but unexecuted pending explicit
   CI now runs scripts/check_distribution.py after build; README included in wheel metadata.
 
 ## Level 7 active checkpoint
-Latest verified Level 7 source/test checkpoint: 0b7150b08caf19aea1671c7949adb2b2fcacdca9.
-CI run 37746328460 passed the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
-format, **836 tests**, package build, distribution audit and clean install/import without bpy.
-The distribution audit verified **81 package modules**.
+Latest verified Level 7 source/test checkpoint: 1ca771d464944fdf7c06baa3e15c87b9d4f1afc6.
+CI run 37749088277 verified the Linux/Windows Python 3.11/3.12/3.13 matrix with lint,
+format, **845 tests**, package build, distribution audit and clean install/import without bpy.
+The distribution audit verified **82 package modules**.
 
-Level 7 Advanced Animation is now **50% source complete** (Milestones 1-5 of 10).
+Level 7 Advanced Animation is now **60% source complete** (Milestones 1-6 of 10).
 
 Milestone 1 adds:
 - `animation.inspect`: one bounded read-only Action/FCurve/keyframe inspection surface using a
@@ -568,25 +568,40 @@ Milestone 5 adds:
 
 Level 7 real Blender runtime verification remains 0%. Production readiness remains No.
 
-Milestone 5 — pose-bone animation channels — is complete. Do not begin Milestone 6 without
+Milestone 5 — pose-bone animation channels — is complete.
+
+Milestone 6 adds:
+- `camera.optics_animation_inspect` and `camera.optics_keyframe_insert` over the separate camera
+  datablock lens and DOF focus-distance Action; object movement Action remains untouched.
+- fresh ObjectTarget plus exact `camera_animation_revision` (including unkeyed lens/focus and keyed
+  Action state); no foreign/shared/slotted camera Actions or unauthorized channel adoption.
+- DOF enabled, no focus object, perspective camera, local unshared camera data, Object mode and
+  no object constraints required before mutation.
+- bounded simultaneous lens/focus key insertion, interpolation readback, no overwrite and
+  recoverable new/old camera-data Actions.
+- verification mismatch restores both lens/focus values and previous camera animation revision.
+- M6 raises typed tools and registry cap from 212 to **214**.
+
+Level 7 runtime verification remains 0%; production readiness remains No.
+Milestone 6 — camera lens and focus animation — is complete. Do not begin Milestone 7 without
 explicit user permission.
 
 ## Status
-Source: 212 typed host contracts/tools at the bounded 212-tool cap. Level 1 source: **100%**.
+Source: 214 typed host contracts/tools at the bounded 214-tool cap. Level 1 source: **100%**.
 Level 2 modeling source: **100%**. Level 3 sculpting/character-modeling source: **100%**.
 Level 4 UV/texture/materials source: **100%**. Level 5 Geometry Nodes source: **100%**.
 Level 6 Rigging source: **100%** (Milestones 1-10 of 10). Verified Level 6 source/test checkpoint:
 8b1f76baebcb02bd285e95dd8754df4fb9e787d4. CI run 37657039445 passed all six
 Linux/Windows Python 3.11/3.12/3.13 jobs with 807 tests, lint/format, package build,
 77-module distribution audit and clean install/import without bpy.
-Level 7 Advanced Animation source: **50%** (Milestones 1-5 of 10). Verified Level 7 source/test
-checkpoint: 0b7150b08caf19aea1671c7949adb2b2fcacdca9. CI run 37746328460 passed all six
-Linux/Windows Python 3.11/3.12/3.13 jobs with 836 tests, lint/format, package build,
-81-module distribution audit and clean install/import without bpy.
+Level 7 Advanced Animation source: **60%** (Milestones 1-6 of 10). Verified Level 7 source/test
+checkpoint: 1ca771d464944fdf7c06baa3e15c87b9d4f1afc6. CI run 37749088277 passed all six
+Linux/Windows Python 3.11/3.12/3.13 jobs with 845 tests, lint/format, package build,
+82-module distribution audit and clean install/import without bpy.
 Real Blender runtime verification: none (0%). Production ready: no.
 
 ## Active work
-Level 7 Milestones 1-5 are complete at 50%. Stop here. Do not begin Milestone 6 without explicit
+Level 7 Milestones 1-6 are complete at 60%. Stop here. Do not begin Milestone 7 without explicit
 user permission. Keep source/fake evidence separate from real Blender runtime verification.
 
 ## Decisions
@@ -605,12 +620,12 @@ user permission. Keep source/fake evidence separate from real Blender runtime ve
 - Target Blender 4.2+ with Python 3.11+; runtime compatibility remains unverified.
 
 ## Blockers
-None for the completed Level 7 50% source checkpoint. The registry/client is exactly at the
-212-tool cap, so Milestone 6 must deliberately reconcile capacity before adding any new tool.
+None for the completed Level 7 60% source checkpoint. The registry/client is exactly at the
+214-tool cap, so Milestone 7 must deliberately reconcile capacity before adding any new tool.
 Heavy Blender runtime actions still require separate user authorization.
 
 ## Exact next task
-Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 6:
-camera / lens / focus animation workflows. First reconcile the current 212/212 registry cap,
-preserve exact animation_revision/readback/recovery evidence, keep real Blender runtime acceptance
-at 0% unless separately authorized, and do not begin Milestone 7 automatically.
+Wait for explicit user permission. If the user asks to continue Level 7, start only Milestone 7:
+constraint influence / visibility animation. First reconcile the current 214/214 registry cap,
+preserve exact revision/readback/recovery evidence, keep real Blender runtime acceptance at 0%
+unless separately authorized, and do not begin Milestone 8 automatically.
