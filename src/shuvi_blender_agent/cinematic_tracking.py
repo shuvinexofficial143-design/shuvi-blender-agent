@@ -303,6 +303,29 @@ class CameraTrackingOperations:
         old_active = self.bpy.context.scene.camera
         old_location = list(camera.location)
         old_rotation = list(camera.rotation_euler)
+        def restore_release():
+            # Recreate only the agent-owned constraint when removal was
+            # interrupted after it disappeared. Never delete foreign state.
+            if constraint not in camera.constraints:
+                if len(camera.constraints) != 0:
+                    raise AgentError(
+                        ErrorCode.VERIFICATION_FAILED,
+                        "Other camera constraints appeared during release recovery",
+                    )
+                restored = camera.constraints.new(type=TRACK_TYPE)
+                restored.name = TRACK_NAME
+                restored.target = subject
+                restored.track_axis = TRACK_AXIS
+                restored.up_axis = UP_AXIS
+                restored.mute = False
+                restored.influence = 1.0
+                self._owned[before["object_id"]] = (restored, subject, tracking_revision)
+            self.bpy.context.view_layer.update()
+            if self.inspector.snapshot(camera)["revision"] != before["revision"]:
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Tracking release rollback not verified"
+                )
+
         try:
             camera.constraints.remove(constraint)
             self.bpy.context.view_layer.update()
@@ -332,23 +355,19 @@ class CameraTrackingOperations:
                     {"before": before, "after": after, "removed_own_constraint": True},
                     verification=verification.to_dict(),
                 )
-        except Exception as exc:
-            # If removal failed without mutation, original tracking remains.
-            if constraint in camera.constraints:
-                self.bpy.context.view_layer.update()
-                if self.inspector.snapshot(camera)["revision"] == before["revision"]:
-                    raise AgentError(
-                        ErrorCode.EXECUTION_ERROR,
-                        "Tracking release interrupted; no change verified",
-                    ) from exc
             raise AgentError(
-                ErrorCode.VERIFICATION_FAILED, "Tracking release state uncertain; inspect manually"
+                ErrorCode.VERIFICATION_FAILED, "Tracking removal readback mismatch"
+            )
+        except Exception as exc:
+            try:
+                restore_release()
+            except Exception as rollback_error:
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Tracking release rollback unverified"
+                ) from rollback_error
+            raise AgentError(
+                ErrorCode.EXECUTION_ERROR, "Tracking release interrupted; original state restored"
             ) from exc
-
-        # Unexpected readback after removal. Do not report verified release.
-        raise AgentError(
-            ErrorCode.VERIFICATION_FAILED, "Tracking removal readback failed; inspect state"
-        )
 
     def tools(self):
         return [
