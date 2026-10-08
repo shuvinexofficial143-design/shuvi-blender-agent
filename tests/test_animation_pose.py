@@ -1,4 +1,6 @@
-from fake_bpy import FakeKeyframePoints, FakeObject, NS, fake_bpy
+from types import SimpleNamespace as NS
+
+from fake_bpy import FakeKeyframePoints, FakeObject, fake_bpy
 
 from shuvi_blender_agent import ErrorCode, Request, Status
 from shuvi_blender_agent.animation import AnimationOperations
