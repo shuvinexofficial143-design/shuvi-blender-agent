@@ -80,7 +80,8 @@ def payload(inspector, obj, before, recipe_id, parameters):
 
 def value_at(state_data, frame):
     location = next(
-        curve for curve in state_data["channels"]
+        curve
+        for curve in state_data["channels"]
         if curve["data_path"] == "location" and curve["index"] == 0
     )
     return next(point["value"] for point in location["points"] if point["frame"] == float(frame))
@@ -221,9 +222,7 @@ def test_m9_verification_mismatch_restores_original_action(monkeypatch):
         return real_compare(expected, actual)
 
     monkeypatch.setattr("shuvi_blender_agent.animation_keyframes.compare", fail_once)
-    recipe = payload(
-        inspector, obj, before, "timeline.shift", {"frames": [10, 20], "offset": 5}
-    )
+    recipe = payload(inspector, obj, before, "timeline.shift", {"frames": [10, 20], "offset": 5})
     result = registry.dispatch(Request("animation.recipe_apply", recipe))
     assert result.status == Status.FAILED
     assert result.error.code == ErrorCode.VERIFICATION_FAILED
