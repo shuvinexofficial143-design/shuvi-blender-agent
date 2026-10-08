@@ -303,6 +303,8 @@ class CameraTrackingOperations:
         old_active = self.bpy.context.scene.camera
         old_location = list(camera.location)
         old_rotation = list(camera.rotation_euler)
+
+
         def restore_release():
             # Recreate only the agent-owned constraint when removal was
             # interrupted after it disappeared. Never delete foreign state.
@@ -355,9 +357,7 @@ class CameraTrackingOperations:
                     {"before": before, "after": after, "removed_own_constraint": True},
                     verification=verification.to_dict(),
                 )
-            raise AgentError(
-                ErrorCode.VERIFICATION_FAILED, "Tracking removal readback mismatch"
-            )
+            raise AgentError(ErrorCode.VERIFICATION_FAILED, "Tracking removal readback mismatch")
         except Exception as exc:
             try:
                 restore_release()
