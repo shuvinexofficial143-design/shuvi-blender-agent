@@ -105,10 +105,8 @@ class CinematicCompositionOperations:
         half_vertical_tan = half_horizontal_tan / original["render_aspect"]
         distance = max(
             original["camera_distance"],
-            (padded + radius * half_horizontal_tan)
-            / (half_horizontal_tan * (1 - abs(position_x))),
-            (padded + radius * half_vertical_tan)
-            / (half_vertical_tan * (1 - abs(position_y))),
+            (padded + radius * half_horizontal_tan) / (half_horizontal_tan * (1 - abs(position_x))),
+            (padded + radius * half_vertical_tan) / (half_vertical_tan * (1 - abs(position_y))),
         )
         pitch, _, yaw = original["camera_rotation_euler"]
         right = [cos(yaw), sin(yaw), 0.0]
@@ -132,10 +130,7 @@ class CinematicCompositionOperations:
             blockers.append("LENS_SHIFT_NOT_SUPPORTED")
         if distance > 1_000_000 or any(abs(value) > 1_000_000 for value in location):
             blockers.append("CAMERA_POSE_EXCEEDS_COORDINATE_BOUNDS")
-        if (
-            distance - padded <= original["clip_start"]
-            or distance + padded >= original["clip_end"]
-        ):
+        if distance - padded <= original["clip_start"] or distance + padded >= original["clip_end"]:
             blockers.append("SUBJECT_OUTSIDE_CAMERA_CLIP")
 
         plan = dict(original)
