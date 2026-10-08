@@ -741,3 +741,29 @@ Blender runtime 0%, production ready No.
 
 STOP: Do not implement Level 8 M3, real Blender runtime/visual tests,
 rendering or main Shuvi integration without explicit user instruction.
+
+
+## Level 8 M3 — Managed Camera Motion
+
+User-authorized single milestone M3 work only. Added typed tools
+`cinema.motion_preview` and `cinema.motion_apply` for ORBIT,
+DOLLY_IN and DOLLY_OUT subject-centered three-pose camera paths.
+Camera keyframe apply authors 18 actual FCurve keyframe points in one
+new Action (6 camera-object transform FCurves: XYZ location + Euler
+rotation) and verifies full point values/frames/interpolation,
+camera pose, unchanged subject/lens/frame, Action and active scene
+camera. Partial write or readback failure removes only the newly
+created Action/animation data and restores original camera pose;
+fail closed if prior revision recovery cannot be verified.
+
+Only fresh local single-user unanimated, parentless, unconstrained
+perspective camera is accepted; no foreign Action adoption.
+This is **source/fake-bpy only**, not validated evaluated Blender
+playback, real Blender Action API, rendered output or production use.
+
+Source progress: Levels 1–7 100%, Level 8 **30%**. Typed tool
+count/cap: **231**. Real Blender runtime acceptance **0%**.
+Production ready: **No**.
+
+STOP after M3. Do not implement M4, start Blender, render or integrate
+main Shuvi repository without new explicit user permission.

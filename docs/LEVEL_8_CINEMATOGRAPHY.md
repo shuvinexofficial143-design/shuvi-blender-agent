@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **20%** (Milestones 1–2 of 10).
+Current Level 8 source progress: **30%** (Milestones 1–3 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -111,8 +111,67 @@ mesh and occluded subjects are not certified.
 M2 increases factory and host typed tools from **227** to **229**.
 Blender runtime acceptance: **0%**. Production ready: **No**.
 
+## Milestone 3 — Bounded Orbit and Dolly Camera Animation (30% source-side)
+
+M3 adds two typed tools for **real keyframe authoring in source-controlled
+Blender adapters**, rather than merely motion recipes or proposal registries:
+
+- `cinema.motion_preview` is nonmutating. Given an exact fresh camera and
+  subject ObjectTarget, 4..720-frame duration, bounded start/end azimuth and
+  elevation, framing margin, mode and optional active-camera choice, it returns
+  three world-space camera poses at start/middle/end frames, expected clip
+  clearance, and a deterministic `motion_revision`.
+- `cinema.motion_apply` rechecks the complete plan and exact revision,
+  creates a **new current-session camera Action** with 6 object transform
+  FCurves (XYZ location and XYZ Euler rotation) and three distinct frame
+  keys per curve (**18 keyframes**), sets LINEAR interpolation, performs
+  readback, and either verifies or removes its newly created Action and
+  restores the original camera pose.
+
+Modes:
+- `ORBIT`: subject-centered camera azimuth and elevation sweep, with
+  0.5..60° maximum azimuth movement and up to 35° elevation change.
+  Three planned camera orientations follow the target across start/mid/end.
+- `DOLLY_IN`: camera moves from a farther point to the M1 safe baseline,
+  at unchanged angle, with factor 1.1..2.0.
+- `DOLLY_OUT`: inverse of DOLLY_IN, same angular orientation.
+
+### Exact source-side boundaries
+
+- Camera requires the exact M1 source safety rules: an editable, local,
+  single-user, parentless, unconstrained, unanimated perspective camera in
+  Object Mode, without transform locks or nonunit scale. Nonzero lens shifts
+  are denied. Existing camera object Action/data animation are **never
+  adopted or overwritten**.
+- Three poses are calculated using existing M1 camera/subject optics and
+  clipping checks, with a conservative bounding sphere at subject origin.
+  Absolute pose and frame bounds are enforced; seam-crossing Euler yaw
+  angles are unwrapped to prevent a spurious full turn.
+- Only newly created **legacy/non-slotted** Action structures with six
+  expected FCurves, three expected points per curve and single-user
+  ownership are accepted for verified mutation. Unsupported/slotted
+  structures fail closed. Modern layered Blender behavior needs separate
+  runtime compatibility work.
+- Mutation verifies every inserted key's frame/value/interpolation,
+  unchanged subject revision, unchanged camera lens, end pose, active-camera
+  selection, unchanged timeline frame and existence of the created Action.
+  Failed verification or partial authoring attempts to clear only the new
+  Action and restore the original pose and active camera. Recovery must be
+  checked against the original object revision before being called verified.
+- **Evaluated interpolation, intermediate actual Blender frames, ease
+  curves, rendered camera motion and production compatibility remain
+  untested**. Three keys represent a basic motion foundation, not a
+  full tracking/cinematic-rail rig.
+
+Registry/host cap: **231 typed tools** (two more than M2).
+Tests cover ORBIT/DOLLY creation, 18 distinct actual source keyframes,
+yaw continuity, stale plans, unsafe/foreign Actions, invalid requests,
+post-mutation readback failure and partial insertion cleanup.
+Real Blender runtime acceptance: **0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-only complete. Level 8 M1–M2 are source-side complete
-at **20%**. Do not begin Level 8 M3, launch Blender, render, perform real runtime
-acceptance or integrate the master Shuvi repo without separate user approval.
+Levels 1–7 remain source-side complete. Level 8 M1–M3 are source-side
+complete at **30%**. Do not begin Level 8 M4, run Blender, render,
+perform real runtime acceptance or integrate the main Shuvi repository
+without the user's separate explicit approval.

@@ -51,6 +51,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | cinema.shot_frame | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, expected_plan_revision | mutation | revision-gated camera placement and aiming with subject readback, optional activation and verified failure rollback |
 | cinema.composition_preview | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, anchor | read_only | deterministic rule-of-thirds composition plan for nine allowlisted image positions, with safe distance and revision |
 | cinema.composition_apply | camera, subject, azimuth_degrees, elevation_degrees, margin, make_active, anchor, expected_composition_revision | mutation | reposition camera in its image plane to land subject on selected grid anchor, with stale plan protection and shared verified rollback |
+| cinema.motion_preview | camera, subject, start_frame, end_frame, mode, start_azimuth, end_azimuth, start_elevation, end_elevation, margin, dolly_factor, make_active | read_only | safe three-pose ORBIT or DOLLY trajectory with fresh target and deterministic revision |
+| cinema.motion_apply | all cinema.motion_preview fields plus expected_motion_revision | mutation | author exact new six-channel camera Action with 18 keyframe points, verified readback and cleanup on failure |
 | animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
 | animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
@@ -1579,3 +1581,26 @@ Current Level 3 source progress: **100%**.
 - Camera pose/active camera and original camera snapshot are restored after
   failed readback or interruption; no arbitrary bpy execution and no renders.
 - Tool count and client cap: **229**. Real Blender runtime verification: 0%.
+
+
+## Level 8 M3 — orbit and dolly motion keyframes
+
+- Three named safe modes: ORBIT, DOLLY_IN, DOLLY_OUT. ORBIT has bounded
+  angular deltas; DOLLY uses fixed angles and distance factor 1.1..2.
+- Input timeline duration is 4..720 frames, with three distinct poses at
+  start, integer midpoint and end; frame numbers limited to 1..100000.
+- Preview is read-only and includes pose coordinates, rotations, blocking
+  reasons and an exact motion revision. Endpoints use M1 shot planning.
+- Apply never adopts, edits or deletes a prior Action: it requires a
+  camera object with **no existing animation data**, and attempts to
+  create only one new session-owned Action.
+- Verifies 6 FCurves (location XYZ and rotation_euler XYZ), 3 LINEAR
+  keys each, action single-user ownership, end camera pose, subject,
+  camera lens, scene activation and timeline frame.
+- Handles partial-keyframe failure, readback mismatch and interrupted
+  mutation with rollback to the exact prior object revision. No automatic
+  retries and no arbitrary bpy or user-supplied Python code.
+- Blender 4.4+ layered/slotted runtime APIs are NOT declared verified;
+  unsupported Action structures fail closed. Intermediate evaluated
+  camera motion and real render visual quality remain unverified.
+- Public tools/client cap: **231**. Real Blender runtime acceptance: 0%.
