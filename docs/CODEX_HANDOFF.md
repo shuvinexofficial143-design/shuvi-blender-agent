@@ -860,3 +860,23 @@ Level 8 source progress **70%**, public tools **241**,
 real Blender runtime acceptance **0%**, production ready **No**.
 STOP before M8, Blender launch/render and main Shuvi integration unless
 explicit user permission.
+
+
+## Level 8 M8 — Baked time-normalized camera follow damping
+
+Adds two public tools `cinema.damped_preview` and `cinema.damped_apply`.
+Reads a safe subject Action containing only matching LINEAR XYZ location
+channels with 5..24 samples. Supports 0.1..0.9 EMA alpha, adjusted
+for elapsed frames, with safe initial camera offset and look-at Euler
+poses. Bake via M3/M4 verified Action writer into 30..144 actual
+camera transform keyframes. Exact preview revision and bounded optics/
+clip/coordinate verification; fail closed for unsupported Action API,
+parented targets, extra channels/constraints, nonlinear/subframe keys.
+No foreign animation modification. Partial authoring cleans up new
+camera Action and verifies previous camera snapshot recovery.
+
+NOT live evaluated follow, not real-time damping, not rendered.
+Level 8 source roadmap **80%** (M1..M8); factory/host cap **243**.
+Real Blender runtime acceptance **0%**, production ready **No**.
+STOP before M9, Blender launch, render or Shuvi master integration
+unless separately explicitly authorized.

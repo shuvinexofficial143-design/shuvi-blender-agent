@@ -238,7 +238,10 @@ class CameraMotionOperations:
 
     def _commit_poses(self, request, camera, subject, before, subject_before, plan, make_active):
         """M3/M4 shared fresh-Action creation, exact readback and rollback."""
-        if len(plan["key_poses"]) not in (3, 5):
+        count = len(plan["key_poses"])
+        if count not in (3, 5) and not (
+            plan.get("scope") == "M8_BOUNDED_BAKED_DAMPED_FOLLOW" and 6 <= count <= 24
+        ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Unsupported camera path size")
         if camera.animation_data is not None:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Cannot overwrite existing animation")

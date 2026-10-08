@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **70%** (Milestones 1–7 of 10).
+Current Level 8 source progress: **80%** (Milestones 1–8 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -358,9 +358,52 @@ Factory/client tools: **241** (238 + 3).
 Source completion Level 8 M1–M7: **70%**. Real Blender runtime
 acceptance: **0%**. Production ready: **No**.
 
+## Milestone 8 — Time-normalized baked camera follow damping (80% source-side)
+
+M8 adds **real temporal smoothing of a pre-keyframed subject trajectory**,
+not a fake "damping" switch on spatial constraints. Two public tools:
+
+- `cinema.damped_preview` (READ_ONLY): accepts fresh camera/subject
+  ObjectTargets, bounded M1 shot azimuth/elevation/margin, an EMA
+  `damping_alpha` in [0.1, 0.9], and scene-camera activation choice.
+  Reads an existing **single-user, legacy subject Action containing
+  exclusively location X/Y/Z FCurves**. All three FCurves must have
+  precisely matching integer frames, 5..24 keyed samples, LINEAR
+  interpolation, increasing frames and maximum 60-frame gaps. Subject
+  must have no parent/constraint, drivers, NLA, rotation or nonunit scale;
+  scene frame and current subject pose must equal its first Action key.
+  Preview computes target positions, a camera baseline offset and
+  independently **time-normalized exponential moving average**:
+  `alpha_eff = 1 - (1 - damping_alpha) ** elapsed_frames`;
+  `filtered = filtered + alpha_eff * (target - filtered)`.
+  Produces camera position from filtered target + baseline offset,
+  calculates camera look-at rotation for the actual unsmoothed subject
+  origin at each sample, checks clip/framing and bounds, and returns
+  deterministic `damped_revision`. Preview changes no scene data.
+- `cinema.damped_apply` (MUTATION): revalidates all input, current
+  subject Action/scene revisions and exact preview token; if safe, uses
+  the existing M3–M5 guarded Action writer to create fresh camera
+  XYZ location and XYZ Euler rotation channels with **5..24
+  sample poses, 30..144 LINEAR keyframes**. Verifies every keyframe
+  frame/value/interpolation, active camera, unchanged subject/optics,
+  created Action identity and final camera pose. On any partial write
+  or readback discrepancy, clears only the new camera Action and
+  checks restoration of original camera snapshot/active camera/frame.
+
+This is **offline/baked, sampled damping**, useful for a subject with
+known motion keys. It is not a runtime frame handler, physics-based
+camera stabilizer, continuously re-evaluated spring, or automatic
+tracking of later target edits. In-between camera frames are linearly
+interpolated between baked keys; actual Blender evaluated transforms,
+occlusions, render framing and visual quality remain unverified.
+
+As in previous milestones, **real Blender runtime acceptance remains
+0%, and production ready is No**. M8 adds exactly two public typed tools,
+bringing the factory/host registry cap to **243**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-side complete. Level 8 M1–M7 are source-side
-complete at **70%** only. Do not begin Level 8 M8, launch Blender,
-render, conduct live Blender acceptance or integrate the main Shuvi
-repository without the user's separate explicit approval.
+Levels 1–7 remain source-side complete. Level 8 M1–M8 are source-side
+complete at **80%** only. Do not begin Level 8 M9, launch Blender,
+render, conduct live Blender compatibility tests or integrate the main
+Shuvi repository without separate explicit user permission.
