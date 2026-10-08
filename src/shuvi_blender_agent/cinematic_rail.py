@@ -167,8 +167,7 @@ class CameraRailOperations:
             (base["camera_location"][i] - center[i]) / base["camera_distance"] for i in range(3)
         ]
         frames = [
-            action.start_frame + round((action.end_frame - action.start_frame) * t)
-            for t in SAMPLES
+            action.start_frame + round((action.end_frame - action.start_frame) * t) for t in SAMPLES
         ]
         poses = []
         for frame, t in zip(frames, SAMPLES, strict=True):
