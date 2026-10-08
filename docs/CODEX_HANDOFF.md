@@ -880,3 +880,26 @@ Level 8 source roadmap **80%** (M1..M8); factory/host cap **243**.
 Real Blender runtime acceptance **0%**, production ready **No**.
 STOP before M9, Blender launch, render or Shuvi master integration
 unless separately explicitly authorized.
+
+
+## Level 8 M9 — Camera-binding hard cuts (source only)
+
+New tools `cinema.cut_preview`, `cinema.cut_apply`,
+`cinema.cut_release` authorize a two-shot transition with distinct
+current-session cameras and start/cut/end frames. Apply creates two
+Blender scene timeline markers with `TimelineMarker.camera` pointers
+and exact verified marker frames/names, preserves all foreign
+scene markers, existing camera Actions, current camera and playhead.
+Foreign camera-marker overlaps, duplicate frame markers, stale
+revisions, missing targets and changed timeline are blocked.
+Release removes only the exact two same-session owned markers after
+token and timeline readback; interrupted removal reconstructs only
+those new markers and checks previous scene state.
+
+**Hard cut only**, not optical crossfade, morph or easing. No rendered
+Blender acceptance yet, no Blender process launched. Level 8 now
+**90% source-side** (M1–M9). Public tool cap **246**. Real Blender
+runtime acceptance **0%**, production ready **No**.
+
+STOP before M10, actual Blender runtime/render work and main Shuvi
+integration unless separately user-authorized.
