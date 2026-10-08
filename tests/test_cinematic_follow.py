@@ -426,7 +426,7 @@ def test_m7_strict_contract_fields_reject_arbitrary_commands():
 
 def test_m7_factory_registers_three_host_tools():
     factory = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(factory.catalog()) == MAX_REGISTERED_TOOLS == 243
+    assert len(factory.catalog()) == MAX_REGISTERED_TOOLS == 246
     assert {"cinema.follow_preview", "cinema.follow_apply", "cinema.follow_release"} <= {
         tool["name"] for tool in factory.catalog()
     }
