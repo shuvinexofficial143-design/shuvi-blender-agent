@@ -127,8 +127,8 @@ def recipe_apply_payload(recipe_id, revision_value):
 
 def test_factory_registers_final_level5_acceptance_under_existing_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 235
-    assert MAX_REGISTERED_TOOLS == 235
+    assert len(registry.catalog()) == 238
+    assert MAX_REGISTERED_TOOLS == 238
     assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
     names = {item["name"] for item in registry.catalog()}
     assert {
