@@ -239,5 +239,9 @@ def test_m9_factory_registers_all_recipe_contracts_at_new_cap():
     assert len(registry.catalog()) == 221
     assert MAX_REGISTERED_TOOLS == 221
     names = {item["name"] for item in registry.catalog()}
-    assert {"animation.recipe_catalog", "animation.recipe_preview", "animation.recipe_apply"} <= names
+    assert {
+        "animation.recipe_catalog",
+        "animation.recipe_preview",
+        "animation.recipe_apply",
+    } <= names
     assert registry.catalog() == registry.catalog()
