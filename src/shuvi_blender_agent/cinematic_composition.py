@@ -108,6 +108,9 @@ class CinematicCompositionOperations:
             (padded + radius * half_horizontal_tan) / (half_horizontal_tan * (1 - abs(position_x))),
             (padded + radius * half_vertical_tan) / (half_vertical_tan * (1 - abs(position_y))),
         )
+        if action.anchor == "CENTER":
+            # Preserve M1 exact center framing; no side-offset clearance is required.
+            distance = original["camera_distance"]
         pitch, _, yaw = original["camera_rotation_euler"]
         right = [cos(yaw), sin(yaw), 0.0]
         up = [-sin(yaw) * cos(pitch), cos(yaw) * cos(pitch), sin(pitch)]
