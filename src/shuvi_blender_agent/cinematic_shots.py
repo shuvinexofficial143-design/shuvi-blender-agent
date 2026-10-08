@@ -1,7 +1,7 @@
 """Level 8 M1: bounded subject-centered perspective camera framing."""
 
 from dataclasses import dataclass
-from math import asin, atan, atan2, cos, degrees, hypot, radians, sin, sqrt
+from math import asin, atan, atan2, cos, degrees, radians, sin, sqrt
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
@@ -142,7 +142,11 @@ class CinematicShotOperations:
         rotation = [pitch, 0.0, yaw]
 
         blockers = []
-        if camera.library is not None or camera.override_library is not None or not camera.is_editable:
+        if (
+            camera.library is not None
+            or camera.override_library is not None
+            or not camera.is_editable
+        ):
             blockers.append("CAMERA_READ_ONLY_OR_LINKED")
         if camera.parent is not None or len(camera.constraints):
             blockers.append("CAMERA_PARENT_OR_CONSTRAINTS")
