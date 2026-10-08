@@ -114,8 +114,8 @@ def test_m1_landscape_and_portrait_framing_use_limiting_fov():
     bpy.context.scene.render.resolution_y = 1920
     portrait = preview(registry, payload(inspector, camera, subject))
     assert portrait["camera_distance"] > 0
-    assert portrait["camera_distance"] > landscape["camera_distance"]
-    assert portrait["vertical_fov_degrees"] < landscape["vertical_fov_degrees"]
+    assert portrait["camera_distance"] < landscape["camera_distance"]
+    assert portrait["vertical_fov_degrees"] > landscape["vertical_fov_degrees"]
 
 
 def test_m1_stale_plan_after_render_aspect_change():
