@@ -107,9 +107,7 @@ class CameraEasingOperations:
     @staticmethod
     def _curve_tangent(a, b, end, t):
         return [
-            3 * (1 - t) ** 2 * a[i]
-            + 6 * (1 - t) * t * (b[i] - a[i])
-            + 3 * t * t * (end[i] - b[i])
+            3 * (1 - t) ** 2 * a[i] + 6 * (1 - t) * t * (b[i] - a[i]) + 3 * t * t * (end[i] - b[i])
             for i in range(2)
         ]
 
@@ -133,14 +131,11 @@ class CameraEasingOperations:
                 action.rail.control_a, action.rail.control_b, action.rail.end_offset, u
             )
             location = [
-                first["location"][i] + distance * 2 * (
-                    right[i] * hx * x + up[i] * hy * y
-                )
+                first["location"][i] + distance * 2 * (right[i] * hx * x + up[i] * hy * y)
                 for i in range(3)
             ]
             slopes = [
-                distance * 2 * (right[i] * hx * dx + up[i] * hy * dy)
-                * speed / frame_span
+                distance * 2 * (right[i] * hx * dx + up[i] * hy * dy) * speed / frame_span
                 for i in range(3)
             ]
             positions.append(
