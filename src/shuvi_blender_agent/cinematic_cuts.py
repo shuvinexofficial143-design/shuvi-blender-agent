@@ -95,6 +95,11 @@ class CameraCutOperations:
             return None
         return int(obj.as_pointer()) if hasattr(obj, "as_pointer") else id(obj)
 
+    def _contains(self, markers, marker):
+        """Compare stable RNA addresses, not Python value equality or wrapper identity."""
+        pointer = self._pointer(marker)
+        return any(self._pointer(item) == pointer for item in markers)
+
     def _state(self, scene):
         markers = scene.timeline_markers
         if len(markers) > MAX_EXISTING_MARKERS + 2:
@@ -228,7 +233,7 @@ class CameraCutOperations:
 
         def rollback():
             for marker in reversed(made):
-                if marker not in scene.timeline_markers:
+                if not self._contains(scene.timeline_markers, marker):
                     raise AgentError(ErrorCode.VERIFICATION_FAILED, "Cut marker identity was lost")
                 scene.timeline_markers.remove(marker)
             if (
@@ -278,8 +283,8 @@ class CameraCutOperations:
                 "camera_b_revision": self.inspector.snapshot(camera_b)["revision"],
                 "marker_ownership": (
                     len(made) == 2
-                    and first in scene.timeline_markers
-                    and second in scene.timeline_markers
+                    and self._contains(scene.timeline_markers, first)
+                    and self._contains(scene.timeline_markers, second)
                 ),
             }
             verified = compare(expected, actual)
@@ -343,7 +348,7 @@ class CameraCutOperations:
             raise AgentError(ErrorCode.STALE_STATE, "Scene changed since cut creation")
         markers = scene.timeline_markers
         first, second = owned["first"], owned["second"]
-        if first not in markers or second not in markers:
+        if not self._contains(markers, first) or not self._contains(markers, second):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Owned camera marker identity changed")
         if self._state(scene) != owned["after"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Camera marker timeline edited externally")
@@ -353,7 +358,11 @@ class CameraCutOperations:
         def restore_release():
             # Only recreate our two originally owned markers when a removal
             # partially succeeded; never mutate any foreign marker.
-            retained = [marker for marker in markers if marker not in (first, second)]
+            retained = [
+                marker
+                for marker in markers
+                if not self._contains((first, second), marker)
+            ]
             original_foreign = owned["original"]["markers"]
             foreign_now = self._state(scene)["markers"]
             foreign_expected = [row for row in foreign_now if row["name"] not in (FIRST, SECOND)]
@@ -366,7 +375,7 @@ class CameraCutOperations:
                 (first, FIRST, owned["camera_a"]),
                 (second, SECOND, owned["camera_b"]),
             ):
-                if old in markers:
+                if self._contains(markers, old):
                     fresh.append(old)
                     continue
                 target_frame = (
@@ -398,7 +407,8 @@ class CameraCutOperations:
                 "original_camera_preserved": scene.camera is old_active,
                 "original_frame_preserved": scene.frame_current == old_frame,
                 "removed_own_markers": (
-                    int(first not in markers) + int(second not in markers)
+                    int(not self._contains(markers, first))
+                    + int(not self._contains(markers, second))
                 ),
             }
             verified = compare(expected, actual)
