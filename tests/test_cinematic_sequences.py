@@ -177,16 +177,15 @@ def test_m10_existing_offscreen_camera_marker_is_preserved():
 def test_m10_host_factory_allows_full_preview_apply_release_pipeline():
     bpy, a, b, subject, inspector, _, _ = setup()
     full = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    params = args(inspector, a, b, subject)
-    # Build targets through the factory's own inspector IDs/session rather
-    # than trying to use a different BpyInspector session's object tokens.
-    from shuvi_blender_agent.cinematic_sequences import CinematicSequenceOperations
-
-    # Use catalog to confirm that all three operations have host contracts.
     names = {row["name"] for row in full.catalog()}
     assert {"cinema.sequence_preview", "cinema.sequence_apply", "cinema.sequence_release"} <= names
     assert len(names) == MAX_REGISTERED_TOOLS == 249
-    assert CinematicSequenceOperations is not None
+    adapter = full._tools["cinema.sequence_preview"].execute.__self__
+    params = args(adapter.inspector, a, b, subject)
+    plan = preview(full, params)
+    outcome = apply(full, params, plan)
+    assert outcome.status == Status.VERIFIED, outcome.error
+    assert release(full, outcome.data["sequence_token"]).status == Status.VERIFIED
 
 
 @pytest.mark.parametrize(
