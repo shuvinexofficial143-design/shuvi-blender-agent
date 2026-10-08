@@ -767,3 +767,23 @@ Production ready: **No**.
 
 STOP after M3. Do not implement M4, start Blender, render or integrate
 main Shuvi repository without new explicit user permission.
+
+
+## Level 8 M4 — Cubic Bézier Camera Rail (source-only)
+
+User-authorized Level 8 M4 adds `cinema.rail_preview` and
+`cinema.rail_apply`. Three bounded 2D control/end offsets specify an
+image-plane cubic Bézier path sampled at 5 timeline positions.
+Each new safe camera Action has 6 XYZ location/rotation transform curves,
+5 LINEAR keys each (30 points), with deterministic preview revision,
+exact key readback and M3-shared Action cleanup/verified rollback.
+
+The curve is planned as cubic Bézier but key interpolation between samples
+is LINEAR; real evaluated Blender frames and rendered footage were not
+tested. Requires camera with no existing animation, same M1 constraints
+and unsupported Action structure refusal. M3 remains 3 poses/18 keys.
+Factory/client count is now **233 typed tools**. Level 8 source milestone
+progress **40%**. Real runtime acceptance **0%**, production ready No.
+
+**STOP** before Level 8 M5, real Blender runtime testing, rendering or
+main Shuvi integration without fresh explicit permission.
