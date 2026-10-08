@@ -930,3 +930,23 @@ and CI are supported. Level 8 **100% source-side (10/10 milestones)**;
 public tools **249**, Blender runtime acceptance **0%**,
 production ready **No**. Do not launch Blender, render, work on
 Level 9, or merge into master Shuvi without separate permission.
+
+
+## Level 9 M1 — Three-point area-light rig
+
+Adds `lighting.studio_preview`, `lighting.studio_apply`,
+`lighting.studio_release` for static subject-focused Key/Fill/Rim
+AREA lights, with three real studio presets and bounded
+distance/intensity scaling. Uses bpy.data.lights.new, bpy.data.objects.new,
+scene.collection.objects.link, and readback verifying actual source
+light datablocks/objects, disk size, energy, color, position and rotation.
+Exact preview revisions prevent stale scene/subject mutations.
+Failed creation removes only owned objects/data and confirms original
+scene revision; release only operates on untouched same-session
+owned rig and checks cleanup. Unrecoverable Blender removal exceptions
+may leave partial state, so manual inspection is required.
+
+Level 9 M1: **10% source-side**; total host tools **252**.
+**0% real Blender runtime/render acceptance; not production ready.**
+STOP before Level 9 M2, Blender process/render or master Shuvi
+integration until explicitly authorized.
