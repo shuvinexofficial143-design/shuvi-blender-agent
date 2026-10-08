@@ -725,6 +725,19 @@ class FakeCollections(list):
                 obj.users_collection.remove(collection)
 
 
+class FakeKeyframePoints(list):
+    def insert(self, frame, value=None, options=None, keyframe_type=None):
+        if value is None:
+            return super().insert(frame, value)
+        point = NS(co=[float(frame), float(value)], interpolation="BEZIER")
+        self.append(point)
+        self.sort(key=lambda item: float(item.co[0]))
+        return point
+
+    def remove(self, point, fast=False):
+        super().remove(point)
+
+
 class FakeObject:
     def __init__(self, name, object_type="MESH"):
         self.name = name
@@ -806,7 +819,10 @@ class FakeObject:
             )
             if curve is None:
                 curve = NS(
-                    data_path=data_path, array_index=index, keyframe_points=[], update=lambda: None
+                    data_path=data_path,
+                    array_index=index,
+                    keyframe_points=FakeKeyframePoints(),
+                    update=lambda: None,
                 )
                 curves.append(curve)
             curve.keyframe_points.append(
