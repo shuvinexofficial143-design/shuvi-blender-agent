@@ -6,10 +6,10 @@ from .animation import AnimationInspect
 from .animation_keyframes import TRANSFORM_CHANNELS, AdvancedAnimationOperations
 from .animation_nla import ManagedNLAOperations
 from .animation_recipe_library import (
+    RECIPE_SPECS,
     AnimationRecipeAction,
     AnimationRecipeCatalog,
     AnimationRecipeLibraryOperations,
-    RECIPE_SPECS,
 )
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
@@ -240,11 +240,17 @@ class AnimationAcceptanceOperations:
         )
         saved = self._recovery.get(action.target.object_id)
         if saved is None or saved["recovery_revision"] != action.recovery_revision:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "No matching current-session recovery capture")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED,
+                "No matching current-session recovery capture",
+            )
         if saved["action"] is not obj.animation_data.action:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Captured Action identity no longer matches")
         if before["animation_revision"] == saved["animation_revision"]:
-            raise AgentError(ErrorCode.INVALID_REQUEST, "Animation already matches captured revision")
+            raise AgentError(
+                ErrorCode.INVALID_REQUEST,
+                "Animation already matches captured revision",
+            )
 
         prior_snapshot = self.advanced._snapshot(curves)
         expected = {
@@ -299,7 +305,10 @@ class AnimationAcceptanceOperations:
                 },
             )
             if not recovery.matched:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Recovery rollback readback mismatch")
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED,
+                    "Recovery rollback readback mismatch",
+                )
         except Exception as exc:
             raise AgentError(
                 ErrorCode.VERIFICATION_FAILED,
@@ -344,8 +353,12 @@ class AnimationAcceptanceOperations:
         )
         checks = [
             self._check("TRANSFORM_ACTION_QA", qa["qa_status"] == "READY", "Transform QA blocked"),
-            self._check("NO_UNMANAGED_NLA", nla["track_count"] == 0, "NLA strips require separate QA"),
-            self._check("FIXED_VERSIONED_RECIPES", catalog_valid, "Versioned recipe catalog differs"),
+            self._check(
+                "NO_UNMANAGED_NLA", nla["track_count"] == 0, "NLA strips require separate QA"
+            ),
+            self._check(
+                "FIXED_VERSIONED_RECIPES", catalog_valid, "Versioned recipe catalog differs"
+            ),
             self._check(
                 "FRESH_NONMUTATING_RECIPE_PREVIEW",
                 preview is not None and preview["mutation_performed"] is False,
