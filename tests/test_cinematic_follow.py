@@ -169,8 +169,9 @@ def test_m7_release_removes_both_owned_constraints_and_restores_original_pose():
     assert result.verification["matched"] is True
     assert camera.constraints == []
     assert inspector.snapshot(camera)["transform"]["location"] == before["transform"]["location"]
-    assert inspector.snapshot(camera)["transform"]["rotation_euler"] == (
-        before["transform"]["rotation_euler"]
+    assert (
+        inspector.snapshot(camera)["transform"]["rotation_euler"]
+        == (before["transform"]["rotation_euler"])
     )
     assert bpy.context.scene.camera is camera
     assert result.data["removed_own_constraints"] == 2
@@ -198,8 +199,16 @@ def test_m7_without_activation_keeps_prior_camera_selection():
 @pytest.mark.parametrize(
     "blocker",
     [
-        "animated_camera", "parent", "existing_constraint", "shared_data", "linked",
-        "lens_shift", "clip", "mode", "locked", "target_cycle",
+        "animated_camera",
+        "parent",
+        "existing_constraint",
+        "shared_data",
+        "linked",
+        "lens_shift",
+        "clip",
+        "mode",
+        "locked",
+        "target_cycle",
     ],
 )
 def test_m7_fails_closed_on_unsafe_camera_and_target(blocker):
@@ -261,10 +270,17 @@ def test_m7_foreign_constraint_cannot_be_removed():
     assert camera.constraints == [foreign]
 
 
-@pytest.mark.parametrize("field,value", [
-    ("use_offset", False), ("use_x", False), ("invert_z", True),
-    ("owner_space", "LOCAL"), ("target_space", "LOCAL"), ("influence", 0.25),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("use_offset", False),
+        ("use_x", False),
+        ("invert_z", True),
+        ("owner_space", "LOCAL"),
+        ("target_space", "LOCAL"),
+        ("influence", 0.25),
+    ],
+)
 def test_m7_release_refuses_modified_translation_constraint(field, value):
     _, camera, subject, inspector, _, registry = setup()
     data = payload(inspector, camera, subject)
