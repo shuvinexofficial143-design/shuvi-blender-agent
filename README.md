@@ -13,7 +13,7 @@ The package imports without Blender. No unrestricted Python execution tool is ex
 Planning, model providers, authentication, billing, and frontend belong to the main Shuvi
 project and are outside this repository.
 
-The execution factory currently registers 249 typed tools. The host client validates its own
+The execution factory currently registers 252 typed tools. The host client validates its own
 allowlist and safety classes, verifies response correlation/readback and executes bounded
 declarative plans. Scene queries stream revision construction and cap nested work, page
 bytes and metadata. File outputs use exclusive reservations and verified readback.
@@ -48,6 +48,7 @@ Level 5 Geometry Nodes source roadmap is **100% complete** (Milestones 1-10 of 1
 Level 6 Rigging source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 7 Advanced Animation source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 8 Cinematography source roadmap is **100% complete** (Milestones 1-10 of 10).
+Level 9 Lighting & Look Development source roadmap begins at **10%** (Milestone 1 of 10): bounded 3-point Key/Fill/Rim AREA lights with studio presets, subject-centered placement, revisioned preview, verified creation and same-session owned release.
 Level 7 Milestone 10 adds bounded animation structure QA, current-session managed Action recovery capture/restore with readback verification and rollback, and scoped source-only acceptance. These source capabilities are not live Blender acceptance.
 Level 8 Milestone 1 adds bounded subject-centered camera shot planning and verified camera framing using lens, sensor width, render aspect, conservative subject bounds, explicit angles and safety checks.
 Level 8 Milestone 2 adds nine fixed Rule-of-Thirds composition anchors, actual camera plane repositioning, adaptive clipping/framing clearance and shared verified camera rollback.
