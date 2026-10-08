@@ -298,6 +298,20 @@ class CameraMotionOperations:
             if action.preview.make_active:
                 self.bpy.context.scene.camera = camera
             self.bpy.context.view_layer.update()
+            current_ad = camera.animation_data
+            if (
+                current_ad is None
+                or current_ad.action is not created_action
+                or getattr(current_ad, "action_slot", None) is not None
+                or getattr(created_action, "users", 0) != 1
+                or not hasattr(created_action, "fcurves")
+                or len(getattr(current_ad, "drivers", ())) != 0
+                or len(getattr(current_ad, "nla_tracks", ())) != 0
+            ):
+                raise AgentError(
+                    ErrorCode.SAFETY_DENIED,
+                    "Camera Action became unsupported before final readback",
+                )
             after = self.inspector.snapshot(camera)
             subject_after = self.inspector.snapshot(subject)
             frame_values = {
