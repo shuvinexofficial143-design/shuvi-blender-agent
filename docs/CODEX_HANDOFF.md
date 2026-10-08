@@ -810,3 +810,27 @@ Level 8 source roadmap **50%** (M1-M5). Public tools: **235**.
 Real Blender runtime verification **0%**, production ready **No**.
 STOP before M6, Blender launch/render, and main Shuvi integration unless
 the user grants explicit new authorization.
+
+
+## Level 8 M6 — Subject-Follow TRACK_TO Constraint
+
+Three bounded tools: `cinema.track_preview`, `cinema.track_apply` and
+`cinema.track_release`. Camera receives a new TRACK_TO object constraint
+targeting an existing subject object, tracking along local -Z/up +Y after
+validated camera placement. Animated target pointers may be followed by
+Blender's future evaluated dependency graph. The camera **does not move
+position** with the subject and evaluated tracking/render quality has NOT
+been tested in Blender.
+
+Preview is read-only and revisioned; apply verifies exact constraint
+pointer, axes, count, initial camera pose, subject and lens. Corrupt
+readback or interrupted writes remove the newly created constraint and
+restore the previous camera/active camera if original revision confirms
+rollback. Release is strictly same-runtime owned and blocks any modified,
+foreign or stale constraint. Session reset loses release ownership by
+design. No preexisting camera constraints/actions are overwritten.
+
+Level 8 source milestone 6/10 => **60%** source only. Factory/client tools
+**238**, live Blender acceptance **0%**, production ready No.
+**STOP** before Level 8 M7, real runtime testing/rendering or Shuvi main
+integration unless the user authorizes it separately.

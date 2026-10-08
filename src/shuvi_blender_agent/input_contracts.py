@@ -36,6 +36,7 @@ from .cinematic_easing import EasingApply, EasingPreview
 from .cinematic_motion import CameraMotionApply, CameraMotionPreview
 from .cinematic_rail import RailApply, RailPreview
 from .cinematic_shots import ShotApply, ShotPreview
+from .cinematic_tracking import TrackingApply, TrackingPreview, TrackingRelease
 from .collection_ops import (
     CollectionNameRequest,
     CollectionObjectChange,
@@ -342,6 +343,9 @@ def builtin_contracts() -> dict:
         "cinema.rail_apply": (mutation, RailApply.parse),
         "cinema.easing_preview": (read, EasingPreview.parse),
         "cinema.easing_apply": (mutation, EasingApply.parse),
+        "cinema.track_preview": (read, TrackingPreview.parse),
+        "cinema.track_apply": (mutation, TrackingApply.parse),
+        "cinema.track_release": (mutation, TrackingRelease.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

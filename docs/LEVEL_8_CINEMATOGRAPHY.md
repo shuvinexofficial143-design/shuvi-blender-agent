@@ -3,7 +3,7 @@
 Level 8 follows completed Level 1–7 **source-only** roadmaps. None of the
 camera framing functionality is certified by a real Blender session yet.
 
-Current Level 8 source progress: **50%** (Milestones 1–5 of 10).
+Current Level 8 source progress: **60%** (Milestones 1–6 of 10).
 Real Blender runtime acceptance: **0%**.
 Production ready: **No**.
 
@@ -249,9 +249,65 @@ No user-supplied Python or arbitrary bpy operators are introduced.
 Registry/host cap: **235 typed tools**; Level 8 M1–M5 source-side 50%.
 Real Blender runtime acceptance: **0%**. Production ready: **No**.
 
+## Milestone 6 — Dynamic subject tracking via managed TRACK_TO constraint
+
+M6 adds three typed public tools that connect a camera to a target Blender
+object with a **real object-level constraint**, rather than calculating a
+single static look-at rotation.
+
+- `cinema.track_preview` (READ_ONLY): validates current-session camera and
+  subject ObjectTargets, M1 azimuth/elevation framing/margin/activation,
+  safe perspective lens/clip distance, empty camera constraint stack and
+  unanimated local single-user camera. Also rejects subject-parent or direct
+  constraint dependencies that would create a camera-target cycle. Reports
+  exact deterministic tracking revision and blockers, without mutation.
+- `cinema.track_apply` (MUTATION): requires exact
+  `expected_tracking_revision`; sets the camera to the planned initial pose,
+  creates **one object TRACK_TO constraint** targeting the subject, with
+  `track_axis=TRACK_NEGATIVE_Z`, `up_axis=UP_Y`, influence=1, mute=False;
+  optionally activates the scene camera. Verifies the new constraint's
+  identity, target pointer, track axes, count, initial camera pose,
+  unchanged subject and focal length. Rollback removes only the newly
+  created constraint and restores the old pose/active camera, checking the
+  original camera snapshot revision before declaring recovery.
+- `cinema.track_release` (MUTATION): requires a fresh camera ObjectTarget
+  and exact successful tracking token. It can only release the same
+  constraint instance created by **this agent adapter in this runtime
+  session**; it refuses nonowned, modified, stale or foreign constraints,
+  verifies constraint removal and preserves the camera's current pose and
+  active camera setting. If release is interrupted after removal, it
+  recreates only the owned TRACK_TO constraint and verifies the original
+  camera snapshot revision before reporting recovery.
+
+When Blender evaluates the new TRACK_TO constraint, it is expected to
+update the camera's *orientation* as the subject moves (including a
+subject with existing animation). **It does not translate/physically chase
+the target, keyframe its motion or guarantee the subject stays fully
+within frame if it moves toward/away from the camera.** Continuous
+depsgraph evaluation, rotation damping, focus/lens adjustments,
+occlusion handling, animated render playback and actual visual
+subject-follow performance remain **untested in real Blender**.
+
+Safety: no existing camera constraint, camera animation or foreign
+Action is modified; linked/shared/nonperspective/locked/parented camera,
+lens-shift, invalid clipping and dependency cycles fail closed. The
+release capability is deliberately **session-local**: if the adapter or
+Blender project restarts, it cannot safely claim ownership of a saved
+constraint and will not remove it. Restoration of manual edits made by
+other tools is not attempted.
+
+Source tests cover deterministic nonmutating planning; real fake-bpy
+constraint new/remove; animated target pointers; current-camera pose;
+stale changes, safety guards, target dependency loops; corrupted readback
+rollback; interrupted updates and same-session release ownership.
+
+Public typed tools / host cap: **238** (235 + 3).
+Source-side Level 8 roadmap: **60%**.
+Real Blender runtime acceptance: **0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Levels 1–7 remain source-side complete. Level 8 M1–M5 are source-side
-complete at **50%** only. Do not begin Level 8 M6, launch Blender, render,
-run live runtime checks or integrate the main Shuvi repository without
-separate explicit user permission.
+Levels 1–7 remain source-side complete. Level 8 M1–M6 are source-side
+complete at **60%** only. Do not begin Level 8 M7, launch Blender,
+render, conduct live acceptance or integrate the main Shuvi repository
+without separate explicit user permission.

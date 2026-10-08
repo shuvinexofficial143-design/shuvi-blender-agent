@@ -22,6 +22,7 @@ from .cinematic_easing import CameraEasingOperations
 from .cinematic_motion import CameraMotionOperations
 from .cinematic_rail import CameraRailOperations
 from .cinematic_shots import CinematicShotOperations
+from .cinematic_tracking import CameraTrackingOperations
 from .collection_ops import CollectionOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
@@ -131,6 +132,7 @@ def create_registry(
         CameraMotionOperations(objects),
         CameraRailOperations(objects),
         CameraEasingOperations(objects),
+        CameraTrackingOperations(objects),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),
         rigging,
