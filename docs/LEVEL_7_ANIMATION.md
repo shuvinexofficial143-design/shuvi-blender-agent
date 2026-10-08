@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **70%**.
+Current Level 7 source progress: **80%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -24,7 +24,7 @@ Production ready: **No**.
 | 5 | Pose-bone animation channels | complete |
 | 6 | Camera / lens / focus animation workflows | complete |
 | 7 | Constraint influence / visibility animation controls | complete |
-| 8 | Managed NLA clip / strip workflows | pending |
+| 8 | Managed NLA clip / strip workflows | complete |
 | 9 | Versioned animation recipe library | pending |
 | 10 | Animation QA / recovery / acceptance | pending |
 
@@ -531,8 +531,56 @@ and **83 package modules**.
 Factory typed tools: **216**. Registry/client cap: **216**.
 Real Blender runtime verification: **0%**. Production ready: **No**.
 
+## Milestone 8 — 80% complete
+
+M8 adds two bounded managed NLA tools:
+
+- `animation.nla_inspect`: read-only inspection of current-object NLA tracks and strips,
+  current active Action, exact Action fingerprint, names, timing, playback properties, ownership,
+  and a deterministic `nla_revision`.
+- `animation.nla_strip_create`: revision-gated conversion of one managed Action into a
+  named NLA track containing one named strip at an explicitly requested start frame.
+
+### First managed clip
+
+M8 only accepts an unshared **legacy** session-owned Action created by Shuvi's
+`animation.insert_keyframe` implementation, with exactly the nine complete
+location/rotation_euler/scale channels and at least two common integer frames.
+The source Action is detached from the active Action slot and reused in a new
+track/strip. Original Action keys are not rewritten.
+
+The resulting strip uses normal REPLACE blending, scale=1, repeat=1,
+influence=1 and mute=false. The requested strip start frame is integer
+1..100000 and the computed strip end must also stay within 100000.
+
+### Safety and recovery
+
+- Mutation requires a fresh ObjectTarget and the exact current `nla_revision`.
+- Foreign, shared, slotted/layered, structurally incomplete, driver/NLA-bearing,
+  constrained-object and non-editable target states fail closed.
+- M8 does **not** adopt or mutate any preexisting NLA tracks or strips.
+- Inspection bounds: at most 64 tracks, 64 strips total, 64 Action FCurves and 1024
+  Action keyframe points, with bounded per-curve reads.
+- Post-mutation verification compares strip identity, timing, playback properties
+  and the complete original Action FCurve fingerprint; the source Action must
+  no longer be the active Action.
+- On mismatch, the new NLA track is removed, the original active Action restored,
+  and the exact former `nla_revision` must be recovered before reporting verified rollback.
+
+M8 is deliberately a **single managed clip push-down** capability, not arbitrary
+NLA arrangement: multi-track editing, blending, retiming, strip removal and repeat
+scheduling are out of scope. It does not verify evaluated NLA playback.
+
+### Milestone 8 source checkpoint
+
+Verified source/test checkpoint: `9a8446ff949c7d0441106201bf96b3059c503ec2`.
+Source CI run `37753381630`: **864 tests**, **84 package modules**,
+Ruff lint/format, package build and offline wheel import without bpy.
+Factory typed tools: **218**; bounded registry/client cap **218**.
+Real Blender runtime verification: **0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1–7 are complete at 70% source-side. Do not begin Milestone 8
-without explicit permission. Do not install, launch, probe or render Blender
-without separate explicit runtime authorization.
+Milestones 1–8 are complete at 80% source-side. Do not begin Milestone 9
+without explicit user permission. Do not install, launch, probe or render
+Blender without separate explicit runtime authorization.

@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 216 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 218 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -40,6 +40,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.keyframe_style_set | target, expected_animation_revision, data_path, array_index, frame, interpolation, easing, handle_left_type, handle_right_type, optional handle_left/handle_right | mutation | set one exact managed key's interpolation/easing and bounded Bezier handle state with style-aware revision readback and verified rollback |
 | animation.retime_preview | target, expected_animation_revision, mappings | read_only | validate 1..32 complete managed transform-key source→target mappings, collision rules, resulting frame set and deterministic workflow revision without mutation |
 | animation.retime_apply | target, expected_animation_revision, mappings | mutation | retime 1..32 complete managed transform keys while preserving values/style/handle geometry, with exact frame/state readback and verified rollback |
+| animation.nla_inspect | object_id | read_only | inspect bounded active Action and NLA track/strip hierarchy, clip timing, Action fingerprint, blockers, ownership and deterministic nla_revision |
+| animation.nla_strip_create | target, expected_nla_revision, track_name, strip_name, start_frame | mutation | push down one complete session-owned legacy transform Action into a single named NLA track/strip, verifying source Action fingerprint, frame placement and recoverable rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
 | animation.pose_bone_keyframe_insert | target, expected_rig_revision, expected_animation_revision, bone_name, frame, location, rotation_mode, rotation, scale, interpolation | mutation | insert one complete raw XYZ/Quaternion pose-bone key with dual revision gating, pose-only Action ownership, exact readback and verified rig+animation rollback |
 | camera.optics_animation_inspect | object_id | read_only | inspect camera-data lens/DOF focus channels, Action ownership, safety blockers and deterministic camera_animation_revision |
@@ -1472,3 +1474,26 @@ Current Level 3 source progress: **100%**.
 - M7 adds two public typed tools and raises the factory/cap from 214 to **216**.
 - Evaluated viewport motion, constraint solving and live Blender runtime behaviour
   remain unverified.
+
+
+### Level 7 milestone 8 limits
+
+- M8 allows exact one-track/one-strip push-down from a complete, session-owned
+  `animation.insert_keyframe` legacy Action. It never imports arbitrary/foreign Actions.
+- The source Action requires 9 complete XYZ transform FCurves and at least two common
+  integer frames; existing shared, layered/slotted, driven or NLA-bearing Actions
+  cannot be mutated.
+- `animation.nla_inspect` reports bounded NLA track/strip details, managed ownership,
+  and a deterministic `nla_revision` over source Action state and existing tracks.
+- `animation.nla_strip_create` needs fresh ObjectTarget and exact `nla_revision`;
+  names are explicit and auto-suffix renaming cannot verify.
+- The created strip uses REPLACE blending, influence=1, repeat=1, scale=1, mute=false,
+  preserving source Action keys with no rewrite.
+- The start/end strip range is bounded to integer frames 1..100000.
+- At most 64 tracks/64 strips and 64 FCurves/1024 points can be inspected.
+- Post-mutation readback verifies original Action fingerprint, clip timing and playback
+  settings. On mismatch, remove only the new track, restore the original active
+  Action, and verify exact pre-mutation NLA revision recovery.
+- M8 adds two public typed tools, raising factory/catalog cap from 216 to **218**.
+- Multi-track creation/edit, layered Action playback, strip mixing, clip removal
+  and real Blender evaluated NLA playback remain unverified/out of scope.
