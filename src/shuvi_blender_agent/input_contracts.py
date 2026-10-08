@@ -38,8 +38,8 @@ from .cinematic_easing import EasingApply, EasingPreview
 from .cinematic_follow import FollowApply, FollowPreview, FollowRelease
 from .cinematic_motion import CameraMotionApply, CameraMotionPreview
 from .cinematic_rail import RailApply, RailPreview
-from .cinematic_shots import ShotApply, ShotPreview
 from .cinematic_sequences import SequenceApply, SequencePreview, SequenceRelease
+from .cinematic_shots import ShotApply, ShotPreview
 from .cinematic_tracking import TrackingApply, TrackingPreview, TrackingRelease
 from .collection_ops import (
     CollectionNameRequest,
