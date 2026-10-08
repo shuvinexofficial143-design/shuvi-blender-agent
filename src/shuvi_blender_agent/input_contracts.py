@@ -39,6 +39,7 @@ from .cinematic_follow import FollowApply, FollowPreview, FollowRelease
 from .cinematic_motion import CameraMotionApply, CameraMotionPreview
 from .cinematic_rail import RailApply, RailPreview
 from .cinematic_shots import ShotApply, ShotPreview
+from .cinematic_sequences import SequenceApply, SequencePreview, SequenceRelease
 from .cinematic_tracking import TrackingApply, TrackingPreview, TrackingRelease
 from .collection_ops import (
     CollectionNameRequest,
@@ -357,6 +358,9 @@ def builtin_contracts() -> dict:
         "cinema.cut_preview": (read, CutPreview.parse),
         "cinema.cut_apply": (mutation, CutApply.parse),
         "cinema.cut_release": (mutation, CutRelease.parse),
+        "cinema.sequence_preview": (read, SequencePreview.parse),
+        "cinema.sequence_apply": (mutation, SequenceApply.parse),
+        "cinema.sequence_release": (mutation, SequenceRelease.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),
