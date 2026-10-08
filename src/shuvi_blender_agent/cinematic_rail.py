@@ -215,6 +215,7 @@ class CameraRailOperations:
             "sample_parameters": list(SAMPLES),
             "interpolation": "LINEAR",
             "camera_lens": base["lens_mm"],
+            "render_aspect": base["render_aspect"],
             "make_active": action.make_active,
             "key_poses": poses,
             "channel_count": 6,
