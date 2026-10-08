@@ -166,7 +166,10 @@ class CameraCutOperations:
                 blockers.add("RESERVED_CAMERA_MARKER_NAME_EXISTS")
             if item["frame"] in (action.start_frame, action.cut_frame):
                 blockers.add("MARKER_FRAME_COLLISION")
-            if item["camera_pointer"] is not None and action.start_frame <= item["frame"] <= action.end_frame:
+            if (
+                item["camera_pointer"] is not None
+                and action.start_frame <= item["frame"] <= action.end_frame
+            ):
                 blockers.add("EXISTING_CAMERA_CUT_OVERLAP")
         plan = {
             "camera_a_id": before_a["object_id"],
@@ -359,9 +362,9 @@ class CameraCutOperations:
                     ErrorCode.VERIFICATION_FAILED, "Foreign timeline changed during recovery"
                 )
             fresh = []
-            for old, name, frame, camera in (
-                (first, FIRST, original_state["markers"][0]["frame"], owned["camera_a"]),
-                (second, SECOND, original_state["markers"][0]["frame"], owned["camera_b"]),
+            for old, name, camera in (
+                (first, FIRST, owned["camera_a"]),
+                (second, SECOND, owned["camera_b"]),
             ):
                 if old in markers:
                     fresh.append(old)
