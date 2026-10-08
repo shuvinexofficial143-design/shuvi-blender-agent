@@ -159,13 +159,7 @@ class PoseBoneAnimationOperations:
             channel for channel in animation["channels"] if channel["data_path"] in bone_paths
         ]
         channels.sort(key=lambda item: (item["data_path"], item["index"]))
-        frames = sorted(
-            {
-                point["frame"]
-                for channel in channels
-                for point in channel["points"]
-            }
-        )
+        frames = sorted({point["frame"] for channel in channels for point in channel["points"]})
 
         non_pose_channels = [
             channel["data_path"]
@@ -178,8 +172,7 @@ class PoseBoneAnimationOperations:
         alternate_channels = [
             channel["data_path"]
             for channel in animation["channels"]
-            if channel["data_path"] in all_bone_paths
-            and channel["data_path"] not in bone_paths
+            if channel["data_path"] in all_bone_paths and channel["data_path"] not in bone_paths
         ]
         if alternate_channels:
             blockers.append("ALTERNATE_ROTATION_CHANNELS_PRESENT")
@@ -304,10 +297,7 @@ class PoseBoneAnimationOperations:
                     ErrorCode.SAFETY_DENIED,
                     "Only a session-created unshared pose Action may be extended",
                 )
-            if any(
-                not self._channel_prefix(channel)
-                for channel in animation_before["channels"]
-            ):
+            if any(not self._channel_prefix(channel) for channel in animation_before["channels"]):
                 raise AgentError(
                     ErrorCode.SAFETY_DENIED,
                     "Pose animation cannot share an Action with non-pose channels",
@@ -318,7 +308,8 @@ class PoseBoneAnimationOperations:
         existing_bone_paths = {
             channel["data_path"]
             for channel in animation_before["channels"]
-            if channel["data_path"] in {
+            if channel["data_path"]
+            in {
                 self._path(pose_bone, "location"),
                 self._path(pose_bone, "rotation_euler"),
                 self._path(pose_bone, "rotation_quaternion"),
@@ -358,8 +349,7 @@ class PoseBoneAnimationOperations:
             paths["scale"]: values["scale"],
         }
         existing_curve_keys = {
-            (channel["data_path"], channel["index"])
-            for channel in animation_before["channels"]
+            (channel["data_path"], channel["index"]) for channel in animation_before["channels"]
         }
         required_curve_keys = {
             (data_path, index)
@@ -415,12 +405,10 @@ class PoseBoneAnimationOperations:
                 if channel["data_path"] not in expected_channels:
                     continue
                 points = [
-                    point
-                    for point in channel["points"]
-                    if point["frame"] == float(action.frame)
+                    point for point in channel["points"] if point["frame"] == float(action.frame)
                 ]
                 if len(points) == 1:
-                    inserted[f'{channel["data_path"]}:{channel["index"]}'] = points[0]
+                    inserted[f"{channel['data_path']}:{channel['index']}"] = points[0]
 
             expected_inserted = {
                 f"{data_path}:{index}": {
@@ -460,8 +448,7 @@ class PoseBoneAnimationOperations:
                     is obj.animation_data.action
                 ),
                 "animation_revision_changed": (
-                    animation_after["animation_revision"]
-                    != animation_before["animation_revision"]
+                    animation_after["animation_revision"] != animation_before["animation_revision"]
                 ),
                 "pose": {
                     "rotation_mode": pose_after["rotation_mode"],
