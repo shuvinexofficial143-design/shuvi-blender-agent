@@ -1,7 +1,7 @@
 """Level 8 M8: bounded time-damped camera follow baked from LINEAR subject keys."""
 
 from dataclasses import dataclass
-from math import atan2, cos, hypot, pi, sin, sqrt
+from math import atan2, hypot, pi, sqrt
 
 from .animation_state import action_curves
 from .cinematic_motion import CameraMotionOperations
@@ -253,7 +253,9 @@ class CameraDampedFollowOperations:
         return camera, subject, before, subject_before, plan
 
     def preview(self, request: Request, action: DampedFollowPreview):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[4])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[4]
+        )
 
     def apply(self, request: Request, action: DampedFollowApply):
         camera, subject, before, subject_before, plan = self._plan(action.preview)
