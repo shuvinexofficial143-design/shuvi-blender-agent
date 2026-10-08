@@ -304,7 +304,6 @@ class CameraTrackingOperations:
         old_location = list(camera.location)
         old_rotation = list(camera.rotation_euler)
 
-
         def restore_release():
             # Recreate only the agent-owned constraint when removal was
             # interrupted after it disappeared. Never delete foreign state.
