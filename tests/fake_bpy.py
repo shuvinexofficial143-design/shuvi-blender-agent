@@ -828,6 +828,25 @@ class FakeNLATracks(list):
         return track
 
 
+class FakeObjectConstraints(list):
+    """Minimal object-level bpy constraint collection for camera TRACK_TO tests."""
+
+    def new(self, type):
+        if type != "TRACK_TO":
+            raise ValueError("Fake object tracking supports TRACK_TO only")
+        constraint = NS(
+            name="Track To",
+            type=type,
+            target=None,
+            track_axis="TRACK_NEGATIVE_Z",
+            up_axis="UP_Y",
+            influence=1.0,
+            mute=False,
+        )
+        self.append(constraint)
+        return constraint
+
+
 class FakeObject:
     def __init__(self, name, object_type="MESH"):
         self.name = name
@@ -851,7 +870,7 @@ class FakeObject:
         self.material_slots = []
         self.animation_data = None
         self.library = None
-        self.constraints = []
+        self.constraints = FakeObjectConstraints()
         self.override_library = None
         self.is_editable = True
         self.asset_data = None
