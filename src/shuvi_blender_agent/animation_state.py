@@ -52,7 +52,15 @@ def animation_snapshot(obj) -> dict:
                 "index": curve.array_index,
                 "point_count": len(points),
                 "points": [
-                    {"co": list(point.co), "interpolation": point.interpolation}
+                    {
+                        "co": list(point.co),
+                        "interpolation": point.interpolation,
+                        "easing": getattr(point, "easing", "AUTO"),
+                        "handle_left_type": getattr(point, "handle_left_type", "AUTO"),
+                        "handle_right_type": getattr(point, "handle_right_type", "AUTO"),
+                        "handle_left": list(getattr(point, "handle_left", point.co)),
+                        "handle_right": list(getattr(point, "handle_right", point.co)),
+                    }
                     for point in islice(points, count)
                 ],
             }

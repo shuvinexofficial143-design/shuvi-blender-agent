@@ -64,7 +64,12 @@ def channel_point(state, data_path, index, frame):
         for item in state["channels"]
         if item["data_path"] == data_path and item["index"] == index
     )
-    return next(point for point in channel["points"] if point["frame"] == float(frame))
+    point = next(point for point in channel["points"] if point["frame"] == float(frame))
+    return {
+        "frame": point["frame"],
+        "value": point["value"],
+        "interpolation": point["interpolation"],
+    }
 
 
 def setup_two_frames():

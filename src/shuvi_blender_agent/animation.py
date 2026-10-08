@@ -103,6 +103,7 @@ class AnimationOperations:
         point_count = 0
         unique_frames = set()
         interpolation_counts = {}
+        easing_counts = {}
         channels = []
         for channel in animation["channels"]:
             data_path = bounded_text(channel["data_path"], limit=256)
@@ -122,17 +123,42 @@ class AnimationOperations:
                 ):
                     raise AgentError(ErrorCode.SAFETY_DENIED, "Animation point is invalid")
                 interpolation = bounded_text(point["interpolation"], limit=64)
+                easing = bounded_text(point.get("easing", "AUTO"), limit=64)
+                handle_left_type = bounded_text(point.get("handle_left_type", "AUTO"), limit=64)
+                handle_right_type = bounded_text(point.get("handle_right_type", "AUTO"), limit=64)
+                handle_left = point.get("handle_left", co)
+                handle_right = point.get("handle_right", co)
+                for handle in (handle_left, handle_right):
+                    if (
+                        not isinstance(handle, list)
+                        or len(handle) != 2
+                        or not all(
+                            type(value) in (int, float)
+                            and -float("inf") < value < float("inf")
+                            for value in handle
+                        )
+                    ):
+                        raise AgentError(
+                            ErrorCode.SAFETY_DENIED,
+                            "Animation handle is invalid",
+                        )
                 point_count += 1
                 if point_count > MAX_ANIMATION_POINTS:
                     raise AgentError(ErrorCode.SAFETY_DENIED, "Animation point limit exceeded")
                 frame = float(co[0])
                 unique_frames.add(frame)
                 interpolation_counts[interpolation] = interpolation_counts.get(interpolation, 0) + 1
+                easing_counts[easing] = easing_counts.get(easing, 0) + 1
                 points.append(
                     {
                         "frame": frame,
                         "value": float(co[1]),
                         "interpolation": interpolation,
+                        "easing": easing,
+                        "handle_left_type": handle_left_type,
+                        "handle_right_type": handle_right_type,
+                        "handle_left": [float(value) for value in handle_left],
+                        "handle_right": [float(value) for value in handle_right],
                     }
                 )
             channels.append(
@@ -197,6 +223,7 @@ class AnimationOperations:
             "unique_frames": frames,
             "frame_range": {"start": frames[0], "end": frames[-1]} if frames else None,
             "interpolation_counts": dict(sorted(interpolation_counts.items())),
+            "easing_counts": dict(sorted(easing_counts.items())),
             "channels": channels,
             "drivers_count": drivers_count,
             "nla_track_count": nla_track_count,

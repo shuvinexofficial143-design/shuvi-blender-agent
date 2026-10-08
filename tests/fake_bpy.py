@@ -729,7 +729,15 @@ class FakeKeyframePoints(list):
     def insert(self, frame, value=None, options=None, keyframe_type=None):
         if value is None:
             return super().insert(frame, value)
-        point = NS(co=[float(frame), float(value)], interpolation="BEZIER")
+        point = NS(
+            co=[float(frame), float(value)],
+            interpolation="BEZIER",
+            easing="AUTO",
+            handle_left_type="AUTO",
+            handle_right_type="AUTO",
+            handle_left=[float(frame) - 1.0 / 3.0, float(value)],
+            handle_right=[float(frame) + 1.0 / 3.0, float(value)],
+        )
         self.append(point)
         self.sort(key=lambda item: float(item.co[0]))
         return point
@@ -826,7 +834,15 @@ class FakeObject:
                 )
                 curves.append(curve)
             curve.keyframe_points.append(
-                NS(co=[float(frame), float(value)], interpolation="BEZIER")
+                NS(
+                    co=[float(frame), float(value)],
+                    interpolation="BEZIER",
+                    easing="AUTO",
+                    handle_left_type="AUTO",
+                    handle_right_type="AUTO",
+                    handle_left=[float(frame) - 1.0 / 3.0, float(value)],
+                    handle_right=[float(frame) + 1.0 / 3.0, float(value)],
+                )
             )
         return True
 

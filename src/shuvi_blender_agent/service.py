@@ -2,6 +2,7 @@
 
 from .animation import AnimationOperations
 from .animation_keyframes import AdvancedAnimationOperations
+from .animation_style import AnimationStyleOperations
 from .appearance import AppearanceOperations
 from .assets import AssetOperations
 from .character_acceptance import CharacterAcceptanceOperations
@@ -69,6 +70,7 @@ def create_registry(
     inspector = BpyInspector(bpy)
     objects = ObjectOperations(inspector)
     animation = AnimationOperations(objects)
+    advanced_animation = AdvancedAnimationOperations(animation)
     adapters = [
         inspector,
         objects,
@@ -100,7 +102,8 @@ def create_registry(
         TextureWorkflowOperations(objects),
         AssetOperations(objects),
         animation,
-        AdvancedAnimationOperations(animation),
+        advanced_animation,
+        AnimationStyleOperations(advanced_animation),
         RenderOperations(objects, policy, workspace),
         RiggingOperations(objects),
         RigRecipeLibraryOperations(objects),

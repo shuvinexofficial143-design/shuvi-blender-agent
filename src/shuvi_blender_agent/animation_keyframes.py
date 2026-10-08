@@ -195,6 +195,11 @@ class AdvancedAnimationOperations:
                     "frame": float(point.co[0]),
                     "value": float(point.co[1]),
                     "interpolation": point.interpolation,
+                    "easing": getattr(point, "easing", "AUTO"),
+                    "handle_left_type": getattr(point, "handle_left_type", "AUTO"),
+                    "handle_right_type": getattr(point, "handle_right_type", "AUTO"),
+                    "handle_left": list(getattr(point, "handle_left", point.co)),
+                    "handle_right": list(getattr(point, "handle_right", point.co)),
                 }
                 for point in curve.keyframe_points
             ]
@@ -212,6 +217,13 @@ class AdvancedAnimationOperations:
     def _insert_point(curve, data):
         point = curve.keyframe_points.insert(data["frame"], data["value"])
         point.interpolation = data["interpolation"]
+        point.easing = data.get("easing", "AUTO")
+        point.handle_left_type = data.get("handle_left_type", "AUTO")
+        point.handle_right_type = data.get("handle_right_type", "AUTO")
+        if "handle_left" in data:
+            point.handle_left = list(data["handle_left"])
+        if "handle_right" in data:
+            point.handle_right = list(data["handle_right"])
         curve.update()
         return point
 
