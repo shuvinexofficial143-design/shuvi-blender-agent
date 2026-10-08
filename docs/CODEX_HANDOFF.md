@@ -675,8 +675,28 @@ production ready **No**.
 Real Blender compatibility and evaluated playback remain unverified. Blender
 launch/runtime testing must not begin without separate explicit authorization.
 
+## Level 7 Milestone 10 — Animation QA, Recovery and Source Acceptance
+
+User-authorized M10 source work only. Four typed tools:
+`animation.qa_inspect`, `animation.recovery_capture`,
+`animation.recovery_restore`, `animation.level7_acceptance`.
+
+M10 adds deterministic integrity checks for the current-session managed nine-channel
+Action, bounded in-memory recovery snapshots, verified restoring with a fresh
+ObjectTarget/current animation revision and exact snapshot readback, plus source-only
+acceptance across managed transform QA, recipe catalog/preview and NLA blockers.
+
+Recovery capture never accepts raw caller-supplied animation state; restore refuses
+foreign/shared/changed-identity Actions and consumes an in-memory capture on success.
+Readback mismatch or interrupted mutation rolls back to the previous exact Action
+snapshot or fails closed if recovery cannot be verified. No code execution surface,
+arbitrary bpy scripting or destructive generic animation API is added.
+
+**Current source state:** Levels 1–7 are 100% complete against their *source*
+milestone roadmaps. Registered typed tools/client cap: **225**.
+Real Blender runtime verification: **0%**. Production ready: **No**.
+
 ## Exact next task
 
-Wait for explicit user permission before Level 7 M10 —
-Animation QA / Recovery / Acceptance. Do not start Level 8 or master
-Shuvi integration automatically.
+STOP. Do not start Level 8 Cinematography, Blender runtime acceptance or
+main Shuvi integration without separate explicit user authorization.
