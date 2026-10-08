@@ -7,7 +7,7 @@ Goal: give Shuvi precise, bounded animation-state understanding and later verifi
 keyframe, curve, pose, camera and NLA workflows without exposing arbitrary Python, unrestricted
 bpy operators or generic animation data mutation.
 
-Current Level 7 source progress: **50%**.
+Current Level 7 source progress: **60%**.
 
 Real Blender runtime verification for Level 7: **0%**.
 
@@ -22,7 +22,7 @@ Production ready: **No**.
 | 3 | Interpolation, easing and handle controls | complete |
 | 4 | Bounded multi-key / timeline animation workflows | complete |
 | 5 | Pose-bone animation channels | complete |
-| 6 | Camera / lens / focus animation workflows | pending |
+| 6 | Camera / lens / focus animation workflows | complete |
 | 7 | Constraint influence / visibility animation controls | pending |
 | 8 | Managed NLA clip / strip workflows | pending |
 | 9 | Versioned animation recipe library | pending |
@@ -433,9 +433,57 @@ Current registry/catalog hard maximum: **212**.
 Real Blender runtime verification remains **0%**.
 Production ready: **No**.
 
+## Milestone 6 — 60% source complete
+
+M6 adds two typed camera optics surfaces:
+
+- `camera.optics_animation_inspect`
+- `camera.optics_keyframe_insert`
+
+A camera's lens and depth-of-field focus distance are stored on the camera **data-block**,
+not the camera object's transform Action. M6 therefore creates and inspects a separate
+camera-data Action. Existing object transform/rig animation is not modified by M6.
+
+The read-only inspection reports lens and focus distance, DOF enablement, data-block users,
+Action ownership/users, exact bounded FCurve/keyframe details, blockers and a deterministic
+`camera_animation_revision`. That revision tracks both unkeyed optics values and keyed
+Action state, so edits outside Shuvi invalidate stale requests.
+
+The mutation takes a fresh ObjectTarget, exact camera animation revision, integer frame,
+bounded lens (1–500 mm), focus distance (0.01–10,000 Blender units), and an allowlisted
+LINEAR/BEZIER/CONSTANT interpolation. Both channels are inserted at the same frame and
+verified via exact channel readback; existing frames are never overwritten.
+
+Safety guards deny:
+- non-camera or non-perspective data, nonlocal/read-only/shared camera data;
+- camera object constraints, non-Object mode, disabled DOF or focus-object override;
+- foreign/shared/slotted camera-data Actions, drivers, NLA tracks or unrecognized channels;
+- partial lens/focus channel sets, incomplete frame pairs or duplicate channel structures;
+- duplicate key frames, stale revisions and work bounds (64 FCurves/1024 points).
+
+A newly-created camera Action is owned by this adapter session; only that unshared Action
+may be extended. Verification mismatch restores previous lens/focus values and removes the
+inserted frame, clearing a newly-created Action when necessary. Recovery is marked verified
+only when the original `camera_animation_revision` returns.
+
+Source/fake-bpy tests cover initial inspection, first/second key insertion, duplicate frames,
+foreign Actions, DOF/focus-object/shared-data blockers, stale revisions, and rollback both
+with and without a pre-existing Action.
+
+M6 **does not** claim evaluated depth-of-field appearance, tracking/focus targeting,
+camera movement path animation, NLA, or real Blender runtime testing.
+
+### Milestone 6 source checkpoint
+
+Source/test commit `1ca771d464944fdf7c06baa3e15c87b9d4f1afc6`:
+**845 passed tests**, **82 package modules**, Ruff lint/format, package build and offline
+distribution/import validation.
+
+Factory typed tools: **214**. Current registry/client cap: **214**.
+Real Blender runtime verification: **0%**. Production ready: **No**.
+
 ## Stop boundary
 
-Milestones 1-5 are complete at 50%. Do not begin Milestone 6 without explicit user permission.
-
-Do not install, probe, launch or render Blender and do not execute real animation runtime
-acceptance without separate explicit runtime authorization.
+Milestones 1–6 are complete at 60% on the source roadmap. Do not begin Milestone 7
+without explicit user permission. Do not launch/install/probe Blender or run real
+render/runtime acceptance without separate explicit authorization.

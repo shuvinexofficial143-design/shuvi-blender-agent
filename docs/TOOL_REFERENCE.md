@@ -1,6 +1,6 @@
 # Tool reference (protocol 1)
 
-The factory registers 212 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
+The factory registers 214 typed tools. Main Shuvi sends a `Request` through `BlenderController`;
 it never needs bpy names, operators or Python expressions. All inputs are JSON objects,
 unknown fields fail, and each result carries the exact request and command IDs.
 
@@ -42,6 +42,8 @@ clients should retain the filter, session ID and revision while continuing a pag
 | animation.retime_apply | target, expected_animation_revision, mappings | mutation | retime 1..32 complete managed transform keys while preserving values/style/handle geometry, with exact frame/state readback and verified rollback |
 | animation.pose_bone_inspect | object_id, bone_name | read_only | exact bounded raw pose-bone animation channels plus rig_revision, animation_revision, pose_animation_revision, channel completeness and Action ownership/blockers |
 | animation.pose_bone_keyframe_insert | target, expected_rig_revision, expected_animation_revision, bone_name, frame, location, rotation_mode, rotation, scale, interpolation | mutation | insert one complete raw XYZ/Quaternion pose-bone key with dual revision gating, pose-only Action ownership, exact readback and verified rig+animation rollback |
+| camera.optics_animation_inspect | object_id | read_only | inspect camera-data lens/DOF focus channels, Action ownership, safety blockers and deterministic camera_animation_revision |
+| camera.optics_keyframe_insert | target, expected_camera_animation_revision, frame, lens, focus_distance, interpolation | mutation | insert an exact two-channel lens/focus data Action keyframe with revision gating and recoverable readback |
 | rig.armature_inspect | object_id | read_only | bounded armature/bone hierarchy, pose transforms, pose-constraint metadata, mismatch diagnostics and deterministic rig_revision |
 | rig.armature_create | name, transform, expected_scene_revision | mutation | create one empty local armature object/datablock with verified object/rig readback and cleanup on mismatch |
 | rig.bone_create | target, expected_rig_revision, name, head, tail, use_deform (optional) | mutation | create one standalone root edit bone through a bounded edit-mode transition with exact readback and verified removal recovery |
@@ -1426,3 +1428,23 @@ Current Level 3 source progress: **100%**.
   bounded registry/client cap to **212**.
 - Evaluated constraints/IK, pose-key edit/remove/retime, baking, NLA and real Blender runtime
   behavior remain unverified/out of scope.
+
+
+### Level 7 milestone 6 limits
+
+- M6 only works with perspective camera data-block `lens` and `dof.focus_distance`.
+  Object movement/rotation animation is separate and unchanged.
+- The full camera Action and unkeyed optics values contribute to `camera_animation_revision`.
+- Mutation requires a fresh ObjectTarget, exact camera revision, an integer frame, lens 1..500,
+  focus_distance 0.01..10000, and LINEAR/BEZIER/CONSTANT interpolation.
+- The camera must have DOF enabled with no focus object, and its data-block must be editable,
+  local and used by exactly one object.
+- Foreign, shared, slotted, driver/NLA or unrelated camera FCurves are never adopted for mutation.
+- Existing frame overwrite, partial lens/focus channel sets and unsupported Action layouts are
+  rejected. Current global limits remain 64 FCurves and 1024 points.
+- Verification requires both lens/focus points and values, exact interpolation and Action
+  ownership; rollback restores original values and camera animation revision.
+- M6 adds two public tools, taking the factory from 212 to **214 typed tools** at the new
+  **214** registry/client cap.
+- Evaluated optics, focus targeting, cinematic composition and real Blender runtime behavior
+  are not verified by the source/fake-bpy CI.
