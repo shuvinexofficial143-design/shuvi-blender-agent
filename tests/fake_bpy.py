@@ -798,6 +798,40 @@ class FakeKeyframePoints(list):
         super().remove(point)
 
 
+class FakeNLAStrips(list):
+    def new(self, name, start, action):
+        frames = [
+            float(point.co[0])
+            for curve in action.fcurves
+            for point in curve.keyframe_points
+        ]
+        if not frames:
+            raise ValueError("NLA Action has no keys")
+        first, last = min(frames), max(frames)
+        strip = NS(
+            name=name,
+            action=action,
+            frame_start=float(start),
+            frame_end=float(start) + last - first,
+            action_frame_start=first,
+            action_frame_end=last,
+            blend_type="REPLACE",
+            influence=1.0,
+            scale=1.0,
+            repeat=1.0,
+            mute=False,
+        )
+        self.append(strip)
+        return strip
+
+
+class FakeNLATracks(list):
+    def new(self):
+        track = NS(name="NlaTrack", mute=False, strips=FakeNLAStrips())
+        self.append(track)
+        return track
+
+
 class FakeObject:
     def __init__(self, name, object_type="MESH"):
         self.name = name
@@ -869,7 +903,12 @@ class FakeObject:
         if self.animation_data is None:
             curves = []
             action = NS(name=self.name + "Action", users=1, fcurves=curves)
-            self.animation_data = NS(action=action, action_slot=None, drivers=[], nla_tracks=[])
+            self.animation_data = NS(
+                action=action,
+                action_slot=None,
+                drivers=[],
+                nla_tracks=FakeNLATracks(),
+            )
         curves = self.animation_data.action.fcurves
         if data_path in ("hide_render", "hide_viewport"):
             values = [getattr(self, data_path)]

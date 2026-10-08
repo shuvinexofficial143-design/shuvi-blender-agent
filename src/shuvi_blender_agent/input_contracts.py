@@ -4,6 +4,7 @@ from .animation import AnimationInspect, FrameRange, InsertKeyframe, SetFrame
 from .animation_camera import CameraAnimationInspect, CameraOpticsKeyframeInsert
 from .animation_controls import ControlInspect, ControlKeyframeInsert
 from .animation_keyframes import EditKeyframe, RemoveKeyframe, ReplaceKeyframe
+from .animation_nla import NLAInspect, NLAStripCreate
 from .animation_pose import PoseBoneAnimationInspect, PoseBoneKeyframeInsert
 from .animation_style import KeyframeStyleSet
 from .animation_timeline import TimelineRetime
@@ -319,6 +320,8 @@ def builtin_contracts() -> dict:
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),
         "animation.retime_apply": (mutation, TimelineRetime.parse),
+        "animation.nla_inspect": (read, NLAInspect.parse),
+        "animation.nla_strip_create": (mutation, NLAStripCreate.parse),
         "render.configure": (mutation, RenderConfig.parse),
         "render.execute": (SafetyClass.RENDER, FileAction.parse_png),
         "file.checkpoint": (SafetyClass.FILE_WRITE, FileAction.parse_blend),

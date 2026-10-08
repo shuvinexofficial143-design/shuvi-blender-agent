@@ -4,6 +4,7 @@ from .animation import AnimationOperations
 from .animation_camera import CameraAnimationOperations
 from .animation_controls import AnimationControlOperations
 from .animation_keyframes import AdvancedAnimationOperations
+from .animation_nla import ManagedNLAOperations
 from .animation_pose import PoseBoneAnimationOperations
 from .animation_style import AnimationStyleOperations
 from .animation_timeline import AnimationTimelineOperations
@@ -110,6 +111,7 @@ def create_registry(
         advanced_animation,
         AnimationStyleOperations(advanced_animation),
         AnimationTimelineOperations(advanced_animation),
+        ManagedNLAOperations(animation),
         PoseBoneAnimationOperations(animation, rigging),
         CameraAnimationOperations(objects),
         AnimationControlOperations(animation, rigging),
