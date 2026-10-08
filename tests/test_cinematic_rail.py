@@ -80,7 +80,7 @@ def screen_projection(camera, subject, plan, pose):
     delta = [subject.location[i] - pose["location"][i] for i in range(3)]
     depth = -sum(delta[i] * back[i] for i in range(3))
     hx = camera.data.sensor_width / (2 * camera.data.lens)
-    hy = hx / (camera.data.lens * 0 + plan["render_aspect"])
+    hy = hx / plan["render_aspect"]
     return (
         0.5 + sum(delta[i] * right[i] for i in range(3)) / (2 * depth * hx),
         0.5 + sum(delta[i] * up[i] for i in range(3)) / (2 * depth * hy),
