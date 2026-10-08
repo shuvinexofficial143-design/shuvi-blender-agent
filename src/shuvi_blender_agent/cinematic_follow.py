@@ -199,7 +199,9 @@ class CameraFollowOperations:
         return camera, subject, before, subject_before, result
 
     def preview(self, request: Request, action: FollowPreview):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[4])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[4]
+        )
 
     def apply(self, request: Request, action: FollowApply):
         camera, subject, before, subject_before, plan = self._plan(action.preview)
@@ -216,7 +218,9 @@ class CameraFollowOperations:
         def rollback():
             for item in reversed(made):
                 if item not in camera.constraints:
-                    raise AgentError(ErrorCode.VERIFICATION_FAILED, "Follow constraint identity lost")
+                    raise AgentError(
+                        ErrorCode.VERIFICATION_FAILED, "Follow constraint identity lost"
+                    )
                 camera.constraints.remove(item)
             camera.location = original_location
             camera.rotation_euler = original_rotation
@@ -304,7 +308,9 @@ class CameraFollowOperations:
                         "after": after,
                         "follow_token": token,
                         "camera_local_offset": plan["camera_local_offset"],
-                        "predicted_initial_world_location": plan["predicted_initial_world_location"],
+                        "predicted_initial_world_location": (
+                            plan["predicted_initial_world_location"]
+                        ),
                         "evaluated_follow_verified": False,
                         "real_runtime_verified": False,
                     },
@@ -370,7 +376,9 @@ class CameraFollowOperations:
             self.bpy.context.scene.camera = old_active
             self.bpy.context.view_layer.update()
             if self.inspector.snapshot(camera)["revision"] != before["revision"]:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Follow release recovery unverified")
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Follow release recovery unverified"
+                )
             self._owned[before["object_id"]] = (
                 new_copy, new_aim, subject, token, original_location, original_rotation
             )
