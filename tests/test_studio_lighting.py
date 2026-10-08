@@ -119,7 +119,7 @@ def test_l9_m1_preset_creates_three_real_area_lights(preset):
         assert list(obj.rotation_euler) == entry["rotation_euler"]
         assert obj.data.users == 1
         assert obj in bpy.context.scene.objects
-    assert subject.data.object_type == "MESH"
+    assert subject.type == "MESH"
 
 
 def test_l9_m1_roles_have_real_angular_separation_and_subject_aim():
