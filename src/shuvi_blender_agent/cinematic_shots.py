@@ -249,11 +249,7 @@ class CinematicShotOperations:
                 "rotation_mode": "XYZ",
                 "subject_revision": subject_before["revision"],
                 "lens_mm": plan["lens_mm"],
-                "active_camera": (
-                    True
-                    if action.preview.make_active
-                    else old_active is camera
-                ),
+                "active_camera": (True if action.preview.make_active else old_active is camera),
                 "revision_changed": True,
             }
             actual = {
