@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from .animation_keyframes import AdvancedAnimationOperations, PATH_BOUNDS
+from .animation_keyframes import PATH_BOUNDS, AdvancedAnimationOperations
 from .errors import AgentError, ErrorCode
 from .models import ObjectTarget
 from .safety import SafetyClass
