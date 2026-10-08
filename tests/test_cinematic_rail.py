@@ -158,7 +158,8 @@ def test_m4_safe_envelope_accounts_for_control_extremes():
     base = preview(registry, params)
     extremes = preview(
         registry,
-        params | {
+        params
+        | {
             "control_a": [0.25, 0.25],
             "control_b": [-0.25, -0.25],
             "end_offset": [0.25, -0.25],
@@ -190,9 +191,19 @@ def test_m4_changes_to_control_point_or_subject_invalidate_revision():
     assert camera.animation_data is None
 
 
-@pytest.mark.parametrize("blocker", [
-    "occupied", "shared", "parent", "constraint", "linked", "locked", "lens_shift", "clip",
-])
+@pytest.mark.parametrize(
+    "blocker",
+    [
+        "occupied",
+        "shared",
+        "parent",
+        "constraint",
+        "linked",
+        "locked",
+        "lens_shift",
+        "clip",
+    ],
+)
 def test_m4_does_not_author_rail_on_unsafe_camera(blocker):
     _, camera, subject, inspector, registry = setup()
     if blocker == "occupied":
@@ -218,18 +229,21 @@ def test_m4_does_not_author_rail_on_unsafe_camera(blocker):
     assert result.error.code == ErrorCode.SAFETY_DENIED
 
 
-@pytest.mark.parametrize("change", [
-    {"control_a": [0.35, 0]},
-    {"control_a": [1, 2, 3]},
-    {"control_a": "0,0"},
-    {"control_b": [False, 0]},
-    {"control_b": [-0.5, 0]},
-    {"end_offset": [0, 0], "control_a": [0, 0], "control_b": [0, 0]},
-    {"start_frame": 0},
-    {"end_frame": 17},
-    {"end_frame": 900},
-    {"make_active": "true"},
-])
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"control_a": [0.35, 0]},
+        {"control_a": [1, 2, 3]},
+        {"control_a": "0,0"},
+        {"control_b": [False, 0]},
+        {"control_b": [-0.5, 0]},
+        {"end_offset": [0, 0], "control_a": [0, 0], "control_b": [0, 0]},
+        {"start_frame": 0},
+        {"end_frame": 17},
+        {"end_frame": 900},
+        {"make_active": "true"},
+    ],
+)
 def test_m4_strict_validation_fails_closed(change):
     _, camera, subject, inspector, _ = setup()
     with pytest.raises(AgentError):
