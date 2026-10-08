@@ -209,7 +209,9 @@ class ManagedNLAOperations:
         before = self._state(action.target.object_id)
         require_revision(action.expected_nla_revision, before["nla_revision"])
         if not before["managed_nla_ready"]:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "NLA Action is not eligible for managed push-down")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "NLA Action is not eligible for managed push-down"
+            )
         frames = before["source_frames"]
         duration = int(frames[-1] - frames[0])
         if duration < 1 or action.start_frame + duration > 100_000:
