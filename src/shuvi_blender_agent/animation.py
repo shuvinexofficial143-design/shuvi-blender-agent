@@ -1,6 +1,5 @@
 """Timeline controls and bounded keyframes on actions created by this session."""
 
-import math
 from dataclasses import dataclass
 
 from .animation_state import action_curves
@@ -118,7 +117,7 @@ class AnimationOperations:
                     not isinstance(co, list)
                     or len(co) != 2
                     or not all(
-                        isinstance(value, (int, float)) and math.isfinite(value) for value in co
+                        type(value) in (int, float) and -float("inf") < value < float("inf") for value in co
                     )
                 ):
                     raise AgentError(ErrorCode.SAFETY_DENIED, "Animation point is invalid")
