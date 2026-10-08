@@ -1,6 +1,5 @@
 """M10 source acceptance and managed Action recovery regression coverage."""
 
-import pytest
 from fake_bpy import fake_bpy
 
 from shuvi_blender_agent import ErrorCode, Request, Status
