@@ -834,3 +834,29 @@ Level 8 source milestone 6/10 => **60%** source only. Factory/client tools
 **238**, live Blender acceptance **0%**, production ready No.
 **STOP** before Level 8 M7, real runtime testing/rendering or Shuvi main
 integration unless the user authorizes it separately.
+
+
+## Level 8 M7 — Dynamic Camera Position Follow (source only)
+
+Added `cinema.follow_preview`, `cinema.follow_apply` and
+`cinema.follow_release` tools. An object camera can safely follow target
+translation using COPY_LOCATION (offset enabled, owner/target WORLD space,
+all XYZ), then TRACK_TO (local -Z, up +Y). The camera's stored location
+is initialized to the planned world camera position minus the subject's
+current world origin, avoiding an immediate offset jump under Blender's
+documented constraint semantics. Apply verifies two exact constraints,
+target pointers, raw pose, unchanged subject and lens. Release removes
+only the exact same-session owned pair and restores the saved pre-follow
+pose, with best-effort rollback/reconstruction on interruption.
+
+No existing camera Action/constraint may be adopted; strict fresh targets
+and stale plan revisions fail closed. Actual evaluated Blender target
+tracking is NOT source-testable, only constraint state and geometry
+calculations are fake-bpy tested. No render, no physical collision, no
+smooth/damped motion guarantee. Releasing after subject moves returns
+to pre-follow pose (may visibly jump).
+
+Level 8 source progress **70%**, public tools **241**,
+real Blender runtime acceptance **0%**, production ready **No**.
+STOP before M8, Blender launch/render and main Shuvi integration unless
+explicit user permission.
