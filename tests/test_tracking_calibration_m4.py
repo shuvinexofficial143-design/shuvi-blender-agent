@@ -172,7 +172,7 @@ def test_m4_registry_and_permissions():
     bpy, _, cam, _, args = setup()
     catalog = create_registry(bpy).catalog()
     names = {item["name"] for item in catalog}
-    assert len(names) == 296
+    assert len(names) == 299
     assert {
         "tracking.calibration_preview",
         "tracking.calibration_apply",
