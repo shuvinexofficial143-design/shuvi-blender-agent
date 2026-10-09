@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **20%** (Milestones 1–2 of 10).
+Current source progress: **30%** (Milestones 1–3 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M2 source progress is **20%**.
+Level 9 M1–M3 source progress is **30%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M3, Blender launch/render/live evaluation,
+**STOP** before Level 9 M4, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -106,4 +106,28 @@ itself fails; affected state must be inspected manually.
 
 M2 raises the typed tool cap from **252 to 253**; source progress
 is **20% of Level 9 only**. Runtime/render acceptance remains **0%**.
-Production ready: **No**. Stop before M3 without new permission.
+Production ready: **No**. M3 was subsequently explicitly authorized.
+
+
+## M3 — Cinematic Color & Mood (20% → 30%)
+
+The existing strict `lighting.studio_preview` and `lighting.studio_apply`
+accept optional `mood`: NEUTRAL (backward-compatible default),
+GOLDEN_HOUR, MOONLIT_BLUE or TEAL_AMBER. Each non-neutral mood applies
+actual role-specific RGB and energy multipliers to all 3–5 AREA
+light datablocks at initial creation, including Catchlight/Top/Edge.
+Positions and pre-existing foreign lights remain unchanged.
+
+Exact revisioned previews include mood and all resulting values.
+Changing mood after preview fails stale-state verification. Creation
+readback checks actual color and energy; partial creation or corruption
+removes only the newly created rig and verifies original scene state.
+Same-session release remains the original checked owned-only workflow.
+
+These are RGB/power authoring presets, *not* color grading, compositor,
+scene view transform changes, calibrated color temperature, or evidence
+that a rendered frame achieved the requested visual mood.
+Tool count remains **253**; Level 9 source **30%**.
+Real Blender runtime/render acceptance **0%**, production ready No.
+The user has authorized M4 alongside M3 in the same `next`; M4
+requires separate implementation/CI verification.

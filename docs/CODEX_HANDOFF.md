@@ -967,3 +967,15 @@ readback, rollback and same-session owned release apply to all rigs.
 Source/fake-bpy and CI only; Blender runtime/render acceptance **0%**,
 production-ready **No**. Stop before Level 9 M3; do not launch Blender,
 render or change the master Shuvi project without new authorization.
+
+
+## Level 9 M3 — Cinematic Color & Mood (source only)
+
+Authorized M3 extends `lighting.studio_preview/apply` with optional
+strict `mood` (NEUTRAL, GOLDEN_HOUR, MOONLIT_BLUE, TEAL_AMBER).
+The three cinematic styles set per-role RGB and Watts multipliers on
+3/4/5-light rigs at actual bpy light-creation time. Existing requests
+default to NEUTRAL unchanged. Preview revision and readback cover the
+resulting values; failed writes roll back only newly owned light objects
+and datablocks. Tool count remains 253; source Level 9 30%.
+Blender runtime 0%; no claim of real visual color grading.
