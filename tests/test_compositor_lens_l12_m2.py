@@ -175,7 +175,7 @@ def test_m2_one_use_nonce_changes_after_release_and_recreate():
 def test_m2_registry_tool_allowlist_and_readonly_policy():
     bpy, _, tree, _, args = prepare()
     names = {entry["name"] for entry in create_registry(bpy).catalog()}
-    assert len(names) == 317
+    assert len(names) == 320
     assert {
         "compositor.lens_preview",
         "compositor.lens_apply",
