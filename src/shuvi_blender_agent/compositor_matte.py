@@ -218,10 +218,13 @@ class MatteRefinementOperations:
             float(key.despill_factor),
             [float(value) for value in key.inputs["Key Color"].default_value],
         ]
-        if current_key_state != state["key_state"] or not compare(
-            state["expected"],
-            matte_actual(tree, key, state["matte"], state["alpha"]),
-        ).matched:
+        if (
+            current_key_state != state["key_state"]
+            or not compare(
+                state["expected"],
+                matte_actual(tree, key, state["matte"], state["alpha"]),
+            ).matched
+        ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Matte or Keying settings edited")
         tree.nodes.remove(state["alpha"])
         tree.nodes.remove(state["matte"])
