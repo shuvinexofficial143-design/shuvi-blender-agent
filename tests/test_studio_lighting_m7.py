@@ -148,9 +148,9 @@ def test_m7_existing_foreign_light_is_never_modified():
         Request(
             "lighting.tune_preview",
             {
-            "expected_lighting_token": token,
-            "role": "Rim",
-            "settings": {"energy_watts": 100},
+                "expected_lighting_token": token,
+                "role": "Rim",
+                "settings": {"energy_watts": 100},
             },
         )
     )
@@ -185,9 +185,9 @@ def test_m7_unknown_role_and_foreign_token_denied():
         Request(
             "lighting.tune_preview",
             {
-            "expected_lighting_token": token,
-            "role": "NotARole",
-            "settings": {"energy_watts": 100},
+                "expected_lighting_token": token,
+                "role": "NotARole",
+                "settings": {"energy_watts": 100},
             },
         )
     )
@@ -196,9 +196,9 @@ def test_m7_unknown_role_and_foreign_token_denied():
         Request(
             "lighting.tune_preview",
             {
-            "expected_lighting_token": "not-owned",
-            "role": "Key",
-            "settings": {"energy_watts": 100},
+                "expected_lighting_token": "not-owned",
+                "role": "Key",
+                "settings": {"energy_watts": 100},
             },
         )
     )
