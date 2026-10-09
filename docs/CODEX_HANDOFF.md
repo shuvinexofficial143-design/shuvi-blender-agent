@@ -1103,3 +1103,8 @@ Real Blender `OCEAN` modifier geometry generation with bounded resolution, size,
 ## Level 10 M3 — Ocean foam/spray attributes
 
 M2 OCEAN modifier now optionally enables and verifies foam vertex-color data layer and spray direction layer via actual bpy modifier attributes. Strict bounded field validation, no external files. M2 legacy unchanged, full readback and owned release enforced. 274 tools, Level 10 source 30%, no Blender execution/render acceptance.
+
+
+## Level 10 M4 — Real Ocean time F-Curves
+
+Three new typed tools preview/apply/restore 2–8 strict monotonic OceanModifier.time keyframes with genuine Blender RNA keyframe insertion, exact Action/curve readback, same-session ownership, original Ocean time and unanimated-object state restoration. Rejects preexisting animation, external key edits, changed Ocean and stale revisions; fail-closed rollback. 277 typed tools, Level 10 source 40%, no actual Blender runtime/animation evaluation.

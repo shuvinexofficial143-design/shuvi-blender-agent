@@ -1,6 +1,6 @@
 # Level 10 — VFX & Simulation
 
-Current source progress: **30%** (M1–M3 of 10).
+Current source progress: **40%** (M1–M4 of 10).
 Real Blender runtime/frame evaluation/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -60,3 +60,40 @@ rendered visual evidence.
 Registered typed tools stay **274**, Level 10 source **30%**.
 Runtime/evaluated-frame/render acceptance **0%**.
 M4 remains user-authorized under the same `next`.
+
+
+## M4 — Animated OceanModifier.time timeline keyframes (30% → 40%)
+
+New typed `vfx.ocean_timeline_preview` (READ_ONLY),
+`vfx.ocean_timeline_apply` (MUTATION) and
+`vfx.ocean_timeline_restore` (MUTATION) accept a currently
+owned Ocean token plus 2–8 strictly increasing frame/time pairs.
+The frames must lie in the scene's original range, and the
+Ocean times must be finite, bounded and strictly increasing.
+Existing animation-data objects are refused.
+
+Apply writes the **real Blender OceanModifier.time** for every
+specified pair and invokes `OceanModifier.keyframe_insert(
+data_path="time", frame=...)`. It reads back actual time
+F-Curve keyframe coordinates from the object's current Blender
+Action using Blender's legacy/slotted action compatibility reader
+and verifies every frame/time coordinate plus the final current
+modifier time. The resulting same-session token guards ownership,
+frame curve identity, and the exact post-write scene revision.
+
+Restore refuses changed Ocean modifiers, altered keyframe
+coordinates, a replaced action, or foreign changes to the scene.
+It clears only animation data created on a previously unanimated
+object, removes the newly-owned orphan action when safe, restores
+the original Ocean.time and verifies the exact prior snapshot,
+then re-enables normal owned `vfx.ocean_release`. The
+source-side tests include interrupted key insertion and cleanup.
+No user-created Action or foreign keyframes are adopted/deleted.
+
+This enables Blender timeline **keyframe data**, but does not
+evaluate time between keys, play an animation, bake ocean
+simulation caches, prove animated geometry or render frames.
+**Level 10 source 40%**, 277 registered typed tools.
+Real Blender runtime/frame/render acceptance **0%**.
+Production-ready **No**. Stop before Level 10 M5 without user
+authorization.

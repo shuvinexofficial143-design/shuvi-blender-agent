@@ -88,3 +88,6 @@ Level 10 VFX & Simulation **20% source** (M1–M2/10): directly creates a bounde
 Level 10 M2 Ocean Surface: typed vfx.ocean_preview/apply/release create a bounded real OCEAN Generate modifier, with seed, time, wind, wave geometry and source-verified ownership/release. Source Level 10 20%, live simulated frames 0, public tools 274.
 
 Level 10 M3 Ocean Foam/Spray: optional guarded real OceanModifier foam mask and spray direction data-layer configuration, exact readback and foreign-change-safe release. Level10 source 30%, runtime 0%; total tools 274.
+
+
+Level 10 M4 Ocean Timeline Animation: three typed tools add 2–8 genuine bpy OceanModifier.time F-Curve keyframes in the current scene timeline and verify each point; guarded one-use restore clears only the new action and reinstates previous Ocean time. Only previously unanimated, current-session owned local mesh accepted. 277 public tools; Level10 source 40%; real rendered frames 0.

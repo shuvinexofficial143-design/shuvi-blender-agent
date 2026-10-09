@@ -765,11 +765,62 @@ class FakeLinks(list):
 
 
 class FakeModifiers(list):
+    def __init__(self, owner=None):
+        super().__init__()
+        self.owner = owner
+
     def get(self, name):
         return next((item for item in self if item.name == name), None)
 
     def new(self, name, modifier_type):
         modifier = NS(name=name, type=modifier_type, show_viewport=True, show_render=True)
+        if modifier_type == "OCEAN" and self.owner is not None:
+            owner = self.owner
+
+            def path_from_id(prop):
+                if prop != "time":
+                    raise ValueError("Only Ocean time can be keyed in fake")
+                return f'modifiers["{modifier.name}"].time'
+
+            def keyframe_insert(data_path, frame):
+                path = path_from_id(data_path)
+                if owner.animation_data is None:
+                    action = NS(name=owner.name + "OceanAction", users=1, fcurves=[])
+                    owner.animation_data = NS(
+                        action=action,
+                        action_slot=None,
+                        drivers=[],
+                        nla_tracks=FakeNLATracks(),
+                    )
+                action = owner.animation_data.action
+                curve = next(
+                    (item for item in action.fcurves if item.data_path == path),
+                    None,
+                )
+                if curve is None:
+                    curve = NS(
+                        data_path=path,
+                        array_index=0,
+                        keyframe_points=FakeKeyframePoints(),
+                        update=lambda: None,
+                    )
+                    action.fcurves.append(curve)
+                value = float(modifier.time)
+                curve.keyframe_points.append(
+                    NS(
+                        co=[float(frame), value],
+                        interpolation="BEZIER",
+                        easing="AUTO",
+                        handle_left_type="AUTO",
+                        handle_right_type="AUTO",
+                        handle_left=[float(frame) - 1.0 / 3.0, value],
+                        handle_right=[float(frame) + 1.0 / 3.0, value],
+                    )
+                )
+                return True
+
+            modifier.path_from_id = path_from_id
+            modifier.keyframe_insert = keyframe_insert
         self.append(modifier)
         return modifier
 
@@ -920,7 +971,7 @@ class FakeObject:
         self._selected = False
         self.parent = None
         self.users_collection = []
-        self.modifiers = FakeModifiers()
+        self.modifiers = FakeModifiers(self)
         self.vertex_groups = FakeVertexGroups(self)
         self.material_slots = []
         self.animation_data = None
@@ -967,6 +1018,8 @@ class FakeObject:
         self.asset_data = NS(description="")
 
     def animation_data_clear(self):
+        if self.animation_data is not None and self.animation_data.action is not None:
+            self.animation_data.action.users = 0
         self.animation_data = None
 
     def keyframe_insert(self, data_path, frame):
