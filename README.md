@@ -94,3 +94,6 @@ Level 10 M4 Ocean Timeline Animation: three typed tools add 2–8 genuine bpy Oc
 
 
 Level 10 M5 Cloth Simulation: real Cloth modifier with bounded quality, mass, air drag, tensile and bend stiffness, self collisions and safety verified release. Level 10 source 50%, real Blender simulation runtime 0%; 280 tools.
+
+
+Level 10 M6 Collision Simulation: supports real Blender COLLISION obstacle modifiers with thickness, cloth friction, damping, culling/normal flags. M5 Cloth and M6 Collision may configure separate scene objects. Source Level 10 60%, 283 tools, runtime 0%.

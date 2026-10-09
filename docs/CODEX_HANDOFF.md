@@ -1113,3 +1113,8 @@ Three new typed tools preview/apply/restore 2–8 strict monotonic OceanModifier
 ## Level 10 M5 — Cloth physics setup
 
 Actual Blender CLOTH modifier configuration: quality, mass, air damping, tension and bending stiffness, self collision plus separation. Owned modifier generation, strict typed validation, readback, fail-closed cleanup and no foreign adoption. Source 50%, tools 280; live frame/render acceptance 0%.
+
+
+## Level10 M6 — Cloth Collision Obstacles
+
+Three typed operations for actual collision Blender modifier on another local mesh. Enables physics collider, configures bounded cloth friction, outer thickness, damping, culling and normal flags with full nested RNA readback and owner-only rollback/release. Integration test validates M5 Cloth and M6 Collision coexist on different meshes. Source 60%, tools 283, no evaluated Blender frames.

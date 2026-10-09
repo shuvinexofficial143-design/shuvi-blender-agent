@@ -1,6 +1,6 @@
 # Level 10 — VFX & Simulation
 
-Current source progress: **50%** (M1–M5 of 10).
+Current source progress: **60%** (M1–M6 of 10).
 Real Blender runtime/frame evaluation/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -102,3 +102,8 @@ authorization.
 ## M5 — Blender Cloth physical simulation setup (40% → 50%)
 
 Adds `vfx.cloth_preview/apply/release` typed commands. Creates an actual bpy `CLOTH` modifier on a local editable mesh. Sets `ClothModifier.settings` quality (2–20), per-vertex mass, air damping, tension/bending stiffness, and `ClothModifier.collision_settings` self collision and minimum collision distance. Enforces bounds, unique modifier name/type, fresh mesh and scene revisions and maximum stack size. All seven fields and the modifier's instance/index/type/render flags are read back and compared; corrupted writes roll back the owned modifier, while edited foreign or managed content is never adopted or silently deleted. Release consumes a session-only token and verifies original scene state. No evaluated cloth solver frames, bake or visuals have been run. **Level 10 50% source, 280 tools; Blender runtime 0%.** M6 follows under this authorized `next`.
+
+
+## M6 — Collision Surface for Cloth/Particle obstacles (50% → 60%)
+
+Adds typed `vfx.collision_preview/apply/release` for a separate existing local MESH. Applies a real bpy `COLLISION` modifier and edits Blender `CollisionModifier.settings`: `use=True`, bounded `thickness_outer` (0.001–1), `cloth_friction` (0–80), `damping` (0–1), Boolean `use_culling` and `use_normal`. Read-only preview binds a fresh target, scene, modifier index and collision geometry options. Apply directly writes nested Blender RNA properties and verifies the exact readback; failures delete only the owned modifier with verified rollback. Release requires session ownership and an unmodified scene/owned collider; foreign meshes/modifiers remain unchanged. M5 Cloth and M6 Collision can coexist on different mesh objects, and the tests verify reverse-order safe release. This configures a collider for subsequent physics execution but does **not** prove that cloth actually collides with it in a rendered or evaluated frame. Source Level10 **60%** (M1–M6); **283** public typed tools; real Blender runtime/frame/render acceptance **0%**; production ready No. Stop before M7 without user authorization.

@@ -774,6 +774,15 @@ class FakeModifiers(list):
 
     def new(self, name, modifier_type):
         modifier = NS(name=name, type=modifier_type, show_viewport=True, show_render=True)
+        if modifier_type == "COLLISION":
+            modifier.settings = NS(
+                thickness_outer=0.02,
+                cloth_friction=5.0,
+                damping=0.0,
+                use_culling=False,
+                use_normal=False,
+                use=True,
+            )
         if modifier_type == "CLOTH":
             modifier.settings = NS(
                 quality=5,
