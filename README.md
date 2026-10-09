@@ -48,7 +48,7 @@ Level 5 Geometry Nodes source roadmap is **100% complete** (Milestones 1-10 of 1
 Level 6 Rigging source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 7 Advanced Animation source roadmap is **100% complete** (Milestones 1-10 of 10).
 Level 8 Cinematography source roadmap is **100% complete** (Milestones 1-10 of 10).
-Level 9 Lighting & Look Development source roadmap is **70%** (Milestones 1–7 of 10): verified studio/World lighting with role-specific target aim and safe in-place per-fixture color, energy, emitter size and shadow tuning, without recreating the rig.
+Level 9 Lighting & Look Development source roadmap is **80%** (Milestones 1–8 of 10): source-verified live per-light tuning and whole-rig Film Noir, Product Gloss and Neon Split cinematic looks with exact guarded one-step undo.
 Level 7 Milestone 10 adds bounded animation structure QA, current-session managed Action recovery capture/restore with readback verification and rollback, and scoped source-only acceptance. These source capabilities are not live Blender acceptance.
 Level 8 Milestone 1 adds bounded subject-centered camera shot planning and verified camera framing using lens, sensor width, render aspect, conservative subject bounds, explicit angles and safety checks.
 Level 8 Milestone 2 adds nine fixed Rule-of-Thirds composition anchors, actual camera plane repositioning, adaptive clipping/framing clearance and shared verified camera rollback.

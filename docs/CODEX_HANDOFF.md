@@ -1047,3 +1047,18 @@ check original readback. Owned release works after successful tuning.
 Public tools **258**; Level 9 source **70%** (M1–M7).
 Real Blender and rendered lighting acceptance **0%**.
 M8 is separately verified under current next permission.
+
+
+## Level 9 M8 — Whole-rig cinematic look swap and one-step undo
+
+`lighting.look_preview/apply/restore` implement three named
+visual lighting styles, all 3–5 owned lamp RGB and energy updates
+in one guarded operation, exact readback of every fixture, rollback
+on any mismatch, and one-use verified undo of the previous rig
+light configuration. Changed lamps, scene edits, stale/fake
+tokens, or external interference refuse restore. An M7 tune after
+a look expires its undo token rather than overriding new edits.
+
+Public tools **261**, source roadmap Level 9 **80%** (M1–M8),
+real Blender runtime/render verification **0%**. No M9 and no
+master Shuvi merge until explicit next.
