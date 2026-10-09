@@ -197,7 +197,7 @@ def evaluate(acceptance, payload):
 
 def test_m10_reconciles_cap_without_new_public_tools():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 302
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 305
     names = {item["name"] for item in registry.catalog()}
     assert "rig.level6_acceptance" not in names
     assert "rig.workflow_preview" not in names
