@@ -258,12 +258,14 @@ class WorldLightingOperations:
             expected = self._expected(plan)
             checked = compare(expected, self._read(new_world))
             if checked.matched and self.bpy.context.scene.world is new_world:
-                token = revision({
-                    "scene": plan["scene_revision"],
-                    "new_world": self._pointer(new_world),
-                    "original": plan["original_world_pointer"],
-                    "expected": expected,
-                })
+                token = revision(
+                    {
+                        "scene": plan["scene_revision"],
+                        "new_world": self._pointer(new_world),
+                        "original": plan["original_world_pointer"],
+                        "expected": expected,
+                    }
+                )
                 self._owned[token] = {
                     "new": new_world,
                     "before": original,
@@ -272,7 +274,9 @@ class WorldLightingOperations:
                     "image": image,
                 }
                 return Result(
-                    request.request_id, request.command_id, Status.VERIFIED,
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
                     {
                         "world_token": token,
                         "mode": plan["mode"],
@@ -293,7 +297,9 @@ class WorldLightingOperations:
             ) from exc
         self._clean(new_world, original, plan["scene_revision"])
         return Result(
-            request.request_id, request.command_id, Status.FAILED,
+            request.request_id,
+            request.command_id,
+            Status.FAILED,
             {"rolled_back": True, "recovery_verified": True},
             AgentError(ErrorCode.VERIFICATION_FAILED, "World node graph readback mismatch"),
             checked.to_dict(),
@@ -326,7 +332,9 @@ class WorldLightingOperations:
         self._clean(current, before, owned["scene_revision"])
         del self._owned[action.expected_world_token]
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
             {"restored_original_world": True, "removed_owned_world": True},
             verification=compare({"restored": True}, {"restored": True}).to_dict(),
         )

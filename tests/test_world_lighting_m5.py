@@ -46,9 +46,7 @@ def apply(reg, data, plan):
 
 
 def release(reg, token):
-    return reg.dispatch(
-        Request("lighting.world_release", {"expected_world_token": token})
-    )
+    return reg.dispatch(Request("lighting.world_release", {"expected_world_token": token}))
 
 
 @pytest.mark.parametrize("mode", ["COLOR", "HDRI"])
@@ -153,8 +151,10 @@ def test_m5_exception_during_node_creation_restores_original_world():
     data = args()
     planned = preview(reg, data)
     original = bpy.data.worlds.new
+
     def fail(name):
         raise RuntimeError("New World failure")
+
     bpy.data.worlds.new = fail
     outcome = apply(reg, data, planned)
     assert outcome.error.code == ErrorCode.EXECUTION_ERROR
@@ -176,10 +176,16 @@ def test_m5_changed_managed_world_or_foreign_session_token_refuses_release():
     assert bpy.context.scene.world is world
 
 
-@pytest.mark.parametrize("field,value", [
-    ("strength", 15), ("strength", True), ("mode", "SKY"),
-    ("color", [1, 2]), ("image_name", "../../etc/passwd"),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("strength", 15),
+        ("strength", True),
+        ("mode", "SKY"),
+        ("color", [1, 2]),
+        ("image_name", "../../etc/passwd"),
+    ],
+)
 def test_m5_rejects_invalid_payload_or_unloaded_hdri(field, value):
     bpy, _, reg = setup()
     data = args("HDRI") if field == "image_name" else args()
