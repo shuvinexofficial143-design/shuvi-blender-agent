@@ -1,6 +1,6 @@
 # Level 10 — VFX & Simulation
 
-Current source progress: **80%** (M1–M8 of 10).
+Current source progress: **90%** (M1–M9 of 10).
 Real Blender runtime/frame evaluation/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -114,3 +114,6 @@ Existing vfx.cloth_preview/apply/release accepts optional paired settings.pin_gr
 
 ### M8 — Two-Mesh Cloth + Collider Workflow (70% → 80%)
 The new typed `vfx.cloth_collision_preview/apply/release` creates real CLOTH and COLLISION modifiers on two distinct editable local meshes, validates source revisions and actual RNA readback, and rolls back newly-created modifiers in reverse order on second-stage failures. Preflight release protects external edits, group weights, foreign modifiers and one-use tokens. Source-only: no simulated frames, baked physics or renders tested.
+
+### M9 — Cloth Pressure & Inflatable Physics (80% → 90%)
+The existing typed cloth preview/apply/release supports optional nested `settings.pressure`: bounded force, ambient factor, target volume and use_target_volume. On a bounded, oriented closed mesh it writes real ClothSettings.use_pressure, uniform_pressure_force, pressure_factor, target_volume and use_pressure_volume. Previews fingerprint face topology. Exact RNA readback and owned-only release protect unrelated data. This replaces the proposed Wind effector approach because context-sensitive bpy.ops effector creation is not safely supported in the present deterministic modifier architecture. No evaluated solver frames or rendered inflatable behavior accepted.

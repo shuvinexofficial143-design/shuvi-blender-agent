@@ -1964,3 +1964,5 @@ real Blender runtime/render acceptance **0%**, production ready No.
 - Level 10 M7: existing `vfx.cloth_*` permits paired `settings.pin_group` + `settings.pin_stiffness` (0..50), guarded by existing vertex weight fingerprint. Tool count unchanged.
 
 - M8: `vfx.cloth_collision_preview/apply/release` use `cloth` and `collider` payload sub-objects, two-mesh safety, source preview revision, exact readback, guarded compound rollback/release. 286 public tools.
+
+Level 10 M9: `vfx.cloth_*` optional `settings.pressure` with force, ambient_factor, target_volume, use_target_volume; requires closed manifold polygon winding. No new public tools (286).
