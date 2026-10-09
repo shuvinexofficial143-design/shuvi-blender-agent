@@ -782,9 +782,7 @@ class FakeModifiers(list):
                 tension_stiffness=15.0,
                 bending_stiffness=0.5,
             )
-            modifier.collision_settings = NS(
-                use_self_collision=False, distance_min=0.015
-            )
+            modifier.collision_settings = NS(use_self_collision=False, distance_min=0.015)
         if modifier_type == "OCEAN" and self.owner is not None:
             owner = self.owner
 

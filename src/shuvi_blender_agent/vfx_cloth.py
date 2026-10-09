@@ -37,12 +37,8 @@ def _cloth_settings(data):
         "quality": integer(data["quality"], "quality", 2, 20),
         "mass": number(data["mass"], "mass", 0.01, 10),
         "air_damping": number(data["air_damping"], "air_damping", 0, 10),
-        "tension_stiffness": number(
-            data["tension_stiffness"], "tension_stiffness", 0, 500
-        ),
-        "bending_stiffness": number(
-            data["bending_stiffness"], "bending_stiffness", 0, 500
-        ),
+        "tension_stiffness": number(data["tension_stiffness"], "tension_stiffness", 0, 500),
+        "bending_stiffness": number(data["bending_stiffness"], "bending_stiffness", 0, 500),
         "self_collision": data["self_collision"],
         "collision_distance": number(data["collision_distance"], "collision_distance", 0.001, 0.1),
     }
@@ -252,9 +248,7 @@ class ClothSimulationOperations(WaveSimulationOperations):
         return self._preview_physics(request, action)
 
     def apply(self, request: Request, action: ClothApply):
-        return self._apply_physics(
-            request, action.preview, action.expected_cloth_revision
-        )
+        return self._apply_physics(request, action.preview, action.expected_cloth_revision)
 
     def release(self, request: Request, action: ClothRelease):
         return self._release_physics(request, action.expected_cloth_token)
