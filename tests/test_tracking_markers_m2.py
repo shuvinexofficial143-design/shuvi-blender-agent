@@ -43,8 +43,11 @@ def setup(allow=True):
     track = NS(name="Corner", markers=markers, lock=False, has_bundle=False)
     tracked = NS(name="Camera", is_camera=True, tracks=Named([track]))
     clip = NS(
-        name="Footage", library=None, is_editable=True,
-        size=[1920, 1080], frame_duration=100,
+        name="Footage",
+        library=None,
+        is_editable=True,
+        size=[1920, 1080],
+        frame_duration=100,
         tracking=NS(objects=Named([tracked])),
     )
     bpy.data.movieclips = Named([clip])
@@ -152,8 +155,7 @@ def test_m2_read_only_policy_and_host_registry():
     bpy, _, track, _, args = setup()
     names = {t["name"] for t in create_registry(bpy).catalog()}
     assert len(names) == 293
-    assert {"tracking.marker_preview", "tracking.marker_apply",
-            "tracking.marker_restore"} <= names
+    assert {"tracking.marker_preview", "tracking.marker_apply", "tracking.marker_restore"} <= names
     locked = ToolRegistry(
         MarkerPlacementOperations(bpy).tools(),
         SafetyPolicy(allow_mutations=False),
@@ -164,13 +166,16 @@ def test_m2_read_only_policy_and_host_registry():
     assert [m.frame for m in track.markers] == [1]
 
 
-@pytest.mark.parametrize("markers", [
-    [],
-    [{"frame": 2, "co": [0.5, 0.5]}],
-    [{"frame": 2, "co": [-0.1, 0.5]}, {"frame": 3, "co": [0.5, 0.5]}],
-    [{"frame": 4, "co": [0.5, 0.5]}, {"frame": 3, "co": [0.5, 0.5]}],
-    [{"frame": 4, "co": [0.5, 0.5]}, {"frame": 4, "co": [0.5, 0.5]}],
-])
+@pytest.mark.parametrize(
+    "markers",
+    [
+        [],
+        [{"frame": 2, "co": [0.5, 0.5]}],
+        [{"frame": 2, "co": [-0.1, 0.5]}, {"frame": 3, "co": [0.5, 0.5]}],
+        [{"frame": 4, "co": [0.5, 0.5]}, {"frame": 3, "co": [0.5, 0.5]}],
+        [{"frame": 4, "co": [0.5, 0.5]}, {"frame": 4, "co": [0.5, 0.5]}],
+    ],
+)
 def test_m2_invalid_marker_payload(markers):
     _, _, _, _, args = setup()
     with pytest.raises(AgentError):
