@@ -113,9 +113,7 @@ class ClothColliderWorkflowOperations:
                 if any(item is mod for item in obj.modifiers):
                     obj.modifiers.remove(mod)
             self.bpy.context.view_layer.update()
-            remaining = any(
-                any(item is mod for item in obj.modifiers) for obj, mod in created
-            )
+            remaining = any(any(item is mod for item in obj.modifiers) for obj, mod in created)
             if remaining or self.inspector.summary()["revision"] != before:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Owned rollback failed")
         except Exception as exc:
@@ -139,8 +137,7 @@ class ClothColliderWorkflowOperations:
             )
             pin_group = action.preview.cloth.settings["pin_group"]
             if pin_group and (
-                self.cloth._pin_signature(fabric, pin_group)
-                != plan["cloth"]["pin_group_signature"]
+                self.cloth._pin_signature(fabric, pin_group) != plan["cloth"]["pin_group_signature"]
             ):
                 raise AgentError(ErrorCode.SAFETY_DENIED, "Pin group changed during setup")
             expected = {"cloth": cloth_expected, "collider": collider_expected}
@@ -151,11 +148,13 @@ class ClothColliderWorkflowOperations:
             checked = compare(expected, actual)
             if not checked.matched:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Compound RNA changed")
-            token = revision({
-                "cloth": self.cloth._pointer(created[0][1]),
-                "collider": self.collider._pointer(created[1][1]),
-                "plan": plan["workflow_revision"],
-            })
+            token = revision(
+                {
+                    "cloth": self.cloth._pointer(created[0][1]),
+                    "collider": self.collider._pointer(created[1][1]),
+                    "plan": plan["workflow_revision"],
+                }
+            )
             self._owned[token] = {
                 "fabric": fabric,
                 "obstacle": obstacle,
@@ -168,7 +167,9 @@ class ClothColliderWorkflowOperations:
                 "pin_signature": plan["cloth"].get("pin_group_signature"),
             }
             return Result(
-                request.request_id, request.command_id, Status.VERIFIED,
+                request.request_id,
+                request.command_id,
+                Status.VERIFIED,
                 {
                     "workflow_token": token,
                     "source_only": True,
@@ -208,17 +209,31 @@ class ClothColliderWorkflowOperations:
         self._rollback([(fabric, cloth_mod), (obstacle, coll_mod)], owned["before_scene"])
         del self._owned[token]
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
             {"removed_owned_modifiers": 2, "restored_scene": True, "source_only": True},
             verification=compare({"restored": True}, {"restored": True}).to_dict(),
         )
 
     def tools(self):
         return [
-            Tool("vfx.cloth_collision_preview", SafetyClass.READ_ONLY,
-                 ClothColliderPreview.parse, self.preview),
-            Tool("vfx.cloth_collision_apply", SafetyClass.MUTATION,
-                 ClothColliderApply.parse, self.apply),
-            Tool("vfx.cloth_collision_release", SafetyClass.MUTATION,
-                 ClothColliderRelease.parse, self.release),
+            Tool(
+                "vfx.cloth_collision_preview",
+                SafetyClass.READ_ONLY,
+                ClothColliderPreview.parse,
+                self.preview,
+            ),
+            Tool(
+                "vfx.cloth_collision_apply",
+                SafetyClass.MUTATION,
+                ClothColliderApply.parse,
+                self.apply,
+            ),
+            Tool(
+                "vfx.cloth_collision_release",
+                SafetyClass.MUTATION,
+                ClothColliderRelease.parse,
+                self.release,
+            ),
         ]
