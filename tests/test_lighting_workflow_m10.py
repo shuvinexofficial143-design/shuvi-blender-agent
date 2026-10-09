@@ -53,11 +53,14 @@ def setup(preset="PRODUCT_FIVE_POINT", hdri=False):
             "target_offsets": {"Key": [0.2, 0, 0.1]},
         },
         "world": (
-            {"name": "OwnedWorld", "mode": "HDRI", "strength": 0.8,
-             "image_name": "LoadedHDRI"}
-            if hdri else
-            {"name": "OwnedWorld", "mode": "COLOR", "strength": 0.6,
-             "color": [0.2, 0.32, 0.55]}
+            {"name": "OwnedWorld", "mode": "HDRI", "strength": 0.8, "image_name": "LoadedHDRI"}
+            if hdri
+            else {
+                "name": "OwnedWorld",
+                "mode": "COLOR",
+                "strength": 0.6,
+                "color": [0.2, 0.32, 0.55],
+            }
         ),
     }
     return bpy, subject, foreign_world, inspector, registry, data
@@ -84,11 +87,14 @@ def release(registry, token):
     )
 
 
-@pytest.mark.parametrize("preset,count", [
-    ("SOFT_STUDIO", 3),
-    ("BEAUTY_CLAMSHELL", 4),
-    ("PRODUCT_FIVE_POINT", 5),
-])
+@pytest.mark.parametrize(
+    "preset,count",
+    [
+        ("SOFT_STUDIO", 3),
+        ("BEAUTY_CLAMSHELL", 4),
+        ("PRODUCT_FIVE_POINT", 5),
+    ],
+)
 @pytest.mark.parametrize("recipe", [None, "PRODUCT_SHOWCASE"])
 def test_m10_integrated_real_lights_world_optional_recipe_and_full_release(preset, count, recipe):
     bpy, subject, old_world, inspector, registry, args = setup(preset)
@@ -198,12 +204,15 @@ def test_m10_external_lamp_edit_refuses_release_and_preserves_foreign_content():
     assert len(bpy.data.lights) == 5
 
 
-@pytest.mark.parametrize("bad", [
-    {"studio": {}, "world": {}},
-    {"studio": "unsafe", "world": {}},
-    {"studio": {}, "world": "unsafe"},
-    {"studio": {}, "world": {}, "recipe": "ARBITRARY"},
-])
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"studio": {}, "world": {}},
+        {"studio": "unsafe", "world": {}},
+        {"studio": {}, "world": "unsafe"},
+        {"studio": {}, "world": {}, "recipe": "ARBITRARY"},
+    ],
+)
 def test_m10_malformed_nested_workflow_is_rejected(bad):
     with pytest.raises(AgentError):
         WorkflowPreview.parse(bad)
@@ -214,7 +223,10 @@ def test_m10_factory_has_real_registered_typed_tools():
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=False))
     names = {row["name"] for row in registry.catalog()}
     assert len(registry.catalog()) == 268
-    assert {"lighting.workflow_preview", "lighting.workflow_apply",
-            "lighting.workflow_release"}.issubset(names)
+    assert {
+        "lighting.workflow_preview",
+        "lighting.workflow_apply",
+        "lighting.workflow_release",
+    }.issubset(names)
     with pytest.raises(AgentError):
         WorkflowPreview.parse({"studio": {}, "world": {}, "execute_python": "eval()"})

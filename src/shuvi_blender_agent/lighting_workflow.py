@@ -101,9 +101,7 @@ class LightingWorkflowOperations:
         return plan
 
     def preview(self, request: Request, action: WorkflowPreview):
-        return Result(
-            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)
-        )
+        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action))
 
     @staticmethod
     def _ensure_verified(result, step):
@@ -118,9 +116,7 @@ class LightingWorkflowOperations:
         if not self.world._is_world(world["new"]):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Managed World datablock no longer exists")
         real_world = self.world._read(world["new"])
-        real_lights = [
-            self.studio._read(obj, data) for obj, data in studio["created"]
-        ]
+        real_lights = [self.studio._read(obj, data) for obj, data in studio["created"]]
         expected = {"lights": studio["expected"], "world": world["expected"]}
         actual = {"lights": real_lights, "world": real_world}
         verified = compare(expected, actual)
@@ -179,7 +175,9 @@ class LightingWorkflowOperations:
                 }
             )
             self._owned[workflow_token] = {
-                "studio": studio_token, "world": world_token, "recipe": recipe_token
+                "studio": studio_token,
+                "world": world_token,
+                "recipe": recipe_token,
             }
             return Result(
                 request.request_id,
