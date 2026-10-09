@@ -1138,3 +1138,5 @@ Level 11 M4 (source 40%): added guarded `tracking.calibration_*` operations on n
 Level11 M5: source 50%, native MovieTrackingTrack strategy preview/apply/restore with bounded motion model and per-track settings; foreign marker and settings edit safe rollback/release, 299 typed tools. Not auto-tracking. Real Blender runtime 0%.
 
 Level11 M6: source 60%; `tracking.clip_inspect` optional `inspect_reconstruction` reports existing solver validity/error, exact-key 4×4 camera poses and track 3D bundles via Blender MovieTrackingReconstruction API with bounded finite checks. No auto-solve, no footage evaluation, no new tools (299), actual Blender runtime 0%.
+
+Level11 M7: source 70%, chroma key node setup on preexisting local compositor tree with real MovieClip and Keying nodes, strict color/matte settings, readback, foreign-edit guarded owned-only release. 302 tools. Actual image matte and Blender runtime not tested.

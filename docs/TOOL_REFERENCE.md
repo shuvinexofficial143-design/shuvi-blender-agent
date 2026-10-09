@@ -1980,3 +1980,5 @@ Level 10 M9: `vfx.cloth_*` optional `settings.pressure` with force, ambient_fact
 Level11 M5: `tracking.track_config_preview/apply/restore` edits safe typed existing MovieTrackingTrack settings (motion_model, pattern_match, correlation_min, frames_limit, margin, use_brute, use_normalization, weight), source verified and owned restore; 299 tools.
 
 - Level11 M6: `tracking.clip_inspect` optional `inspect_reconstruction` reads existing stored 3D camera tracking pose matrices and bundle reprojection metrics, no solve triggered. 299 tools unchanged.
+
+- Level11 M7: `compositor.key_preview/apply/release` add native loaded MovieClip → Keying nodes with RGB key color, black/white matte levels, despill and owned-only safe rollback; no output rewiring or rendering. 302 tools.
