@@ -1124,3 +1124,5 @@ Level 10 M7 is source-only: existing cloth tools now bind pre-existing weighted 
 Level 10 M8: atomic source-side Cloth+Collision two-object workflow via 3 typed tools. 80% source, 286 tools, no live Blender simulation evidence.
 
 Level 10 M9: real Cloth pressure settings via bounded nested pressure request on existing typed Cloth tools, closed mesh geometry guard, shape revision and owned release. Source 90%, registered 286, runtime 0%. Wind was not added due to context-dependent forcefield operator safety.
+
+Level 10 M10: Level 10 has 10/10 source milestones merged after PR confirmation; four-mesh VFX integrated workflow via `vfx.scene_*`, strict readback and guarded cleanup. Typed tool cap 289, Blender runtime/frame/bake/render acceptance 0%; production ready No. Next authorized source level is Level 11 Tracking / Matchmove / Green Screen M1+M2; do not start without next.
