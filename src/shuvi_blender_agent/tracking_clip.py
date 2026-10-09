@@ -50,9 +50,7 @@ class MovieClipInspectionOperations:
         clip = clips.get(clip_name)
         if clip is None:
             raise AgentError(ErrorCode.NOT_FOUND, "MovieClip is not loaded")
-        if getattr(clip, "library", None) is not None or not getattr(
-            clip, "is_editable", True
-        ):
+        if getattr(clip, "library", None) is not None or not getattr(clip, "is_editable", True):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Local editable MovieClip required")
         objects = clip.tracking.objects
         if len(objects) > 16:
@@ -78,21 +76,29 @@ class MovieClipInspectionOperations:
                 coords = [float(x) for x in found.co]
                 if len(coords) != 2 or not all(isfinite(x) for x in coords):
                     raise AgentError(ErrorCode.SAFETY_DENIED, "Non-finite tracking marker")
-                markers.append({
-                    "frame": frame, "co": coords,
-                    "mute": bool(found.mute), "is_keyed": bool(found.is_keyed),
-                })
-            summary.append({
-                "name": name,
-                "locked": bool(track.lock),
-                "has_bundle": bool(track.has_bundle),
-                "sampled_markers": markers,
-            })
+                markers.append(
+                    {
+                        "frame": frame,
+                        "co": coords,
+                        "mute": bool(found.mute),
+                        "is_keyed": bool(found.is_keyed),
+                    }
+                )
+            summary.append(
+                {
+                    "name": name,
+                    "locked": bool(track.lock),
+                    "has_bundle": bool(track.has_bundle),
+                    "sampled_markers": markers,
+                }
+            )
         size = [int(x) for x in clip.size]
         if len(size) != 2 or any(x < 0 or x > 100000 for x in size):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Invalid MovieClip dimensions")
         return Result(
-            request.request_id, request.command_id, Status.SUCCEEDED,
+            request.request_id,
+            request.command_id,
+            Status.SUCCEEDED,
             {
                 "clip_name": clip.name,
                 "tracking_object_name": obj.name,
