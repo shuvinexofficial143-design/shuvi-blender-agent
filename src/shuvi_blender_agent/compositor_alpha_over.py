@@ -141,20 +141,11 @@ class AlphaCompositeOperations:
             (alpha.outputs["Image"], target.inputs["Image"]),
         ]
         owned_links = [
-            link
-            for link in tree.links
-            if link.from_node is alpha or link.to_node is alpha
+            link for link in tree.links if link.from_node is alpha or link.to_node is alpha
         ]
-        correct = (
-            len(owned_links) == 3
-            and all(
-                sum(
-                    link.from_socket is source and link.to_socket is sink
-                    for link in owned_links
-                )
-                == 1
-                for source, sink in expected_links
-            )
+        correct = len(owned_links) == 3 and all(
+            sum(link.from_socket is source and link.to_socket is sink for link in owned_links) == 1
+            for source, sink in expected_links
         )
         return {
             "node_type": str(alpha.bl_idname),
@@ -198,8 +189,12 @@ class AlphaCompositeOperations:
                 {"before": plan["graph_before"], "after": after, "settings": self._expected(plan)}
             )
             self._owned[token] = {
-                "scene": scene, "tree": tree, "alpha": alpha, "sources": sources,
-                "after": after, "before": plan["graph_before"],
+                "scene": scene,
+                "tree": tree,
+                "alpha": alpha,
+                "sources": sources,
+                "after": after,
+                "before": plan["graph_before"],
                 "expected": self._expected(plan),
             }
             return Result(
@@ -247,7 +242,9 @@ class AlphaCompositeOperations:
         del self._owned[action.expected_blend_token]
         checked = compare({"restored": True}, {"restored": True})
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
             {"owned_node_removed": 1, "owned_links_removed": 3, "source_only": True},
             verification=checked.to_dict(),
         )
@@ -257,9 +254,7 @@ class AlphaCompositeOperations:
             Tool(
                 "compositor.blend_preview", SafetyClass.READ_ONLY, BlendPreview.parse, self.preview
             ),
-            Tool(
-                "compositor.blend_apply", SafetyClass.MUTATION, BlendApply.parse, self.apply
-            ),
+            Tool("compositor.blend_apply", SafetyClass.MUTATION, BlendApply.parse, self.apply),
             Tool(
                 "compositor.blend_release", SafetyClass.MUTATION, BlendRelease.parse, self.release
             ),
