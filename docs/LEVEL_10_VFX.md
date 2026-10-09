@@ -1,6 +1,6 @@
 # Level 10 — VFX & Simulation
 
-Current source progress: **90%** (M1–M9 of 10).
+Current source progress: **100%** (M1–M10 of 10).
 Real Blender runtime/frame evaluation/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -117,3 +117,6 @@ The new typed `vfx.cloth_collision_preview/apply/release` creates real CLOTH and
 
 ### M9 — Cloth Pressure & Inflatable Physics (80% → 90%)
 The existing typed cloth preview/apply/release supports optional nested `settings.pressure`: bounded force, ambient factor, target volume and use_target_volume. On a bounded, oriented closed mesh it writes real ClothSettings.use_pressure, uniform_pressure_force, pressure_factor, target_volume and use_pressure_volume. Previews fingerprint face topology. Exact RNA readback and owned-only release protect unrelated data. This replaces the proposed Wind effector approach because context-sensitive bpy.ops effector creation is not safely supported in the present deterministic modifier architecture. No evaluated solver frames or rendered inflatable behavior accepted.
+
+### M10 — Integrated Level 10 VFX Scene Workflow (90% → 100%)
+The new typed `vfx.scene_preview/apply/release` orchestration configures native Blender WAVE, OCEAN (optional foam/spray), CLOTH (optional pinning/pressure) and COLLISION modifiers across four distinct editable local meshes in one verified compound transaction. Read-only preview fingerprints each existing target, geometry, and scene revision. Apply uses actual Blender modifier properties and full readback, rolling back only newly owned modifiers in reverse sequence if any stage fails. Release preflights all four modifier identities/properties and cloth geometry before removing them, leaving foreign Blender data unchanged. Supports bounded acceptance tests on fake-bpy for success, stale/foreign edits, invalid settings, partial failure and rollback. This is 100% of the planned **source-side** Level 10 milestones only: evaluated Blender physics/frames, caches, rendered appearance and production readiness remain **unverified**. Future Level 11 begins only after authorization.

@@ -85,6 +85,7 @@ from .vfx_cloth_collision_workflow import ClothColliderWorkflowOperations
 from .vfx_collision import CollisionSimulationOperations
 from .vfx_ocean import OceanSimulationOperations
 from .vfx_ocean_timeline import OceanTimelineOperations
+from .vfx_scene_workflow import VfxSceneWorkflowOperations
 from .vfx_wave import WaveSimulationOperations
 from .visibility import VisibilityOperations
 from .world_lighting import WorldLightingOperations
@@ -119,6 +120,7 @@ def create_registry(
         ClothSimulationOperations(objects),
         CollisionSimulationOperations(objects),
         ClothColliderWorkflowOperations(objects),
+        VfxSceneWorkflowOperations(objects),
         ocean_simulation,
         OceanTimelineOperations(ocean_simulation),
         GeometryAcceptanceOperations(objects),

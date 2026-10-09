@@ -1966,3 +1966,5 @@ real Blender runtime/render acceptance **0%**, production ready No.
 - M8: `vfx.cloth_collision_preview/apply/release` use `cloth` and `collider` payload sub-objects, two-mesh safety, source preview revision, exact readback, guarded compound rollback/release. 286 public tools.
 
 Level 10 M9: `vfx.cloth_*` optional `settings.pressure` with force, ambient_factor, target_volume, use_target_volume; requires closed manifold polygon winding. No new public tools (286).
+
+- Level 10 M10: `vfx.scene_preview/apply/release`: combined CLOTH + COLLISION + OCEAN + WAVE on four distinct local meshes, owned modifier rollback and one-use verified release. 289 typed tools. Source-only, not runtime proof.

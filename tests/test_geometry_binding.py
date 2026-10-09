@@ -57,8 +57,8 @@ def bind_payload(inspector, obj, group_snapshot, modifier_name="GeometryNodes"):
 def test_factory_has_three_binding_tools_within_bounded_cap():
     bpy = fake_bpy()
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 286
-    assert MAX_REGISTERED_TOOLS == 286
+    assert len(registry.catalog()) == 289
+    assert MAX_REGISTERED_TOOLS == 289
     names = {item["name"] for item in registry.catalog()}
     assert {
         "geometry_nodes.modifier_inspect",

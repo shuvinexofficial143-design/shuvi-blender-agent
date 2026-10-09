@@ -170,6 +170,7 @@ from .vfx_cloth_collision_workflow import (
 from .vfx_collision import CollisionApply, CollisionPreview, CollisionRelease
 from .vfx_ocean import OceanApply, OceanPreview, OceanRelease
 from .vfx_ocean_timeline import OceanTimelineApply, OceanTimelinePreview, OceanTimelineRestore
+from .vfx_scene_workflow import VfxSceneApply, VfxScenePreview, VfxSceneRelease
 from .vfx_wave import WaveApply, WavePreview, WaveRelease
 from .visibility import SetVisibility
 from .world_lighting import WorldApply, WorldPreview, WorldRelease
@@ -418,6 +419,9 @@ def builtin_contracts() -> dict:
         "vfx.cloth_collision_preview": (read, ClothColliderPreview.parse),
         "vfx.cloth_collision_apply": (mutation, ClothColliderApply.parse),
         "vfx.cloth_collision_release": (mutation, ClothColliderRelease.parse),
+        "vfx.scene_preview": (read, VfxScenePreview.parse),
+        "vfx.scene_apply": (mutation, VfxSceneApply.parse),
+        "vfx.scene_release": (mutation, VfxSceneRelease.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),
