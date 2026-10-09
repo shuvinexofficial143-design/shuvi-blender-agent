@@ -1931,3 +1931,8 @@ real Blender runtime acceptance **0%**.
 
 Public typed count **268**. Level 9 source **100%** (M1–M10),
 real Blender runtime/render acceptance **0%**, production ready No.
+
+
+## Level 10 M1 — WAVE Ripple Modifier
+
+`vfx.wave_preview` (READ_ONLY), `vfx.wave_apply` (MUTATION), `vfx.wave_release` (MUTATION). Requires fresh `target` ObjectTarget for local mesh, free modifier `name`, and strict seven numeric `settings` (height, width, speed, narrowness, time_offset, start_position_x/y) plus optional Boolean `use_cyclic`. Applies an actual Blender WAVE modifier to the existing object, verifies its properties/stack, owns only the created modifier, and refuses release after foreign edits. Expected preview `wave_revision` and same-session `wave_token` are required. Source Level 10 10%, Blender simulation/render runtime 0%. Total tools 271.

@@ -80,3 +80,6 @@ Read [architecture](docs/ARCHITECTURE.md) and [handoff](docs/CODEX_HANDOFF.md) b
 continuing development. Source implementation, unit testing, CI, actual Blender runtime
 verification, and production readiness are tracked separately. No Blender runtime
 verification or production readiness is claimed.
+
+
+Level 10 VFX & Simulation **10% source** (M1/10): directly creates a bounded bpy WAVE modifier for real non-destructive ripple distortion with exact readback and current-session owned release; live Blender depsgraph/frame/render not tested. Level 9 remains 100% source. Total typed tools 271.
