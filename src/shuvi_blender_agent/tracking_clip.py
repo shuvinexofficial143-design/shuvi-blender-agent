@@ -9,8 +9,8 @@ from math import hypot, isfinite
 from .contracts import Result, Status
 from .errors import AgentError, ErrorCode
 from .safety import SafetyClass
-from .tracking_reconstruction import reconstruction_quality
 from .tools import Tool
+from .tracking_reconstruction import reconstruction_quality
 from .validation import fields, integer, string
 
 MAX_CLIPS = 32
