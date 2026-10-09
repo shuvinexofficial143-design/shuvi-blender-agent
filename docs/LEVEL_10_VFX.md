@@ -1,6 +1,6 @@
 # Level 10 — VFX & Simulation
 
-Current source progress: **70%** (M1–M7 of 10).
+Current source progress: **80%** (M1–M8 of 10).
 Real Blender runtime/frame evaluation/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -106,7 +106,11 @@ Adds `vfx.cloth_preview/apply/release` typed commands. Creates an actual bpy `CL
 
 ## M6 — Collision Surface for Cloth/Particle obstacles (50% → 60%)
 
-Adds typed `vfx.collision_preview/apply/release` for a separate existing local MESH. Applies a real bpy `COLLISION` modifier and edits Blender `CollisionModifier.settings`: `use=True`, bounded `thickness_outer` (0.001–1), `cloth_friction` (0–80), `damping` (0–1), Boolean `use_culling` and `use_normal`. Read-only preview binds a fresh target, scene, modifier index and collision geometry options. Apply directly writes nested Blender RNA properties and verifies the exact readback; failures delete only the owned modifier with verified rollback. Release requires session ownership and an unmodified scene/owned collider; foreign meshes/modifiers remain unchanged. M5 Cloth and M6 Collision can coexist on different mesh objects, and the tests verify reverse-order safe release. This configures a collider for subsequent physics execution but does **not** prove that cloth actually collides with it in a rendered or evaluated frame. Source Level10 **70%** (M1–M7); **283** public typed tools; real Blender runtime/frame/render acceptance **0%**; production ready No. Stop before M7 without user authorization.
+Adds typed `vfx.collision_preview/apply/release` for a separate existing local MESH. Applies a real bpy `COLLISION` modifier and edits Blender `CollisionModifier.settings`: `use=True`, bounded `thickness_outer` (0.001–1), `cloth_friction` (0–80), `damping` (0–1), Boolean `use_culling` and `use_normal`. Read-only preview binds a fresh target, scene, modifier index and collision geometry options. Apply directly writes nested Blender RNA properties and verifies the exact readback; failures delete only the owned modifier with verified rollback. Release requires session ownership and an unmodified scene/owned collider; foreign meshes/modifiers remain unchanged. M5 Cloth and M6 Collision can coexist on different mesh objects, and the tests verify reverse-order safe release. This configures a collider for subsequent physics execution but does **not** prove that cloth actually collides with it in a rendered or evaluated frame. Historical M6 source status was 60% and 283 tools. Latest M8 source status: **80%** (M1–M8); **286** public typed tools; real Blender runtime/frame/render acceptance **0%**; production ready No. M9 requires the next authorized development cycle.
 
 ### M7 — Cloth Pinning (60% → 70%)
 Existing vfx.cloth_preview/apply/release accepts optional paired settings.pin_group (existing weighted vertex group) and settings.pin_stiffness (0..50). Writes real ClothSettings.vertex_group_mass and pin_stiffness, fingerprints existing vertex weights in preview, refuses weight edits during release, and never creates or removes foreign vertex groups. Source-only; real frame/bake/render testing remains outstanding.
+
+
+### M8 — Two-Mesh Cloth + Collider Workflow (70% → 80%)
+The new typed `vfx.cloth_collision_preview/apply/release` creates real CLOTH and COLLISION modifiers on two distinct editable local meshes, validates source revisions and actual RNA readback, and rolls back newly-created modifiers in reverse order on second-stage failures. Preflight release protects external edits, group weights, foreign modifiers and one-use tokens. Source-only: no simulated frames, baked physics or renders tested.
