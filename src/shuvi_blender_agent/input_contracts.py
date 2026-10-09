@@ -72,6 +72,10 @@ from .geometry_recipe_library import RecipeClear as GeometryRecipeClear
 from .geometry_recipe_library import RecipePreview as GeometryRecipePreview
 from .geometry_scatter import ScatterApply, ScatterClear, ScatterPreview
 from .hierarchy import ParentChange
+from .lighting_recipes import RecipeApply as LightingRecipeApply
+from .lighting_recipes import RecipeCatalog as LightingRecipeCatalog
+from .lighting_recipes import RecipePreview as LightingRecipePreview
+from .lighting_recipes import RecipeRestore as LightingRecipeRestore
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
     MaterialFaceAssign,
@@ -385,6 +389,10 @@ def builtin_contracts() -> dict:
         "lighting.look_preview": (read, LookPreview.parse),
         "lighting.look_apply": (mutation, LookApply.parse),
         "lighting.look_restore": (mutation, LookRestore.parse),
+        "lighting.recipe_catalog": (read, LightingRecipeCatalog.parse),
+        "lighting.recipe_preview": (read, LightingRecipePreview.parse),
+        "lighting.recipe_apply": (mutation, LightingRecipeApply.parse),
+        "lighting.recipe_restore": (mutation, LightingRecipeRestore.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

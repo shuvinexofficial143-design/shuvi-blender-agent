@@ -1899,3 +1899,16 @@ Public tools **258**, source Level 9 **70%**, Blender live **0%**.
 
 Host tool count **261**, Level 9 source progress **80%**,
 real Blender runtime acceptance **0%**.
+
+
+## Level 9 M9 — Multi-property cinematic lighting recipes
+
+- `lighting.recipe_catalog` (read-only), `lighting.recipe_preview` (read-only),
+  `lighting.recipe_apply` and `lighting.recipe_restore` (mutations).
+- INTERVIEW_SOFTBOX, NOIR_PORTRAIT, PRODUCT_SHOWCASE adjust **existing**
+  owned 3–5 AREA fixtures together: role-specific RGB, energy multipliers,
+  emitter size, AREA spread and shadow casting. No arbitrary paths/code.
+- Exact stale revision, complete all-lamp readback, rollback on failure,
+  ownership-checked one-level restore. M7 tuning expires recipe undo;
+  pending recipe blocks M8 look application.
+- Typed tool cap 265; Level 9 source 90%; runtime/render acceptance 0%.

@@ -1062,3 +1062,13 @@ a look expires its undo token rather than overriding new edits.
 Public tools **261**, source roadmap Level 9 **80%** (M1–M8),
 real Blender runtime/render verification **0%**. No M9 and no
 master Shuvi merge until explicit next.
+
+
+## Level 9 M9 — Real multi-property cinematic recipe operations
+
+Strict recipe catalog, preview, apply and restore for INTERVIEW_SOFTBOX,
+NOIR_PORTRAIT and PRODUCT_SHOWCASE. Each recipe changes actual existing
+owned 3–5 AREA lamp datablocks: RGB, Watts, disk size, spread and shadow
+casting. Whole-rig readback and rollback are checked. M7 edits expire
+pending recipe undo; M8 look changes refuse active recipe snapshots.
+Source Level 9 **90%**, typed tools **265**, Blender runtime **0%**.
