@@ -1,6 +1,6 @@
 # Level 11 — Tracking, Matchmove & Green Screen
 
-Source milestone: **90%** (M1–M9/10). Blender runtime verification: **0%**. Production: No.
+Source milestone: **100%** (M1–M10/10). Blender runtime verification: **0%**. Production: No.
 
 ## M1 — Existing MovieClip tracking inspection
 The allowlisted read-only `tracking.clip_inspect` takes an exact, already-loaded Blender MovieClip name, its tracking object name, and 1–16 sorted unique sample frames. It inspects the actual Blender MovieTrackingObject tracks and uses `MovieTrackingMarkers.find_frame(frame, exact=True)` to read real coordinates, keyed/mute status and lock flags (max 64 tracks). It also reports clip pixel dimensions/duration, without file paths. It never loads a clip, runs Blender tracking, solves camera movement, touches external files, changes any tracking data, or renders. Full runtime acceptance is not demonstrated. M2 will add reversible manual marker placement to an existing track; green screen and actual matchmove solve remain future milestones.
@@ -28,3 +28,6 @@ Three native Blender compositor operations `compositor.blend_preview/apply/relea
 
 ## M9 — Reversible native Matte Edge Refinement (80% → 90%)
 Three typed operations `compositor.matte_preview/apply/release` use an existing local scene's native Keying node, creating a STEP-mode `CompositorNodeDilateErode` (integer distance -8..8) and `CompositorNodeSetAlpha` (REPLACE_ALPHA). Three source links connect Keying Matte → Dilate/Erode Mask, Keying Image → Set Alpha Image, refined Mask → Set Alpha Alpha. Refined Image is available as a source for subsequent compositing; no existing output is rewired. Strict graph revision, Keying-property snapshot, real RNA readback, guarded owned-only rollback and one-use release prevent external changes from being overwritten. Blender compositor frames and matte quality remain unverified. 308 public tools; runtime acceptance 0%.
+
+## M10 — Integrated Green Screen Shot (90% → 100%)
+`compositor.shot_preview/apply/release` create and safely remove five native compositor nodes: MovieClip, Keying, Dilate/Erode STEP matte refinement, Set Alpha REPLACE_ALPHA, Alpha Over. Exactly seven links bind already loaded footage, existing background and an unconnected Composite input. Settings and links are verified from Blender RNA; preview revision and one-use release guard ownership, with rollback on partial failure. Does not run tracking, keying, render or footage evaluation. 311 typed tools; **Level 11 source roadmap 100%**, real Blender runtime 0% verified, production not ready.

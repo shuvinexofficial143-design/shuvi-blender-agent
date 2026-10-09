@@ -154,7 +154,7 @@ def test_m2_locked_tracking_track_denies_preflight():
 def test_m2_read_only_policy_and_host_registry():
     bpy, _, track, _, args = setup()
     names = {t["name"] for t in create_registry(bpy).catalog()}
-    assert len(names) == 308
+    assert len(names) == 311
     assert {"tracking.marker_preview", "tracking.marker_apply", "tracking.marker_restore"} <= names
     locked = ToolRegistry(
         MarkerPlacementOperations(bpy).tools(),

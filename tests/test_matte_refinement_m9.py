@@ -112,7 +112,7 @@ def test_m9_injected_link_failure_removes_only_own_nodes():
 
 def test_m9_readonly_policy_and_catalog():
     bpy, tree, _, args = prepare()
-    assert len(create_registry(bpy).catalog()) == 308
+    assert len(create_registry(bpy).catalog()) == 311
     locked = ToolRegistry(MatteRefinementOperations(bpy).tools(), SafetyPolicy())
     plan = preview(locked, args)
     assert plan.status == Status.SUCCEEDED
