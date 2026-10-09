@@ -82,8 +82,7 @@ def test_m1_rejects_linked_clip_and_too_many_tracks():
     clip.library = None
     tracks = clip.tracking.objects[0].tracks
     tracks.extend(
-        NS(name=f"T{i}", markers=Markers(), lock=False, has_bundle=False)
-        for i in range(64)
+        NS(name=f"T{i}", markers=Markers(), lock=False, has_bundle=False) for i in range(64)
     )
     denied = reg.dispatch(Request("tracking.clip_inspect", payload))
     assert denied.error.code == ErrorCode.SAFETY_DENIED
@@ -106,9 +105,7 @@ def test_m1_rejects_invalid_frame_lists(frames):
 
 def test_m1_no_arbitrary_operations_or_fields():
     _, _, _, reg, payload = setup()
-    wrong = reg.dispatch(
-        Request("tracking.clip_inspect", payload | {"run_python": "import bpy"})
-    )
+    wrong = reg.dispatch(Request("tracking.clip_inspect", payload | {"run_python": "import bpy"}))
     assert wrong.error.code == ErrorCode.INVALID_REQUEST
     wrong = reg.dispatch(Request("tracking.clip_delete", payload))
     assert wrong.error.code == ErrorCode.UNSUPPORTED_OPERATION
