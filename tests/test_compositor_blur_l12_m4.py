@@ -79,7 +79,9 @@ def test_m4_gauss_and_viewer_target():
 
 def test_m4_existing_output_link_not_overwritten():
     _, tree, reg, args = prepare()
-    tree.links.new(tree.nodes.get("Source").outputs["Image"], tree.nodes.get("Composite").inputs["Image"])
+    tree.links.new(
+        tree.nodes.get("Source").outputs["Image"], tree.nodes.get("Composite").inputs["Image"]
+    )
     assert preview(reg, args).error.code == ErrorCode.SAFETY_DENIED
     assert tree.nodes.get("ShuviGaussianBlur") is None
     assert len(tree.links) == 1
