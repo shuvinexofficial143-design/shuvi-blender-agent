@@ -1,9 +1,12 @@
 # Level 11 — Tracking, Matchmove & Green Screen
 
-Source milestone: **20%** (M1–M2/10). Blender runtime verification: **0%**. Production: No.
+Source milestone: **30%** (M1–M3/10). Blender runtime verification: **0%**. Production: No.
 
 ## M1 — Existing MovieClip tracking inspection
 The allowlisted read-only `tracking.clip_inspect` takes an exact, already-loaded Blender MovieClip name, its tracking object name, and 1–16 sorted unique sample frames. It inspects the actual Blender MovieTrackingObject tracks and uses `MovieTrackingMarkers.find_frame(frame, exact=True)` to read real coordinates, keyed/mute status and lock flags (max 64 tracks). It also reports clip pixel dimensions/duration, without file paths. It never loads a clip, runs Blender tracking, solves camera movement, touches external files, changes any tracking data, or renders. Full runtime acceptance is not demonstrated. M2 will add reversible manual marker placement to an existing track; green screen and actual matchmove solve remain future milestones.
 
 ## M2 — Manual tracking marker placement and guarded restore (10% → 20%)
 `tracking.marker_preview/apply/restore` works on an already-loaded local MovieClip and existing unlocked tracking object/track. Preview strictly validates 2–8 increasing frames and finite normalized coordinates within 0..1; overlapping existing markers are rejected. Apply uses real Blender `track.markers.insert_frame(frame, co=(x, y))`, verifies exact RNA readback of each created marker and reverses only the new markers on partial failure. Restore requires an unchanged same-session track signature and a one-use owner token, then removes only owned frames through `markers.delete_frame(frame)` and checks that the previous track state is restored. No file loading, automatic tracking, matchmove solve or green-screen keying; those are future milestones. Live Blender testing remains pending.
+
+## M3 — Exact sampled tracking-motion quality check (20% → 30%)
+The existing read-only `tracking.clip_inspect` accepts optional Boolean `analyze_motion` for its 1–16 sample frames. For each existing track, it reports visible-marker coverage, missing/muted frames, mean/max pixel motion per frame, large displacement jumps (>10% of footage diagonal per frame), and a conservative `heuristic_ready` flag requiring ≥3 visible samples, ≥75% coverage and zero large jumps. These are deterministic **heuristics**, not camera reprojection error, a calibrated camera solve, automatic point tracking or actual frame evaluation. No write operation and no new public tool; 293 tools.
