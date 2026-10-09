@@ -33,13 +33,22 @@ class Camera(NS):
 def setup(allow=True):
     bpy = fake_bpy()
     cam = Camera(
-        units="PIXELS", distortion_model="POLYNOMIAL", sensor_width=36.0,
-        focal_length=800.0, pixel_aspect=1.0, principal_point=[0.0, 0.0],
-        k1=0.0, k2=0.0, k3=0.0,
+        units="PIXELS",
+        distortion_model="POLYNOMIAL",
+        sensor_width=36.0,
+        focal_length=800.0,
+        pixel_aspect=1.0,
+        principal_point=[0.0, 0.0],
+        k1=0.0,
+        k2=0.0,
+        k3=0.0,
     )
     tracked = NS(name="Camera", is_camera=True, tracks=Named())
     clip = NS(
-        name="Footage", library=None, is_editable=True, size=[1920, 1080],
+        name="Footage",
+        library=None,
+        is_editable=True,
+        size=[1920, 1080],
         frame_duration=60,
         tracking=NS(objects=Named([tracked]), camera=cam, reconstruction=NS(is_valid=False)),
     )
@@ -56,7 +65,9 @@ def setup(allow=True):
             "sensor_width": 36.0,
             "pixel_aspect": 1.0,
             "principal_point": [0.02, -0.03],
-            "k1": 0.012, "k2": -0.005, "k3": 0.0004,
+            "k1": 0.012,
+            "k2": -0.005,
+            "k3": 0.0004,
         },
     }
     return bpy, clip, cam, reg, args
@@ -67,16 +78,18 @@ def preview(reg, args):
 
 
 def apply(reg, args, plan):
-    return reg.dispatch(Request(
-        "tracking.calibration_apply",
-        args | {"expected_calibration_revision": plan.data["calibration_revision"]},
-    ))
+    return reg.dispatch(
+        Request(
+            "tracking.calibration_apply",
+            args | {"expected_calibration_revision": plan.data["calibration_revision"]},
+        )
+    )
 
 
 def restore(reg, token):
-    return reg.dispatch(Request(
-        "tracking.calibration_restore", {"expected_calibration_token": token}
-    ))
+    return reg.dispatch(
+        Request("tracking.calibration_restore", {"expected_calibration_token": token})
+    )
 
 
 def test_m4_actual_lens_rna_write_readback_and_restore():
@@ -160,8 +173,11 @@ def test_m4_registry_and_permissions():
     catalog = create_registry(bpy).catalog()
     names = {item["name"] for item in catalog}
     assert len(names) == 296
-    assert {"tracking.calibration_preview", "tracking.calibration_apply",
-            "tracking.calibration_restore"} <= names
+    assert {
+        "tracking.calibration_preview",
+        "tracking.calibration_apply",
+        "tracking.calibration_restore",
+    } <= names
     locked = ToolRegistry(
         MovieClipCameraCalibrationOperations(bpy).tools(),
         SafetyPolicy(allow_mutations=False),
@@ -172,10 +188,17 @@ def test_m4_registry_and_permissions():
     assert cam.units == "PIXELS"
 
 
-@pytest.mark.parametrize("key,value", [
-    ("focal_length", 0), ("sensor_width", 0), ("pixel_aspect", 3),
-    ("k1", 0.6), ("principal_point", [1.2, 0]), ("k2", -0.6),
-])
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("focal_length", 0),
+        ("sensor_width", 0),
+        ("pixel_aspect", 3),
+        ("k1", 0.6),
+        ("principal_point", [1.2, 0]),
+        ("k2", -0.6),
+    ],
+)
 def test_m4_rejects_unbounded_intrinsics(key, value):
     _, _, _, _, args = setup()
     args["settings"][key] = value
