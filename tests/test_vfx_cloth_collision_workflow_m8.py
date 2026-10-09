@@ -170,7 +170,7 @@ def test_m8_foreign_collision_edit_blocks_cleanup():
 def test_m8_compound_factory_registration_and_read_only_permission():
     bpy, fabric, ground, inspector, _, args = setup(allow=False)
     catalog = create_registry(bpy, SafetyPolicy(allow_mutations=False)).catalog()
-    assert len(catalog) == 290
+    assert len(catalog) == 293
     expected = {
         "vfx.cloth_collision_preview",
         "vfx.cloth_collision_apply",
