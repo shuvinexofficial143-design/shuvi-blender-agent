@@ -177,7 +177,7 @@ def test_m10_host_factory_allows_full_preview_apply_release_pipeline():
     full = create_registry(bpy, SafetyPolicy(allow_mutations=True))
     names = {row["name"] for row in full.catalog()}
     assert {"cinema.sequence_preview", "cinema.sequence_apply", "cinema.sequence_release"} <= names
-    assert len(names) == MAX_REGISTERED_TOOLS == 277
+    assert len(names) == MAX_REGISTERED_TOOLS == 280
     adapter = full._tools["cinema.sequence_preview"].execute.__self__
     params = args(adapter.inspector, a, b, subject)
     plan = preview(full, params)

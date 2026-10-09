@@ -1,6 +1,6 @@
 # Level 10 — VFX & Simulation
 
-Current source progress: **40%** (M1–M4 of 10).
+Current source progress: **50%** (M1–M5 of 10).
 Real Blender runtime/frame evaluation/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -97,3 +97,8 @@ simulation caches, prove animated geometry or render frames.
 Real Blender runtime/frame/render acceptance **0%**.
 Production-ready **No**. Stop before Level 10 M5 without user
 authorization.
+
+
+## M5 — Blender Cloth physical simulation setup (40% → 50%)
+
+Adds `vfx.cloth_preview/apply/release` typed commands. Creates an actual bpy `CLOTH` modifier on a local editable mesh. Sets `ClothModifier.settings` quality (2–20), per-vertex mass, air damping, tension/bending stiffness, and `ClothModifier.collision_settings` self collision and minimum collision distance. Enforces bounds, unique modifier name/type, fresh mesh and scene revisions and maximum stack size. All seven fields and the modifier's instance/index/type/render flags are read back and compared; corrupted writes roll back the owned modifier, while edited foreign or managed content is never adopted or silently deleted. Release consumes a session-only token and verifies original scene state. No evaluated cloth solver frames, bake or visuals have been run. **Level 10 50% source, 280 tools; Blender runtime 0%.** M6 follows under this authorized `next`.

@@ -1108,3 +1108,8 @@ M2 OCEAN modifier now optionally enables and verifies foam vertex-color data lay
 ## Level 10 M4 — Real Ocean time F-Curves
 
 Three new typed tools preview/apply/restore 2–8 strict monotonic OceanModifier.time keyframes with genuine Blender RNA keyframe insertion, exact Action/curve readback, same-session ownership, original Ocean time and unanimated-object state restoration. Rejects preexisting animation, external key edits, changed Ocean and stale revisions; fail-closed rollback. 277 typed tools, Level 10 source 40%, no actual Blender runtime/animation evaluation.
+
+
+## Level 10 M5 — Cloth physics setup
+
+Actual Blender CLOTH modifier configuration: quality, mass, air damping, tension and bending stiffness, self collision plus separation. Owned modifier generation, strict typed validation, readback, fail-closed cleanup and no foreign adoption. Source 50%, tools 280; live frame/render acceptance 0%.

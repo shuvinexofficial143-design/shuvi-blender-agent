@@ -1950,3 +1950,8 @@ real Blender runtime/render acceptance **0%**, production ready No.
 ## Level 10 M4 — Ocean Timeline
 
 `vfx.ocean_timeline_preview`, `vfx.ocean_timeline_apply`, `vfx.ocean_timeline_restore`: 2–8 strictly increasing scene-bound `[frame, ocean_time]` pairs for a same-session owned Ocean modifier. Invokes real `OceanModifier.keyframe_insert('time', frame=...)`, inspects actual animation F-Curve points, guards exact token/scene/Action and restores previously unanimated object with prior Ocean time. Existing animation is refused, foreign curves not adopted. Source 40%, 277 tools; evaluated frames 0.
+
+
+## Level 10 M5 — Cloth Simulation
+
+`vfx.cloth_preview` (READ_ONLY), `vfx.cloth_apply` and `vfx.cloth_release` (MUTATION): local editable mesh + unique name and strict `settings` with quality, mass, air_damping, tension_stiffness, bending_stiffness, self_collision (Boolean) and collision_distance. Actual CLOTH bpy modifier with nested `settings`/`collision_settings` writes, all fields readback, stale plan guard, full owned-only rollback/release. 280 tools, source 50%, no Blender solver evaluation/render.
