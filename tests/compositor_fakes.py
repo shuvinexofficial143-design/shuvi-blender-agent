@@ -38,6 +38,15 @@ class Node:
             self.clip_black = 0.0
             self.clip_white = 1.0
             self.despill_factor = 0.0
+        elif kind == "CompositorNodeDilateErode":
+            self.inputs.append(Socket("Mask"))
+            self.outputs.append(Socket("Mask"))
+            self.mode = "STEP"
+            self.distance = 0
+        elif kind == "CompositorNodeSetAlpha":
+            self.inputs.extend([Socket("Image"), Socket("Alpha")])
+            self.outputs.append(Socket("Image"))
+            self.mode = "APPLY"
         elif kind == "CompositorNodeImage":
             self.outputs.append(Socket("Image"))
         elif kind == "CompositorNodeComposite":
