@@ -152,7 +152,11 @@ def test_m1_viewer_sink_and_read_only_policy():
     assert apply(locked, args, plan).status == Status.FAILED
     names = {tool["name"] for tool in create_registry(bpy).catalog()}
     assert len(names) == 314
-    assert {"compositor.grade_preview", "compositor.grade_apply", "compositor.grade_release"} <= names
+    assert {
+        "compositor.grade_preview",
+        "compositor.grade_apply",
+        "compositor.grade_release",
+    } <= names
 
 
 @pytest.mark.parametrize(
