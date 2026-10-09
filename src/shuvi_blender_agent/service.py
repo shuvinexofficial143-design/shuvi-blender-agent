@@ -28,6 +28,7 @@ from .cinematic_sequences import CinematicSequenceOperations
 from .cinematic_shots import CinematicShotOperations
 from .cinematic_tracking import CameraTrackingOperations
 from .collection_ops import CollectionOperations
+from .compositor_keying import ChromaKeyOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
 from .files import OutputWorkspace
@@ -126,6 +127,7 @@ def create_registry(
         ClothColliderWorkflowOperations(objects),
         VfxSceneWorkflowOperations(objects),
         MovieClipInspectionOperations(bpy),
+        ChromaKeyOperations(bpy),
         MovieClipCameraCalibrationOperations(bpy),
         MarkerPlacementOperations(bpy),
         MovieTrackingTrackConfigOperations(bpy),

@@ -1,6 +1,6 @@
 # Level 11 — Tracking, Matchmove & Green Screen
 
-Source milestone: **60%** (M1–M6/10). Blender runtime verification: **0%**. Production: No.
+Source milestone: **70%** (M1–M7/10). Blender runtime verification: **0%**. Production: No.
 
 ## M1 — Existing MovieClip tracking inspection
 The allowlisted read-only `tracking.clip_inspect` takes an exact, already-loaded Blender MovieClip name, its tracking object name, and 1–16 sorted unique sample frames. It inspects the actual Blender MovieTrackingObject tracks and uses `MovieTrackingMarkers.find_frame(frame, exact=True)` to read real coordinates, keyed/mute status and lock flags (max 64 tracks). It also reports clip pixel dimensions/duration, without file paths. It never loads a clip, runs Blender tracking, solves camera movement, touches external files, changes any tracking data, or renders. Full runtime acceptance is not demonstrated. M2 will add reversible manual marker placement to an existing track; green screen and actual matchmove solve remain future milestones.
@@ -19,3 +19,6 @@ Adds `tracking.track_config_preview/apply/restore` for one existing local, unloc
 
 ## M6 — Existing Matchmove Reconstruction & Camera-Pose QA (50% → 60%)
 Existing read-only `tracking.clip_inspect` now accepts optional Boolean `inspect_reconstruction`. Reads Blender's already-calculated `MovieTrackingReconstruction` (`is_valid`, `average_error`, `cameras.find_frame(frame=...)`) from the current tracked object (or clip camera reconstruction fallback). Bounded to ≤512 reconstructed cameras and 1–16 explicit queried frames, returns exact stored 4×4 camera poses and per-frame error, reports missing solve frames without interpolating, and lists bounded 3D track `bundle` coordinates / reprojection errors. Invalid, nonfinite and enormous data fail closed. A ≤1 px `heuristic_low_error` is purely a review hint; **not new camera solving, tracking, rendering or visual verification**. Fully read-only; no new public tools, total 299. Actual Blender runtime acceptance still 0%.
+
+## M7 — Owned Blender Green-Screen Keying (60% → 70%)
+New operations `compositor.key_preview/apply/release` add native Blender `CompositorNodeMovieClip` and `CompositorNodeKeying` to an **already enabled, local compositor node tree**. The clip must already be loaded in Blender. Bounded RGB key color, matte clip_black/clip_white and despill_factor set actual Blender Keying RNA. A new Image socket link feeds the footage to the Keying node, without modifying any existing compositor outputs or links. Readback verifies both nodes, settings and link identity; one-use owner token allows guarded removal of only those two nodes, reverting their new link. Pre-existing compositor topology cannot be overwritten; failures roll back owned nodes. This source capability does not render/evaluate footage, remove backgrounds visually, or verify matte quality. 302 tools; real Blender runtime unverified.

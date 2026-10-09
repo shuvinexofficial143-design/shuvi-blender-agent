@@ -161,6 +161,7 @@ from .tracking_calibration import (
     CameraCalibrationPreview,
     CameraCalibrationRestore,
 )
+from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .tracking_clip import ClipInspect
 from .tracking_configuration import (
     TrackConfigurationApply,
@@ -444,6 +445,9 @@ def builtin_contracts() -> dict:
         "tracking.track_config_preview": (read, TrackConfigurationPreview.parse),
         "tracking.track_config_apply": (mutation, TrackConfigurationApply.parse),
         "tracking.track_config_restore": (mutation, TrackConfigurationRestore.parse),
+        "compositor.key_preview": (read, KeyPreview.parse),
+        "compositor.key_apply": (mutation, KeyApply.parse),
+        "compositor.key_release": (mutation, KeyRelease.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),
