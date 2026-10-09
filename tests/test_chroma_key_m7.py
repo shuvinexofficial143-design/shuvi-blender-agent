@@ -34,9 +34,13 @@ def preview(reg, payload):
 
 def apply(reg, payload, plan):
     return reg.dispatch(
-        Request("compositor.key_apply", payload | {
-            "expected_key_revision": plan.data["key_revision"],
-        })
+        Request(
+            "compositor.key_apply",
+            payload
+            | {
+                "expected_key_revision": plan.data["key_revision"],
+            },
+        )
     )
 
 
@@ -121,21 +125,22 @@ def test_m7_readonly_policy_and_host_registry():
     assert {"compositor.key_preview", "compositor.key_apply", "compositor.key_release"} <= {
         item["name"] for item in catalog
     }
-    locked = ToolRegistry(
-        ChromaKeyOperations(bpy).tools(), SafetyPolicy(allow_mutations=False)
-    )
+    locked = ToolRegistry(ChromaKeyOperations(bpy).tools(), SafetyPolicy(allow_mutations=False))
     plan = preview(locked, payload)
     assert plan.status == Status.SUCCEEDED
     assert apply(locked, payload, plan).status == Status.FAILED
     assert tree.nodes.get("ShuviGreenKey") is None
 
 
-@pytest.mark.parametrize("change", [
-    {"clip_black": 0.9, "clip_white": 0.8},
-    {"key_color": [0.1, 2, 0]},
-    {"key_color": [0, 1]},
-    {"despill_factor": float("nan")},
-])
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"clip_black": 0.9, "clip_white": 0.8},
+        {"key_color": [0.1, 2, 0]},
+        {"key_color": [0, 1]},
+        {"despill_factor": float("nan")},
+    ],
+)
 def test_m7_rejects_invalid_keying_params(change):
     _, _, _, _, _, payload = prepare()
     with pytest.raises(AgentError):
