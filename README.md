@@ -105,3 +105,5 @@ Level 10 M10 source: `vfx.scene_preview/apply/release` orchestrates four Blender
 Level 11 M1–M2: actual source API inspection of already-loaded MovieClip tracking tracks and reversible manual marker placement through Blender MovieTrackingMarkers; no automatic tracking, matchmove solve or green-screen processing. Source 20%, Blender runtime 0%.
 
 Level 11 M4 source: guarded native MovieClip camera intrinsics setup and reversible restore; no actual matchmove solve, clip frame tracking or Blender runtime verification. 296 tools, Level11 source 40%.
+
+Level11 M6 source: read-only QA for already-solved MovieTrackingReconstruction camera frames and 3D point bundles; no new solve executed, actual Blender runtime untested. Level11 source 60%, 299 tools.

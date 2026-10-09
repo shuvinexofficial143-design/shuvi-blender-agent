@@ -1,6 +1,6 @@
 # Level 11 — Tracking, Matchmove & Green Screen
 
-Source milestone: **50%** (M1–M5/10). Blender runtime verification: **0%**. Production: No.
+Source milestone: **60%** (M1–M6/10). Blender runtime verification: **0%**. Production: No.
 
 ## M1 — Existing MovieClip tracking inspection
 The allowlisted read-only `tracking.clip_inspect` takes an exact, already-loaded Blender MovieClip name, its tracking object name, and 1–16 sorted unique sample frames. It inspects the actual Blender MovieTrackingObject tracks and uses `MovieTrackingMarkers.find_frame(frame, exact=True)` to read real coordinates, keyed/mute status and lock flags (max 64 tracks). It also reports clip pixel dimensions/duration, without file paths. It never loads a clip, runs Blender tracking, solves camera movement, touches external files, changes any tracking data, or renders. Full runtime acceptance is not demonstrated. M2 will add reversible manual marker placement to an existing track; green screen and actual matchmove solve remain future milestones.
@@ -16,3 +16,6 @@ Three strict typed operations `tracking.calibration_preview/apply/restore` chang
 
 ## M5 — Native tracking strategy configuration (40% → 50%)
 Adds `tracking.track_config_preview/apply/restore` for one existing local, unlocked `MovieTrackingTrack`. Settings use Blender RNA motion_model (Loc, LocRot, LocScale, LocRotScale, Affine, Perspective), pattern_match (KEYFRAME/PREV_FRAME), correlation_min, frames_limit, margin, use_brute, use_normalization and weight. Apply captures original settings and full marker fingerprint, writes actual RNA, verifies readback and reverses partial failure. Restore is an owned one-use token requiring unchanged clip/track identity, all marker coordinates and settings. No automatic frames tracked or footage loaded. 299 typed tools; real Blender runtime remains unverified.
+
+## M6 — Existing Matchmove Reconstruction & Camera-Pose QA (50% → 60%)
+Existing read-only `tracking.clip_inspect` now accepts optional Boolean `inspect_reconstruction`. Reads Blender's already-calculated `MovieTrackingReconstruction` (`is_valid`, `average_error`, `cameras.find_frame(frame=...)`) from the current tracked object (or clip camera reconstruction fallback). Bounded to ≤512 reconstructed cameras and 1–16 explicit queried frames, returns exact stored 4×4 camera poses and per-frame error, reports missing solve frames without interpolating, and lists bounded 3D track `bundle` coordinates / reprojection errors. Invalid, nonfinite and enormous data fail closed. A ≤1 px `heuristic_low_error` is purely a review hint; **not new camera solving, tracking, rendering or visual verification**. Fully read-only; no new public tools, total 299. Actual Blender runtime acceptance still 0%.

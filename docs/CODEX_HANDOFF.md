@@ -1136,3 +1136,5 @@ Level 11 M3 source milestone 30%: added exact-sampled, read-only marker motion Q
 Level 11 M4 (source 40%): added guarded `tracking.calibration_*` operations on native MovieTrackingCamera, polynomial lens intrinsics, full readback and failure/foreign-edit-safe one-use restore. 296 typed tools, Blender runtime/solve 0%. Next permitted milestone on user next M5+M6.
 
 Level11 M5: source 50%, native MovieTrackingTrack strategy preview/apply/restore with bounded motion model and per-track settings; foreign marker and settings edit safe rollback/release, 299 typed tools. Not auto-tracking. Real Blender runtime 0%.
+
+Level11 M6: source 60%; `tracking.clip_inspect` optional `inspect_reconstruction` reports existing solver validity/error, exact-key 4×4 camera poses and track 3D bundles via Blender MovieTrackingReconstruction API with bounded finite checks. No auto-solve, no footage evaluation, no new tools (299), actual Blender runtime 0%.
