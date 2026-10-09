@@ -40,27 +40,41 @@ def setup(valid=True):
     bpy = fake_bpy()
     marks = Markers([NS(frame=1, co=[0.5, 0.4], is_keyed=True, mute=False)])
     track = NS(
-        name="Window", markers=marks, lock=False, has_bundle=True,
-        average_error=0.35, bundle=[0.0, 2.0, 1.0],
+        name="Window",
+        markers=marks,
+        lock=False,
+        has_bundle=True,
+        average_error=0.35,
+        bundle=[0.0, 2.0, 1.0],
     )
-    frames = Cameras([
-        NS(frame=1, matrix=matrix(), average_error=0.4),
-        NS(frame=5, matrix=matrix(1.0), average_error=0.5),
-    ])
+    frames = Cameras(
+        [
+            NS(frame=1, matrix=matrix(), average_error=0.4),
+            NS(frame=5, matrix=matrix(1.0), average_error=0.5),
+        ]
+    )
     reconstruction = NS(is_valid=valid, average_error=0.45, cameras=frames)
     tracked = NS(
-        name="Camera", is_camera=True, tracks=Named([track]),
+        name="Camera",
+        is_camera=True,
+        tracks=Named([track]),
         reconstruction=reconstruction,
     )
     clip = NS(
-        name="Clip", library=None, is_editable=True, size=[1920, 1080],
-        frame_duration=80, tracking=NS(objects=Named([tracked]), reconstruction=reconstruction),
+        name="Clip",
+        library=None,
+        is_editable=True,
+        size=[1920, 1080],
+        frame_duration=80,
+        tracking=NS(objects=Named([tracked]), reconstruction=reconstruction),
     )
     bpy.data.movieclips = Named([clip])
     reg = ToolRegistry(MovieClipInspectionOperations(bpy).tools(), SafetyPolicy())
     request = {
-        "clip_name": "Clip", "tracking_object_name": "Camera",
-        "frames": [1, 5], "inspect_reconstruction": True,
+        "clip_name": "Clip",
+        "tracking_object_name": "Camera",
+        "frames": [1, 5],
+        "inspect_reconstruction": True,
     }
     return clip, tracked, frames, track, reg, request
 
