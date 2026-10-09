@@ -48,6 +48,7 @@ from .collection_ops import (
     MoveObject,
     RenameCollection,
 )
+from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .destructive import DeleteObject
 from .geometry_acceptance import GeometryWorkflowPreview, Level5Acceptance
 from .geometry_architecture import ArchitectureApply, ArchitectureClear, ArchitecturePreview
@@ -161,7 +162,6 @@ from .tracking_calibration import (
     CameraCalibrationPreview,
     CameraCalibrationRestore,
 )
-from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .tracking_clip import ClipInspect
 from .tracking_configuration import (
     TrackConfigurationApply,
