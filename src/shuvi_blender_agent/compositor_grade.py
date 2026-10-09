@@ -26,6 +26,7 @@ IMAGE_SOURCES = {
     "CompositorNodeSetAlpha",
     "CompositorNodeBrightContrast",
     "CompositorNodeHueSat",
+    "CompositorNodeBlur",
     "CompositorNodeLensdist",
 }
 IMAGE_SINKS = {"CompositorNodeComposite", "CompositorNodeViewer"}
