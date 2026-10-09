@@ -384,7 +384,7 @@ def test_l9_m1_strict_apply_and_release_payload_validation():
 def test_l9_m1_host_registry_has_three_new_tools_and_permission_gate():
     bpy, subject, inspector, _, registry = setup()
     full = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    assert len(full.catalog()) == MAX_REGISTERED_TOOLS == 317
+    assert len(full.catalog()) == MAX_REGISTERED_TOOLS == 320
     names = {entry["name"] for entry in full.catalog()}
     assert {
         "lighting.studio_preview",
