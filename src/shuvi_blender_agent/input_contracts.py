@@ -161,8 +161,8 @@ from .uv import SeamSet
 from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPackPlan
 from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
 from .validation import fields, string
-from .visibility import SetVisibility
 from .vfx_wave import WaveApply, WavePreview, WaveRelease
+from .visibility import SetVisibility
 from .world_lighting import WorldApply, WorldPreview, WorldRelease
 
 
