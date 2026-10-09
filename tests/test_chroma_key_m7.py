@@ -16,7 +16,7 @@ def prepare():
     existing.name = "ExistingComposite"
     background = tree.nodes.new("CompositorNodeImage")
     background.name = "ExistingBackground"
-    reg = ToolRegistry(ChromaKeyOperations(bpy).tools(), SafetyPolicy())
+    reg = ToolRegistry(ChromaKeyOperations(bpy).tools(), SafetyPolicy(allow_mutations=True))
     payload = {
         "scene_name": "Scene",
         "clip_name": "Footage",
