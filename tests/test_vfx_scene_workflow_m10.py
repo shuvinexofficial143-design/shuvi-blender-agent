@@ -112,9 +112,7 @@ def apply(reg, args, plan):
 
 
 def release(reg, token):
-    return reg.dispatch(
-        Request("vfx.scene_release", {"expected_scene_workflow_token": token})
-    )
+    return reg.dispatch(Request("vfx.scene_release", {"expected_scene_workflow_token": token}))
 
 
 def test_m10_integrates_four_real_modifier_types_with_foam_and_rollback():
