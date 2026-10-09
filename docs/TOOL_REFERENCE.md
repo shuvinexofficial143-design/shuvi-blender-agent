@@ -1806,3 +1806,15 @@ Real runtime acceptance: **0%**. Production ready: **No**.
   Interrupted *release* is not guaranteed atomic.
 - Registered typed tools: **253**. Level 9 source-side: **20%**.
   Real Blender runtime/render acceptance **0%**; production ready No.
+
+
+## Level 9 M3 — Cinematic light colors and moods
+
+Optional typed `mood` field (NEUTRAL default, GOLDEN_HOUR,
+MOONLIT_BLUE, TEAL_AMBER) on existing studio preview/apply sets
+actual per-light RGB color and energy from bounded role palettes.
+Every 3–5 lamp arrangement is covered, including custom M2 extra
+roles. Source preview revision includes mood; verified apply and
+rollback enforce all expected light values. No environment world,
+color management, material, camera or foreign scene edits.
+Tool cap remains **253**. Level 9 source 30%; runtime 0%.

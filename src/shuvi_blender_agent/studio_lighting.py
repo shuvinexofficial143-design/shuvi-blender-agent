@@ -1,4 +1,4 @@
-"""Level 9 M1: bounded studio three-point AREA lights around a static subject."""
+"""Level 9 studio AREA rigs, advanced fixture layouts and cinematic mood palettes."""
 
 from dataclasses import dataclass
 from math import atan2, cos, pi, radians, sin, sqrt
@@ -43,6 +43,35 @@ EXPANDED_PRESETS = {
         ("Edge", -145, 16, 1.0, 440, (0.87, 0.94, 1.0)),
     ),
 }
+# Per-role color and power multipliers: real AREA light datablock adjustments.
+# Mood changes leave fixture geometry and foreign scene state untouched.
+MOOD_STYLES = {
+    "NEUTRAL": {},
+    "GOLDEN_HOUR": {
+        "Key": ((1.0, 0.70, 0.42), 1.15),
+        "Fill": ((1.0, 0.77, 0.58), 0.70),
+        "Rim": ((1.0, 0.42, 0.22), 1.30),
+        "Catchlight": ((1.0, 0.90, 0.73), 0.80),
+        "Top": ((1.0, 0.79, 0.51), 0.90),
+        "Edge": ((1.0, 0.54, 0.30), 1.12),
+    },
+    "MOONLIT_BLUE": {
+        "Key": ((0.42, 0.63, 1.0), 0.72),
+        "Fill": ((0.25, 0.44, 0.90), 0.43),
+        "Rim": ((0.63, 0.80, 1.0), 1.05),
+        "Catchlight": ((0.77, 0.87, 1.0), 0.76),
+        "Top": ((0.43, 0.58, 0.95), 0.60),
+        "Edge": ((0.33, 0.67, 1.0), 0.85),
+    },
+    "TEAL_AMBER": {
+        "Key": ((1.0, 0.57, 0.28), 1.20),
+        "Fill": ((0.10, 0.83, 0.82), 0.48),
+        "Rim": ((0.16, 0.88, 0.94), 1.25),
+        "Catchlight": ((1.0, 0.84, 0.65), 0.80),
+        "Top": ((1.0, 0.58, 0.29), 0.85),
+        "Edge": ((0.08, 0.86, 0.79), 1.10),
+    },
+}
 PRESET_DESCRIPTIONS = {
     "SOFT_STUDIO": "Balanced three-point neutral studio lighting",
     "DRAMATIC": "Three-point higher contrast with restrained fill",
@@ -79,13 +108,21 @@ class RigPreview:
     preset: str
     distance_scale: float
     intensity_scale: float
+    mood: str = "NEUTRAL"
 
     @classmethod
     def parse(cls, data):
-        fields(data, {"subject", "name_prefix", "preset", "distance_scale", "intensity_scale"})
+        fields(
+            data,
+            {"subject", "name_prefix", "preset", "distance_scale", "intensity_scale"},
+            {"mood"},
+        )
         preset = string(data["preset"], "preset", limit=32)
         if preset not in PRESETS and preset not in EXPANDED_PRESETS:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown studio lighting preset")
+        mood = string(data.get("mood", "NEUTRAL"), "mood", limit=24)
+        if mood not in MOOD_STYLES:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown cinematic lighting mood")
         prefix = object_name(data["name_prefix"])
         if len(prefix) > 40:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Light prefix exceeds 40 characters")
@@ -95,6 +132,7 @@ class RigPreview:
             preset,
             number(data["distance_scale"], "distance_scale", 2.5, 6.0),
             number(data["intensity_scale"], "intensity_scale", 0.25, 3.0),
+            mood,
         )
 
 
@@ -115,6 +153,7 @@ class RigApply:
                 "intensity_scale",
                 "expected_lighting_revision",
             },
+            {"mood"},
         )
         return cls(
             RigPreview.parse(
@@ -226,6 +265,7 @@ class StudioLightingOperations:
         entries = []
         for role, azimuth, elevation, size_mul, energy, rgb in specs:
             name = f"{action.name_prefix}_{role}"
+            mood_rgb, mood_power = MOOD_STYLES[action.mood].get(role, (rgb, 1.0))
             if self.bpy.data.objects.get(name) is not None or any(
                 light.name == name for light in self.bpy.data.lights
             ):
@@ -247,13 +287,14 @@ class StudioLightingOperations:
                     "name": name,
                     "location": location,
                     "rotation_euler": rotation,
-                    "energy": float(energy * action.intensity_scale),
-                    "color": list(rgb),
+                    "energy": float(energy * action.intensity_scale * mood_power),
+                    "color": list(mood_rgb),
                     "size": float(max(0.2, radius * size_mul)),
                 }
             )
         plan = {
             "preset": action.preset,
+            "mood": action.mood,
             "subject_id": snap["object_id"],
             "subject_revision": snap["revision"],
             "scene_revision": scene_revision,
