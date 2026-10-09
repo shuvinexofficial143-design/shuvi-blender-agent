@@ -30,6 +30,7 @@ from .cinematic_tracking import CameraTrackingOperations
 from .collection_ops import CollectionOperations
 from .compositor_alpha_over import AlphaCompositeOperations
 from .compositor_keying import ChromaKeyOperations
+from .compositor_matte import MatteRefinementOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
 from .files import OutputWorkspace
@@ -130,6 +131,7 @@ def create_registry(
         MovieClipInspectionOperations(bpy),
         ChromaKeyOperations(bpy),
         AlphaCompositeOperations(bpy),
+        MatteRefinementOperations(bpy),
         MovieClipCameraCalibrationOperations(bpy),
         MarkerPlacementOperations(bpy),
         MovieTrackingTrackConfigOperations(bpy),

@@ -50,6 +50,7 @@ from .collection_ops import (
 )
 from .compositor_alpha_over import BlendApply, BlendPreview, BlendRelease
 from .compositor_keying import KeyApply, KeyPreview, KeyRelease
+from .compositor_matte import MatteApply, MattePreview, MatteRelease
 from .destructive import DeleteObject
 from .geometry_acceptance import GeometryWorkflowPreview, Level5Acceptance
 from .geometry_architecture import ArchitectureApply, ArchitectureClear, ArchitecturePreview
@@ -452,6 +453,9 @@ def builtin_contracts() -> dict:
         "compositor.blend_preview": (read, BlendPreview.parse),
         "compositor.blend_apply": (mutation, BlendApply.parse),
         "compositor.blend_release": (mutation, BlendRelease.parse),
+        "compositor.matte_preview": (read, MattePreview.parse),
+        "compositor.matte_apply": (mutation, MatteApply.parse),
+        "compositor.matte_release": (mutation, MatteRelease.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),

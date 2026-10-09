@@ -78,8 +78,8 @@ def apply_payload(registry, recipe="CUBE_SCATTER", prefix="ScatterDemo"):
 
 def test_factory_has_scatter_tools_within_bounded_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 305
-    assert MAX_REGISTERED_TOOLS == 305
+    assert len(registry.catalog()) == 308
+    assert MAX_REGISTERED_TOOLS == 308
     assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
     names = {item["name"] for item in registry.catalog()}
     assert {
