@@ -53,6 +53,12 @@ class Node:
             self.inputs.extend([Socket("Image"), Socket("Bright", 0.0), Socket("Contrast", 0.0)])
             self.outputs.append(Socket("Image"))
             self.use_premultiply = False
+        elif kind == "CompositorNodeLensdist":
+            self.inputs.extend([Socket("Image"), Socket("Distort", 0.0), Socket("Dispersion", 0.0)])
+            self.outputs.append(Socket("Image"))
+            self.use_fit = False
+            self.use_jitter = False
+            self.use_projector = False
         elif kind == "CompositorNodeViewer":
             self.inputs.append(Socket("Image"))
         elif kind == "CompositorNodeComposite":
