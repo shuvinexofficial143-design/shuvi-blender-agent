@@ -76,9 +76,7 @@ def apply(reg, args, plan):
 
 
 def release(reg, token):
-    return reg.dispatch(
-        Request("vfx.cloth_collision_release", {"expected_workflow_token": token})
-    )
+    return reg.dispatch(Request("vfx.cloth_collision_release", {"expected_workflow_token": token}))
 
 
 def test_m8_compound_blender_rna_and_release_preserve_foreign_modifier():
