@@ -411,7 +411,7 @@ def test_m6_track_apply_requires_exact_revision_and_approved_fields():
 
 def test_m6_factory_and_host_allowlist_register_three_tools():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 305
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 308
     assert {"cinema.track_preview", "cinema.track_apply", "cinema.track_release"} <= {
         tool["name"] for tool in registry.catalog()
     }
