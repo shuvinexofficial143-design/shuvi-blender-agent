@@ -126,7 +126,11 @@ def test_m7_modified_weights_prevent_release():
 def test_m7_invalid_pin_fields(field, value):
     _, _, _, reg, args = setup()
     args["settings"][field] = value
-    assert preview(reg, args).status == Status.FAILED
+    if value != value:  # Non-finite values are denied by the Request envelope itself.
+        with pytest.raises(AgentError):
+            preview(reg, args)
+    else:
+        assert preview(reg, args).status == Status.FAILED
 
 
 def test_m7_unpaired_pin_fields_rejected():
