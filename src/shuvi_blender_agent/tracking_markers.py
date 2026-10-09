@@ -60,11 +60,20 @@ class MarkerApply:
 
     @classmethod
     def parse(cls, data):
-        fields(data, {"clip_name", "tracking_object_name", "track_name", "markers",
-                      "expected_marker_revision"})
+        fields(
+            data,
+            {
+                "clip_name",
+                "tracking_object_name",
+                "track_name",
+                "markers",
+                "expected_marker_revision",
+            },
+        )
         data = dict(data)
-        expected = string(data.pop("expected_marker_revision"), "expected_marker_revision",
-                          limit=64)
+        expected = string(
+            data.pop("expected_marker_revision"), "expected_marker_revision", limit=64
+        )
         return cls(MarkerPreview.parse(data), expected)
 
 
@@ -99,18 +108,20 @@ class MarkerPlacementOperations:
         markers = track.markers
         if len(markers) > MAX_EXISTING_MARKERS:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Existing marker work limit exceeded")
-        return revision({
-            "clip_name": clip.name,
-            "clip_size": [int(v) for v in clip.size],
-            "duration": int(clip.frame_duration),
-            "tracking_object_name": tracking_object.name,
-            "track_name": track.name,
-            "locked": bool(track.lock),
-            "markers": sorted(
-                (self._read_marker(marker) for marker in markers),
-                key=lambda item: item["frame"],
-            ),
-        })
+        return revision(
+            {
+                "clip_name": clip.name,
+                "clip_size": [int(v) for v in clip.size],
+                "duration": int(clip.frame_duration),
+                "tracking_object_name": tracking_object.name,
+                "track_name": track.name,
+                "locked": bool(track.lock),
+                "markers": sorted(
+                    (self._read_marker(marker) for marker in markers),
+                    key=lambda item: item["frame"],
+                ),
+            }
+        )
 
     def _plan(self, action):
         clip, obj = self.inspection.resolve(action.clip_name, action.tracking_object_name)
@@ -146,7 +157,9 @@ class MarkerPlacementOperations:
 
     def preview(self, request, action):
         return Result(
-            request.request_id, request.command_id, Status.SUCCEEDED,
+            request.request_id,
+            request.command_id,
+            Status.SUCCEEDED,
             self._plan(action)[3],
         )
 
@@ -174,28 +187,43 @@ class MarkerPlacementOperations:
                 actual = self._read_marker(marker)
                 if not compare(expected, actual).matched:
                     raise AgentError(ErrorCode.VERIFICATION_FAILED, "Marker RNA readback mismatch")
-            actual = [self._read_marker(track.markers.find_frame(f, exact=True))
-                      for f, _ in action.preview.frames]
-            expected = [{"frame": frame, "co": list(co), "mute": False}
-                        for frame, co in action.preview.frames]
+            actual = [
+                self._read_marker(track.markers.find_frame(f, exact=True))
+                for f, _ in action.preview.frames
+            ]
+            expected = [
+                {"frame": frame, "co": list(co), "mute": False}
+                for frame, co in action.preview.frames
+            ]
             checked = compare({"markers": expected}, {"markers": actual})
             if not checked.matched:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Inserted marker mismatch")
-            token = revision({
-                "track": track.name, "pre": plan["before_tracking_revision"],
-                "post": self._signature(clip, obj, track),
-                "frames": created,
-            })
+            token = revision(
+                {
+                    "track": track.name,
+                    "pre": plan["before_tracking_revision"],
+                    "post": self._signature(clip, obj, track),
+                    "frames": created,
+                }
+            )
             self._owned[token] = {
-                "clip": clip, "object": obj, "track": track,
+                "clip": clip,
+                "object": obj,
+                "track": track,
                 "frames": list(created),
                 "before": plan["before_tracking_revision"],
                 "after": self._signature(clip, obj, track),
             }
             return Result(
-                request.request_id, request.command_id, Status.VERIFIED,
-                {"marker_token": token, "markers_created": len(created), "source_only": True,
-                 "matchmove_solved": False},
+                request.request_id,
+                request.command_id,
+                Status.VERIFIED,
+                {
+                    "marker_token": token,
+                    "markers_created": len(created),
+                    "source_only": True,
+                    "matchmove_solved": False,
+                },
                 verification=checked.to_dict(),
             )
         except Exception as exc:
@@ -226,18 +254,20 @@ class MarkerPlacementOperations:
         del self._owned[token]
         checked = compare({"restored": True}, {"restored": True})
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
-            {"removed_owned_markers": len(owned["frames"]), "restored": True,
-             "source_only": True},
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
+            {"removed_owned_markers": len(owned["frames"]), "restored": True, "source_only": True},
             verification=checked.to_dict(),
         )
 
     def tools(self):
         return [
-            Tool("tracking.marker_preview", SafetyClass.READ_ONLY,
-                 MarkerPreview.parse, self.preview),
-            Tool("tracking.marker_apply", SafetyClass.MUTATION,
-                 MarkerApply.parse, self.apply),
-            Tool("tracking.marker_restore", SafetyClass.MUTATION,
-                 MarkerRestore.parse, self.restore),
+            Tool(
+                "tracking.marker_preview", SafetyClass.READ_ONLY, MarkerPreview.parse, self.preview
+            ),
+            Tool("tracking.marker_apply", SafetyClass.MUTATION, MarkerApply.parse, self.apply),
+            Tool(
+                "tracking.marker_restore", SafetyClass.MUTATION, MarkerRestore.parse, self.restore
+            ),
         ]
