@@ -202,18 +202,24 @@ class WaveSimulationOperations:
             }
             verified = compare(expected, actual)
             if verified.matched:
-                token = revision({
-                    "object": plan["target_id"],
-                    "modifier": self._pointer(mod),
-                    "plan": plan["wave_revision"],
-                })
+                token = revision(
+                    {
+                        "object": plan["target_id"],
+                        "modifier": self._pointer(mod),
+                        "plan": plan["wave_revision"],
+                    }
+                )
                 self._owned[token] = {
-                    "object": obj, "modifier": mod, "expected": expected,
+                    "object": obj,
+                    "modifier": mod,
+                    "expected": expected,
                     "before_scene": before_scene,
                     "after_scene": self.inspector.summary()["revision"],
                 }
                 return Result(
-                    request.request_id, request.command_id, Status.VERIFIED,
+                    request.request_id,
+                    request.command_id,
+                    Status.VERIFIED,
                     {
                         "wave_token": token,
                         "modifier_name": mod.name,
@@ -236,7 +242,9 @@ class WaveSimulationOperations:
             ) from exc
         self._remove_owned(obj, mod, before_scene)
         return Result(
-            request.request_id, request.command_id, Status.FAILED,
+            request.request_id,
+            request.command_id,
+            Status.FAILED,
             {"rolled_back": True, "recovery_verified": True},
             AgentError(ErrorCode.VERIFICATION_FAILED, "Wave modifier property mismatch"),
             verification=verified.to_dict(),
@@ -247,9 +255,8 @@ class WaveSimulationOperations:
             obj.modifiers.remove(mod)
         self.bpy.context.view_layer.update()
         if (
-            (mod is not None and any(current is mod for current in obj.modifiers))
-            or self.inspector.summary()["revision"] != before_scene
-        ):
+            mod is not None and any(current is mod for current in obj.modifiers)
+        ) or self.inspector.summary()["revision"] != before_scene:
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Wave cleanup not verified")
 
     def release(self, request: Request, action: WaveRelease):
@@ -259,15 +266,14 @@ class WaveSimulationOperations:
         obj, mod = owned["object"], owned["modifier"]
         if self.inspector.summary()["revision"] != owned["after_scene"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Scene changed after wave setup")
-        if (
-            mod not in obj.modifiers
-            or not compare(owned["expected"], self._read(obj, mod)).matched
-        ):
+        if mod not in obj.modifiers or not compare(owned["expected"], self._read(obj, mod)).matched:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Wave modifier changed externally")
         self._remove_owned(obj, mod, owned["before_scene"])
         del self._owned[action.expected_wave_token]
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
             {"removed_owned_wave": True, "restored_scene": True},
             verification=compare({"restored": True}, {"restored": True}).to_dict(),
         )
