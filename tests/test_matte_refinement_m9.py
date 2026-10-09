@@ -46,9 +46,7 @@ def apply(reg, args, plan):
 
 
 def release(reg, token):
-    return reg.dispatch(
-        Request("compositor.matte_release", {"expected_matte_token": token})
-    )
+    return reg.dispatch(Request("compositor.matte_release", {"expected_matte_token": token}))
 
 
 def test_m9_native_nodes_exact_links_and_guarded_restore():
