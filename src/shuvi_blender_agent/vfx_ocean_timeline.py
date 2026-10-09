@@ -37,7 +37,7 @@ class OceanTimelinePreview:
             )
         if any(
             right[0] <= left[0] or right[1] <= left[1]
-            for left, right in zip(checked, checked[1:])
+            for left, right in zip(checked, checked[1:], strict=True)
         ):
             raise AgentError(ErrorCode.INVALID_REQUEST, "Frame and Ocean time must increase")
         return cls(
@@ -85,7 +85,9 @@ class OceanTimelineOperations:
             raise AgentError(ErrorCode.STALE_STATE, "Ocean token is unknown or foreign")
         obj, modifier = owned["object"], owned["modifier"]
         if owned.get("timeline_token") is not None:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Existing owned Ocean animation must be restored")
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Existing owned Ocean animation must be restored"
+            )
         if (
             obj.animation_data is not None
             or self.inspector.summary()["revision"] != owned["after_scene"]
