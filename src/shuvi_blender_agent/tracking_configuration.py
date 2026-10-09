@@ -161,7 +161,9 @@ class MovieTrackingTrackConfigOperations:
         return clip, obj, track, plan
 
     def preview(self, request, action):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[3])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[3]
+        )
 
     def apply(self, request, action):
         clip, obj, track, plan = self._plan(action.preview)
@@ -173,16 +175,22 @@ class MovieTrackingTrackConfigOperations:
             actual = self._read(track)
             checked = compare(plan["settings"], actual)
             if not checked.matched:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Track configuration readback mismatch")
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Track configuration readback mismatch"
+                )
             if self.markers._signature(clip, obj, track) != plan["marker_signature"]:
-                raise AgentError(ErrorCode.SAFETY_DENIED, "Markers changed during track configuration")
+                raise AgentError(
+                    ErrorCode.SAFETY_DENIED, "Markers changed during track configuration"
+                )
         except Exception as exc:
             try:
                 self._write(track, before)
                 if not compare(before, self._read(track)).matched:
                     raise AgentError(ErrorCode.VERIFICATION_FAILED, "Tracking rollback mismatch")
             except Exception as rollback:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Tracking rollback uncertain") from rollback
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Tracking rollback uncertain"
+                ) from rollback
             code = exc.code if isinstance(exc, AgentError) else ErrorCode.EXECUTION_ERROR
             raise AgentError(code, "Track config apply failed; original settings restored") from exc
         token = revision({
