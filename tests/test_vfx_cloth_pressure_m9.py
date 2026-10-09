@@ -15,7 +15,8 @@ def setup():
     fabric = FakeObject("Balloon")
     bpy = fake_bpy([fabric])
     fabric.data.from_pydata(
-        [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)], [],
+        [(0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)],
+        [],
         [(0, 2, 1), (0, 1, 3), (0, 3, 2), (1, 2, 3)],
     )
     inspector = BpyInspector(bpy)
@@ -28,12 +29,18 @@ def setup():
         },
         "name": "Inflatable",
         "settings": {
-            "quality": 8, "mass": 0.4, "air_damping": 1.0,
-            "tension_stiffness": 14, "bending_stiffness": 0.7,
-            "self_collision": True, "collision_distance": 0.02,
+            "quality": 8,
+            "mass": 0.4,
+            "air_damping": 1.0,
+            "tension_stiffness": 14,
+            "bending_stiffness": 0.7,
+            "self_collision": True,
+            "collision_distance": 0.02,
             "pressure": {
-                "force": 6.0, "ambient_factor": 1.25,
-                "target_volume": 3.0, "use_target_volume": True,
+                "force": 6.0,
+                "ambient_factor": 1.25,
+                "target_volume": 3.0,
+                "use_target_volume": True,
             },
         },
     }
@@ -49,10 +56,12 @@ def preview(reg, args):
 
 
 def apply(reg, args, plan):
-    return reg.dispatch(Request(
-        "vfx.cloth_apply",
-        args | {"expected_cloth_revision": plan.data["cloth_revision"]},
-    ))
+    return reg.dispatch(
+        Request(
+            "vfx.cloth_apply",
+            args | {"expected_cloth_revision": plan.data["cloth_revision"]},
+        )
+    )
 
 
 def test_m9_pressure_writes_actual_blender_settings_and_releases():
@@ -69,9 +78,9 @@ def test_m9_pressure_writes_actual_blender_settings_and_releases():
     assert mod.settings.pressure_factor == 1.25
     assert mod.settings.target_volume == 3.0
     assert mod.settings.use_pressure_volume is True
-    result = reg.dispatch(Request(
-        "vfx.cloth_release", {"expected_cloth_token": done.data["cloth_token"]}
-    ))
+    result = reg.dispatch(
+        Request("vfx.cloth_release", {"expected_cloth_token": done.data["cloth_token"]})
+    )
     assert result.status == Status.VERIFIED, result.error
     assert not fabric.modifiers
     assert inspector.summary()["revision"] == before
@@ -107,16 +116,22 @@ def test_m9_foreign_pressure_property_edit_blocks_release():
     done = apply(reg, args, preview(reg, args))
     assert done.status == Status.VERIFIED, done.error
     fabric.modifiers[0].settings.uniform_pressure_force = 20
-    denied = reg.dispatch(Request(
-        "vfx.cloth_release", {"expected_cloth_token": done.data["cloth_token"]}
-    ))
+    denied = reg.dispatch(
+        Request("vfx.cloth_release", {"expected_cloth_token": done.data["cloth_token"]})
+    )
     assert denied.error.code == ErrorCode.SAFETY_DENIED
 
 
-@pytest.mark.parametrize("key,value", [
-    ("force", 101), ("force", -101), ("ambient_factor", -1),
-    ("target_volume", 1001), ("use_target_volume", 1),
-])
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("force", 101),
+        ("force", -101),
+        ("ambient_factor", -1),
+        ("target_volume", 1001),
+        ("use_target_volume", 1),
+    ],
+)
 def test_m9_invalid_pressure_rejected(key, value):
     _, _, reg, args = setup()
     args["settings"]["pressure"][key] = value
