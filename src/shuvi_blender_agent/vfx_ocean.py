@@ -265,6 +265,10 @@ class OceanSimulationOperations(WaveSimulationOperations):
         state = self._owned.get(action.expected_ocean_token)
         if state is None:
             raise AgentError(ErrorCode.STALE_STATE, "Unknown or foreign ocean token")
+        if state.get("timeline_token") is not None:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Restore owned Ocean time keyframes before release"
+            )
         obj, mod = state["object"], state["modifier"]
         if self.inspector.summary()["revision"] != state["after_scene"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Scene changed since ocean creation")
