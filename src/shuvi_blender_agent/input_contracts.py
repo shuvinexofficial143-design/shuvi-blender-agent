@@ -50,6 +50,7 @@ from .collection_ops import (
 )
 from .compositor_alpha_over import BlendApply, BlendPreview, BlendRelease
 from .compositor_grade import GradeApply, GradePreview, GradeRelease
+from .compositor_hsv import HueApply, HuePreview, HueRelease
 from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .compositor_lens import LensApply, LensPreview, LensRelease
 from .compositor_matte import MatteApply, MattePreview, MatteRelease
@@ -461,6 +462,9 @@ def builtin_contracts() -> dict:
         "compositor.grade_preview": (read, GradePreview.parse),
         "compositor.grade_apply": (mutation, GradeApply.parse),
         "compositor.grade_release": (mutation, GradeRelease.parse),
+        "compositor.hsv_preview": (read, HuePreview.parse),
+        "compositor.hsv_apply": (mutation, HueApply.parse),
+        "compositor.hsv_release": (mutation, HueRelease.parse),
         "compositor.lens_preview": (read, LensPreview.parse),
         "compositor.lens_apply": (mutation, LensApply.parse),
         "compositor.lens_release": (mutation, LensRelease.parse),
