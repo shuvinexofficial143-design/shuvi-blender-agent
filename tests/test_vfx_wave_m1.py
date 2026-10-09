@@ -61,6 +61,10 @@ def release(reg, token):
 def test_m1_real_wave_modifier_apply_exact_readback_and_release():
     bpy, obj, insp, reg, args = setup()
     foreign = obj.modifiers.new("ExistingSubsurf", "SUBSURF")
+    # Foreign modifier was added after the initial inspection; refresh
+    # ObjectTarget instead of bypassing the production stale-state guard.
+    latest = insp.snapshot(obj)
+    args["target"]["expected_revision"] = latest["revision"]
     before = insp.summary()["revision"]
     planned = preview(reg, args)
     assert not planned["mutation_performed"] and planned["simulated_frames"] == 0
