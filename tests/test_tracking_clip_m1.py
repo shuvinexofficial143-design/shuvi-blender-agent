@@ -1,4 +1,15 @@
-"""Level 11 M1: real MovieClip RNA inspection without mutation."""
+        reg.dispatch(
+            Request(
+                "tracking.clip_inspect",
+                payload
+                | {
+                    "run_python": "import bpy",
+                },
+            )
+        ).error.code
+        == ErrorCode.INVALID_REQUEST
+    )
+    assert ("""Level 11 M1: real MovieClip RNA inspection without mutation."""
 
 from types import SimpleNamespace as NS
 
@@ -24,21 +35,26 @@ class Markers(list):
 
 def setup():
     bpy = fake_bpy()
-    markers = Markers([
-        NS(frame=1, co=[0.25, 0.75], mute=False, is_keyed=True),
-        NS(frame=15, co=[0.4, 0.6], mute=False, is_keyed=False),
-    ])
+    markers = Markers(
+        [
+            NS(frame=1, co=[0.25, 0.75], mute=False, is_keyed=True),
+            NS(frame=15, co=[0.4, 0.6], mute=False, is_keyed=False),
+        ]
+    )
     track = NS(name="BuildingCorner", markers=markers, lock=False, has_bundle=False)
     tracking = NS(name="Camera", is_camera=True, tracks=Named([track]))
     clip = NS(
-        name="Footage", library=None, is_editable=True, size=[1920, 1080],
-        frame_duration=120, filepath="//private/footage.mp4",
+        name="Footage",
+        library=None,
+        is_editable=True,
+        size=[1920, 1080],
+        frame_duration=120,
+        filepath="//private/footage.mp4",
         tracking=NS(objects=Named([tracking])),
     )
     bpy.data.movieclips = Named([clip])
     reg = ToolRegistry(MovieClipInspectionOperations(bpy).tools(), SafetyPolicy())
-    payload = {"clip_name": "Footage", "tracking_object_name": "Camera",
-               "frames": [1, 2, 15]}
+    payload = {"clip_name": "Footage", "tracking_object_name": "Camera", "frames": [1, 2, 15]}
     return bpy, clip, track, reg, payload
 
 
@@ -60,12 +76,30 @@ def test_m1_reads_real_marker_co_without_mutating():
 
 def test_m1_rejects_unknown_clip_or_tracking_object():
     _, _, _, reg, payload = setup()
-    assert reg.dispatch(Request("tracking.clip_inspect", payload | {
-        "clip_name": "Missing",
-    })).error.code == ErrorCode.NOT_FOUND
-    assert reg.dispatch(Request("tracking.clip_inspect", payload | {
-        "tracking_object_name": "Missing",
-    })).error.code == ErrorCode.NOT_FOUND
+    assert (
+        reg.dispatch(
+            Request(
+                "tracking.clip_inspect",
+                payload
+                | {
+                    "clip_name": "Missing",
+                },
+            )
+        ).error.code
+        == ErrorCode.NOT_FOUND
+    )
+    assert (
+        reg.dispatch(
+            Request(
+                "tracking.clip_inspect",
+                payload
+                | {
+                    "tracking_object_name": "Missing",
+                },
+            )
+        ).error.code
+        == ErrorCode.NOT_FOUND
+    )
 
 
 def test_m1_rejects_linked_clip_and_oversized_tracks():
@@ -76,8 +110,9 @@ def test_m1_rejects_linked_clip_and_oversized_tracks():
         == ErrorCode.SAFETY_DENIED
     )
     clip.library = None
-    clip.tracking.objects[0].tracks.extend([NS(name=f"other{i}", markers=Markers(),
-                                              lock=False, has_bundle=False) for i in range(64)])
+    clip.tracking.objects[0].tracks.extend(
+        [NS(name=f"other{i}", markers=Markers(), lock=False, has_bundle=False) for i in range(64)]
+    )
     assert (
         reg.dispatch(Request("tracking.clip_inspect", payload)).error.code
         == ErrorCode.SAFETY_DENIED
@@ -104,9 +139,7 @@ def test_m1_rejects_invalid_frame_requests(frames):
 
 def test_m1_strict_host_allowlist():
     _, _, _, reg, payload = setup()
-    assert reg.dispatch(Request("tracking.clip_inspect", payload | {
-        "run_python": "import bpy",
-    })).error.code == ErrorCode.INVALID_REQUEST
+
     assert (
         reg.dispatch(Request("tracking.clip_delete", payload)).error.code
         == ErrorCode.UNSUPPORTED_OPERATION
