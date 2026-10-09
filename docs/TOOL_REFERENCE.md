@@ -1912,3 +1912,22 @@ real Blender runtime acceptance **0%**.
   ownership-checked one-level restore. M7 tuning expires recipe undo;
   pending recipe blocks M8 look application.
 - Typed tool cap 265; Level 9 source 90%; runtime/render acceptance 0%.
+
+
+## Level 9 M10 — Coordinated Studio / World / Recipe
+
+- `lighting.workflow_preview` (READ_ONLY): nested typed
+  `studio` + `world` plans with optional M9 `recipe`.
+  Validates source subject, lamp placement, owned World shader
+  or preloaded safe HDRI, names, existing ownership and revisions.
+- `lighting.workflow_apply` (MUTATION): exact expected workflow
+  revision, actual 3–5 AREA bpy objects, owned World graph, optional
+  recipe adjustment, combined readback. Owned-only rollback in
+  reverse order if any stage fails; no foreign objects deleted.
+- `lighting.workflow_release` (MUTATION): same-session workflow
+  token, strict full-rig and World/HDRI preflight, optional recipe
+  undo followed by exact original World restore and owned lamp
+  removal, with verified cleanup and fail-closed partial failures.
+
+Public typed count **268**. Level 9 source **100%** (M1–M10),
+real Blender runtime/render acceptance **0%**, production ready No.
