@@ -81,6 +81,7 @@ from .uv_packing import UVPackingOperations
 from .uv_workflows import UVWorkflowOperations
 from .validation import fields
 from .vfx_cloth import ClothSimulationOperations
+from .vfx_collision import CollisionSimulationOperations
 from .vfx_ocean import OceanSimulationOperations
 from .vfx_ocean_timeline import OceanTimelineOperations
 from .vfx_wave import WaveSimulationOperations
@@ -115,6 +116,7 @@ def create_registry(
         GeometryNodeOperations(objects),
         WaveSimulationOperations(objects),
         ClothSimulationOperations(objects),
+        CollisionSimulationOperations(objects),
         ocean_simulation,
         OceanTimelineOperations(ocean_simulation),
         GeometryAcceptanceOperations(objects),

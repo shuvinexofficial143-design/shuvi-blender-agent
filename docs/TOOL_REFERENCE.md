@@ -1955,3 +1955,8 @@ real Blender runtime/render acceptance **0%**, production ready No.
 ## Level 10 M5 — Cloth Simulation
 
 `vfx.cloth_preview` (READ_ONLY), `vfx.cloth_apply` and `vfx.cloth_release` (MUTATION): local editable mesh + unique name and strict `settings` with quality, mass, air_damping, tension_stiffness, bending_stiffness, self_collision (Boolean) and collision_distance. Actual CLOTH bpy modifier with nested `settings`/`collision_settings` writes, all fields readback, stale plan guard, full owned-only rollback/release. 280 tools, source 50%, no Blender solver evaluation/render.
+
+
+## Level 10 M6 — Collision Surface
+
+`vfx.collision_preview/apply/release` allow local MESH target, unique name and strict `settings` (thickness_outer, cloth_friction, damping, use_culling, use_normal). Creates actual Blender COLLISION modifier and enables it; reads/writes collision `settings.use`, `thickness_outer`, `cloth_friction`, `damping`, `use_culling` and `use_normal`. Exact owned release, rejection of stale/changed/foreign modifiers. 283 public tools, Level10 source 60%, Blender runtime 0%.
