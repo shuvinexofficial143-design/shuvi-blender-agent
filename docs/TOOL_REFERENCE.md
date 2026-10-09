@@ -1972,3 +1972,5 @@ Level 10 M9: `vfx.cloth_*` optional `settings.pressure` with force, ambient_fact
 - Level 11 M1: `tracking.clip_inspect`: {clip_name, tracking_object_name, frames: sorted 1..16}, returns bounded exact Blender tracking marker samples, clip dimensions and camera/object context. Read-only; 290 typed tools.
 
 - Level 11 M2: `tracking.marker_preview/apply/restore` on an existing clip+tracking_object+track with 2–8 `{frame,co:[x,y]}` markers. Preview revision, exact RNA insert_frame/delete_frame, owned-only rollback and restore. Total 293 public tools.
+
+- Level 11 M3: `tracking.clip_inspect` optional Boolean `analyze_motion` produces per-track exact-frame sampled motion QA. Not a 3D solve. Tool count unchanged (293).
