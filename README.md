@@ -107,3 +107,5 @@ Level 11 M1–M2: actual source API inspection of already-loaded MovieClip track
 Level 11 M4 source: guarded native MovieClip camera intrinsics setup and reversible restore; no actual matchmove solve, clip frame tracking or Blender runtime verification. 296 tools, Level11 source 40%.
 
 Level11 M6 source: read-only QA for already-solved MovieTrackingReconstruction camera frames and 3D point bundles; no new solve executed, actual Blender runtime untested. Level11 source 60%, 299 tools.
+
+Level11 M8 adds guarded Green Screen foreground over existing background via native compositor Alpha Over into a previously unconnected Composite output; Blender runtime/visual verification pending.

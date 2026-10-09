@@ -1982,3 +1982,5 @@ Level11 M5: `tracking.track_config_preview/apply/restore` edits safe typed exist
 - Level11 M6: `tracking.clip_inspect` optional `inspect_reconstruction` reads existing stored 3D camera tracking pose matrices and bundle reprojection metrics, no solve triggered. 299 tools unchanged.
 
 - Level11 M7: `compositor.key_preview/apply/release` add native loaded MovieClip → Keying nodes with RGB key color, black/white matte levels, despill and owned-only safe rollback; no output rewiring or rendering. 302 tools.
+
+- Level11 M8: `compositor.blend_preview/apply/release` joins existing Keying output + preexisting background into unlinked Composite via native Alpha Over, verified 3 links and guarded owned-only restore. 305 tools.

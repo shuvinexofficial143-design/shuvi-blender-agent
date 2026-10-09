@@ -28,6 +28,7 @@ from .cinematic_sequences import CinematicSequenceOperations
 from .cinematic_shots import CinematicShotOperations
 from .cinematic_tracking import CameraTrackingOperations
 from .collection_ops import CollectionOperations
+from .compositor_alpha_over import AlphaCompositeOperations
 from .compositor_keying import ChromaKeyOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
@@ -128,6 +129,7 @@ def create_registry(
         VfxSceneWorkflowOperations(objects),
         MovieClipInspectionOperations(bpy),
         ChromaKeyOperations(bpy),
+        AlphaCompositeOperations(bpy),
         MovieClipCameraCalibrationOperations(bpy),
         MarkerPlacementOperations(bpy),
         MovieTrackingTrackConfigOperations(bpy),

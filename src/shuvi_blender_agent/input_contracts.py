@@ -48,6 +48,7 @@ from .collection_ops import (
     MoveObject,
     RenameCollection,
 )
+from .compositor_alpha_over import BlendApply, BlendPreview, BlendRelease
 from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .destructive import DeleteObject
 from .geometry_acceptance import GeometryWorkflowPreview, Level5Acceptance
@@ -448,6 +449,9 @@ def builtin_contracts() -> dict:
         "compositor.key_preview": (read, KeyPreview.parse),
         "compositor.key_apply": (mutation, KeyApply.parse),
         "compositor.key_release": (mutation, KeyRelease.parse),
+        "compositor.blend_preview": (read, BlendPreview.parse),
+        "compositor.blend_apply": (mutation, BlendApply.parse),
+        "compositor.blend_release": (mutation, BlendRelease.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),
