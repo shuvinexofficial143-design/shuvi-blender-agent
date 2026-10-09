@@ -94,19 +94,25 @@ def test_m2_lens_from_existing_grade_node_to_separate_viewer():
     lens_done = apply(reg, args, preview(reg, args))
     assert lens_done.status == Status.VERIFIED
     assert len(tree.links) == 4
-    assert grade_reg.dispatch(
-        Request(
-            "compositor.grade_release",
-            {"expected_grade_token": grade_done.data["grade_token"]},
-        )
-    ).error.code == ErrorCode.SAFETY_DENIED
+    assert (
+        grade_reg.dispatch(
+            Request(
+                "compositor.grade_release",
+                {"expected_grade_token": grade_done.data["grade_token"]},
+            )
+        ).error.code
+        == ErrorCode.SAFETY_DENIED
+    )
     assert release(reg, lens_done.data["lens_token"]).status == Status.VERIFIED
-    assert grade_reg.dispatch(
-        Request(
-            "compositor.grade_release",
-            {"expected_grade_token": grade_done.data["grade_token"]},
-        )
-    ).status == Status.VERIFIED
+    assert (
+        grade_reg.dispatch(
+            Request(
+                "compositor.grade_release",
+                {"expected_grade_token": grade_done.data["grade_token"]},
+            )
+        ).status
+        == Status.VERIFIED
+    )
 
 
 def test_m2_prelinked_target_rejected_without_foreign_rewire():
