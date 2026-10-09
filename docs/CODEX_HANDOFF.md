@@ -1072,3 +1072,20 @@ owned 3–5 AREA lamp datablocks: RGB, Watts, disk size, spread and shadow
 casting. Whole-rig readback and rollback are checked. M7 edits expire
 pending recipe undo; M8 look changes refuse active recipe snapshots.
 Source Level 9 **90%**, typed tools **265**, Blender runtime **0%**.
+
+
+## Level 9 M10 — Complete integrated lighting (source-side)
+
+`lighting.workflow_preview/apply/release` combine checked
+Studio Rig + COLOR/HDRI World + optional M9 recipe in one typed,
+revisioned, same-session adapter. Apply executes actual bpy calls
+and reads back the exact final lamp/World state. Failed second or
+third stages restore only owned datablocks in reverse order.
+Release prechecks all components, then restores recipe, World,
+original scene, and releases owned lights with verified readback.
+Broken partial recovery is reported as uncertain, not as success.
+
+**Level 9 M1–M10 source roadmap 100%; public typed tools 268.**
+Live Blender runtime/render acceptance **0%**;
+production readiness **No**. Stop before Level 10 or master Shuvi
+merge without explicit authorization.

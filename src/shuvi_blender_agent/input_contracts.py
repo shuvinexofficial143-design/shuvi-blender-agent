@@ -76,6 +76,7 @@ from .lighting_recipes import RecipeApply as LightingRecipeApply
 from .lighting_recipes import RecipeCatalog as LightingRecipeCatalog
 from .lighting_recipes import RecipePreview as LightingRecipePreview
 from .lighting_recipes import RecipeRestore as LightingRecipeRestore
+from .lighting_workflow import WorkflowApply, WorkflowPreview, WorkflowRelease
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
     MaterialFaceAssign,
@@ -393,6 +394,9 @@ def builtin_contracts() -> dict:
         "lighting.recipe_preview": (read, LightingRecipePreview.parse),
         "lighting.recipe_apply": (mutation, LightingRecipeApply.parse),
         "lighting.recipe_restore": (mutation, LightingRecipeRestore.parse),
+        "lighting.workflow_preview": (read, WorkflowPreview.parse),
+        "lighting.workflow_apply": (mutation, WorkflowApply.parse),
+        "lighting.workflow_release": (mutation, WorkflowRelease.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

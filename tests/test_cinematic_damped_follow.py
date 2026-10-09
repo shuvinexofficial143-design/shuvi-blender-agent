@@ -342,7 +342,7 @@ def test_m8_hard_cap_24_sampled_subject_keys():
 
 def test_m8_factory_host_allowlist_has_two_new_tools():
     factory = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(factory.catalog()) == MAX_REGISTERED_TOOLS == 265
+    assert len(factory.catalog()) == MAX_REGISTERED_TOOLS == 268
     assert {"cinema.damped_preview", "cinema.damped_apply"} <= {
         row["name"] for row in factory.catalog()
     }

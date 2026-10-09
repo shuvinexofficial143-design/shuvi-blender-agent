@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **90%** (Milestones 1–9 of 10).
+Current source progress: **100%** (Milestones 1–10 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M9 source progress is **90%**.
+Level 9 M1–M10 source progress is **100%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M10, Blender launch/render/live evaluation,
+**STOP** before Level 10, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -314,3 +314,52 @@ cinematic quality. Level 9 source **90%**, public typed tools **265**.
 Real Blender runtime/render acceptance **0%**. Production-ready No.
 M10 is separately authorized in the same `next`, requiring separate
 implementation, testing and green CI.
+
+
+## M10 — Integrated Studio + World/HDRI + Recipe Workflow (90% → 100%)
+
+New typed `lighting.workflow_preview` (READ_ONLY),
+`lighting.workflow_apply` (MUTATION), and
+`lighting.workflow_release` (MUTATION) coordinate M1–M9
+rather than merely listing completed features.
+
+A single nested strict typed request contains a bounded Studio
+RigPreview, a WorldPreview (COLOR or previously loaded local HDRI),
+and an optional M9 recipe name. Read-only planning preflights the
+static mesh subject, studio-role/name collisions, scene revision,
+existing foreign World, required HDRI image and unsafe ownership
+conflicts, then hashes the full source-only proposal.
+
+On approved apply, all in the same bpy/inspector session:
+1. Create 3–5 owned AREA lamps with correct placement/aim, mood
+   and shadow profile, with full actual bpy readback.
+2. Replan and create the owned World shader graph, set the World,
+   verify all nodes/links/properties/image without editing the foreign
+   World or externally accessing HDRI files.
+3. If requested, apply a real M9 multi-property lighting recipe to
+   the newly created lamps with full per-fixture verification.
+4. Verify the **combined** World graph and every installed lamp,
+   issue a same-session workflow token, and expose accurate source-only
+   and render-not-verified flags.
+
+If any stage fails, rollback runs in reverse order (recipe, World,
+lamps). Every individual restoration must be verified; failed recovery
+returns an uncertain-state error requiring manual inspection rather
+than claiming a clean scene. On regular workflow release, the whole
+owned rig and World are read-only verified *before* any cleanup,
+then optional recipe is restored, original foreign World restored,
+and owned light objects/datablocks removed. Changed/foreign
+fixtures, scene or HDRI refuse release. Cleanup is not an atomic
+transaction if Blender data removal itself fails: manually inspect
+partially released scene before retry.
+
+M10 regression tests cover 3/4/5 light rigs, optional recipe,
+preloaded HDRI, unchanged original scene and world, stale preview,
+World setup failure, recipe failure, external edits, invalid nested
+payload and checked single-use release.
+
+**Level 9 source roadmap 100% (M1–M10), 268 typed tools.**
+Blender runtime/render acceptance **0%**; production-ready **No**.
+Do not claim visual results or Level 10 completion. No Blender
+launch, rendering, cross-repository merging or Vercel deployment
+was authorized by this source implementation.

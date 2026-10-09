@@ -42,6 +42,7 @@ from .geometry_scatter import GeometryScatterOperations
 from .hierarchy import HierarchyOperations
 from .inspection import BpyInspector
 from .lighting_recipes import LightingRecipeOperations
+from .lighting_workflow import LightingWorkflowOperations
 from .material_nodes import MaterialNodeOperations
 from .material_slots import MaterialSlotOperations
 from .mesh import MeshOperations
@@ -95,6 +96,8 @@ def create_registry(
     rigging = RiggingOperations(objects)
     recipe_animation = AnimationRecipeLibraryOperations(timeline_animation)
     studio_lighting = StudioLightingOperations(objects)
+    world_lighting = WorldLightingOperations(objects)
+    recipe_lighting = LightingRecipeOperations(studio_lighting)
     nla_animation = ManagedNLAOperations(animation)
     adapters = [
         inspector,
@@ -146,8 +149,9 @@ def create_registry(
         CameraCutOperations(objects),
         CinematicSequenceOperations(objects),
         studio_lighting,
-        LightingRecipeOperations(studio_lighting),
-        WorldLightingOperations(objects),
+        recipe_lighting,
+        world_lighting,
+        LightingWorkflowOperations(studio_lighting, world_lighting, recipe_lighting),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),
         rigging,
