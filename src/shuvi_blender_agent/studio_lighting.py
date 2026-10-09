@@ -64,7 +64,6 @@ def _layout_specs(preset):
     )
 
 
-
 @dataclass(frozen=True)
 class StudioPresetCatalog:
     @classmethod
@@ -97,6 +96,7 @@ class RigPreview:
             number(data["distance_scale"], "distance_scale", 2.5, 6.0),
             number(data["intensity_scale"], "intensity_scale", 0.25, 3.0),
         )
+
 
 @dataclass(frozen=True)
 class RigApply:
