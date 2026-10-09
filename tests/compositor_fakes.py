@@ -63,7 +63,8 @@ class Nodes(Named):
 
     def remove(self, node):
         self.tree.links[:] = [
-            link for link in self.tree.links
+            link
+            for link in self.tree.links
             if link.from_node is not node and link.to_node is not node
         ]
         super().remove(node)
@@ -80,7 +81,9 @@ class Links(list):
         if any(item.to_socket is input_socket for item in self):
             raise RuntimeError("Existing input socket connection")
         link = NS(
-            from_node=from_node, to_node=to_node, from_socket=output,
+            from_node=from_node,
+            to_node=to_node,
+            from_socket=output,
             to_socket=input_socket,
         )
         self.append(link)
