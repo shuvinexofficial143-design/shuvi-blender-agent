@@ -50,8 +50,8 @@ from .collection_ops import (
 )
 from .compositor_alpha_over import BlendApply, BlendPreview, BlendRelease
 from .compositor_grade import GradeApply, GradePreview, GradeRelease
-from .compositor_lens import LensApply, LensPreview, LensRelease
 from .compositor_keying import KeyApply, KeyPreview, KeyRelease
+from .compositor_lens import LensApply, LensPreview, LensRelease
 from .compositor_matte import MatteApply, MattePreview, MatteRelease
 from .compositor_shot import ShotApply as CompositeShotApply
 from .compositor_shot import ShotPreview as CompositeShotPreview
