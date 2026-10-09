@@ -1945,3 +1945,8 @@ real Blender runtime/render acceptance **0%**, production ready No.
 ## Level10 M3 — Foam and spray
 
 `vfx.ocean_preview/apply/release` additionally accept optional `settings.foam` with required bounded `foam_layer_name` and `foam_coverage`; optional Boolean `use_spray`, `invert_spray` and `spray_layer_name`. Applies actual `OceanModifier` foam/spray properties; verifies readback, stale hashes and guarded deletion of only owned modifier. No material/texture is generated and no frame evaluated. Public tools still 274, Level 10 source 30%.
+
+
+## Level 10 M4 — Ocean Timeline
+
+`vfx.ocean_timeline_preview`, `vfx.ocean_timeline_apply`, `vfx.ocean_timeline_restore`: 2–8 strictly increasing scene-bound `[frame, ocean_time]` pairs for a same-session owned Ocean modifier. Invokes real `OceanModifier.keyframe_insert('time', frame=...)`, inspects actual animation F-Curve points, guards exact token/scene/Action and restores previously unanimated object with prior Ocean time. Existing animation is refused, foreign curves not adopted. Source 40%, 277 tools; evaluated frames 0.

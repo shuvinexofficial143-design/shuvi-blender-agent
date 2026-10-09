@@ -81,6 +81,7 @@ from .uv_packing import UVPackingOperations
 from .uv_workflows import UVWorkflowOperations
 from .validation import fields
 from .vfx_ocean import OceanSimulationOperations
+from .vfx_ocean_timeline import OceanTimelineOperations
 from .vfx_wave import WaveSimulationOperations
 from .visibility import VisibilityOperations
 from .world_lighting import WorldLightingOperations
@@ -100,6 +101,7 @@ def create_registry(
     studio_lighting = StudioLightingOperations(objects)
     world_lighting = WorldLightingOperations(objects)
     recipe_lighting = LightingRecipeOperations(studio_lighting)
+    ocean_simulation = OceanSimulationOperations(objects)
     nla_animation = ManagedNLAOperations(animation)
     adapters = [
         inspector,
@@ -111,7 +113,8 @@ def create_registry(
         HierarchyOperations(objects),
         GeometryNodeOperations(objects),
         WaveSimulationOperations(objects),
-        OceanSimulationOperations(objects),
+        ocean_simulation,
+        OceanTimelineOperations(ocean_simulation),
         GeometryAcceptanceOperations(objects),
         GeometryBindingOperations(objects),
         GeometryArchitectureOperations(objects),
