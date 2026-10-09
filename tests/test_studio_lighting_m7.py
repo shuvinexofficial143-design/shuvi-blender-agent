@@ -130,9 +130,12 @@ def test_m7_injected_bad_readback_restores_previous_settings():
     assert out.status == Status.FAILED
     assert out.error.code == ErrorCode.VERIFICATION_FAILED
     assert bpy.data.objects.get("MyRig_Key").data.energy == old
-    assert registry.dispatch(
-        Request("lighting.studio_release", {"expected_lighting_token": token})
-    ).status == Status.VERIFIED
+    assert (
+        registry.dispatch(
+            Request("lighting.studio_release", {"expected_lighting_token": token})
+        ).status
+        == Status.VERIFIED
+    )
 
 
 def test_m7_existing_foreign_light_is_never_modified():
@@ -142,11 +145,14 @@ def test_m7_existing_foreign_light_is_never_modified():
     foreign_obj = bpy.data.objects.new("Existing", foreign_data)
     bpy.context.scene.collection.objects.link(foreign_obj)
     result = registry.dispatch(
-        Request("lighting.tune_preview", {
+        Request(
+            "lighting.tune_preview",
+            {
             "expected_lighting_token": token,
             "role": "Rim",
             "settings": {"energy_watts": 100},
-        })
+            },
+        )
     )
     assert result.error.code == ErrorCode.SAFETY_DENIED
     assert foreign_data.energy == 543
@@ -176,18 +182,24 @@ def test_m7_invalid_tuning_payloads_fail_closed(settings):
 def test_m7_unknown_role_and_foreign_token_denied():
     _, _, registry, token, _ = setup()
     bad = registry.dispatch(
-        Request("lighting.tune_preview", {
+        Request(
+            "lighting.tune_preview",
+            {
             "expected_lighting_token": token,
             "role": "NotARole",
             "settings": {"energy_watts": 100},
-        })
+            },
+        )
     )
     assert bad.error.code == ErrorCode.INVALID_REQUEST
     foreign = registry.dispatch(
-        Request("lighting.tune_preview", {
+        Request(
+            "lighting.tune_preview",
+            {
             "expected_lighting_token": "not-owned",
             "role": "Key",
             "settings": {"energy_watts": 100},
-        })
+            },
+        )
     )
     assert foreign.error.code == ErrorCode.STALE_STATE

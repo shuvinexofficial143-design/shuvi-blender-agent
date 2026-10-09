@@ -200,7 +200,6 @@ class RigRelease:
         return cls(string(data["expected_lighting_token"], "expected_lighting_token", limit=64))
 
 
-
 TUNABLE_FIELDS = ("energy", "color", "size", "use_shadow")
 
 
