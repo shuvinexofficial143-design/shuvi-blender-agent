@@ -35,7 +35,7 @@ class OceanTimelinePreview:
             checked.append((integer(pair[0], "frame", 1, 10000), number(pair[1], "time", 0, 1000)))
         if any(
             right[0] <= left[0] or right[1] <= left[1]
-            for left, right in zip(checked, checked[1:], strict=True)
+            for left, right in zip(checked, checked[1:], strict=False)
         ):
             raise AgentError(ErrorCode.INVALID_REQUEST, "Frame and Ocean time must increase")
         return cls(
