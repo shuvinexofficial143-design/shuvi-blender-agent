@@ -121,7 +121,7 @@ def test_m7_no_implicit_compositor_creation_or_clip_loading():
 def test_m7_readonly_policy_and_host_registry():
     bpy, _, _, tree, _, payload = prepare()
     catalog = create_registry(bpy).catalog()
-    assert len(catalog) == 314
+    assert len(catalog) == 317
     assert {"compositor.key_preview", "compositor.key_apply", "compositor.key_release"} <= {
         item["name"] for item in catalog
     }

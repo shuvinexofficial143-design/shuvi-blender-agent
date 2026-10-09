@@ -262,7 +262,7 @@ def test_m1_frame_without_activation_does_not_replace_scene_camera():
 
 def test_m1_factory_contracts_and_bounded_registry_count():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 314
-    assert MAX_REGISTERED_TOOLS == 314
+    assert len(registry.catalog()) == 317
+    assert MAX_REGISTERED_TOOLS == 317
     names = {item["name"] for item in registry.catalog()}
     assert {"cinema.shot_preview", "cinema.shot_frame"} <= names
