@@ -32,9 +32,7 @@ class OceanTimelinePreview:
         for pair in points:
             if not isinstance(pair, list) or len(pair) != 2:
                 raise AgentError(ErrorCode.INVALID_REQUEST, "Keyframes require [frame, time]")
-            checked.append(
-                (integer(pair[0], "frame", 1, 10000), number(pair[1], "time", 0, 1000))
-            )
+            checked.append((integer(pair[0], "frame", 1, 10000), number(pair[1], "time", 0, 1000)))
         if any(
             right[0] <= left[0] or right[1] <= left[1]
             for left, right in zip(checked, checked[1:], strict=True)
@@ -152,6 +150,7 @@ class OceanTimelineOperations:
         if owned_action is not None and hasattr(self.bpy.data, "actions"):
             if owned_action in self.bpy.data.actions and owned_action.users == 0:
                 self.bpy.data.actions.remove(owned_action)
+
     def apply(self, request: Request, action: OceanTimelineApply):
         owned, plan = self._plan(action.preview)
         if action.expected_timeline_revision != plan["timeline_revision"]:
@@ -248,9 +247,10 @@ class OceanTimelineOperations:
         if not compare(owned["expected"], self.ocean._read_ocean(obj, mod)).matched:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Ocean settings changed after animation")
         attached_action, current_keys = self._keys(obj, mod)
-        if attached_action is not state["action"] or not compare(
-            {"keys": state["expected_keys"]}, {"keys": current_keys}
-        ).matched:
+        if (
+            attached_action is not state["action"]
+            or not compare({"keys": state["expected_keys"]}, {"keys": current_keys}).matched
+        ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Ocean timeline keys changed externally")
         self._cleanup_action(obj, state["action"])
         mod.time = state["previous_time"]
