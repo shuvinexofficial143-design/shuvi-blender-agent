@@ -1,4 +1,4 @@
-"""Level 12 M1: reversible native compositor Bright/Contrast image grading.
+"""Level 12 M4: reversible native fixed-radius Gaussian image blur.
 
 Connects an existing native image source to a previously unlinked Composite or
 Viewer output, without changing any foreign links, scene settings or files.
@@ -7,39 +7,28 @@ Viewer output, without changing any foreign links, scene settings or files.
 from dataclasses import dataclass
 from uuid import uuid4
 
+from .compositor_grade import IMAGE_SINKS, IMAGE_SOURCES
 from .compositor_keying import graph_revision, require_scene
 from .contracts import Result, Status
 from .errors import AgentError, ErrorCode
 from .inspection import revision
 from .safety import SafetyClass
 from .tools import Tool
-from .validation import fields, number, string
+from .validation import fields, integer, string
 from .verification import compare
 
-GRADE_NODE = "ShuviColorGrade"
-IMAGE_SOURCES = {
-    "CompositorNodeImage",
-    "CompositorNodeMovieClip",
-    "CompositorNodeRLayers",
-    "CompositorNodeKeying",
-    "CompositorNodeAlphaOver",
-    "CompositorNodeSetAlpha",
-    "CompositorNodeBrightContrast",
-    "CompositorNodeHueSat",
-    "CompositorNodeBlur",
-    "CompositorNodeLensdist",
-}
-IMAGE_SINKS = {"CompositorNodeComposite", "CompositorNodeViewer"}
+BLUR_NODE = "ShuviGaussianBlur"
 
 
 @dataclass(frozen=True)
-class GradePreview:
+class BlurPreview:
     scene_name: str
     source_node: str
     output_node: str
-    brightness: float
-    contrast: float
-    use_premultiply: bool
+    radius_x: int
+    radius_y: int
+    filter_type: str
+    use_extended_bounds: bool
 
     @classmethod
     def parse(cls, data):
@@ -49,78 +38,86 @@ class GradePreview:
                 "scene_name",
                 "source_node",
                 "output_node",
-                "brightness",
-                "contrast",
-                "use_premultiply",
+                "radius_x",
+                "radius_y",
+                "filter_type",
+                "use_extended_bounds",
             },
         )
-        premultiply = data["use_premultiply"]
-        if type(premultiply) is not bool:
-            raise AgentError(ErrorCode.INVALID_REQUEST, "use_premultiply must be Boolean")
+        filter_type = string(data["filter_type"], "filter_type", limit=20)
+        if filter_type not in ("GAUSS", "FAST_GAUSS"):
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Unsupported blur filter")
+        if type(data["use_extended_bounds"]) is not bool:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "use_extended_bounds must be Boolean")
         return cls(
             string(data["scene_name"], "scene_name", limit=120),
             string(data["source_node"], "source_node", limit=120),
             string(data["output_node"], "output_node", limit=120),
-            number(data["brightness"], "brightness", -100, 100),
-            number(data["contrast"], "contrast", -100, 100),
-            premultiply,
+            integer(data["radius_x"], "radius_x", 1, 64),
+            integer(data["radius_y"], "radius_y", 1, 64),
+            filter_type,
+            data["use_extended_bounds"],
         )
 
 
 @dataclass(frozen=True)
-class GradeApply:
-    preview: GradePreview
-    expected_grade_revision: str
+class BlurApply:
+    preview: BlurPreview
+    expected_blur_revision: str
 
     @classmethod
     def parse(cls, data):
-        fields(data, set(GradePreview.__dataclass_fields__) | {"expected_grade_revision"})
+        fields(data, set(BlurPreview.__dataclass_fields__) | {"expected_blur_revision"})
         payload = dict(data)
-        expected = string(
-            payload.pop("expected_grade_revision"), "expected_grade_revision", limit=64
-        )
-        return cls(GradePreview.parse(payload), expected)
+        expected = string(payload.pop("expected_blur_revision"), "expected_blur_revision", limit=64)
+        return cls(BlurPreview.parse(payload), expected)
 
 
 @dataclass(frozen=True)
-class GradeRelease:
-    expected_grade_token: str
+class BlurRelease:
+    expected_blur_token: str
 
     @classmethod
     def parse(cls, data):
-        fields(data, {"expected_grade_token"})
-        return cls(string(data["expected_grade_token"], "expected_grade_token", limit=64))
+        fields(data, {"expected_blur_token"})
+        return cls(string(data["expected_blur_token"], "expected_blur_token", limit=64))
 
 
-def actual(tree, source, output, grade):
-    links = [item for item in tree.links if item.from_node is grade or item.to_node is grade]
+def actual(tree, source, output, node):
+    links = [link for link in tree.links if link.from_node is node or link.to_node is node]
     pairs = (
-        (source.outputs["Image"], grade.inputs["Image"]),
-        (grade.outputs["Image"], output.inputs["Image"]),
+        (source.outputs["Image"], node.inputs["Image"]),
+        (node.outputs["Image"], output.inputs["Image"]),
     )
     correct = len(links) == 2 and all(
-        sum(item.from_socket is a and item.to_socket is b for item in links) == 1 for a, b in pairs
+        sum(link.from_socket is a and link.to_socket is b for link in links) == 1 for a, b in pairs
     )
     return {
-        "node_type": str(grade.bl_idname),
-        "brightness": float(grade.inputs["Bright"].default_value),
-        "contrast": float(grade.inputs["Contrast"].default_value),
-        "use_premultiply": bool(grade.use_premultiply),
+        "node_type": str(node.bl_idname),
+        "radius_x": int(node.size_x),
+        "radius_y": int(node.size_y),
+        "filter_type": str(node.filter_type),
+        "use_extended_bounds": bool(node.use_extended_bounds),
+        "use_relative": bool(node.use_relative),
+        "use_variable_size": bool(node.use_variable_size),
         "links_verified": correct,
     }
 
 
 def expected(plan):
     return {
-        "node_type": "CompositorNodeBrightContrast",
-        "brightness": plan["brightness"],
-        "contrast": plan["contrast"],
-        "use_premultiply": plan["use_premultiply"],
+        "node_type": "CompositorNodeBlur",
+        "radius_x": plan["radius_x"],
+        "radius_y": plan["radius_y"],
+        "filter_type": plan["filter_type"],
+        "use_extended_bounds": plan["use_extended_bounds"],
+        "use_relative": False,
+        "use_variable_size": False,
         "links_verified": True,
     }
 
 
-class ColorGradeOperations:
+class GaussianBlurOperations:
     def __init__(self, bpy):
         self.bpy = bpy
         self._owned = {}
@@ -129,8 +126,8 @@ class ColorGradeOperations:
         scene, tree = require_scene(self.bpy, action.scene_name)
         if len(tree.nodes) >= 128 or len(tree.links) > 254:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Compositor capacity exceeded")
-        if tree.nodes.get(GRADE_NODE) is not None:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Reserved grade node exists")
+        if tree.nodes.get(BLUR_NODE) is not None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Reserved blur node exists")
         if action.source_node == action.output_node:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Separate source and output required")
         source, output = tree.nodes.get(action.source_node), tree.nodes.get(action.output_node)
@@ -141,22 +138,23 @@ class ColorGradeOperations:
         if any(link.to_socket is output.inputs["Image"] for link in tree.links):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Output already connected")
         if any(state["scene"] is scene for state in self._owned.values()):
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Color grade already owned for scene")
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Color blur already owned for scene")
         if len(self._owned) >= 8:
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Too many owned color grades")
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Too many owned color blurs")
         plan = {
             "scene_name": scene.name,
             "source_node": source.name,
             "output_node": output.name,
-            "brightness": action.brightness,
-            "contrast": action.contrast,
-            "use_premultiply": action.use_premultiply,
+            "radius_x": action.radius_x,
+            "radius_y": action.radius_y,
+            "filter_type": action.filter_type,
+            "use_extended_bounds": action.use_extended_bounds,
             "graph_before": graph_revision(tree),
             "mutation_performed": False,
             "source_only": True,
             "render_verified": False,
         }
-        plan["grade_revision"] = revision(plan)
+        plan["blur_revision"] = revision(plan)
         return scene, tree, source, output, plan
 
     def preview(self, request, action):
@@ -165,21 +163,24 @@ class ColorGradeOperations:
 
     def apply(self, request, action):
         scene, tree, source, output, plan = self._plan(action.preview)
-        if action.expected_grade_revision != plan["grade_revision"]:
-            raise AgentError(ErrorCode.STALE_STATE, "Color grade preview stale")
+        if action.expected_blur_revision != plan["blur_revision"]:
+            raise AgentError(ErrorCode.STALE_STATE, "Color blur preview stale")
         node = None
         try:
-            node = tree.nodes.new("CompositorNodeBrightContrast")
-            node.name = GRADE_NODE
-            node.inputs["Bright"].default_value = plan["brightness"]
-            node.inputs["Contrast"].default_value = plan["contrast"]
-            node.use_premultiply = plan["use_premultiply"]
+            node = tree.nodes.new("CompositorNodeBlur")
+            node.name = BLUR_NODE
+            node.size_x = plan["radius_x"]
+            node.size_y = plan["radius_y"]
+            node.filter_type = plan["filter_type"]
+            node.use_relative = False
+            node.use_variable_size = False
+            node.use_extended_bounds = plan["use_extended_bounds"]
             tree.links.new(source.outputs["Image"], node.inputs["Image"])
             tree.links.new(node.outputs["Image"], output.inputs["Image"])
             settings = expected(plan)
             checked = compare(settings, actual(tree, source, output, node))
             if not checked.matched:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Grade RNA/link readback failed")
+                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Blur RNA/link readback failed")
             after = graph_revision(tree)
             token = revision({"before": plan["graph_before"], "after": after, "nonce": uuid4().hex})
             self._owned[token] = {
@@ -197,8 +198,8 @@ class ColorGradeOperations:
                 request.command_id,
                 Status.VERIFIED,
                 {
-                    "grade_token": token,
-                    "grade_node": GRADE_NODE,
+                    "blur_token": token,
+                    "blur_node": BLUR_NODE,
                     "links_created": 2,
                     "source_only": True,
                     "render_verified": False,
@@ -209,14 +210,14 @@ class ColorGradeOperations:
             if node is not None and any(item is node for item in tree.nodes):
                 tree.nodes.remove(node)
             if graph_revision(tree) != plan["graph_before"]:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Grade rollback uncertain") from exc
+                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Blur rollback uncertain") from exc
             code = exc.code if isinstance(exc, AgentError) else ErrorCode.EXECUTION_ERROR
-            raise AgentError(code, "Grade setup failed; owned node rolled back") from exc
+            raise AgentError(code, "Blur setup failed; owned node rolled back") from exc
 
     def release(self, request, action):
-        state = self._owned.get(action.expected_grade_token)
+        state = self._owned.get(action.expected_blur_token)
         if state is None:
-            raise AgentError(ErrorCode.STALE_STATE, "Unknown or used grade token")
+            raise AgentError(ErrorCode.STALE_STATE, "Unknown or used blur token")
         scene, tree = require_scene(self.bpy, state["scene"].name)
         if (
             scene is not state["scene"]
@@ -231,11 +232,11 @@ class ColorGradeOperations:
                 actual(tree, state["source"], state["output"], state["node"]),
             ).matched
         ):
-            raise AgentError(ErrorCode.SAFETY_DENIED, "Color grade graph edited externally")
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Color blur graph edited externally")
         tree.nodes.remove(state["node"])
         if graph_revision(tree) != state["before"]:
-            raise AgentError(ErrorCode.VERIFICATION_FAILED, "Grade restore mismatch")
-        del self._owned[action.expected_grade_token]
+            raise AgentError(ErrorCode.VERIFICATION_FAILED, "Blur restore mismatch")
+        del self._owned[action.expected_blur_token]
         checked = compare({"restored": True}, {"restored": True})
         return Result(
             request.request_id,
@@ -247,11 +248,7 @@ class ColorGradeOperations:
 
     def tools(self):
         return [
-            Tool(
-                "compositor.grade_preview", SafetyClass.READ_ONLY, GradePreview.parse, self.preview
-            ),
-            Tool("compositor.grade_apply", SafetyClass.MUTATION, GradeApply.parse, self.apply),
-            Tool(
-                "compositor.grade_release", SafetyClass.MUTATION, GradeRelease.parse, self.release
-            ),
+            Tool("compositor.blur_preview", SafetyClass.READ_ONLY, BlurPreview.parse, self.preview),
+            Tool("compositor.blur_apply", SafetyClass.MUTATION, BlurApply.parse, self.apply),
+            Tool("compositor.blur_release", SafetyClass.MUTATION, BlurRelease.parse, self.release),
         ]
