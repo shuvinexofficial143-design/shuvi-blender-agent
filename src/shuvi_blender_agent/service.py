@@ -84,8 +84,8 @@ from .vfx_cloth import ClothSimulationOperations
 from .vfx_cloth_collision_workflow import ClothColliderWorkflowOperations
 from .vfx_collision import CollisionSimulationOperations
 from .vfx_ocean import OceanSimulationOperations
-from .vfx_scene_workflow import VfxSceneWorkflowOperations
 from .vfx_ocean_timeline import OceanTimelineOperations
+from .vfx_scene_workflow import VfxSceneWorkflowOperations
 from .vfx_wave import WaveSimulationOperations
 from .visibility import VisibilityOperations
 from .world_lighting import WorldLightingOperations
