@@ -1,9 +1,12 @@
 # Level 12 — Advanced Compositing
 
-**Source milestones: 20% (M1–M2/10); Blender runtime/visual verification 0%; production readiness: No.**
+**Source milestones: 30% (M1–M3/10); Blender runtime/visual verification 0%; production readiness: No.**
 
 ## M1 — Native Bright/Contrast image grading
 The typed `compositor.grade_preview/apply/release` tools connect one existing native image-output node to an *initially unconnected* existing Composite or Viewer output through a new Blender `CompositorNodeBrightContrast`. Bounded Bright (-100..100) and Contrast (-100..100) socket values and use_premultiply are written via real bpy RNA and verified with exact link readback. A stale graph revision blocks apply; release needs an unchanged scene, source, output, graded settings and links, then removes only the owned grade node and two links. Partial creation/link failures roll back the new node without rewriting foreign compositor links. This is source-level functionality: it does not load footage, process image pixels, execute compositing, or render a frame. Tool registry count 314. Next M2 will add a separate native lens-distortion / chromatic aberration pass.
 
 ## M2 — Native Lens Distortion and Chromatic Dispersion (10% → 20%)
 Typed `compositor.lens_preview/apply/release` connect an existing native compositor Image source to an initially unconnected Composite or Viewer sink through `CompositorNodeLensdist`. The actual Blender `Distort` (-0.5..0.5), `Dispersion` (0..0.25), fit/jitter properties and projector=false are set via bpy RNA; exactly two links and all settings are read back. The source may be an existing M1 color grade, enabling grade→lens→Viewer while preserving its current Composite output. Graph revision guards, unique one-use owner token, refusal to overwrite foreign sink links, owned-only rollback and external-edit-denying release protect user scenes. No footage files, compositor execution, rendering or visual quality verified. Registry: 317 public typed tools. Level 12 source progress 20%; Blender runtime validation 0%.
+
+## M3 — Hue / Saturation / Value native color correction (20% → 30%)
+`compositor.hsv_preview/apply/release`: bounded Hue (0..1, neutral 0.5), Saturation (0..2), Value (0..2) and Fac (0..1) set through native `CompositorNodeHueSat` input sockets. Source node to previously empty Composite/Viewer via exactly two verified links. No foreign rewiring, stale graph/ownership guard, atomic own-node rollback, one-use release, real RNA readback. Source-only, no Blender evaluation or rendered frame. Registry 320 tools.
