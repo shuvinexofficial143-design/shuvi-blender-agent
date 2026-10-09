@@ -155,7 +155,7 @@ def test_m10_native_source_requirement_and_reserved_node_guard():
 def test_m10_registry_and_policy_gate():
     bpy, _, _, tree, _, args = prepare()
     names = {entry["name"] for entry in create_registry(bpy).catalog()}
-    assert len(names) == 311
+    assert len(names) == 314
     assert {"compositor.shot_preview", "compositor.shot_apply", "compositor.shot_release"} <= names
     locked = ToolRegistry(GreenScreenShotOperations(bpy).tools(), SafetyPolicy())
     plan = preview(locked, args)
