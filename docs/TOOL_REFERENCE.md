@@ -1788,3 +1788,21 @@ Current Level 3 source progress: **100%**.
 
 Registered typed tools: **252**. Level 9 source: **10%**.
 Real runtime acceptance: **0%**. Production ready: **No**.
+
+
+## Level 9 M2 — Professional multi-light studio layouts
+
+- `lighting.preset_catalog` (read-only, strict empty payload) lists
+  all five bounded source lighting layouts including actual fixture roles,
+  angles, size multipliers, energy, RGB and intent.
+- `lighting.studio_preview` and `lighting.studio_apply` additionally
+  support BEAUTY_CLAMSHELL (four lights: Key, Fill, Rim, Catchlight)
+  and PRODUCT_FIVE_POINT (five lights: Key, Fill, Rim, Top, Edge).
+  Previously supported M1 three-light presets are unchanged.
+- Every named light is a real Blender-shaped AREA light/datablock, with
+  independent pose/energy/color/emitter-size readback. Dynamic all-role
+  name-collision guards, scene limits, stale-state checks, rollbacks and
+  owned-only same-session release cover all four/five fixtures.
+  Interrupted *release* is not guaranteed atomic.
+- Registered typed tools: **253**. Level 9 source-side: **20%**.
+  Real Blender runtime/render acceptance **0%**; production ready No.

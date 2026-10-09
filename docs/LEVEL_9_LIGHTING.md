@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **10%** (Milestone 1 of 10).
+Current source progress: **20%** (Milestones 1–2 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,10 +65,45 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1 source progress is **10%**.
+Level 9 M1–M2 source progress is **20%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M2, Blender launch/render/live evaluation,
+**STOP** before Level 9 M3, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
+
+
+## M2 — Professional multi-light studio presets (10% → 20%)
+
+One additional strict, read-only typed host tool:
+
+- `lighting.preset_catalog`: accepts only an empty payload and returns
+  five source-defined presets, their named roles, fixture count,
+  azimuth/elevation, initial Watts, RGB and emitter-size multipliers.
+  It creates or modifies no objects.
+
+The existing `lighting.studio_preview`, `lighting.studio_apply`
+and `lighting.studio_release` now support two real, separately
+placed and aimed arrangements in addition to all three M1 presets:
+
+- `BEAUTY_CLAMSHELL`: four actual AREA light objects/datablocks,
+  Key + low frontal Fill + Rim + small Catchlight.
+- `PRODUCT_FIVE_POINT`: five AREA lights, Key + Fill + Rim + Top + Edge.
+
+Each rig has independently calculated poses, light power, color,
+disk-emitter size and unique role-based names. Full scene and subject
+revision safeguards, preflight name-collision checks, exact readback,
+bounded scene-object ceiling, creation-failure rollback and same-session
+owned release now cover every fixture in the selected 3–5 light layout.
+Pre-existing foreign lights, objects, materials and cameras are not
+changed or adopted.
+
+Preset light energies are starting settings, not calibrated lux, exposure,
+lighting aesthetics, Blender runtime compatibility or rendered results.
+Partial light *release* cannot be guaranteed atomic if Blender removal
+itself fails; affected state must be inspected manually.
+
+M2 raises the typed tool cap from **252 to 253**; source progress
+is **20% of Level 9 only**. Runtime/render acceptance remains **0%**.
+Production ready: **No**. Stop before M3 without new permission.
