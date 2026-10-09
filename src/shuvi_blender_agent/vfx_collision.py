@@ -13,7 +13,6 @@ from .tools import Tool
 from .validation import fields, number, string
 from .vfx_cloth import ClothSimulationOperations
 
-
 COLLISION_FIELDS = {
     "thickness_outer": ("settings", "thickness_outer"),
     "cloth_friction": ("settings", "cloth_friction"),

@@ -115,7 +115,10 @@ def test_m6_collision_and_cloth_can_coexist_on_separate_meshes():
     }
     cplan = reg.dispatch(Request("vfx.cloth_preview", cloth_args)).data
     cloth = reg.dispatch(
-        Request("vfx.cloth_apply", cloth_args | {"expected_cloth_revision": cplan["cloth_revision"]})
+        Request(
+            "vfx.cloth_apply",
+            cloth_args | {"expected_cloth_revision": cplan["cloth_revision"]},
+        )
     )
     assert cloth.status == Status.VERIFIED, cloth.error
     collision_args = {
