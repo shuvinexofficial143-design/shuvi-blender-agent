@@ -137,6 +137,9 @@ from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelT
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .studio_lighting import (
+    LookApply,
+    LookPreview,
+    LookRestore,
     RigApply,
     RigPreview,
     RigRelease,
@@ -379,6 +382,9 @@ def builtin_contracts() -> dict:
         "lighting.studio_release": (mutation, RigRelease.parse),
         "lighting.tune_preview": (read, TunePreview.parse),
         "lighting.tune_apply": (mutation, TuneApply.parse),
+        "lighting.look_preview": (read, LookPreview.parse),
+        "lighting.look_apply": (mutation, LookApply.parse),
+        "lighting.look_restore": (mutation, LookRestore.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

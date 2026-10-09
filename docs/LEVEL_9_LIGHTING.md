@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **70%** (Milestones 1–7 of 10).
+Current source progress: **80%** (Milestones 1–8 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M7 source progress is **70%**.
+Level 9 M1–M8 source progress is **80%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M8, Blender launch/render/live evaluation,
+**STOP** before Level 9 M9, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -251,3 +251,35 @@ Level 9 source progress **70%**. Real Blender runtime and
 rendered appearance acceptance **0%**. Production ready: No.
 The same user `next` also authorizes M8; complete its own
 source and CI checks before claiming 80%.
+
+
+## M8 — Reversible whole-rig cinematic look swaps (70% → 80%)
+
+Three real host operations: `lighting.look_preview` (READ_ONLY),
+`lighting.look_apply` and `lighting.look_restore` (mutations).
+Strict named styles: FILM_NOIR, PRODUCT_GLOSS and NEON_SPLIT. Each
+style computes bounded per-role power (Watt) multipliers and actual
+RGB values for every fixture of the currently owned 3–5 light rig.
+Unlike source-side recipe descriptions, `look_apply` modifies
+**the existing bpy AREA light datablocks together**. It requires an
+unchanged ownership token, complete preflight readback, exact fresh
+look revision and no pending un-restored look. Every fixture is
+independently verified after the mutation. If even one light fails
+readback or write, the pre-look properties of the entire owned rig
+are restored with verified readback; uncertain recovery fails closed.
+
+Successful apply returns a same-session look token and preserves a
+one-level exact before/after snapshot. `lighting.look_restore` accepts
+that token only while the managed scene and every light match the
+applied look. Restore writes the original per-fixture settings,
+verifies them, expires the look token and preserves the regular
+`studio_release` lifecycle. Individual M7 tuning after a look
+explicitly expires the pending undo token so it cannot overwrite
+new intentional adjustments. Neither foreign lights nor materials,
+camera, environment, other objects are altered. This is not
+color grading, rendered film-noir quality or visual acceptance.
+
+Public tools **261**. Level 9 source progress **80%** (M1–M8).
+Real Blender runtime/visual render acceptance remains **0%**.
+Production ready: No. **STOP before M9**, Blender launch/render
+and merging into the master Shuvi repo without new instruction.

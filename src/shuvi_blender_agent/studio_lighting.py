@@ -263,6 +263,77 @@ class TuneApply:
         )
 
 
+# M8 scene-look swaps multiply the *current* owned lights, and save
+# an exact one-level undo snapshot. No foreign lights are affected.
+LOOK_STYLES = {
+    "FILM_NOIR": {
+        "Key": (1.12, (0.98, 0.89, 0.78)),
+        "Fill": (0.18, (0.34, 0.46, 0.72)),
+        "Rim": (1.25, (1.0, 0.92, 0.82)),
+        "Catchlight": (0.40, (1.0, 0.96, 0.88)),
+        "Top": (0.68, (0.88, 0.86, 0.89)),
+        "Edge": (0.82, (0.81, 0.86, 1.0)),
+    },
+    "PRODUCT_GLOSS": {
+        "Key": (1.15, (1.0, 0.99, 0.97)),
+        "Fill": (1.05, (0.94, 0.98, 1.0)),
+        "Rim": (1.35, (1.0, 1.0, 1.0)),
+        "Catchlight": (1.05, (1.0, 1.0, 1.0)),
+        "Top": (1.30, (1.0, 0.98, 0.95)),
+        "Edge": (1.15, (0.90, 0.97, 1.0)),
+    },
+    "NEON_SPLIT": {
+        "Key": (0.85, (1.0, 0.24, 0.13)),
+        "Fill": (0.70, (0.07, 0.88, 0.95)),
+        "Rim": (1.45, (0.16, 0.72, 1.0)),
+        "Catchlight": (0.75, (1.0, 0.84, 0.61)),
+        "Top": (0.84, (1.0, 0.32, 0.27)),
+        "Edge": (1.20, (0.08, 0.96, 0.88)),
+    },
+}
+
+
+@dataclass(frozen=True)
+class LookPreview:
+    token: str
+    look: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(data, {"expected_lighting_token", "look"})
+        look = string(data["look"], "look", limit=32)
+        if look not in LOOK_STYLES:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Unsupported cinematic look")
+        return cls(
+            string(data["expected_lighting_token"], "expected_lighting_token", limit=64),
+            look,
+        )
+
+
+@dataclass(frozen=True)
+class LookApply:
+    preview: LookPreview
+    expected_look_revision: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(data, {"expected_lighting_token", "look", "expected_look_revision"})
+        return cls(
+            LookPreview.parse({k: v for k, v in data.items() if k != "expected_look_revision"}),
+            string(data["expected_look_revision"], "expected_look_revision", limit=64),
+        )
+
+
+@dataclass(frozen=True)
+class LookRestore:
+    expected_look_token: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(data, {"expected_look_token"})
+        return cls(string(data["expected_look_token"], "expected_look_token", limit=64))
+
+
 class StudioLightingOperations:
     """Creates three actual Blender area lights, verifies and owns their life cycle."""
 
@@ -700,6 +771,7 @@ class StudioLightingOperations:
                 AgentError(ErrorCode.VERIFICATION_FAILED, "Light tuning readback mismatch"),
                 checked.to_dict(),
             )
+        owned["look_undo"] = None
         return Result(
             request.request_id,
             request.command_id,
@@ -708,6 +780,124 @@ class StudioLightingOperations:
                 "lighting_token": action.preview.token,
                 "role": action.preview.role,
                 "settings_updated": list(action.preview.settings),
+                "source_only": True,
+                "render_verified": False,
+            },
+            verification=checked.to_dict(),
+        )
+
+    def _look_plan(self, action: LookPreview):
+        owned = self._live_owned(action.token)
+        if owned.get("look_undo") is not None:
+            raise AgentError(
+                ErrorCode.SAFETY_DENIED, "Restore the active look before selecting another"
+            )
+        proposed = []
+        for role, original in zip(owned["roles"], owned["expected"], strict=True):
+            multiplier, rgb = LOOK_STYLES[action.look][role]
+            changed = dict(original)
+            changed["energy"] = min(100_000.0, max(1.0, original["energy"] * multiplier))
+            changed["color"] = list(rgb)
+            proposed.append(changed)
+        plan = {
+            "look": action.look,
+            "lighting_token": action.token,
+            "roles": list(owned["roles"]),
+            "current_lights": owned["expected"],
+            "proposed_lights": proposed,
+            "scene_revision": owned["after_scene"],
+            "source_only": True,
+            "render_verified": False,
+            "mutation_performed": False,
+        }
+        plan["look_revision"] = revision(plan)
+        return owned, proposed, plan
+
+    def look_preview(self, request: Request, action: LookPreview):
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.SUCCEEDED,
+            self._look_plan(action)[2],
+        )
+
+    def look_apply(self, request: Request, action: LookApply):
+        owned, expected, plan = self._look_plan(action.preview)
+        if plan["look_revision"] != action.expected_look_revision:
+            raise AgentError(ErrorCode.STALE_STATE, "Look changed since preview")
+        previous = [dict(row) for row in owned["expected"]]
+        if previous == expected:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Look already matches owned rig")
+        checked = self._mutate_lights(owned, expected)
+        if not checked.matched:
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {"rolled_back": True, "recovery_verified": True},
+                AgentError(ErrorCode.VERIFICATION_FAILED, "Look swap readback mismatch"),
+                checked.to_dict(),
+            )
+        look_token = revision(
+            {
+                "lighting_token": action.preview.token,
+                "look": action.preview.look,
+                "before": previous,
+                "after": expected,
+                "scene": owned["after_scene"],
+            }
+        )
+        owned["look_undo"] = {
+            "token": look_token,
+            "before": previous,
+            "after": expected,
+        }
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
+            {
+                "look_token": look_token,
+                "lighting_token": action.preview.token,
+                "look": action.preview.look,
+                "lights_updated": len(expected),
+                "source_only": True,
+                "render_verified": False,
+            },
+            verification=checked.to_dict(),
+        )
+
+    def look_restore(self, request: Request, action: LookRestore):
+        candidates = [
+            (token, owned)
+            for token, owned in self._owned.items()
+            if (owned.get("look_undo") or {}).get("token") == action.expected_look_token
+        ]
+        if len(candidates) != 1:
+            raise AgentError(ErrorCode.STALE_STATE, "Unknown or expired cinematic look token")
+        lighting_token, _ = candidates[0]
+        owned = self._live_owned(lighting_token)
+        undo = owned["look_undo"]
+        if owned["expected"] != undo["after"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Look was edited since application")
+        checked = self._mutate_lights(owned, undo["before"])
+        if not checked.matched:
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {"rolled_back": True, "recovery_verified": True},
+                AgentError(ErrorCode.VERIFICATION_FAILED, "Look restore readback mismatch"),
+                checked.to_dict(),
+            )
+        owned["look_undo"] = None
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
+            {
+                "lighting_token": lighting_token,
+                "restored_previous_look": True,
                 "source_only": True,
                 "render_verified": False,
             },
@@ -766,4 +956,17 @@ class StudioLightingOperations:
                 self.tune_preview,
             ),
             Tool("lighting.tune_apply", SafetyClass.MUTATION, TuneApply.parse, self.tune_apply),
+            Tool(
+                "lighting.look_preview",
+                SafetyClass.READ_ONLY,
+                LookPreview.parse,
+                self.look_preview,
+            ),
+            Tool("lighting.look_apply", SafetyClass.MUTATION, LookApply.parse, self.look_apply),
+            Tool(
+                "lighting.look_restore",
+                SafetyClass.MUTATION,
+                LookRestore.parse,
+                self.look_restore,
+            ),
         ]

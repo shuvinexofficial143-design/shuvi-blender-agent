@@ -1879,3 +1879,23 @@ Writes the actual existing bpy AREA light properties, verifies full
 readback, rolls back on error/mismatch and updates owned-release
 baseline on success. Foreign objects and data remain untouched.
 Public tools **258**, source Level 9 **70%**, Blender live **0%**.
+
+
+## Level 9 M8 — Cinematic look swap/restore of owned rig
+
+- `lighting.look_preview` (read-only): exact same-session
+  `expected_lighting_token` and a strict `look`:
+  FILM_NOIR, PRODUCT_GLOSS or NEON_SPLIT. Produces planned
+  roles, per-fixture RGB/Watts, and stale-guard look revision.
+- `lighting.look_apply` (mutation): identical fields +
+  `expected_look_revision`; verifies every currently owned
+  3–5 light then updates actual AREA light color/energy together.
+  Rolls back **all managed lights** on any readback error.
+- `lighting.look_restore` (mutation): one-use
+  `expected_look_token` from successful apply. Refuses modified
+  scene/fixtures or expired snapshots, restores exact prior
+  properties to all 3–5 lamps, with complete verification.
+  M7 tuning invalidates the earlier pending undo.
+
+Host tool count **261**, Level 9 source progress **80%**,
+real Blender runtime acceptance **0%**.

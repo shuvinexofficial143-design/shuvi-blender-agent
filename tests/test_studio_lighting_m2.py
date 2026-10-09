@@ -220,7 +220,7 @@ def test_m2_foreign_light_remains_untouched_after_setup_and_release():
 def test_m2_catalog_host_contract_caps_and_permissions():
     bpy, _, _, _, _ = setup()
     full = create_registry(bpy, SafetyPolicy(allow_mutations=True))
-    assert len(full.catalog()) == MAX_REGISTERED_TOOLS == 258
+    assert len(full.catalog()) == MAX_REGISTERED_TOOLS == 261
     assert "lighting.preset_catalog" in {tool["name"] for tool in full.catalog()}
     assert full.dispatch(Request("lighting.preset_catalog", {})).status == Status.SUCCEEDED
     deny = create_registry(bpy, SafetyPolicy(allow_mutations=False))
