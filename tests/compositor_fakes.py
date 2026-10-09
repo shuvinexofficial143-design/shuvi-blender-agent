@@ -53,6 +53,10 @@ class Node:
             self.inputs.extend([Socket("Image"), Socket("Bright", 0.0), Socket("Contrast", 0.0)])
             self.outputs.append(Socket("Image"))
             self.use_premultiply = False
+        elif kind == "CompositorNodeFilter":
+            self.inputs.extend([Socket("Fac", 1.0), Socket("Image")])
+            self.outputs.append(Socket("Image"))
+            self.filter_type = "SOFTEN"
         elif kind == "CompositorNodeBlur":
             self.inputs.append(Socket("Image"))
             self.outputs.append(Socket("Image"))

@@ -52,7 +52,9 @@ class SharpenApply:
     def parse(cls, data):
         fields(data, set(SharpenPreview.__dataclass_fields__) | {"expected_sharpen_revision"})
         payload = dict(data)
-        expected = string(payload.pop("expected_sharpen_revision"), "expected_sharpen_revision", limit=64)
+        expected = string(
+            payload.pop("expected_sharpen_revision"), "expected_sharpen_revision", limit=64
+        )
         return cls(SharpenPreview.parse(payload), expected)
 
 
@@ -73,8 +75,7 @@ def actual(tree, source, output, node):
         (node.outputs["Image"], output.inputs["Image"]),
     )
     connected = len(links) == 2 and all(
-        sum(item.from_socket is a and item.to_socket is b for item in links) == 1
-        for a, b in pairs
+        sum(item.from_socket is a and item.to_socket is b for item in links) == 1 for a, b in pairs
     )
     return {
         "node_type": str(node.bl_idname),
@@ -180,7 +181,9 @@ class SharpenFilterOperations:
             if node is not None and any(item is node for item in tree.nodes):
                 tree.nodes.remove(node)
             if graph_revision(tree) != plan["graph_before"]:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Sharpen rollback uncertain") from exc
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Sharpen rollback uncertain"
+                ) from exc
             code = exc.code if isinstance(exc, AgentError) else ErrorCode.EXECUTION_ERROR
             raise AgentError(code, "Sharpen setup failed; owned node rolled back") from exc
 
@@ -218,7 +221,11 @@ class SharpenFilterOperations:
 
     def tools(self):
         return [
-            Tool("compositor.sharpen_preview", SafetyClass.READ_ONLY, SharpenPreview.parse, self.preview),
+            Tool(
+                "compositor.sharpen_preview", SafetyClass.READ_ONLY, SharpenPreview.parse, self.preview
+            ),
             Tool("compositor.sharpen_apply", SafetyClass.MUTATION, SharpenApply.parse, self.apply),
-            Tool("compositor.sharpen_release", SafetyClass.MUTATION, SharpenRelease.parse, self.release),
+            Tool(
+                "compositor.sharpen_release", SafetyClass.MUTATION, SharpenRelease.parse, self.release
+            ),
         ]
