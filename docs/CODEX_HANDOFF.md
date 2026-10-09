@@ -1130,3 +1130,5 @@ Level 10 M10: Level 10 has 10/10 source milestones merged after PR confirmation;
 Level 11 M1: `tracking.clip_inspect` (READ_ONLY) inspects already loaded local Blender MovieClip tracking objects, exact-frame marker positions, locked flags and source footage metadata with bounded work, no path disclosure or file loading. Level 11 source 10%, 290 tools. Not an auto-tracker, matchmove solve, keyer, real Blender runtime or render.
 
 Level 11 M2: manual track markers inserted via real `MovieTrackingMarkers.insert_frame` on existing, local/unlocked MovieClip tracks, with typed bounded coordinates/frames, post-insert readback, foreign-edit detection, owned-only recovery/restore and tests. Level 11 source 20%, 293 tools; live Blender runtime 0%. No automatic matchmove or green-screen.
+
+Level 11 M3 source milestone 30%: added exact-sampled, read-only marker motion QA (coverage, pixel speeds, large jumps and review-only heuristic_ready) to tracking.clip_inspect. 293 typed tools, live Blender runtime 0%, no matchmove solve.
