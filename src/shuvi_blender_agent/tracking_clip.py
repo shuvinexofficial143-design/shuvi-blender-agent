@@ -145,18 +145,18 @@ class MovieClipInspectionOperations:
                     action.frames, entry["sampled_markers"], size
                 )
         result = {
-                "clip_name": clip.name,
-                "tracking_object_name": obj.name,
-                "camera_tracking": bool(obj.is_camera),
-                "size": size,
-                "frame_duration": max(0, int(clip.frame_duration)),
-                "track_count": len(tracks),
-                "tracks": summary,
-                "sample_frames": list(action.frames),
-                "motion_analyzed": action.analyze_motion,
-                "source_only": True,
-                "matchmove_solved": False,
-                "mutation_performed": False,
+            "clip_name": clip.name,
+            "tracking_object_name": obj.name,
+            "camera_tracking": bool(obj.is_camera),
+            "size": size,
+            "frame_duration": max(0, int(clip.frame_duration)),
+            "track_count": len(tracks),
+            "tracks": summary,
+            "sample_frames": list(action.frames),
+            "motion_analyzed": action.analyze_motion,
+            "source_only": True,
+            "matchmove_solved": False,
+            "mutation_performed": False,
         }
         if action.inspect_reconstruction:
             result["existing_reconstruction"] = reconstruction_quality(
