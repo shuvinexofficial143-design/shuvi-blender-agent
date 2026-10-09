@@ -1099,3 +1099,7 @@ Actual bpy modifier operations (WAVE) with strict bounded parameter schema, stal
 ## Level 10 M2 — Ocean Surface Generator
 
 Real Blender `OCEAN` modifier geometry generation with bounded resolution, size, time, deterministic seed, wave scale, directional wind/choppiness. Preview/apply/release with exact readback, scene revision, ownership and rollback; no baked cache, no external files, no measured render, no Blender launch. 274 typed tools. Level 10 source **20%**.
+
+## Level 10 M3 — Ocean foam/spray attributes
+
+M2 OCEAN modifier now optionally enables and verifies foam vertex-color data layer and spray direction layer via actual bpy modifier attributes. Strict bounded field validation, no external files. M2 legacy unchanged, full readback and owned release enforced. 274 tools, Level 10 source 30%, no Blender execution/render acceptance.
