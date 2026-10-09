@@ -126,7 +126,7 @@ def test_m5_injected_second_link_failure_reverts_owned_node():
 def test_m5_catalog_and_readonly_gate():
     bpy, tree, _, args = prepare()
     names = {x["name"] for x in create_registry(bpy).catalog()}
-    assert len(names) == 326
+    assert len(names) == 329
     assert {
         "compositor.sharpen_preview",
         "compositor.sharpen_apply",
