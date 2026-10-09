@@ -59,9 +59,7 @@ def apply(registry, args, plan):
 
 
 def release(registry, token):
-    return registry.dispatch(
-        Request("lighting.studio_release", {"expected_lighting_token": token})
-    )
+    return registry.dispatch(Request("lighting.studio_release", {"expected_lighting_token": token}))
 
 
 def test_m2_catalog_is_read_only_and_reports_real_fixture_layouts():

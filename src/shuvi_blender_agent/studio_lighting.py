@@ -98,7 +98,6 @@ class RigPreview:
             number(data["intensity_scale"], "intensity_scale", 0.25, 3.0),
         )
 
-
 @dataclass(frozen=True)
 class RigApply:
     preview: RigPreview
