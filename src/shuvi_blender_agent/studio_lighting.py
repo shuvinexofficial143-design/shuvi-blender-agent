@@ -605,7 +605,7 @@ class StudioLightingOperations:
         created = owned["created"]
 
         def write(settings):
-            for (obj, data), want in zip(created, settings, strict=True):
+            for (_obj, data), want in zip(created, settings, strict=True):
                 for key in TUNABLE_FIELDS:
                     value = want[key]
                     setattr(data, key, list(value) if key == "color" else value)
@@ -758,6 +758,11 @@ class StudioLightingOperations:
             Tool("lighting.studio_preview", SafetyClass.READ_ONLY, RigPreview.parse, self.preview),
             Tool("lighting.studio_apply", SafetyClass.MUTATION, RigApply.parse, self.apply),
             Tool("lighting.studio_release", SafetyClass.MUTATION, RigRelease.parse, self.release),
-            Tool("lighting.tune_preview", SafetyClass.READ_ONLY, TunePreview.parse, self.tune_preview),
+            Tool(
+                "lighting.tune_preview",
+                SafetyClass.READ_ONLY,
+                TunePreview.parse,
+                self.tune_preview,
+            ),
             Tool("lighting.tune_apply", SafetyClass.MUTATION, TuneApply.parse, self.tune_apply),
         ]
