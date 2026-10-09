@@ -176,7 +176,7 @@ def test_m9_catalog_host_registration_and_permission_gate():
     bpy = fake_bpy()
     full = create_registry(bpy, SafetyPolicy(allow_mutations=False))
     catalog = full.catalog()
-    assert len(catalog) == 271
+    assert len(catalog) == 274
     assert {"lighting.recipe_apply", "lighting.recipe_restore"}.issubset(
         {row["name"] for row in catalog}
     )

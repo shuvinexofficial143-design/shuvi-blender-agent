@@ -1094,3 +1094,8 @@ merge without explicit authorization.
 ## Level 10 M1 — Real ripple/WAVE modifier
 
 Actual bpy modifier operations (WAVE) with strict bounded parameter schema, stale target and scene revision, readback of properties, owned session token and exact guarded release. Source Level 10 **10%**; no frame simulation or Blender live acceptance; 271 typed tools. Next M2 Ocean.
+
+
+## Level 10 M2 — Ocean Surface Generator
+
+Real Blender `OCEAN` modifier geometry generation with bounded resolution, size, time, deterministic seed, wave scale, directional wind/choppiness. Preview/apply/release with exact readback, scene revision, ownership and rollback; no baked cache, no external files, no measured render, no Blender launch. 274 typed tools. Level 10 source **20%**.
