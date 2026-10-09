@@ -950,3 +950,20 @@ Level 9 M1: **10% source-side**; total host tools **252**.
 **0% real Blender runtime/render acceptance; not production ready.**
 STOP before Level 9 M2, Blender process/render or master Shuvi
 integration until explicitly authorized.
+
+
+## Level 9 M2 — Four/five light studio presets (source only)
+
+Authorized M2 adds strictly read-only `lighting.preset_catalog`
+reporting the actual fixture specifications and layouts. The original
+revisioned studio setup/release operations now support independently
+positioned, aimed and checked `BEAUTY_CLAMSHELL` (4 lights including
+Catchlight) and `PRODUCT_FIVE_POINT` (5 lights including Top and Edge).
+Existing three-point M1 layouts remain exactly unchanged.
+Dynamic light counts, extra-role collision checks, exact datablock
+readback, rollback and same-session owned release apply to all rigs.
+
+**Level 9 source: 20% (M1–M2). Public typed tools: 253.**
+Source/fake-bpy and CI only; Blender runtime/render acceptance **0%**,
+production-ready **No**. Stop before Level 9 M3; do not launch Blender,
+render or change the master Shuvi project without new authorization.

@@ -26,6 +26,52 @@ PRESETS = {
 ANGLES = ((40, 35), (-55, 20), (165, 50))
 SIZES = (1.6, 2.1, 1.0)
 
+# M2 adds actual four- and five-fixture arrangements. These values
+# are initial wattage/position presets, not rendered exposure guarantees.
+EXPANDED_PRESETS = {
+    "BEAUTY_CLAMSHELL": (
+        ("Key", 20, 48, 2.3, 1100, (1.0, 0.93, 0.86)),
+        ("Fill", -8, -28, 2.5, 750, (1.0, 0.95, 0.91)),
+        ("Rim", 155, 45, 1.2, 680, (1.0, 0.90, 0.83)),
+        ("Catchlight", -32, 12, 0.55, 190, (1.0, 1.0, 1.0)),
+    ),
+    "PRODUCT_FIVE_POINT": (
+        ("Key", 38, 38, 2.4, 1350, (1.0, 0.98, 0.94)),
+        ("Fill", -62, 20, 2.8, 600, (0.91, 0.95, 1.0)),
+        ("Rim", 150, 46, 1.15, 1100, (1.0, 1.0, 1.0)),
+        ("Top", 0, 78, 1.6, 790, (1.0, 0.99, 0.96)),
+        ("Edge", -145, 16, 1.0, 440, (0.87, 0.94, 1.0)),
+    ),
+}
+PRESET_DESCRIPTIONS = {
+    "SOFT_STUDIO": "Balanced three-point neutral studio lighting",
+    "DRAMATIC": "Three-point higher contrast with restrained fill",
+    "WARM_PORTRAIT": "Three-point warm portrait with a cool fill",
+    "BEAUTY_CLAMSHELL": "Four-light beauty portrait with low frontal fill",
+    "PRODUCT_FIVE_POINT": "Five-light product illumination with top and edge lights",
+}
+
+
+def _layout_specs(preset):
+    if preset in EXPANDED_PRESETS:
+        return EXPANDED_PRESETS[preset]
+    energies, colors = PRESETS[preset]
+    return tuple(
+        (role, angles[0], angles[1], size, energy, rgb)
+        for role, angles, size, energy, rgb in zip(
+            ROLES, ANGLES, SIZES, energies, colors, strict=True
+        )
+    )
+
+
+
+@dataclass(frozen=True)
+class StudioPresetCatalog:
+    @classmethod
+    def parse(cls, data):
+        fields(data, set())
+        return cls()
+
 
 @dataclass(frozen=True)
 class RigPreview:
@@ -39,7 +85,7 @@ class RigPreview:
     def parse(cls, data):
         fields(data, {"subject", "name_prefix", "preset", "distance_scale", "intensity_scale"})
         preset = string(data["preset"], "preset", limit=32)
-        if preset not in PRESETS:
+        if preset not in PRESETS and preset not in EXPANDED_PRESETS:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown studio lighting preset")
         prefix = object_name(data["name_prefix"])
         if len(prefix) > 40:
@@ -173,14 +219,13 @@ class StudioLightingOperations:
             blockers.add("LINKED_SUBJECT_UNSUPPORTED")
         if self.bpy.context.mode != "OBJECT":
             blockers.add("OBJECT_MODE_REQUIRED")
-        if len(self.bpy.data.objects) + 3 > 10_000:
+        specs = _layout_specs(action.preset)
+        if len(self.bpy.data.objects) + len(specs) > 10_000:
             blockers.add("SCENE_OBJECT_LIMIT")
         if self._owned:
             blockers.add("LIGHTING_RIG_ALREADY_MANAGED")
         entries = []
-        for role, (azimuth, elevation), size_mul, energy, rgb in zip(
-            ROLES, ANGLES, SIZES, *PRESETS[action.preset], strict=True
-        ):
+        for role, azimuth, elevation, size_mul, energy, rgb in specs:
             name = f"{action.name_prefix}_{role}"
             if self.bpy.data.objects.get(name) is not None or any(
                 light.name == name for light in self.bpy.data.lights
@@ -275,7 +320,7 @@ class StudioLightingOperations:
             expected = {
                 "lights": [self._expected(entry) for entry in plan["lights"]],
                 "subject_revision": subject_before["revision"],
-                "created_count": 3,
+                "created_count": len(plan["lights"]),
             }
             actual = {
                 "lights": after,
@@ -308,8 +353,8 @@ class StudioLightingOperations:
                     Status.VERIFIED,
                     {
                         "lighting_token": token,
-                        "lights_created": 3,
-                        "roles": list(ROLES),
+                        "lights_created": len(created),
+                        "roles": [entry["role"] for entry in plan["lights"]],
                         "source_only": True,
                         "render_verified": False,
                     },
@@ -370,12 +415,52 @@ class StudioLightingOperations:
             request.request_id,
             request.command_id,
             Status.VERIFIED,
-            {"removed_owned_lights": 3, "restored_scene": True},
+            {"removed_owned_lights": len(created), "restored_scene": True},
             verification=checked.to_dict(),
+        )
+
+    def catalog(self, request: Request, action: StudioPresetCatalog):
+        presets = []
+        for name in PRESET_DESCRIPTIONS:
+            specs = _layout_specs(name)
+            presets.append(
+                {
+                    "preset": name,
+                    "description": PRESET_DESCRIPTIONS[name],
+                    "light_count": len(specs),
+                    "fixtures": [
+                        {
+                            "role": role,
+                            "azimuth_degrees": azimuth,
+                            "elevation_degrees": elevation,
+                            "size_multiplier": size,
+                            "energy_watts": energy,
+                            "rgb": list(rgb),
+                        }
+                        for role, azimuth, elevation, size, energy, rgb in specs
+                    ],
+                }
+            )
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.SUCCEEDED,
+            {
+                "presets": presets,
+                "source_only": True,
+                "render_verified": False,
+                "mutation_performed": False,
+            },
         )
 
     def tools(self):
         return [
+            Tool(
+                "lighting.preset_catalog",
+                SafetyClass.READ_ONLY,
+                StudioPresetCatalog.parse,
+                self.catalog,
+            ),
             Tool("lighting.studio_preview", SafetyClass.READ_ONLY, RigPreview.parse, self.preview),
             Tool("lighting.studio_apply", SafetyClass.MUTATION, RigApply.parse, self.apply),
             Tool("lighting.studio_release", SafetyClass.MUTATION, RigRelease.parse, self.release),
