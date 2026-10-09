@@ -9,7 +9,7 @@ from .safety import SafetyClass
 from .studio_lighting import StudioLightingOperations
 from .tools import Tool
 from .validation import fields, string
-from .verification import compare
+
 
 # Each recipe changes *real, existing, owned* AREA lamp color, power,
 # emitter size, spread and casting. Values are source defaults, not
@@ -145,7 +145,9 @@ class LightingRecipeOperations:
         return owned, wanted, plan
 
     def preview(self, request: Request, action: RecipePreview):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[2])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[2]
+        )
 
     def apply(self, request: Request, action: RecipeApply):
         owned, wanted, plan = self._plan(action.preview)
@@ -223,8 +225,14 @@ class LightingRecipeOperations:
 
     def tools(self):
         return [
-            Tool("lighting.recipe_catalog", SafetyClass.READ_ONLY, RecipeCatalog.parse, self.catalog),
-            Tool("lighting.recipe_preview", SafetyClass.READ_ONLY, RecipePreview.parse, self.preview),
+            Tool(
+                "lighting.recipe_catalog", SafetyClass.READ_ONLY, RecipeCatalog.parse, self.catalog
+            ),
+            Tool(
+                "lighting.recipe_preview", SafetyClass.READ_ONLY, RecipePreview.parse, self.preview
+            ),
             Tool("lighting.recipe_apply", SafetyClass.MUTATION, RecipeApply.parse, self.apply),
-            Tool("lighting.recipe_restore", SafetyClass.MUTATION, RecipeRestore.parse, self.restore),
+            Tool(
+                "lighting.recipe_restore", SafetyClass.MUTATION, RecipeRestore.parse, self.restore
+            ),
         ]

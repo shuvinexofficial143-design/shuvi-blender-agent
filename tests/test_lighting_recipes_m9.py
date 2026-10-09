@@ -5,12 +5,9 @@ from fake_bpy import fake_bpy
 from test_studio_lighting_m7 import setup as setup_owned
 
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
-from shuvi_blender_agent.inspection import BpyInspector
 from shuvi_blender_agent.lighting_recipes import LightingRecipeOperations, RecipePreview
-from shuvi_blender_agent.operations import ObjectOperations
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
-from shuvi_blender_agent.studio_lighting import StudioLightingOperations
 from shuvi_blender_agent.tools import ToolRegistry
 
 
@@ -179,4 +176,6 @@ def test_m9_catalog_host_registration_and_permission_gate():
     assert outcome.status == Status.SUCCEEDED, outcome.error
     assert len(outcome.data["recipes"]) == 3
     with pytest.raises(AgentError):
-        RecipePreview.parse({"expected_lighting_token": "ok", "recipe": "NOIR_PORTRAIT", "code": "unsafe"})
+        RecipePreview.parse(
+            {"expected_lighting_token": "ok", "recipe": "NOIR_PORTRAIT", "code": "unsafe"}
+        )

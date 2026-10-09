@@ -72,6 +72,12 @@ from .geometry_recipe_library import RecipeClear as GeometryRecipeClear
 from .geometry_recipe_library import RecipePreview as GeometryRecipePreview
 from .geometry_scatter import ScatterApply, ScatterClear, ScatterPreview
 from .hierarchy import ParentChange
+from .lighting_recipes import (
+    RecipeApply as LightingRecipeApply,
+    RecipeCatalog as LightingRecipeCatalog,
+    RecipePreview as LightingRecipePreview,
+    RecipeRestore as LightingRecipeRestore,
+)
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
     MaterialFaceAssign,
@@ -136,7 +142,6 @@ from .sculpting_detail import DetailPlan, SubdivisionLevels, SubdivisionSetup
 from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelTarget
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
-from .lighting_recipes import RecipeApply, RecipeCatalog, RecipePreview, RecipeRestore
 from .studio_lighting import (
     LookApply,
     LookPreview,
@@ -386,10 +391,10 @@ def builtin_contracts() -> dict:
         "lighting.look_preview": (read, LookPreview.parse),
         "lighting.look_apply": (mutation, LookApply.parse),
         "lighting.look_restore": (mutation, LookRestore.parse),
-        "lighting.recipe_catalog": (read, RecipeCatalog.parse),
-        "lighting.recipe_preview": (read, RecipePreview.parse),
-        "lighting.recipe_apply": (mutation, RecipeApply.parse),
-        "lighting.recipe_restore": (mutation, RecipeRestore.parse),
+        "lighting.recipe_catalog": (read, LightingRecipeCatalog.parse),
+        "lighting.recipe_preview": (read, LightingRecipePreview.parse),
+        "lighting.recipe_apply": (mutation, LightingRecipeApply.parse),
+        "lighting.recipe_restore": (mutation, LightingRecipeRestore.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

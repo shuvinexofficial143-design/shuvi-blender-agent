@@ -40,6 +40,7 @@ from .geometry_primitives import ProceduralPrimitiveOperations
 from .geometry_recipe_library import GeometryRecipeLibraryOperations
 from .geometry_scatter import GeometryScatterOperations
 from .hierarchy import HierarchyOperations
+from .lighting_recipes import LightingRecipeOperations
 from .inspection import BpyInspector
 from .material_nodes import MaterialNodeOperations
 from .material_slots import MaterialSlotOperations
@@ -60,7 +61,6 @@ from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
 from .rig_recipe_library import RigRecipeLibraryOperations
-from .lighting_recipes import LightingRecipeOperations
 from .rigging import RiggingOperations
 from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
