@@ -161,6 +161,7 @@ from .uv import SeamSet
 from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPackPlan
 from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
 from .validation import fields, string
+from .vfx_ocean import OceanApply, OceanPreview, OceanRelease
 from .vfx_wave import WaveApply, WavePreview, WaveRelease
 from .visibility import SetVisibility
 from .world_lighting import WorldApply, WorldPreview, WorldRelease
@@ -403,6 +404,9 @@ def builtin_contracts() -> dict:
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),
+        "vfx.ocean_preview": (read, OceanPreview.parse),
+        "vfx.ocean_apply": (mutation, OceanApply.parse),
+        "vfx.ocean_release": (mutation, OceanRelease.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

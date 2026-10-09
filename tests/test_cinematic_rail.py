@@ -326,7 +326,7 @@ def test_m4_without_activation_does_not_change_scene_camera():
 
 def test_m4_factory_and_host_contracts_register_233_tools():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 271
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 274
     assert {"cinema.rail_preview", "cinema.rail_apply"} <= {
         row["name"] for row in registry.catalog()
     }

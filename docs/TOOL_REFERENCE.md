@@ -1936,3 +1936,8 @@ real Blender runtime/render acceptance **0%**, production ready No.
 ## Level 10 M1 — WAVE Ripple Modifier
 
 `vfx.wave_preview` (READ_ONLY), `vfx.wave_apply` (MUTATION), `vfx.wave_release` (MUTATION). Requires fresh `target` ObjectTarget for local mesh, free modifier `name`, and strict seven numeric `settings` (height, width, speed, narrowness, time_offset, start_position_x/y) plus optional Boolean `use_cyclic`. Applies an actual Blender WAVE modifier to the existing object, verifies its properties/stack, owns only the created modifier, and refuses release after foreign edits. Expected preview `wave_revision` and same-session `wave_token` are required. Source Level 10 10%, Blender simulation/render runtime 0%. Total tools 271.
+
+
+## Level 10 M2 — Ocean Generate modifier
+
+`vfx.ocean_preview` (READ_ONLY), `vfx.ocean_apply` and `vfx.ocean_release` (MUTATION): a local MESH ObjectTarget plus distinct `name` and nine bounded settings (`resolution` 2–16, `spatial_size` 1–200, `wave_scale` 0.01–3, `wave_alignment` 0–1, `wave_direction` radians ±3.14159, `choppiness` 0–3, `wind_velocity` 0.1–40, `random_seed` integer 0–1000, `time` 0–1000). Creates an actual Blender `OCEAN` modifier in `GENERATE` mode. Fresh preview revisions, exact shader-independent modifier readback, single-session owned release, and rollback on error. Source Level 10 20%, 274 typed tools, live-frame/render acceptance 0%.

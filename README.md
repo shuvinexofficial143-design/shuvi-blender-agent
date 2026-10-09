@@ -82,4 +82,7 @@ verification, and production readiness are tracked separately. No Blender runtim
 verification or production readiness is claimed.
 
 
-Level 10 VFX & Simulation **10% source** (M1/10): directly creates a bounded bpy WAVE modifier for real non-destructive ripple distortion with exact readback and current-session owned release; live Blender depsgraph/frame/render not tested. Level 9 remains 100% source. Total typed tools 271.
+Level 10 VFX & Simulation **20% source** (M1–M2/10): directly creates a bounded bpy WAVE modifier for real non-destructive ripple distortion with exact readback and current-session owned release; live Blender depsgraph/frame/render not tested. Level 9 remains 100% source. Total typed tools 271.
+
+
+Level 10 M2 Ocean Surface: typed vfx.ocean_preview/apply/release create a bounded real OCEAN Generate modifier, with seed, time, wind, wave geometry and source-verified ownership/release. Source Level 10 20%, live simulated frames 0, public tools 274.
