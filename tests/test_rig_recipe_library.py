@@ -163,8 +163,8 @@ def ik_fk_parameters():
 
 def test_factory_registers_level6_m9_recipe_tools_at_raised_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 305
-    assert MAX_REGISTERED_TOOLS == 305
+    assert len(registry.catalog()) == 308
+    assert MAX_REGISTERED_TOOLS == 308
     names = {item["name"] for item in registry.catalog()}
     assert {"rig.recipe_catalog", "rig.recipe_preview", "rig.recipe_apply"} <= names
 
