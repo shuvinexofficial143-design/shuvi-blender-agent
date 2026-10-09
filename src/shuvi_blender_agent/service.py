@@ -29,6 +29,7 @@ from .cinematic_shots import CinematicShotOperations
 from .cinematic_tracking import CameraTrackingOperations
 from .collection_ops import CollectionOperations
 from .compositor_alpha_over import AlphaCompositeOperations
+from .compositor_grade import ColorGradeOperations
 from .compositor_keying import ChromaKeyOperations
 from .compositor_matte import MatteRefinementOperations
 from .compositor_shot import GreenScreenShotOperations
@@ -132,6 +133,7 @@ def create_registry(
         MovieClipInspectionOperations(bpy),
         ChromaKeyOperations(bpy),
         AlphaCompositeOperations(bpy),
+        ColorGradeOperations(bpy),
         MatteRefinementOperations(bpy),
         GreenScreenShotOperations(bpy),
         MovieClipCameraCalibrationOperations(bpy),

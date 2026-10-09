@@ -218,7 +218,7 @@ def test_m10_readonly_policy_and_host_registration():
     bpy, objs, inspector, _, args = setup()
     factory = create_registry(bpy, SafetyPolicy(allow_mutations=False))
     names = {tool["name"] for tool in factory.catalog()}
-    assert len(names) == 311
+    assert len(names) == 314
     assert {"vfx.scene_preview", "vfx.scene_apply", "vfx.scene_release"} <= names
     locked = ToolRegistry(
         VfxSceneWorkflowOperations(ObjectOperations(inspector)).tools(),

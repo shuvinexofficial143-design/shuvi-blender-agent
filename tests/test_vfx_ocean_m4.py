@@ -194,7 +194,7 @@ def test_m4_factory_registration_uses_allowlisted_typed_contracts():
     bpy = fake_bpy()
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=False))
     names = {tool["name"] for tool in registry.catalog()}
-    assert len(names) == 311
+    assert len(names) == 314
     assert {
         "vfx.ocean_timeline_preview",
         "vfx.ocean_timeline_apply",

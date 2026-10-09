@@ -49,6 +49,12 @@ class Node:
             self.mode = "APPLY"
         elif kind == "CompositorNodeImage":
             self.outputs.append(Socket("Image"))
+        elif kind == "CompositorNodeBrightContrast":
+            self.inputs.extend([Socket("Image"), Socket("Bright", 0.0), Socket("Contrast", 0.0)])
+            self.outputs.append(Socket("Image"))
+            self.use_premultiply = False
+        elif kind == "CompositorNodeViewer":
+            self.inputs.append(Socket("Image"))
         elif kind == "CompositorNodeComposite":
             self.inputs.append(Socket("Image"))
         elif kind == "CompositorNodeAlphaOver":

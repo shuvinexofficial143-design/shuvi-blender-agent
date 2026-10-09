@@ -165,7 +165,7 @@ def test_m8_rejects_non_native_foreground():
 def test_m8_readonly_host_and_registry():
     bpy, tree, _, _, _, params = prepare()
     catalog = create_registry(bpy).catalog()
-    assert len(catalog) == 311
+    assert len(catalog) == 314
     assert {"compositor.blend_preview", "compositor.blend_apply", "compositor.blend_release"} <= {
         x["name"] for x in catalog
     }

@@ -161,7 +161,7 @@ def test_m5_invalid_cloth_settings_rejected(field, value):
 def test_m5_permission_gate_and_factory_registration():
     bpy, obj, inspector, _, args = setup()
     full = create_registry(bpy, SafetyPolicy(allow_mutations=False))
-    assert len(full.catalog()) == 311
+    assert len(full.catalog()) == 314
     names = {entry["name"] for entry in full.catalog()}
     assert {"vfx.cloth_preview", "vfx.cloth_apply", "vfx.cloth_release"} <= names
     locked = ToolRegistry(

@@ -49,6 +49,7 @@ from .collection_ops import (
     RenameCollection,
 )
 from .compositor_alpha_over import BlendApply, BlendPreview, BlendRelease
+from .compositor_grade import GradeApply, GradePreview, GradeRelease
 from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .compositor_matte import MatteApply, MattePreview, MatteRelease
 from .compositor_shot import ShotApply as CompositeShotApply
@@ -456,6 +457,9 @@ def builtin_contracts() -> dict:
         "compositor.blend_preview": (read, BlendPreview.parse),
         "compositor.blend_apply": (mutation, BlendApply.parse),
         "compositor.blend_release": (mutation, BlendRelease.parse),
+        "compositor.grade_preview": (read, GradePreview.parse),
+        "compositor.grade_apply": (mutation, GradeApply.parse),
+        "compositor.grade_release": (mutation, GradeRelease.parse),
         "compositor.matte_preview": (read, MattePreview.parse),
         "compositor.matte_apply": (mutation, MatteApply.parse),
         "compositor.matte_release": (mutation, MatteRelease.parse),
