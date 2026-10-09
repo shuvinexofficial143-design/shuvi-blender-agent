@@ -1850,3 +1850,16 @@ Tool count remains 253, Level 9 source 40%, runtime accepted 0%.
   and removes only the managed datablock.
 - M5 typed tool count **256**, Level 9 source **50%**. No real Blender
   execution, HDRI loading, render, measured lux or environment preview.
+
+
+## Level 9 M6 — Advanced per-role static mesh-region light aim
+
+Optional `target_offsets` on `lighting.studio_preview`/
+`lighting.studio_apply` maps existing fixture roles to a strict
+three-number normalized position inside the static subject's
+reported bounding box. Each real AREA lamp keeps its M1–M5 source
+placement while changing its Euler aim toward the specific target;
+plan emits `aim_point`, `target_offset` and revision. Rotations are
+verified with bpy object readback. Omitted/zero offsets preserve old
+poses; altered roles/offsets invalidate previews. No live tracking.
+Host tools **256**, Level 9 source **60%**, runtime accepted **0%**.

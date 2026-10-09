@@ -1,4 +1,4 @@
-"""Level 9 studio AREA rigs with mood palettes and bounded shadow controls."""
+"""Level 9 studio AREA rigs with mood palettes, shadow control, and per-light aim."""
 
 from dataclasses import dataclass
 from math import atan2, cos, pi, radians, sin, sqrt
@@ -119,13 +119,14 @@ class RigPreview:
     intensity_scale: float
     mood: str = "NEUTRAL"
     shadow_profile: str = "STANDARD"
+    target_offsets: dict[str, tuple[float, float, float]] | None = None
 
     @classmethod
     def parse(cls, data):
         fields(
             data,
             {"subject", "name_prefix", "preset", "distance_scale", "intensity_scale"},
-            {"mood", "shadow_profile"},
+            {"mood", "shadow_profile", "target_offsets"},
         )
         preset = string(data["preset"], "preset", limit=32)
         if preset not in PRESETS and preset not in EXPANDED_PRESETS:
@@ -136,6 +137,17 @@ class RigPreview:
         shadow_profile = string(data.get("shadow_profile", "STANDARD"), "shadow_profile", limit=32)
         if shadow_profile not in SHADOW_PROFILES:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown shadow quality profile")
+        offsets = data.get("target_offsets", {})
+        if not isinstance(offsets, dict) or len(offsets) > 5:
+            raise AgentError(
+                ErrorCode.INVALID_REQUEST, "Target offsets must be a small role mapping"
+            )
+        allowed_roles = {role for role, *_ in _layout_specs(preset)}
+        mapped = {}
+        for role, value in offsets.items():
+            if role not in allowed_roles or not isinstance(value, list) or len(value) != 3:
+                raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown role or invalid target offset")
+            mapped[role] = tuple(number(v, "target offset", -0.45, 0.45) for v in value)
         prefix = object_name(data["name_prefix"])
         if len(prefix) > 40:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Light prefix exceeds 40 characters")
@@ -147,6 +159,7 @@ class RigPreview:
             number(data["intensity_scale"], "intensity_scale", 0.25, 3.0),
             mood,
             shadow_profile,
+            mapped,
         )
 
 
@@ -167,7 +180,7 @@ class RigApply:
                 "intensity_scale",
                 "expected_lighting_revision",
             },
-            {"mood", "shadow_profile"},
+            {"mood", "shadow_profile", "target_offsets"},
         )
         return cls(
             RigPreview.parse(
@@ -297,15 +310,34 @@ class StudioLightingOperations:
                 sin(el),
             ]
             location = [center[i] + distance * direction[i] for i in range(3)]
-            # Blender lights shine along their local -Z, with +Y as up.
-            yaw_angle = az + pi / 2
-            rotation = [pi / 2 - el, 0.0, atan2(sin(yaw_angle), cos(yaw_angle))]
+            offset = (action.target_offsets or {}).get(role, (0.0, 0.0, 0.0))
+            aim_point = [center[i] + dimensions[i] * offset[i] for i in range(3)]
+            # Blender lights emit along local -Z. Use the original exact
+            # M1 angles for the default central target to avoid drift.
+            if not any(offset):
+                yaw_angle = az + pi / 2
+                rotation = [pi / 2 - el, 0.0, atan2(sin(yaw_angle), cos(yaw_angle))]
+            else:
+                outward = [location[i] - aim_point[i] for i in range(3)]
+                horizontal = sqrt(outward[0] ** 2 + outward[1] ** 2)
+                if horizontal < 0.001:
+                    raise AgentError(ErrorCode.SAFETY_DENIED, "Unsafe vertical light aim")
+                aim_az = atan2(outward[1], outward[0])
+                aim_el = atan2(outward[2], horizontal)
+                yaw_angle = aim_az + pi / 2
+                rotation = [
+                    pi / 2 - aim_el,
+                    0.0,
+                    atan2(sin(yaw_angle), cos(yaw_angle)),
+                ]
             entries.append(
                 {
                     "role": role,
                     "name": name,
                     "location": location,
                     "rotation_euler": rotation,
+                    "aim_point": aim_point,
+                    "target_offset": list(offset),
                     "energy": float(energy * action.intensity_scale * mood_power),
                     "color": list(mood_rgb),
                     "size": float(max(0.2, radius * size_mul * size_factor)),
@@ -317,6 +349,9 @@ class StudioLightingOperations:
             "preset": action.preset,
             "mood": action.mood,
             "shadow_profile": action.shadow_profile,
+            "target_offsets": {
+                key: list(value) for key, value in sorted((action.target_offsets or {}).items())
+            },
             "subject_id": snap["object_id"],
             "subject_revision": snap["revision"],
             "scene_revision": scene_revision,

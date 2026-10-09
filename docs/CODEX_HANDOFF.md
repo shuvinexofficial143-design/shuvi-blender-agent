@@ -1015,3 +1015,21 @@ world/image/scene state and removes only the owned world.
 New host/tool cap **256**, Level 9 source **50%**. Source/fake CI
 only, live Blender world-render acceptance **0%**. No file IO.
 M6 targeting is separately tested before completion.
+
+
+## Level 9 M6 — Per-fixture subject-region aim (source only)
+
+User-authorized M6 extends strict studio preview/apply with
+`target_offsets`, a bounded per-existing-role normalized XYZ map
+in [-0.45, 0.45]. Each fixture aims at a distinct world point
+derived from the unchanged static mesh object's reported dimensions.
+Actual light Object Euler rotations are computed for the target,
+written via bpy and exactly checked. All existing central aim poses
+remain unchanged when offsets are omitted/zero. Stale targets,
+unknown roles, invalid coordinates and changed scenes are rejected;
+all new fixtures roll back if verification fails.
+
+Level 9 source **60%** (M1–M6); typed tools **256**.
+Runtime Blender 0%; no live animated target tracking or occlusion
+guarantee. No M7, master Shuvi integration or live Blender without
+new user authorization.
