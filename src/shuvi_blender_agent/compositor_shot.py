@@ -172,6 +172,8 @@ class GreenScreenShotOperations:
 
     def _plan(self, action):
         scene, tree = require_scene(self.bpy, action.scene_name)
+        if len(tree.nodes) > 123 or len(tree.links) > 249:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Shot would exceed graph size limits")
         if len(self.bpy.data.movieclips) > 32:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Too many loaded MovieClips")
         clip = self.bpy.data.movieclips.get(action.clip_name)
