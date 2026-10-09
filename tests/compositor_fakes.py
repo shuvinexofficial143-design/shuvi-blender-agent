@@ -53,6 +53,17 @@ class Node:
             self.inputs.extend([Socket("Image"), Socket("Bright", 0.0), Socket("Contrast", 0.0)])
             self.outputs.append(Socket("Image"))
             self.use_premultiply = False
+        elif kind == "CompositorNodeHueSat":
+            self.inputs.extend(
+                [
+                    Socket("Image"),
+                    Socket("Hue", 0.5),
+                    Socket("Saturation", 1.0),
+                    Socket("Value", 1.0),
+                    Socket("Fac", 1.0),
+                ]
+            )
+            self.outputs.append(Socket("Image"))
         elif kind == "CompositorNodeLensdist":
             self.inputs.extend([Socket("Image"), Socket("Distort", 0.0), Socket("Dispersion", 0.0)])
             self.outputs.append(Socket("Image"))

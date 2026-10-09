@@ -30,6 +30,7 @@ from .cinematic_tracking import CameraTrackingOperations
 from .collection_ops import CollectionOperations
 from .compositor_alpha_over import AlphaCompositeOperations
 from .compositor_grade import ColorGradeOperations
+from .compositor_hsv import HSVColorOperations
 from .compositor_keying import ChromaKeyOperations
 from .compositor_lens import LensDistortionOperations
 from .compositor_matte import MatteRefinementOperations
@@ -135,6 +136,7 @@ def create_registry(
         ChromaKeyOperations(bpy),
         AlphaCompositeOperations(bpy),
         ColorGradeOperations(bpy),
+        HSVColorOperations(bpy),
         LensDistortionOperations(bpy),
         MatteRefinementOperations(bpy),
         GreenScreenShotOperations(bpy),
