@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **30%** (Milestones 1–3 of 10).
+Current source progress: **40%** (Milestones 1–4 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M3 source progress is **30%**.
+Level 9 M1–M4 source progress is **40%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M4, Blender launch/render/live evaluation,
+**STOP** before Level 9 M5, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -131,3 +131,30 @@ Tool count remains **253**; Level 9 source **30%**.
 Real Blender runtime/render acceptance **0%**, production ready No.
 The user has authorized M4 alongside M3 in the same `next`; M4
 requires separate implementation/CI verification.
+
+
+## M4 — Shadow Casting & Area-Light Quality (30% → 40%)
+
+Existing revisioned `lighting.studio_preview` / `lighting.studio_apply`
+accept optional `shadow_profile`: STANDARD (backward-compatible),
+SOFT_CINEMATIC, CRISP_DIRECTIONAL and NO_SHADOWS. These presets
+write real AREA `size`, `spread` and Blender 4.2+ Light
+`use_shadow` fields for every selected 3–5 fixture light.
+SOFT_CINEMATIC increases the disk diameter 2.25x, yielding a
+larger area source capable of a softer penumbra; CRISP_DIRECTIONAL
+reduces the disk size to 0.35x and restricts cone spread to pi/2,
+and NO_SHADOWS disables shadow casting on this rig's lights.
+
+Exact preview revisions include the profile and intended emitter
+values, while apply readback and mismatch rollback verify every lamp's
+shadow enablement, disk size and spread. Existing foreign lights
+retain all fields; same-session release still refuses modified lights
+and removes only owned datablocks. The fake-bpy fixture now models
+these Blender fields strictly for source testing.
+
+These source-level controls are **not** proof of rendering-engine
+compatibility, light sampling quality, noise/alias suppression,
+visually clean contact shadows, or final shadow softness. Actual
+Blender evaluated and rendered acceptance remains **0%**.
+Public typed tools stay at **253**, Level 9 source milestone roadmap
+**40%**. Production ready No. **STOP** before Level 9 M5.

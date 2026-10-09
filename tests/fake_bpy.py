@@ -618,6 +618,8 @@ class FakeDevices(list):
             clip_end=1000,
             energy=100,
             color=[1, 1, 1],
+            spread=3.141592653589793,
+            use_shadow=True,
         )
         if self.object_type == "CAMERA":
             data.dof = NS(use_dof=False, focus_distance=10.0, focus_object=None)

@@ -979,3 +979,21 @@ default to NEUTRAL unchanged. Preview revision and readback cover the
 resulting values; failed writes roll back only newly owned light objects
 and datablocks. Tool count remains 253; source Level 9 30%.
 Blender runtime 0%; no claim of real visual color grading.
+
+
+## Level 9 M4 — AREA-light shadow casting and size/spread quality
+
+Authorized M4 adds optional strict `shadow_profile` to existing
+revisioned studio preview/apply: STANDARD, SOFT_CINEMATIC,
+CRISP_DIRECTIONAL, NO_SHADOWS. It writes actual Blender 4.2+
+`Light.use_shadow` and `AreaLight.size/spread` on each
+session-owned 3–5 fixture rig. Preview and post-create readback
+cover all three light properties. All unrelated scene content is
+preserved and rollback/release retain ownership checks.
+Only source/fake-bpy CI proved, not actual rendered penumbra quality.
+
+**Level 9 source 40% (M1–M4), public tools 253, real
+Blender runtime/render acceptance 0%, production-ready NO**.
+No Level 9 M5, Blender launch or master Shuvi merge without fresh
+permission. This user authorized two sequential 10% milestones
+(M3+M4) in one `next`.

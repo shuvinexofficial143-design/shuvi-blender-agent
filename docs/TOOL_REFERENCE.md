@@ -1818,3 +1818,15 @@ roles. Source preview revision includes mood; verified apply and
 rollback enforce all expected light values. No environment world,
 color management, material, camera or foreign scene edits.
 Tool cap remains **253**. Level 9 source 30%; runtime 0%.
+
+
+## Level 9 M4 — Shadow and AREA-emitter quality controls
+
+Optional strict `shadow_profile` on existing studio preview/apply:
+STANDARD (unchanged source sizes/cast), SOFT_CINEMATIC (2.25x AREA
+disk size), CRISP_DIRECTIONAL (0.35x disk size and half-pi spread),
+NO_SHADOWS (casts no shadow). Apply writes real AREA Light
+`size`, `spread` and `use_shadow` in Blender 4.2+; readback
+requires exact per-light matches and retained ownership guards.
+No shadow-buffer/samples, material, render-engine or compositor edits.
+Tool count remains 253, Level 9 source 40%, runtime accepted 0%.

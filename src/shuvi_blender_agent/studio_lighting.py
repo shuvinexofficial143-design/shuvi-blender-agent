@@ -1,4 +1,4 @@
-"""Level 9 studio AREA rigs, advanced fixture layouts and cinematic mood palettes."""
+"""Level 9 studio AREA rigs with mood palettes and bounded shadow controls."""
 
 from dataclasses import dataclass
 from math import atan2, cos, pi, radians, sin, sqrt
@@ -45,6 +45,15 @@ EXPANDED_PRESETS = {
 }
 # Per-role color and power multipliers: real AREA light datablock adjustments.
 # Mood changes leave fixture geometry and foreign scene state untouched.
+# Size influences area-light penumbra; spread limits the emitter cone.
+# use_shadow is the Blender 4.2+ common Light cast-shadow property.
+# Neither sampling noise nor rendered appearance is certified by source tests.
+SHADOW_PROFILES = {
+    "STANDARD": (1.0, pi, True),
+    "SOFT_CINEMATIC": (2.25, pi, True),
+    "CRISP_DIRECTIONAL": (0.35, pi / 2, True),
+    "NO_SHADOWS": (1.0, pi, False),
+}
 MOOD_STYLES = {
     "NEUTRAL": {},
     "GOLDEN_HOUR": {
@@ -109,13 +118,14 @@ class RigPreview:
     distance_scale: float
     intensity_scale: float
     mood: str = "NEUTRAL"
+    shadow_profile: str = "STANDARD"
 
     @classmethod
     def parse(cls, data):
         fields(
             data,
             {"subject", "name_prefix", "preset", "distance_scale", "intensity_scale"},
-            {"mood"},
+            {"mood", "shadow_profile"},
         )
         preset = string(data["preset"], "preset", limit=32)
         if preset not in PRESETS and preset not in EXPANDED_PRESETS:
@@ -123,6 +133,11 @@ class RigPreview:
         mood = string(data.get("mood", "NEUTRAL"), "mood", limit=24)
         if mood not in MOOD_STYLES:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown cinematic lighting mood")
+        shadow_profile = string(
+            data.get("shadow_profile", "STANDARD"), "shadow_profile", limit=32
+        )
+        if shadow_profile not in SHADOW_PROFILES:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown shadow quality profile")
         prefix = object_name(data["name_prefix"])
         if len(prefix) > 40:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Light prefix exceeds 40 characters")
@@ -133,6 +148,7 @@ class RigPreview:
             number(data["distance_scale"], "distance_scale", 2.5, 6.0),
             number(data["intensity_scale"], "intensity_scale", 0.25, 3.0),
             mood,
+            shadow_profile,
         )
 
 
@@ -153,7 +169,7 @@ class RigApply:
                 "intensity_scale",
                 "expected_lighting_revision",
             },
-            {"mood"},
+            {"mood", "shadow_profile"},
         )
         return cls(
             RigPreview.parse(
@@ -209,6 +225,8 @@ class StudioLightingOperations:
             "color": list(data.color),
             "shape": data.shape,
             "size": float(data.size),
+            "spread": float(data.spread),
+            "use_shadow": bool(data.use_shadow),
             "users": int(data.users),
         }
 
@@ -229,6 +247,8 @@ class StudioLightingOperations:
             "color": entry["color"],
             "shape": "DISK",
             "size": entry["size"],
+            "spread": entry["spread"],
+            "use_shadow": entry["use_shadow"],
             "users": 1,
         }
 
@@ -263,6 +283,7 @@ class StudioLightingOperations:
         if self._owned:
             blockers.add("LIGHTING_RIG_ALREADY_MANAGED")
         entries = []
+        size_factor, spread, casts_shadow = SHADOW_PROFILES[action.shadow_profile]
         for role, azimuth, elevation, size_mul, energy, rgb in specs:
             name = f"{action.name_prefix}_{role}"
             mood_rgb, mood_power = MOOD_STYLES[action.mood].get(role, (rgb, 1.0))
@@ -289,12 +310,15 @@ class StudioLightingOperations:
                     "rotation_euler": rotation,
                     "energy": float(energy * action.intensity_scale * mood_power),
                     "color": list(mood_rgb),
-                    "size": float(max(0.2, radius * size_mul)),
+                    "size": float(max(0.2, radius * size_mul * size_factor)),
+                    "spread": float(spread),
+                    "use_shadow": casts_shadow,
                 }
             )
         plan = {
             "preset": action.preset,
             "mood": action.mood,
+            "shadow_profile": action.shadow_profile,
             "subject_id": snap["object_id"],
             "subject_revision": snap["revision"],
             "scene_revision": scene_revision,
@@ -346,6 +370,8 @@ class StudioLightingOperations:
                 created.append([None, data])
                 data.shape = "DISK"
                 data.size = entry["size"]
+                data.spread = entry["spread"]
+                data.use_shadow = entry["use_shadow"]
                 data.energy = entry["energy"]
                 data.color = entry["color"]
                 obj = self.bpy.data.objects.new(entry["name"], data)
