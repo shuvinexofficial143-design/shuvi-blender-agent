@@ -76,8 +76,11 @@ class TrackConfigurationApply:
         fields(
             data,
             {
-                "clip_name", "tracking_object_name", "track_name",
-                "settings", "expected_track_config_revision",
+                "clip_name",
+                "tracking_object_name",
+                "track_name",
+                "settings",
+                "expected_track_config_revision",
             },
         )
         params = dict(data)
@@ -193,16 +196,28 @@ class MovieTrackingTrackConfigOperations:
                 ) from rollback
             code = exc.code if isinstance(exc, AgentError) else ErrorCode.EXECUTION_ERROR
             raise AgentError(code, "Track config apply failed; original settings restored") from exc
-        token = revision({
-            "clip": clip.name, "object": obj.name, "track": track.name,
-            "before": before, "after": actual, "marker_signature": plan["marker_signature"],
-        })
+        token = revision(
+            {
+                "clip": clip.name,
+                "object": obj.name,
+                "track": track.name,
+                "before": before,
+                "after": actual,
+                "marker_signature": plan["marker_signature"],
+            }
+        )
         self._owned[token] = {
-            "clip": clip, "object": obj, "track": track,
-            "before": before, "after": actual, "markers": plan["marker_signature"],
+            "clip": clip,
+            "object": obj,
+            "track": track,
+            "before": before,
+            "after": actual,
+            "markers": plan["marker_signature"],
         }
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
             {"track_config_token": token, "source_only": True, "tracking_executed": False},
             verification=checked.to_dict(),
         )
@@ -228,17 +243,31 @@ class MovieTrackingTrackConfigOperations:
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Track restore mismatch")
         del self._owned[token]
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
             {"track_configuration_restored": True, "source_only": True},
             verification=checked.to_dict(),
         )
 
     def tools(self):
         return [
-            Tool("tracking.track_config_preview", SafetyClass.READ_ONLY,
-                 TrackConfigurationPreview.parse, self.preview),
-            Tool("tracking.track_config_apply", SafetyClass.MUTATION,
-                 TrackConfigurationApply.parse, self.apply),
-            Tool("tracking.track_config_restore", SafetyClass.MUTATION,
-                 TrackConfigurationRestore.parse, self.restore),
+            Tool(
+                "tracking.track_config_preview",
+                SafetyClass.READ_ONLY,
+                TrackConfigurationPreview.parse,
+                self.preview,
+            ),
+            Tool(
+                "tracking.track_config_apply",
+                SafetyClass.MUTATION,
+                TrackConfigurationApply.parse,
+                self.apply,
+            ),
+            Tool(
+                "tracking.track_config_restore",
+                SafetyClass.MUTATION,
+                TrackConfigurationRestore.parse,
+                self.restore,
+            ),
         ]
