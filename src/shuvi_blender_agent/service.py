@@ -76,6 +76,7 @@ from .studio_lighting import StudioLightingOperations
 from .texture_workflows import TextureWorkflowOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .tracking_clip import MovieClipInspectionOperations
+from .tracking_markers import MarkerPlacementOperations
 from .transform import TransformOperations
 from .uv import UVOperations
 from .uv_packing import UVPackingOperations
@@ -123,6 +124,7 @@ def create_registry(
         ClothColliderWorkflowOperations(objects),
         VfxSceneWorkflowOperations(objects),
         MovieClipInspectionOperations(bpy),
+        MarkerPlacementOperations(bpy),
         ocean_simulation,
         OceanTimelineOperations(ocean_simulation),
         GeometryAcceptanceOperations(objects),
