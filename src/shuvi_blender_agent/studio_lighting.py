@@ -200,6 +200,70 @@ class RigRelease:
         return cls(string(data["expected_lighting_token"], "expected_lighting_token", limit=64))
 
 
+
+TUNABLE_FIELDS = ("energy", "color", "size", "use_shadow")
+
+
+def _tune_fields(data):
+    patch = fields(
+        data,
+        set(),
+        {"energy_watts", "rgb", "emitter_size", "cast_shadows"},
+    )
+    if not patch:
+        raise AgentError(ErrorCode.INVALID_REQUEST, "At least one light property is required")
+    values = {}
+    if "energy_watts" in patch:
+        values["energy"] = number(patch["energy_watts"], "energy_watts", 1, 100_000)
+    if "rgb" in patch:
+        rgb = patch["rgb"]
+        if not isinstance(rgb, list) or len(rgb) != 3:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "rgb requires three channels")
+        values["color"] = [number(v, "rgb channel", 0, 1) for v in rgb]
+    if "emitter_size" in patch:
+        values["size"] = number(patch["emitter_size"], "emitter_size", 0.2, 50_000)
+    if "cast_shadows" in patch:
+        if type(patch["cast_shadows"]) is not bool:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "cast_shadows must be Boolean")
+        values["use_shadow"] = patch["cast_shadows"]
+    return values
+
+
+@dataclass(frozen=True)
+class TunePreview:
+    token: str
+    role: str
+    settings: dict
+
+    @classmethod
+    def parse(cls, data):
+        fields(data, {"expected_lighting_token", "role", "settings"})
+        return cls(
+            string(data["expected_lighting_token"], "expected_lighting_token", limit=64),
+            string(data["role"], "role", limit=24),
+            _tune_fields(data["settings"]),
+        )
+
+
+@dataclass(frozen=True)
+class TuneApply:
+    preview: TunePreview
+    expected_tuning_revision: str
+
+    @classmethod
+    def parse(cls, data):
+        fields(
+            data,
+            {"expected_lighting_token", "role", "settings", "expected_tuning_revision"},
+        )
+        return cls(
+            TunePreview.parse(
+                {key: value for key, value in data.items() if key != "expected_tuning_revision"}
+            ),
+            string(data["expected_tuning_revision"], "expected_tuning_revision", limit=64),
+        )
+
+
 class StudioLightingOperations:
     """Creates three actual Blender area lights, verifies and owns their life cycle."""
 
@@ -440,6 +504,7 @@ class StudioLightingOperations:
                 )
                 self._owned[token] = {
                     "created": created,
+                    "roles": [entry["role"] for entry in plan["lights"]],
                     "before_scene": plan["scene_revision"],
                     "after_scene": after_scene_revision,
                     "subject": subject,
@@ -518,6 +583,136 @@ class StudioLightingOperations:
             verification=checked.to_dict(),
         )
 
+    def _live_owned(self, token):
+        owned = self._owned.get(token)
+        if owned is None:
+            raise AgentError(ErrorCode.STALE_STATE, "Unknown or foreign lighting token")
+        if self.inspector.summary()["revision"] != owned["after_scene"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Scene changed since lighting setup")
+        if self.inspector.snapshot(owned["subject"])["revision"] != owned["subject_revision"]:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Subject changed since lighting setup")
+        if any(
+            not self._in_table(obj)
+            or not self._in_lights(data)
+            or not compare(wanted, self._read(obj, data)).matched
+            for (obj, data), wanted in zip(owned["created"], owned["expected"], strict=True)
+        ):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Managed light has changed externally")
+        return owned
+
+    def _mutate_lights(self, owned, expected):
+        previous = [dict(row) for row in owned["expected"]]
+        created = owned["created"]
+
+        def write(settings):
+            for (obj, data), want in zip(created, settings, strict=True):
+                for key in TUNABLE_FIELDS:
+                    value = want[key]
+                    setattr(data, key, list(value) if key == "color" else value)
+
+        try:
+            write(expected)
+            self.bpy.context.view_layer.update()
+            actual = [self._read(obj, data) for obj, data in created]
+            checked = compare({"lights": expected}, {"lights": actual})
+            scene_unchanged = self.inspector.summary()["revision"] == owned["after_scene"]
+            if checked.matched and scene_unchanged:
+                owned["expected"] = expected
+                owned["after_scene"] = self.inspector.summary()["revision"]
+                return checked
+        except Exception as exc:
+            try:
+                write(previous)
+                self.bpy.context.view_layer.update()
+                restored = [self._read(obj, data) for obj, data in created]
+                if (
+                    not compare({"lights": previous}, {"lights": restored}).matched
+                    or self.inspector.summary()["revision"] != owned["after_scene"]
+                ):
+                    raise AgentError(ErrorCode.VERIFICATION_FAILED, "Light rollback not verified")
+            except Exception as rollback_error:
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "Light update recovery is uncertain"
+                ) from rollback_error
+            raise AgentError(
+                ErrorCode.EXECUTION_ERROR, "Light update failed; previous settings restored"
+            ) from exc
+
+        # Readback mismatches are verified failures, not successful updates.
+        try:
+            write(previous)
+            self.bpy.context.view_layer.update()
+            restored = [self._read(obj, data) for obj, data in created]
+            if (
+                not compare({"lights": previous}, {"lights": restored}).matched
+                or self.inspector.summary()["revision"] != owned["after_scene"]
+            ):
+                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Light rollback not verified")
+        except Exception as exc:
+            raise AgentError(
+                ErrorCode.VERIFICATION_FAILED, "Light update recovery is uncertain"
+            ) from exc
+        return checked
+
+    def _tune_plan(self, action: TunePreview):
+        owned = self._live_owned(action.token)
+        if action.role not in owned["roles"]:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Role not in managed lighting rig")
+        index = owned["roles"].index(action.role)
+        expected = [dict(item) for item in owned["expected"]]
+        expected[index] = expected[index] | action.settings
+        plan = {
+            "role": action.role,
+            "lighting_token": action.token,
+            "current_light": owned["expected"][index],
+            "proposed_light": expected[index],
+            "current_rig": owned["expected"],
+            "scene_revision": owned["after_scene"],
+            "source_only": True,
+            "render_verified": False,
+            "mutation_performed": False,
+        }
+        plan["tuning_revision"] = revision(plan)
+        return owned, expected, plan
+
+    def tune_preview(self, request: Request, action: TunePreview):
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.SUCCEEDED,
+            self._tune_plan(action)[2],
+        )
+
+    def tune_apply(self, request: Request, action: TuneApply):
+        owned, expected, plan = self._tune_plan(action.preview)
+        if plan["tuning_revision"] != action.expected_tuning_revision:
+            raise AgentError(ErrorCode.STALE_STATE, "Light settings changed after preview")
+        if plan["current_light"] == plan["proposed_light"]:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Light tuning patch changes nothing")
+        checked = self._mutate_lights(owned, expected)
+        if not checked.matched:
+            return Result(
+                request.request_id,
+                request.command_id,
+                Status.FAILED,
+                {"rolled_back": True, "recovery_verified": True},
+                AgentError(ErrorCode.VERIFICATION_FAILED, "Light tuning readback mismatch"),
+                checked.to_dict(),
+            )
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
+            {
+                "lighting_token": action.preview.token,
+                "role": action.preview.role,
+                "settings_updated": list(action.preview.settings),
+                "source_only": True,
+                "render_verified": False,
+            },
+            verification=checked.to_dict(),
+        )
+
     def catalog(self, request: Request, action: StudioPresetCatalog):
         presets = []
         for name in PRESET_DESCRIPTIONS:
@@ -563,4 +758,6 @@ class StudioLightingOperations:
             Tool("lighting.studio_preview", SafetyClass.READ_ONLY, RigPreview.parse, self.preview),
             Tool("lighting.studio_apply", SafetyClass.MUTATION, RigApply.parse, self.apply),
             Tool("lighting.studio_release", SafetyClass.MUTATION, RigRelease.parse, self.release),
+            Tool("lighting.tune_preview", SafetyClass.READ_ONLY, TunePreview.parse, self.tune_preview),
+            Tool("lighting.tune_apply", SafetyClass.MUTATION, TuneApply.parse, self.tune_apply),
         ]
