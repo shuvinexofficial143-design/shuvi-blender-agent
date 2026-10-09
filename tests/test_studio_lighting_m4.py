@@ -108,9 +108,11 @@ def test_m4_modified_owned_shadow_flag_prevents_unsafe_release():
     result = apply(reg, current, plan)
     assert result.status == Status.VERIFIED
     bpy.data.objects.get("ShadowRig_Key").data.use_shadow = True
-    done = reg.dispatch(Request("lighting.studio_release", {
-        "expected_lighting_token": result.data["lighting_token"]
-    }))
+    done = reg.dispatch(
+        Request(
+            "lighting.studio_release", {"expected_lighting_token": result.data["lighting_token"]}
+        )
+    )
     assert done.error.code == ErrorCode.SAFETY_DENIED
     assert len(bpy.data.lights) == 5
 
