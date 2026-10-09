@@ -167,7 +167,7 @@ class GaussianBlurOperations:
             raise AgentError(ErrorCode.STALE_STATE, "Color blur preview stale")
         node = None
         try:
-            node = tree.nodes.new("CompositorNodeBlurSat")
+            node = tree.nodes.new("CompositorNodeBlur")
             node.name = BLUR_NODE
             node.size_x = plan["radius_x"]
             node.size_y = plan["radius_y"]
