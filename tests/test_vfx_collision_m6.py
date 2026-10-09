@@ -225,7 +225,7 @@ def test_m6_fails_closed_on_stale_preview_or_duplicate_collider():
 def test_m6_factory_registration_and_permission_boundary():
     bpy, ground, inspector, _, args = setup()
     catalog = create_registry(bpy, SafetyPolicy(allow_mutations=False)).catalog()
-    assert len(catalog) == 305
+    assert len(catalog) == 308
     names = {row["name"] for row in catalog}
     assert {"vfx.collision_preview", "vfx.collision_apply", "vfx.collision_release"} <= names
     read_only = ToolRegistry(
