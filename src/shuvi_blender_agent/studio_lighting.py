@@ -200,7 +200,7 @@ class RigRelease:
         return cls(string(data["expected_lighting_token"], "expected_lighting_token", limit=64))
 
 
-TUNABLE_FIELDS = ("energy", "color", "size", "use_shadow")
+TUNABLE_FIELDS = ("energy", "color", "size", "spread", "use_shadow")
 
 
 def _tune_fields(data):
@@ -772,6 +772,7 @@ class StudioLightingOperations:
                 checked.to_dict(),
             )
         owned["look_undo"] = None
+        owned["recipe_undo"] = None
         return Result(
             request.request_id,
             request.command_id,
@@ -788,7 +789,7 @@ class StudioLightingOperations:
 
     def _look_plan(self, action: LookPreview):
         owned = self._live_owned(action.token)
-        if owned.get("look_undo") is not None:
+        if owned.get("look_undo") is not None or owned.get("recipe_undo") is not None:
             raise AgentError(
                 ErrorCode.SAFETY_DENIED, "Restore the active look before selecting another"
             )

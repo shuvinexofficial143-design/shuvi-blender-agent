@@ -58,8 +58,8 @@ def apply_payload(registry, recipe="CUBE", prefix="Block", parameters=None):
 
 def test_factory_reaches_bounded_cap_exactly():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 261
-    assert MAX_REGISTERED_TOOLS == 261
+    assert len(registry.catalog()) == 265
+    assert MAX_REGISTERED_TOOLS == 265
     assert len(registry.catalog()) == MAX_REGISTERED_TOOLS
 
 

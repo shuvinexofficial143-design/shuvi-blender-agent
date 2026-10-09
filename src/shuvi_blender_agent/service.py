@@ -60,6 +60,7 @@ from .object_core import ObjectCore
 from .operations import ObjectOperations
 from .rendering import RenderOperations
 from .rig_recipe_library import RigRecipeLibraryOperations
+from .lighting_recipes import LightingRecipeOperations
 from .rigging import RiggingOperations
 from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
@@ -93,6 +94,7 @@ def create_registry(
     timeline_animation = AnimationTimelineOperations(advanced_animation)
     rigging = RiggingOperations(objects)
     recipe_animation = AnimationRecipeLibraryOperations(timeline_animation)
+    studio_lighting = StudioLightingOperations(objects)
     nla_animation = ManagedNLAOperations(animation)
     adapters = [
         inspector,
@@ -143,7 +145,8 @@ def create_registry(
         CameraDampedFollowOperations(objects),
         CameraCutOperations(objects),
         CinematicSequenceOperations(objects),
-        StudioLightingOperations(objects),
+        studio_lighting,
+        LightingRecipeOperations(studio_lighting),
         WorldLightingOperations(objects),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),

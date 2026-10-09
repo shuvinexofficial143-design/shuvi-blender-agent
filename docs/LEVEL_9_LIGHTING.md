@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **80%** (Milestones 1–8 of 10).
+Current source progress: **90%** (Milestones 1–9 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M8 source progress is **80%**.
+Level 9 M1–M9 source progress is **90%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M9, Blender launch/render/live evaluation,
+**STOP** before Level 9 M10, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -283,3 +283,34 @@ Public tools **261**. Level 9 source progress **80%** (M1–M8).
 Real Blender runtime/visual render acceptance remains **0%**.
 Production ready: No. **STOP before M9**, Blender launch/render
 and merging into the master Shuvi repo without new instruction.
+
+
+## M9 — Reversible multi-property Cinematic Lighting Recipes (80% → 90%)
+
+New strictly typed `lighting.recipe_catalog`, `lighting.recipe_preview`,
+`lighting.recipe_apply`, and `lighting.recipe_restore` support
+INTERVIEW_SOFTBOX, NOIR_PORTRAIT and PRODUCT_SHOWCASE. These are **functional
+recipes**, not descriptions: a single recipe adjusts existing managed
+3–5 AREA lights together with per-role RGB, power, emitter size,
+`spread`, and `use_shadow` (not just M8's color and energy). Every
+fixture's actual datablock is modified via the existing safe in-place
+write method, all properties are read back, a partial or corrupted
+result restores every previous owned light, and a one-use recipe token
+restores all prior settings on request. The previous native scene,
+camera, material, foreign lights and World remain unchanged.
+
+Recipe preview requires current-session ownership, unchanged full
+scene and each fixture readback, and no pending M8 look/previous recipe.
+The deterministic expected recipe revision must still match at apply.
+Individual M7 tuning after successful recipe intentionally invalidates
+the old recipe undo (new user changes take precedence); M8's look
+switching refuses to silently override a pending recipe undo.
+Restore refuses stale, modified or foreign tokens/fixtures and checks
+the complete post-restore state.
+
+These are static initial scene-look presets only; they do not
+render, inspect scene images, calibrate illuminance, or guarantee
+cinematic quality. Level 9 source **90%**, public typed tools **265**.
+Real Blender runtime/render acceptance **0%**. Production-ready No.
+M10 is separately authorized in the same `next`, requiring separate
+implementation, testing and green CI.
