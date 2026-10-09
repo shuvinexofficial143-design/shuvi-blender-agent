@@ -229,7 +229,7 @@ class LightingWorkflowOperations:
         recipe_token = state["recipe"]
 
         # Strict read-only preflight of every owned fixture and World node graph.
-        checked = self._verify_current(studio_token, world_token)
+        self._verify_current(studio_token, world_token)
         if recipe_token is not None:
             snapshot = self.studio._owned[studio_token].get("recipe_undo")
             if snapshot is None or snapshot["token"] != recipe_token:
