@@ -1033,3 +1033,17 @@ Level 9 source **60%** (M1–M6); typed tools **256**.
 Runtime Blender 0%; no live animated target tracking or occlusion
 guarantee. No M7, master Shuvi integration or live Blender without
 new user authorization.
+
+
+## Level 9 M7 — Live edit of owned lamps (source-side)
+
+`lighting.tune_preview` and `lighting.tune_apply` perform strict
+per-role in-place light edits: finite Watts, RGB, disk size, shadow
+toggle. No light recreation, no foreign light adopted, strict
+current ownership and revision/readback preflight. Writes and full
+rig readback are verified; failed writes attempt full rollback and
+check original readback. Owned release works after successful tuning.
+
+Public tools **258**; Level 9 source **70%** (M1–M7).
+Real Blender and rendered lighting acceptance **0%**.
+M8 is separately verified under current next permission.

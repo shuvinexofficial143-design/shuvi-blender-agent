@@ -136,7 +136,14 @@ from .sculpting_detail import DetailPlan, SubdivisionLevels, SubdivisionSetup
 from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelTarget
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
-from .studio_lighting import RigApply, RigPreview, RigRelease, StudioPresetCatalog
+from .studio_lighting import (
+    RigApply,
+    RigPreview,
+    RigRelease,
+    StudioPresetCatalog,
+    TuneApply,
+    TunePreview,
+)
 from .texture_workflows import AssetScope, BakePrep, ImageInspect, MaterialOnly, UDIMPlan
 from .texture_workflows import RecoveryRestore as TextureRecoveryRestore
 from .transform import PatchTransform
@@ -370,6 +377,8 @@ def builtin_contracts() -> dict:
         "lighting.studio_preview": (read, RigPreview.parse),
         "lighting.studio_apply": (mutation, RigApply.parse),
         "lighting.studio_release": (mutation, RigRelease.parse),
+        "lighting.tune_preview": (read, TunePreview.parse),
+        "lighting.tune_apply": (mutation, TuneApply.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

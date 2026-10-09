@@ -1863,3 +1863,19 @@ plan emits `aim_point`, `target_offset` and revision. Rotations are
 verified with bpy object readback. Omitted/zero offsets preserve old
 poses; altered roles/offsets invalidate previews. No live tracking.
 Host tools **256**, Level 9 source **60%**, runtime accepted **0%**.
+
+
+## Level 9 M7 — Current-session in-place lamp tuning
+
+`lighting.tune_preview`: existing owned token, one existing fixture
+role and bounded nonempty settings patch of energy_watts (1–100000),
+rgb (three channels 0–1), emitter_size (0.2–50000), cast_shadows
+(Boolean); returns exact current/proposed light state and deterministic
+tuning revision. Does not mutate Blender.
+
+`lighting.tune_apply`: same payload + expected_tuning_revision;
+guards unchanged session, scene, subject and all 3–5 managed lights.
+Writes the actual existing bpy AREA light properties, verifies full
+readback, rolls back on error/mismatch and updates owned-release
+baseline on success. Foreign objects and data remain untouched.
+Public tools **258**, source Level 9 **70%**, Blender live **0%**.

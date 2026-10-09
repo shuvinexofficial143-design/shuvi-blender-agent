@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **60%** (Milestones 1–6 of 10).
+Current source progress: **70%** (Milestones 1–7 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M6 source progress is **60%**.
+Level 9 M1–M7 source progress is **70%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M7, Blender launch/render/live evaluation,
+**STOP** before Level 9 M8, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -218,4 +218,36 @@ animated, constrained, or nonunit-scaled subjects are still refused.
 
 Registered public tools remain **256**. Level 9 source **60%**
 (M1–M6 of 10), Blender runtime/render verification **0%**,
-production ready No. **STOP before M7**.
+production ready No. M7 subsequently explicitly authorized.
+
+
+## M7 — In-place single-lamp creative tuning (60% → 70%)
+
+Two real, typed public tools: `lighting.tune_preview` (READ_ONLY)
+and `lighting.tune_apply` (approved mutation). Requires a currently
+owned, unchanged lighting token and one existing fixture role. A
+nonempty bounded settings patch can change energy Watts (1–100000),
+RGB (three finite numbers in [0, 1]), AREA disk emitter size
+(0.2–50000) and Boolean shadow casting. Unlike the original M1–M6
+rig creation, **M7 changes actual existing bpy light datablocks
+in place**, without deleting/recreating the rig.
+
+The exact read-only plan contains current and proposed light
+properties plus a deterministic `tuning_revision` bound to the
+ownership token, full currently read-back rig and scene revision.
+Apply requires this exact expected revision; stale, foreign, changed
+or already-modified lights cannot be adopted. Every existing fixture
+is read back, with current same-session ownership and subject
+verified before mutation. On write error or mismatch, all relevant
+original light settings are restored and read back, with a
+fail-closed status if recovery cannot be verified. Successful tuning
+updates the owned baseline so `lighting.studio_release` can still
+remove only those owned lights and restore the original scene.
+Foreign objects, foreign lights, world, materials and camera are
+untouched.
+
+M7 registers **258** public typed tools (M6 256 + 2).
+Level 9 source progress **70%**. Real Blender runtime and
+rendered appearance acceptance **0%**. Production ready: No.
+The same user `next` also authorizes M8; complete its own
+source and CI checks before claiming 80%.
