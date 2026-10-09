@@ -98,8 +98,7 @@ def actual(tree, source, output, grade):
         (grade.outputs["Image"], output.inputs["Image"]),
     )
     correct = len(links) == 2 and all(
-        sum(item.from_socket is a and item.to_socket is b for item in links) == 1
-        for a, b in pairs
+        sum(item.from_socket is a and item.to_socket is b for item in links) == 1 for a, b in pairs
     )
     return {
         "node_type": str(grade.bl_idname),
@@ -181,9 +180,7 @@ class ColorGradeOperations:
             if not checked.matched:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Grade RNA/link readback failed")
             after = graph_revision(tree)
-            token = revision(
-                {"before": plan["graph_before"], "after": after, "nonce": uuid4().hex}
-            )
+            token = revision({"before": plan["graph_before"], "after": after, "nonce": uuid4().hex})
             self._owned[token] = {
                 "scene": scene,
                 "tree": tree,
