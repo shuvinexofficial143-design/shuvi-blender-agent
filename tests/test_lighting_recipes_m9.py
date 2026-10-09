@@ -15,9 +15,7 @@ def rig(preset="PRODUCT_FIVE_POINT"):
     bpy, inspector, studio_registry, token, revision = setup_owned(preset)
     studio = studio_registry._tools["lighting.studio_apply"].execute.__self__
     recipes = LightingRecipeOperations(studio)
-    registry = ToolRegistry(
-        studio.tools() + recipes.tools(), SafetyPolicy(allow_mutations=True)
-    )
+    registry = ToolRegistry(studio.tools() + recipes.tools(), SafetyPolicy(allow_mutations=True))
     return bpy, inspector, registry, token, revision
 
 
@@ -47,8 +45,15 @@ def test_m9_real_full_rig_recipe_and_exact_undo(preset, recipe):
     bpy, inspector, reg, token, original_scene = rig(preset)
     lamps = [obj for obj in bpy.context.scene.objects if obj.type == "LIGHT"]
     before = [
-        (obj, obj.data.energy, list(obj.data.color), obj.data.size, obj.data.spread,
-         obj.data.use_shadow) for obj in lamps
+        (
+            obj,
+            obj.data.energy,
+            list(obj.data.color),
+            obj.data.size,
+            obj.data.spread,
+            obj.data.use_shadow,
+        )
+        for obj in lamps
     ]
     payload, plan = preview(reg, token, recipe)
     assert not plan["mutation_performed"]
@@ -71,9 +76,7 @@ def test_m9_real_full_rig_recipe_and_exact_undo(preset, recipe):
         assert obj.data.size == size
         assert obj.data.spread == spread
         assert obj.data.use_shadow is cast
-    released = reg.dispatch(
-        Request("lighting.studio_release", {"expected_lighting_token": token})
-    )
+    released = reg.dispatch(Request("lighting.studio_release", {"expected_lighting_token": token}))
     assert released.status == Status.VERIFIED, released.error
     assert inspector.summary()["revision"] == original_scene
 
@@ -110,12 +113,15 @@ def test_m9_m7_tuning_expires_old_recipe_undo_and_m8_is_blocked_until_restore():
     }
     tune = reg.dispatch(Request("lighting.tune_preview", tune_payload))
     assert tune.status == Status.SUCCEEDED
-    assert reg.dispatch(
-        Request(
-            "lighting.tune_apply",
-            tune_payload | {"expected_tuning_revision": tune.data["tuning_revision"]},
-        )
-    ).status == Status.VERIFIED
+    assert (
+        reg.dispatch(
+            Request(
+                "lighting.tune_apply",
+                tune_payload | {"expected_tuning_revision": tune.data["tuning_revision"]},
+            )
+        ).status
+        == Status.VERIFIED
+    )
     assert restore(reg, done.data["recipe_token"]).error.code == ErrorCode.STALE_STATE
     assert bpy.data.objects.get("MyRig_Key").data.energy == 333
 
@@ -134,7 +140,8 @@ def test_m9_corrupt_readback_restores_all_original_owned_light_settings():
     bpy, _, reg, token, _ = rig()
     before = [
         (obj, obj.data.energy, list(obj.data.color), obj.data.size, obj.data.spread)
-        for obj in bpy.context.scene.objects if obj.type == "LIGHT"
+        for obj in bpy.context.scene.objects
+        if obj.type == "LIGHT"
     ]
     payload, plan = preview(reg, token, "NOIR_PORTRAIT")
     calls = {"n": 0}
@@ -153,9 +160,10 @@ def test_m9_corrupt_readback_restores_all_original_owned_light_settings():
         assert list(obj.data.color) == color
         assert obj.data.size == size
         assert obj.data.spread == spread
-    assert reg.dispatch(
-        Request("lighting.studio_release", {"expected_lighting_token": token})
-    ).status == Status.VERIFIED
+    assert (
+        reg.dispatch(Request("lighting.studio_release", {"expected_lighting_token": token})).status
+        == Status.VERIFIED
+    )
 
 
 @pytest.mark.parametrize("bad", ["", "UNKNOWN", 3, None, True])
