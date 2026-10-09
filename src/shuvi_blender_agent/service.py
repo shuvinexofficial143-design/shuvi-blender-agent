@@ -65,6 +65,7 @@ from .rig_recipe_library import RigRecipeLibraryOperations
 from .rigging import RiggingOperations
 from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
+from .tracking_clip import MovieClipInspectionOperations
 from .sculpting import SculptingOperations
 from .sculpting_brushes import SculptBrushOperations
 from .sculpting_controls import SculptControlOperations
@@ -121,6 +122,7 @@ def create_registry(
         CollisionSimulationOperations(objects),
         ClothColliderWorkflowOperations(objects),
         VfxSceneWorkflowOperations(objects),
+        MovieClipInspectionOperations(bpy),
         ocean_simulation,
         OceanTimelineOperations(ocean_simulation),
         GeometryAcceptanceOperations(objects),

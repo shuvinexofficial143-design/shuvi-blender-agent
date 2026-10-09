@@ -1968,3 +1968,5 @@ real Blender runtime/render acceptance **0%**, production ready No.
 Level 10 M9: `vfx.cloth_*` optional `settings.pressure` with force, ambient_factor, target_volume, use_target_volume; requires closed manifold polygon winding. No new public tools (286).
 
 - Level 10 M10: `vfx.scene_preview/apply/release`: combined CLOTH + COLLISION + OCEAN + WAVE on four distinct local meshes, owned modifier rollback and one-use verified release. 289 typed tools. Source-only, not runtime proof.
+
+- Level 11 M1: `tracking.clip_inspect`: {clip_name, tracking_object_name, frames: sorted 1..16}, returns bounded exact Blender tracking marker samples, clip dimensions and camera/object context. Read-only; 290 typed tools.

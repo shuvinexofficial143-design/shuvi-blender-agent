@@ -160,6 +160,7 @@ from .transform import PatchTransform
 from .uv import SeamSet
 from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPackPlan
 from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
+from .tracking_clip import ClipInspect
 from .validation import fields, string
 from .vfx_cloth import ClothApply, ClothPreview, ClothRelease
 from .vfx_cloth_collision_workflow import (
@@ -422,6 +423,7 @@ def builtin_contracts() -> dict:
         "vfx.scene_preview": (read, VfxScenePreview.parse),
         "vfx.scene_apply": (mutation, VfxSceneApply.parse),
         "vfx.scene_release": (mutation, VfxSceneRelease.parse),
+        "tracking.clip_inspect": (read, ClipInspect.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),
