@@ -4,7 +4,7 @@ import pytest
 from compositor_fakes import setup
 
 from shuvi_blender_agent import AgentError, ErrorCode, Request, Status
-from shuvi_blender_agent.compositor_sharpen import SharpenPreview, SharpenFilterOperations
+from shuvi_blender_agent.compositor_sharpen import SharpenFilterOperations, SharpenPreview
 from shuvi_blender_agent.safety import SafetyPolicy
 from shuvi_blender_agent.service import create_registry
 from shuvi_blender_agent.tools import ToolRegistry
