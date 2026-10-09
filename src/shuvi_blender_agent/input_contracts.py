@@ -51,11 +51,9 @@ from .collection_ops import (
 from .compositor_alpha_over import BlendApply, BlendPreview, BlendRelease
 from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .compositor_matte import MatteApply, MattePreview, MatteRelease
-from .compositor_shot import (
-    ShotApply as CompositeShotApply,
-    ShotPreview as CompositeShotPreview,
-    ShotRelease as CompositeShotRelease,
-)
+from .compositor_shot import ShotApply as CompositeShotApply
+from .compositor_shot import ShotPreview as CompositeShotPreview
+from .compositor_shot import ShotRelease as CompositeShotRelease
 from .destructive import DeleteObject
 from .geometry_acceptance import GeometryWorkflowPreview, Level5Acceptance
 from .geometry_architecture import ArchitectureApply, ArchitectureClear, ArchitecturePreview
