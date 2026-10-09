@@ -178,7 +178,7 @@ def test_m5_registry_and_read_only_permissions():
     bpy, _, track, _, payload = setup()
     catalog = create_registry(bpy).catalog()
     names = {t["name"] for t in catalog}
-    assert len(names) == 326
+    assert len(names) == 329
     assert {
         "tracking.track_config_preview",
         "tracking.track_config_apply",

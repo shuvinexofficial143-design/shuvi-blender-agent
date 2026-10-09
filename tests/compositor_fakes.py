@@ -53,6 +53,14 @@ class Node:
             self.inputs.extend([Socket("Image"), Socket("Bright", 0.0), Socket("Contrast", 0.0)])
             self.outputs.append(Socket("Image"))
             self.use_premultiply = False
+        elif kind == "CompositorNodeGlare":
+            self.inputs.append(Socket("Image"))
+            self.outputs.append(Socket("Image"))
+            self.glare_type = "SIMPLE_STAR"
+            self.quality = "HIGH"
+            self.threshold = 1.0
+            self.size = 7
+            self.mix = 0.0
         elif kind == "CompositorNodeFilter":
             self.inputs.extend([Socket("Fac", 1.0), Socket("Image")])
             self.outputs.append(Socket("Image"))

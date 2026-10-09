@@ -64,8 +64,8 @@ def apply_payload(registry, workflow="INDEX_ATTRIBUTE", prefix="FieldDemo"):
 
 def test_factory_has_field_tools_within_raised_bounded_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 326
-    assert MAX_REGISTERED_TOOLS == 326
+    assert len(registry.catalog()) == 329
+    assert MAX_REGISTERED_TOOLS == 329
     names = {item["name"] for item in registry.catalog()}
     assert {
         "geometry_nodes.field_preview",

@@ -151,7 +151,7 @@ def test_m1_viewer_sink_and_read_only_policy():
     assert plan.status == Status.SUCCEEDED
     assert apply(locked, args, plan).status == Status.FAILED
     names = {tool["name"] for tool in create_registry(bpy).catalog()}
-    assert len(names) == 326
+    assert len(names) == 329
     assert {
         "compositor.grade_preview",
         "compositor.grade_apply",
