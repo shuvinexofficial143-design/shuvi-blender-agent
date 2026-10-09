@@ -9,6 +9,7 @@ from math import hypot, isfinite
 from .contracts import Result, Status
 from .errors import AgentError, ErrorCode
 from .safety import SafetyClass
+from .tracking_reconstruction import reconstruction_quality
 from .tools import Tool
 from .validation import fields, integer, string
 
@@ -23,13 +24,21 @@ class ClipInspect:
     tracking_object_name: str
     frames: tuple[int, ...]
     analyze_motion: bool = False
+    inspect_reconstruction: bool = False
 
     @classmethod
     def parse(cls, data):
-        fields(data, {"clip_name", "tracking_object_name", "frames"}, {"analyze_motion"})
+        fields(
+            data,
+            {"clip_name", "tracking_object_name", "frames"},
+            {"analyze_motion", "inspect_reconstruction"},
+        )
         analyze = data.get("analyze_motion", False)
         if type(analyze) is not bool:
             raise AgentError(ErrorCode.INVALID_REQUEST, "analyze_motion must be Boolean")
+        reconstruction = data.get("inspect_reconstruction", False)
+        if type(reconstruction) is not bool:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "inspect_reconstruction must be Boolean")
         frames = data["frames"]
         if not isinstance(frames, list) or not 1 <= len(frames) <= MAX_SAMPLE_FRAMES:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Provide 1–16 sample frames")
@@ -41,6 +50,7 @@ class ClipInspect:
             string(data["tracking_object_name"], "tracking_object_name", limit=120),
             checked,
             analyze,
+            reconstruction,
         )
 
 
@@ -134,11 +144,7 @@ class MovieClipInspectionOperations:
                 entry["motion_quality"] = self.motion_quality(
                     action.frames, entry["sampled_markers"], size
                 )
-        return Result(
-            request.request_id,
-            request.command_id,
-            Status.SUCCEEDED,
-            {
+        result = {
                 "clip_name": clip.name,
                 "tracking_object_name": obj.name,
                 "camera_tracking": bool(obj.is_camera),
@@ -151,8 +157,12 @@ class MovieClipInspectionOperations:
                 "source_only": True,
                 "matchmove_solved": False,
                 "mutation_performed": False,
-            },
-        )
+        }
+        if action.inspect_reconstruction:
+            result["existing_reconstruction"] = reconstruction_quality(
+                clip, obj, tracks, action.frames
+            )
+        return Result(request.request_id, request.command_id, Status.SUCCEEDED, result)
 
     def tools(self):
         return [
