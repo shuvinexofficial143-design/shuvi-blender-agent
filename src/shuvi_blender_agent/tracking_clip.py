@@ -71,7 +71,7 @@ class MovieClipInspectionOperations:
         visible = [m for m in samples if not m["mute"]]
         missing = [f for f in requested if all(m["frame"] != f for m in visible)]
         speeds = []
-        for before, after in zip(visible, visible[1:], strict=True):
+        for before, after in zip(visible, visible[1:], strict=False):
             frames = after["frame"] - before["frame"]
             if frames <= 0:
                 raise AgentError(ErrorCode.SAFETY_DENIED, "Unsorted track markers")
