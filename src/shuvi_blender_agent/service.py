@@ -65,7 +65,6 @@ from .rig_recipe_library import RigRecipeLibraryOperations
 from .rigging import RiggingOperations
 from .safety import SafetyClass, SafetyPolicy
 from .scene_state import SceneStateOperations
-from .tracking_clip import MovieClipInspectionOperations
 from .sculpting import SculptingOperations
 from .sculpting_brushes import SculptBrushOperations
 from .sculpting_controls import SculptControlOperations
@@ -76,6 +75,7 @@ from .shape_ops import ShapeOperations
 from .studio_lighting import StudioLightingOperations
 from .texture_workflows import TextureWorkflowOperations
 from .tools import Tool, ToolRegistry, ping_tool
+from .tracking_clip import MovieClipInspectionOperations
 from .transform import TransformOperations
 from .uv import UVOperations
 from .uv_packing import UVPackingOperations

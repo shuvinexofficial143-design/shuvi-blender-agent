@@ -71,18 +71,27 @@ def test_m1_rejects_unknown_clip_or_tracking_object():
 def test_m1_rejects_linked_clip_and_oversized_tracks():
     _, clip, track, reg, payload = setup()
     clip.library = NS()
-    assert reg.dispatch(Request("tracking.clip_inspect", payload)).error.code == ErrorCode.SAFETY_DENIED
+    assert (
+        reg.dispatch(Request("tracking.clip_inspect", payload)).error.code
+        == ErrorCode.SAFETY_DENIED
+    )
     clip.library = None
     clip.tracking.objects[0].tracks.extend([NS(name=f"other{i}", markers=Markers(),
                                               lock=False, has_bundle=False) for i in range(64)])
-    assert reg.dispatch(Request("tracking.clip_inspect", payload)).error.code == ErrorCode.SAFETY_DENIED
+    assert (
+        reg.dispatch(Request("tracking.clip_inspect", payload)).error.code
+        == ErrorCode.SAFETY_DENIED
+    )
     assert track.name == "BuildingCorner"
 
 
 def test_m1_rejects_nonfinite_marker():
     _, _, track, reg, payload = setup()
     track.markers[0].co[0] = float("nan")
-    assert reg.dispatch(Request("tracking.clip_inspect", payload)).error.code == ErrorCode.SAFETY_DENIED
+    assert (
+        reg.dispatch(Request("tracking.clip_inspect", payload)).error.code
+        == ErrorCode.SAFETY_DENIED
+    )
 
 
 @pytest.mark.parametrize("frames", [[], list(range(1, 18)), [2, 1], [1, 1], [0], [1048575]])
@@ -98,4 +107,7 @@ def test_m1_strict_host_allowlist():
     assert reg.dispatch(Request("tracking.clip_inspect", payload | {
         "run_python": "import bpy",
     })).error.code == ErrorCode.INVALID_REQUEST
-    assert reg.dispatch(Request("tracking.clip_delete", payload)).error.code == ErrorCode.UNSUPPORTED_OPERATION
+    assert (
+        reg.dispatch(Request("tracking.clip_delete", payload)).error.code
+        == ErrorCode.UNSUPPORTED_OPERATION
+    )
