@@ -25,9 +25,38 @@ OCEAN_PROPERTIES = (
 )
 
 
-def _ocean_settings(data):
-    fields(data, set(OCEAN_PROPERTIES))
+def _foam_settings(data):
+    fields(
+        data,
+        {"foam_layer_name", "foam_coverage"},
+        {"use_spray", "spray_layer_name", "invert_spray"},
+    )
+    foam_name = string(data["foam_layer_name"], "foam_layer_name", limit=40)
+    spray_name = string(data.get("spray_layer_name", "ShuviSpray"), "spray_layer_name", limit=40)
+    for label, name in (("foam_layer_name", foam_name), ("spray_layer_name", spray_name)):
+        if not name.isascii() or not all(char.isalnum() or char == "_" for char in name):
+            raise AgentError(ErrorCode.INVALID_REQUEST, f"{label} must be ASCII alphanumeric")
+    spray = data.get("use_spray", False)
+    invert = data.get("invert_spray", False)
+    if type(spray) is not bool or type(invert) is not bool:
+        raise AgentError(ErrorCode.INVALID_REQUEST, "Spray flags must be boolean")
+    if invert and not spray:
+        raise AgentError(ErrorCode.INVALID_REQUEST, "Cannot invert disabled spray")
+    if spray and foam_name == spray_name:
+        raise AgentError(ErrorCode.INVALID_REQUEST, "Foam and spray data layers must be different")
     return {
+        "use_foam": True,
+        "foam_layer_name": foam_name,
+        "foam_coverage": number(data["foam_coverage"], "foam_coverage", 0, 10),
+        "use_spray": spray,
+        "spray_layer_name": spray_name,
+        "invert_spray": invert,
+    }
+
+
+def _ocean_settings(data):
+    fields(data, set(OCEAN_PROPERTIES), {"foam"})
+    result = {
         "resolution": integer(data["resolution"], "resolution", 2, 16),
         "spatial_size": number(data["spatial_size"], "spatial_size", 1, 200),
         "wave_scale": number(data["wave_scale"], "wave_scale", 0.01, 3),
@@ -38,6 +67,9 @@ def _ocean_settings(data):
         "random_seed": integer(data["random_seed"], "random_seed", 0, 1000),
         "time": number(data["time"], "time", 0, 1000),
     }
+    if "foam" in data:
+        result["foam"] = _foam_settings(data["foam"])
+    return result
 
 
 @dataclass(frozen=True)
@@ -84,7 +116,7 @@ class OceanSimulationOperations(WaveSimulationOperations):
     """Real Blender OCEAN modifier with standalone session-owned lifecycle."""
 
     def _read_ocean(self, obj, modifier):
-        return {
+        result = {
             "name": modifier.name,
             "type": modifier.type,
             "geometry_mode": str(modifier.geometry_mode),
@@ -100,6 +132,20 @@ class OceanSimulationOperations(WaveSimulationOperations):
             },
             "position": list(obj.modifiers).index(modifier),
             "owned_object_id": self.inspector.identity(obj),
+        }
+        if hasattr(modifier, "use_foam"):
+            result["foam"] = self._read_foam(modifier)
+        return result
+
+    @staticmethod
+    def _read_foam(modifier):
+        return {
+            "use_foam": bool(modifier.use_foam),
+            "foam_layer_name": str(modifier.foam_layer_name),
+            "foam_coverage": float(modifier.foam_coverage),
+            "use_spray": bool(modifier.use_spray),
+            "spray_layer_name": str(modifier.spray_layer_name),
+            "invert_spray": bool(modifier.invert_spray),
         }
 
     def _plan_ocean(self, action: OceanPreview):
@@ -143,6 +189,9 @@ class OceanSimulationOperations(WaveSimulationOperations):
             mod = obj.modifiers.new(action.preview.name, "OCEAN")
             mod.geometry_mode = "GENERATE"
             for name, value in action.preview.settings.items():
+                if name != "foam":
+                    setattr(mod, name, value)
+            for name, value in action.preview.settings.get("foam", {}).items():
                 setattr(mod, name, value)
             mod.show_viewport = True
             mod.show_render = True
@@ -154,10 +203,14 @@ class OceanSimulationOperations(WaveSimulationOperations):
                 "geometry_mode": "GENERATE",
                 "show_viewport": True,
                 "show_render": True,
-                "properties": plan["settings"],
+                "properties": {
+                    key: value for key, value in plan["settings"].items() if key != "foam"
+                },
                 "position": plan["modifier_index"],
                 "owned_object_id": plan["target_id"],
             }
+            if "foam" in plan["settings"]:
+                expected["foam"] = plan["settings"]["foam"]
             checked = compare(expected, actual)
             if checked.matched:
                 token = revision(

@@ -1941,3 +1941,7 @@ real Blender runtime/render acceptance **0%**, production ready No.
 ## Level 10 M2 — Ocean Generate modifier
 
 `vfx.ocean_preview` (READ_ONLY), `vfx.ocean_apply` and `vfx.ocean_release` (MUTATION): a local MESH ObjectTarget plus distinct `name` and nine bounded settings (`resolution` 2–16, `spatial_size` 1–200, `wave_scale` 0.01–3, `wave_alignment` 0–1, `wave_direction` radians ±3.14159, `choppiness` 0–3, `wind_velocity` 0.1–40, `random_seed` integer 0–1000, `time` 0–1000). Creates an actual Blender `OCEAN` modifier in `GENERATE` mode. Fresh preview revisions, exact shader-independent modifier readback, single-session owned release, and rollback on error. Source Level 10 20%, 274 typed tools, live-frame/render acceptance 0%.
+
+## Level10 M3 — Foam and spray
+
+`vfx.ocean_preview/apply/release` additionally accept optional `settings.foam` with required bounded `foam_layer_name` and `foam_coverage`; optional Boolean `use_spray`, `invert_spray` and `spray_layer_name`. Applies actual `OceanModifier` foam/spray properties; verifies readback, stale hashes and guarded deletion of only owned modifier. No material/texture is generated and no frame evaluated. Public tools still 274, Level 10 source 30%.
