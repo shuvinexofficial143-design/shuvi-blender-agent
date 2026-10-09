@@ -193,8 +193,11 @@ class VfxSceneWorkflowOperations:
             )
             self.inspector.target(action.preview.collider.target)
             coll = self.pair._create(
-                collider, action.preview.collider, self.pair.collider,
-                pair_plan["collider"], created
+                collider,
+                action.preview.collider,
+                self.pair.collider,
+                pair_plan["collider"],
+                created,
             )
             self.inspector.target(action.preview.ocean.target)
             ocean = self._make_ocean(sea, action.preview.ocean, plan["ocean"], created)
@@ -205,10 +208,12 @@ class VfxSceneWorkflowOperations:
             checked = compare(expected, self._read_all(objs, created))
             if not checked.matched:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "VFX final readback mismatch")
-            token = revision({
-                "plan": plan["scene_workflow_revision"],
-                "modifiers": [self.wave._pointer(mod) for _, mod in created],
-            })
+            token = revision(
+                {
+                    "plan": plan["scene_workflow_revision"],
+                    "modifiers": [self.wave._pointer(mod) for _, mod in created],
+                }
+            )
             self._owned[token] = {
                 "objects": objs,
                 "created": created,
@@ -219,7 +224,9 @@ class VfxSceneWorkflowOperations:
                 "after_scene": self.inspector.summary()["revision"],
             }
             return Result(
-                request.request_id, request.command_id, Status.VERIFIED,
+                request.request_id,
+                request.command_id,
+                Status.VERIFIED,
                 {
                     "scene_workflow_token": token,
                     "owned_modifiers": 4,
@@ -244,33 +251,22 @@ class VfxSceneWorkflowOperations:
         created = state["created"]
         if any(not any(item is mod for item in obj.modifiers) for obj, mod in created):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Owned VFX modifier removed externally")
-        self._verify_geometry(
-            state["objects"][0], state["cloth_plan"], state["cloth_settings"]
-        )
-        if not compare(
-            state["expected"], self._read_all(state["objects"], created)
-        ).matched:
+        self._verify_geometry(state["objects"][0], state["cloth_plan"], state["cloth_settings"])
+        if not compare(state["expected"], self._read_all(state["objects"], created)).matched:
             raise AgentError(ErrorCode.SAFETY_DENIED, "External VFX modifier edit detected")
         self.pair._rollback(created, state["before_scene"])
         del self._owned[token]
         return Result(
-            request.request_id, request.command_id, Status.VERIFIED,
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
             {"removed_owned_modifiers": 4, "restored_scene": True, "source_only": True},
             verification=compare({"restored": True}, {"restored": True}).to_dict(),
         )
 
     def tools(self):
         return [
-            Tool(
-                "vfx.scene_preview", SafetyClass.READ_ONLY,
-                VfxScenePreview.parse, self.preview
-            ),
-            Tool(
-                "vfx.scene_apply", SafetyClass.MUTATION,
-                VfxSceneApply.parse, self.apply
-            ),
-            Tool(
-                "vfx.scene_release", SafetyClass.MUTATION,
-                VfxSceneRelease.parse, self.release
-            ),
+            Tool("vfx.scene_preview", SafetyClass.READ_ONLY, VfxScenePreview.parse, self.preview),
+            Tool("vfx.scene_apply", SafetyClass.MUTATION, VfxSceneApply.parse, self.apply),
+            Tool("vfx.scene_release", SafetyClass.MUTATION, VfxSceneRelease.parse, self.release),
         ]
