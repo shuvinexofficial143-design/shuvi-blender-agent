@@ -232,7 +232,7 @@ class ClothSimulationOperations(WaveSimulationOperations):
         }
         if action.settings.get("pin_group"):
             planned["pin_group_signature"] = self._pin_signature(obj, action.settings["pin_group"])
-        if action.settings["use_pressure"]:
+        if action.settings.get("use_pressure", False):
             planned["pressure_topology_signature"] = self._pressure_topology(obj)
         planned[self.revision_key] = revision(planned)
         return obj, planned
