@@ -139,7 +139,9 @@ class RigPreview:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown shadow quality profile")
         offsets = data.get("target_offsets", {})
         if not isinstance(offsets, dict) or len(offsets) > 5:
-            raise AgentError(ErrorCode.INVALID_REQUEST, "Target offsets must be a small role mapping")
+            raise AgentError(
+                ErrorCode.INVALID_REQUEST, "Target offsets must be a small role mapping"
+            )
         allowed_roles = {role for role, *_ in _layout_specs(preset)}
         mapped = {}
         for role, value in offsets.items():
