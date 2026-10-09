@@ -156,6 +156,11 @@ from .studio_lighting import (
 )
 from .texture_workflows import AssetScope, BakePrep, ImageInspect, MaterialOnly, UDIMPlan
 from .texture_workflows import RecoveryRestore as TextureRecoveryRestore
+from .tracking_calibration import (
+    CameraCalibrationApply,
+    CameraCalibrationPreview,
+    CameraCalibrationRestore,
+)
 from .tracking_clip import ClipInspect
 from .tracking_markers import MarkerApply, MarkerPreview, MarkerRestore
 from .transform import PatchTransform
@@ -428,6 +433,9 @@ def builtin_contracts() -> dict:
         "tracking.marker_preview": (read, MarkerPreview.parse),
         "tracking.marker_apply": (mutation, MarkerApply.parse),
         "tracking.marker_restore": (mutation, MarkerRestore.parse),
+        "tracking.calibration_preview": (read, CameraCalibrationPreview.parse),
+        "tracking.calibration_apply": (mutation, CameraCalibrationApply.parse),
+        "tracking.calibration_restore": (mutation, CameraCalibrationRestore.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),

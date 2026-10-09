@@ -235,8 +235,8 @@ def test_m9_verification_mismatch_restores_original_action(monkeypatch):
 
 def test_m9_factory_registers_all_recipe_contracts_at_new_cap():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == 293
-    assert MAX_REGISTERED_TOOLS == 293
+    assert len(registry.catalog()) == 296
+    assert MAX_REGISTERED_TOOLS == 296
     names = {item["name"] for item in registry.catalog()}
     assert {
         "animation.recipe_catalog",
