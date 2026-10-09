@@ -162,6 +162,11 @@ from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPa
 from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
 from .validation import fields, string
 from .vfx_cloth import ClothApply, ClothPreview, ClothRelease
+from .vfx_cloth_collision_workflow import (
+    ClothColliderApply,
+    ClothColliderPreview,
+    ClothColliderRelease,
+)
 from .vfx_collision import CollisionApply, CollisionPreview, CollisionRelease
 from .vfx_ocean import OceanApply, OceanPreview, OceanRelease
 from .vfx_ocean_timeline import OceanTimelineApply, OceanTimelinePreview, OceanTimelineRestore
@@ -410,6 +415,9 @@ def builtin_contracts() -> dict:
         "vfx.collision_preview": (read, CollisionPreview.parse),
         "vfx.collision_apply": (mutation, CollisionApply.parse),
         "vfx.collision_release": (mutation, CollisionRelease.parse),
+        "vfx.cloth_collision_preview": (read, ClothColliderPreview.parse),
+        "vfx.cloth_collision_apply": (mutation, ClothColliderApply.parse),
+        "vfx.cloth_collision_release": (mutation, ClothColliderRelease.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),

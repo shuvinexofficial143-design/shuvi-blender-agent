@@ -97,3 +97,5 @@ Level 10 M5 Cloth Simulation: real Cloth modifier with bounded quality, mass, ai
 
 
 Level 10 M6 Collision Simulation: supports real Blender COLLISION obstacle modifiers with thickness, cloth friction, damping, culling/normal flags. M5 Cloth and M6 Collision may configure separate scene objects. Source Level 10 60%, 283 tools, runtime 0%.
+
+Level 10 M8: `vfx.cloth_collision_*` can create/release a guarded cloth+collider modifier pair on two meshes. Source-only; no evaluated simulations.
