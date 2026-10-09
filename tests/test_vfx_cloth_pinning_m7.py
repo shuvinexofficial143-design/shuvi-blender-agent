@@ -27,14 +27,21 @@ def setup():
         },
         "name": "PinnedCape",
         "settings": {
-            "quality": 5, "mass": 0.3, "air_damping": 1.0,
-            "tension_stiffness": 12, "bending_stiffness": 0.6,
-            "self_collision": False, "collision_distance": 0.02,
-            "pin_group": "Shoulders", "pin_stiffness": 35.0,
+            "quality": 5,
+            "mass": 0.3,
+            "air_damping": 1.0,
+            "tension_stiffness": 12,
+            "bending_stiffness": 0.6,
+            "self_collision": False,
+            "collision_distance": 0.02,
+            "pin_group": "Shoulders",
+            "pin_stiffness": 35.0,
         },
     }
-    reg = ToolRegistry(ClothSimulationOperations(ObjectOperations(inspector)).tools(),
-                       SafetyPolicy(allow_mutations=True))
+    reg = ToolRegistry(
+        ClothSimulationOperations(ObjectOperations(inspector)).tools(),
+        SafetyPolicy(allow_mutations=True),
+    )
     return cloth, group, inspector, reg, args
 
 
@@ -43,9 +50,15 @@ def preview(reg, args):
 
 
 def apply(reg, args, plan):
-    return reg.dispatch(Request("vfx.cloth_apply", args | {
-        "expected_cloth_revision": plan.data["cloth_revision"],
-    }))
+    return reg.dispatch(
+        Request(
+            "vfx.cloth_apply",
+            args
+            | {
+                "expected_cloth_revision": plan.data["cloth_revision"],
+            },
+        )
+    )
 
 
 def test_m7_pin_and_release_preserve_existing_group():
@@ -60,9 +73,14 @@ def test_m7_pin_and_release_preserve_existing_group():
     assert mod.settings.vertex_group_mass == "Shoulders"
     assert mod.settings.pin_stiffness == 35.0
     assert cloth.vertex_groups.get("Shoulders") is group
-    released = reg.dispatch(Request("vfx.cloth_release", {
-        "expected_cloth_token": done.data["cloth_token"],
-    }))
+    released = reg.dispatch(
+        Request(
+            "vfx.cloth_release",
+            {
+                "expected_cloth_token": done.data["cloth_token"],
+            },
+        )
+    )
     assert released.status == Status.VERIFIED, released.error
     assert not cloth.modifiers
     assert cloth.vertex_groups.get("Shoulders") is group
@@ -83,17 +101,28 @@ def test_m7_modified_weights_prevent_release():
     done = apply(reg, args, preview(reg, args))
     assert done.status == Status.VERIFIED
     group.add([1], 0.5, "REPLACE")
-    denied = reg.dispatch(Request("vfx.cloth_release", {
-        "expected_cloth_token": done.data["cloth_token"],
-    }))
+    denied = reg.dispatch(
+        Request(
+            "vfx.cloth_release",
+            {
+                "expected_cloth_token": done.data["cloth_token"],
+            },
+        )
+    )
     assert denied.error.code == ErrorCode.SAFETY_DENIED
     assert cloth.modifiers.get("PinnedCape") is not None
 
 
-@pytest.mark.parametrize("field,value", [
-    ("pin_group", "Missing"), ("pin_group", ""), ("pin_stiffness", 51),
-    ("pin_stiffness", -1), ("pin_stiffness", float("nan")),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("pin_group", "Missing"),
+        ("pin_group", ""),
+        ("pin_stiffness", 51),
+        ("pin_stiffness", -1),
+        ("pin_stiffness", float("nan")),
+    ],
+)
 def test_m7_invalid_pin_fields(field, value):
     _, _, _, reg, args = setup()
     args["settings"][field] = value
@@ -116,8 +145,10 @@ def test_m7_unweighted_group_denied():
 
 def test_m7_read_only_policy_prevents_mutation():
     cloth, group, inspector, _, args = setup()
-    locked = ToolRegistry(ClothSimulationOperations(ObjectOperations(inspector)).tools(),
-                          SafetyPolicy(allow_mutations=False))
+    locked = ToolRegistry(
+        ClothSimulationOperations(ObjectOperations(inspector)).tools(),
+        SafetyPolicy(allow_mutations=False),
+    )
     plan = preview(locked, args)
     assert apply(locked, args, plan).status == Status.FAILED
     assert cloth.vertex_groups.get("Shoulders") is group

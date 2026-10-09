@@ -173,9 +173,7 @@ class ClothSimulationOperations(WaveSimulationOperations):
             "mutation_performed": False,
         }
         if action.settings.get("pin_group"):
-            planned["pin_group_signature"] = self._pin_signature(
-                obj, action.settings["pin_group"]
-            )
+            planned["pin_group_signature"] = self._pin_signature(obj, action.settings["pin_group"])
         planned[self.revision_key] = revision(planned)
         return obj, planned
 
