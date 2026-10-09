@@ -792,6 +792,11 @@ class FakeModifiers(list):
                 bending_stiffness=0.5,
                 vertex_group_mass="",
                 pin_stiffness=1.0,
+                use_pressure=False,
+                uniform_pressure_force=0.0,
+                pressure_factor=1.0,
+                target_volume=0.0,
+                use_pressure_volume=False,
             )
             modifier.collision_settings = NS(use_self_collision=False, distance_min=0.015)
         if modifier_type == "OCEAN" and self.owner is not None:

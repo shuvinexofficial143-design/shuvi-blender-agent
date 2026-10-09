@@ -1122,3 +1122,5 @@ Three typed operations for actual collision Blender modifier on another local me
 Level 10 M7 is source-only: existing cloth tools now bind pre-existing weighted pin groups and pin stiffness, with stale checks and owned release. 70% source-side, runtime 0%.
 
 Level 10 M8: atomic source-side Cloth+Collision two-object workflow via 3 typed tools. 80% source, 286 tools, no live Blender simulation evidence.
+
+Level 10 M9: real Cloth pressure settings via bounded nested pressure request on existing typed Cloth tools, closed mesh geometry guard, shape revision and owned release. Source 90%, registered 286, runtime 0%. Wind was not added due to context-dependent forcefield operator safety.

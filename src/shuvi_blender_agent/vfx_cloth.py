@@ -27,17 +27,43 @@ CLOTH_FIELDS = {
     "collision_distance": ("collision_settings", "distance_min"),
     "pin_group": ("settings", "vertex_group_mass"),
     "pin_stiffness": ("settings", "pin_stiffness"),
+    "use_pressure": ("settings", "use_pressure"),
+    "uniform_pressure_force": ("settings", "uniform_pressure_force"),
+    "pressure_factor": ("settings", "pressure_factor"),
+    "target_volume": ("settings", "target_volume"),
+    "use_pressure_volume": ("settings", "use_pressure_volume"),
 }
 CLOTH_INT = {"quality"}
-CLOTH_BOOL = {"self_collision"}
+CLOTH_BOOL = {"self_collision", "use_pressure", "use_pressure_volume"}
+PRESSURE_KEYS = {
+    "use_pressure", "uniform_pressure_force", "pressure_factor",
+    "target_volume", "use_pressure_volume",
+}
 
 
 def _cloth_settings(data):
-    fields(data, set(CLOTH_FIELDS) - {"pin_group", "pin_stiffness"}, {"pin_group", "pin_stiffness"})
+    fields(
+        data,
+        set(CLOTH_FIELDS) - {"pin_group", "pin_stiffness"} - PRESSURE_KEYS,
+        {"pin_group", "pin_stiffness", "pressure"},
+    )
     if ("pin_group" in data) != ("pin_stiffness" in data):
         raise AgentError(ErrorCode.INVALID_REQUEST, "Pin group and stiffness must be paired")
     if type(data["self_collision"]) is not bool:
         raise AgentError(ErrorCode.INVALID_REQUEST, "self_collision must be Boolean")
+    pressure = data.get("pressure")
+    if pressure is not None:
+        fields(pressure, {"force", "ambient_factor", "target_volume", "use_target_volume"})
+        if type(pressure["use_target_volume"]) is not bool:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "use_target_volume must be Boolean")
+        force = number(pressure["force"], "pressure.force", -100, 100)
+        ambient = number(pressure["ambient_factor"], "pressure.ambient_factor", 0, 100)
+        volume = number(pressure["target_volume"], "pressure.target_volume", 0, 1000)
+        use_volume = pressure["use_target_volume"]
+        if use_volume and volume == 0:
+            raise AgentError(ErrorCode.INVALID_REQUEST, "Positive target volume required")
+    else:
+        force, ambient, volume, use_volume = 0.0, 1.0, 0.0, False
     return {
         "quality": integer(data["quality"], "quality", 2, 20),
         "mass": number(data["mass"], "mass", 0.01, 10),
@@ -52,6 +78,11 @@ def _cloth_settings(data):
         "pin_stiffness": number(data["pin_stiffness"], "pin_stiffness", 0, 50)
         if "pin_stiffness" in data
         else 1.0,
+        "use_pressure": pressure is not None,
+        "uniform_pressure_force": force,
+        "pressure_factor": ambient,
+        "target_volume": volume,
+        "use_pressure_volume": use_volume,
     }
 
 
@@ -149,6 +180,31 @@ class ClothSimulationOperations(WaveSimulationOperations):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Pin group has no weighted vertices")
         return revision({"group": group.name, "index": group.index, "weights": weights})
 
+    @staticmethod
+    def _pressure_topology(obj):
+        """Guard source pressure setup to bounded, consistently closed face topology."""
+        polygons = obj.data.polygons
+        vertices = obj.data.vertices
+        if not 4 <= len(polygons) <= 20000 or not 4 <= len(vertices) <= 12000:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Closed bounded mesh required for pressure")
+        edges = {}
+        for polygon in polygons:
+            corners = list(polygon.vertices)
+            if len(corners) < 3:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "Pressure mesh contains invalid face")
+            for i, a in enumerate(corners):
+                b = corners[(i + 1) % len(corners)]
+                if a == b or not 0 <= a < len(vertices) or not 0 <= b < len(vertices):
+                    raise AgentError(ErrorCode.SAFETY_DENIED, "Pressure mesh has invalid edge")
+                key = (min(a, b), max(a, b))
+                edges.setdefault(key, []).append((a, b))
+        if not edges or any(
+            len(directions) != 2 or directions[0] == directions[1]
+            for directions in edges.values()
+        ):
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Pressure requires closed oriented faces")
+        return revision({"vertices": len(vertices), "faces": [list(f.vertices) for f in polygons]})
+
     def _plan_physics(self, action):
         obj, before = self._target(action.target)
         if obj.modifiers.get(action.name) is not None:
@@ -174,6 +230,8 @@ class ClothSimulationOperations(WaveSimulationOperations):
         }
         if action.settings.get("pin_group"):
             planned["pin_group_signature"] = self._pin_signature(obj, action.settings["pin_group"])
+        if action.settings["use_pressure"]:
+            planned["pressure_topology_signature"] = self._pressure_topology(obj)
         planned[self.revision_key] = revision(planned)
         return obj, planned
 
@@ -221,6 +279,7 @@ class ClothSimulationOperations(WaveSimulationOperations):
                 self._owned[token] = {
                     "pin_group": action.settings.get("pin_group", ""),
                     "pin_signature": plan.get("pin_group_signature"),
+                    "pressure_topology_signature": plan.get("pressure_topology_signature"),
                     "object": obj,
                     "modifier": mod,
                     "expected": expected,
@@ -266,6 +325,9 @@ class ClothSimulationOperations(WaveSimulationOperations):
         if owned is None:
             raise AgentError(ErrorCode.STALE_STATE, "Unknown or foreign physics token")
         obj, mod = owned["object"], owned["modifier"]
+        if owned.get("pressure_topology_signature"):
+            if self._pressure_topology(obj) != owned["pressure_topology_signature"]:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "Pressure mesh topology changed")
         if owned.get("pin_group"):
             if self._pin_signature(obj, owned["pin_group"]) != owned["pin_signature"]:
                 raise AgentError(ErrorCode.SAFETY_DENIED, "Pinned vertex weights changed")
