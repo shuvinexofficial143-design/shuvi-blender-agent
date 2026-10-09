@@ -614,8 +614,10 @@ class StudioLightingOperations:
             self.bpy.context.view_layer.update()
             actual = [self._read(obj, data) for obj, data in created]
             checked = compare({"lights": expected}, {"lights": actual})
-            scene_unchanged = self.inspector.summary()["revision"] == owned["after_scene"]
-            if checked.matched and scene_unchanged:
+            # Owned lamp properties legitimately change the scene revision.
+            # The full rig readback must match, and the new scene revision
+            # becomes the guarded baseline for subsequent tuning/release.
+            if checked.matched:
                 owned["expected"] = expected
                 owned["after_scene"] = self.inspector.summary()["revision"]
                 return checked
