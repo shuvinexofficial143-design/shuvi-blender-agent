@@ -222,10 +222,16 @@ class SharpenFilterOperations:
     def tools(self):
         return [
             Tool(
-                "compositor.sharpen_preview", SafetyClass.READ_ONLY, SharpenPreview.parse, self.preview
+                "compositor.sharpen_preview",
+                SafetyClass.READ_ONLY,
+                SharpenPreview.parse,
+                self.preview,
             ),
             Tool("compositor.sharpen_apply", SafetyClass.MUTATION, SharpenApply.parse, self.apply),
             Tool(
-                "compositor.sharpen_release", SafetyClass.MUTATION, SharpenRelease.parse, self.release
+                "compositor.sharpen_release",
+                SafetyClass.MUTATION,
+                SharpenRelease.parse,
+                self.release,
             ),
         ]

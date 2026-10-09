@@ -127,7 +127,11 @@ def test_m5_catalog_and_readonly_gate():
     bpy, tree, _, args = prepare()
     names = {x["name"] for x in create_registry(bpy).catalog()}
     assert len(names) == 326
-    assert {"compositor.sharpen_preview", "compositor.sharpen_apply", "compositor.sharpen_release"} <= names
+    assert {
+        "compositor.sharpen_preview",
+        "compositor.sharpen_apply",
+        "compositor.sharpen_release",
+    } <= names
     locked = ToolRegistry(SharpenFilterOperations(bpy).tools(), SafetyPolicy())
     plan = preview(locked, args)
     assert plan.status == Status.SUCCEEDED
