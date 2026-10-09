@@ -365,6 +365,6 @@ def test_m3_unsupported_created_slotted_action_fails_closed_and_restores():
 
 def test_m3_factory_and_host_contracts_are_consistent():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 308
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 311
     names = {entry["name"] for entry in registry.catalog()}
     assert {"cinema.motion_preview", "cinema.motion_apply"} <= names
