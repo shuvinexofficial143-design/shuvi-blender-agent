@@ -1,6 +1,6 @@
 # Level 11 — Tracking, Matchmove & Green Screen
 
-Source milestone: **30%** (M1–M3/10). Blender runtime verification: **0%**. Production: No.
+Source milestone: **40%** (M1–M4/10). Blender runtime verification: **0%**. Production: No.
 
 ## M1 — Existing MovieClip tracking inspection
 The allowlisted read-only `tracking.clip_inspect` takes an exact, already-loaded Blender MovieClip name, its tracking object name, and 1–16 sorted unique sample frames. It inspects the actual Blender MovieTrackingObject tracks and uses `MovieTrackingMarkers.find_frame(frame, exact=True)` to read real coordinates, keyed/mute status and lock flags (max 64 tracks). It also reports clip pixel dimensions/duration, without file paths. It never loads a clip, runs Blender tracking, solves camera movement, touches external files, changes any tracking data, or renders. Full runtime acceptance is not demonstrated. M2 will add reversible manual marker placement to an existing track; green screen and actual matchmove solve remain future milestones.
@@ -10,3 +10,6 @@ The allowlisted read-only `tracking.clip_inspect` takes an exact, already-loaded
 
 ## M3 — Exact sampled tracking-motion quality check (20% → 30%)
 The existing read-only `tracking.clip_inspect` accepts optional Boolean `analyze_motion` for its 1–16 sample frames. For each existing track, it reports visible-marker coverage, missing/muted frames, mean/max pixel motion per frame, large displacement jumps (>10% of footage diagonal per frame), and a conservative `heuristic_ready` flag requiring ≥3 visible samples, ≥75% coverage and zero large jumps. These are deterministic **heuristics**, not camera reprojection error, a calibrated camera solve, automatic point tracking or actual frame evaluation. No write operation and no new public tool; 293 tools.
+
+## M4 — Existing MovieClip Camera lens calibration (30% → 40%)
+Three strict typed operations `tracking.calibration_preview/apply/restore` change native `clip.tracking.camera` RNA on an already-loaded local clip's **camera tracking object**. The bounded POLYNOMIAL lens profile configures MILLIMETERS focal length, sensor width, pixel aspect, normalized optical center (`principal_point`), and radial `k1/k2/k3`; preview captures the original 9 camera properties and hash. Apply uses direct Blender RNA setters with full readback and verified rollback on a fault. Restore requires unchanged camera/clip identity and full lens values and consumes an owner token. Clips with already valid camera reconstruction and active owned calibrations are rejected. Does not auto-calibrate lenses, solve matchmove, evaluate frames, access footage files, or render. 296 registered tools; Blender runtime acceptance 0%.
