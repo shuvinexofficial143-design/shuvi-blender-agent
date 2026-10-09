@@ -222,7 +222,7 @@ def test_m10_factory_has_real_registered_typed_tools():
     bpy = fake_bpy()
     registry = create_registry(bpy, SafetyPolicy(allow_mutations=False))
     names = {row["name"] for row in registry.catalog()}
-    assert len(registry.catalog()) == 296
+    assert len(registry.catalog()) == 299
     assert {
         "lighting.workflow_preview",
         "lighting.workflow_apply",
