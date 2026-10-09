@@ -105,10 +105,15 @@ def test_m2_ocean_modifiers_have_independent_time_and_seed_per_object():
             },
             "name": n,
             "settings": {
-                "resolution": 5, "spatial_size": 20, "wave_scale": 1,
-                "wave_alignment": 0.5, "wave_direction": 0,
-                "choppiness": 0.2, "wind_velocity": 6,
-                "random_seed": 1, "time": time,
+                "resolution": 5,
+                "spatial_size": 20,
+                "wave_scale": 1,
+                "wave_alignment": 0.5,
+                "wave_direction": 0,
+                "choppiness": 0.2,
+                "wind_velocity": 6,
+                "random_seed": 1,
+                "time": time,
             },
         }
 
