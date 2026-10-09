@@ -162,6 +162,11 @@ from .tracking_calibration import (
     CameraCalibrationRestore,
 )
 from .tracking_clip import ClipInspect
+from .tracking_configuration import (
+    TrackConfigurationApply,
+    TrackConfigurationPreview,
+    TrackConfigurationRestore,
+)
 from .tracking_markers import MarkerApply, MarkerPreview, MarkerRestore
 from .transform import PatchTransform
 from .uv import SeamSet
@@ -436,6 +441,9 @@ def builtin_contracts() -> dict:
         "tracking.calibration_preview": (read, CameraCalibrationPreview.parse),
         "tracking.calibration_apply": (mutation, CameraCalibrationApply.parse),
         "tracking.calibration_restore": (mutation, CameraCalibrationRestore.parse),
+        "tracking.track_config_preview": (read, TrackConfigurationPreview.parse),
+        "tracking.track_config_apply": (mutation, TrackConfigurationApply.parse),
+        "tracking.track_config_restore": (mutation, TrackConfigurationRestore.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),

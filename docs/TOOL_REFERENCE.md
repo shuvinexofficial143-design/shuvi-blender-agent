@@ -1976,3 +1976,5 @@ Level 10 M9: `vfx.cloth_*` optional `settings.pressure` with force, ambient_fact
 - Level 11 M3: `tracking.clip_inspect` optional Boolean `analyze_motion` produces per-track exact-frame sampled motion QA. Not a 3D solve. Tool count unchanged (293).
 
 - Level 11 M4: `tracking.calibration_preview/apply/restore` on existing MovieClip camera object; typed bounded focal_length/sensor_width/pixel_aspect/principal_point/k1/k2/k3, direct Blender RNA verification, guarded owned restore. 296 tools, no actual solver.
+
+Level11 M5: `tracking.track_config_preview/apply/restore` edits safe typed existing MovieTrackingTrack settings (motion_model, pattern_match, correlation_min, frames_limit, margin, use_brute, use_normalization, weight), source verified and owned restore; 299 tools.

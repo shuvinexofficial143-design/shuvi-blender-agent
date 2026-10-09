@@ -1134,3 +1134,5 @@ Level 11 M2: manual track markers inserted via real `MovieTrackingMarkers.insert
 Level 11 M3 source milestone 30%: added exact-sampled, read-only marker motion QA (coverage, pixel speeds, large jumps and review-only heuristic_ready) to tracking.clip_inspect. 293 typed tools, live Blender runtime 0%, no matchmove solve.
 
 Level 11 M4 (source 40%): added guarded `tracking.calibration_*` operations on native MovieTrackingCamera, polynomial lens intrinsics, full readback and failure/foreign-edit-safe one-use restore. 296 typed tools, Blender runtime/solve 0%. Next permitted milestone on user next M5+M6.
+
+Level11 M5: source 50%, native MovieTrackingTrack strategy preview/apply/restore with bounded motion model and per-track settings; foreign marker and settings edit safe rollback/release, 299 typed tools. Not auto-tracking. Real Blender runtime 0%.
