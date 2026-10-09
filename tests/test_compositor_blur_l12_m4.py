@@ -131,7 +131,7 @@ def test_m4_injected_second_link_failure_reverts_owned_node():
 def test_m4_catalog_and_readonly_gate():
     bpy, tree, _, args = prepare()
     names = {x["name"] for x in create_registry(bpy).catalog()}
-    assert len(names) == 323
+    assert len(names) == 326
     assert {"compositor.blur_preview", "compositor.blur_apply", "compositor.blur_release"} <= names
     locked = ToolRegistry(GaussianBlurOperations(bpy).tools(), SafetyPolicy())
     plan = preview(locked, args)
