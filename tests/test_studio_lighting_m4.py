@@ -44,9 +44,13 @@ def preview(reg, args):
 
 def apply(reg, args, plan):
     return reg.dispatch(
-        Request("lighting.studio_apply", args | {
-            "expected_lighting_revision": plan["lighting_revision"],
-        })
+        Request(
+            "lighting.studio_apply",
+            args
+            | {
+                "expected_lighting_revision": plan["lighting_revision"],
+            },
+        )
     )
 
 
@@ -79,9 +83,11 @@ def test_m4_preview_and_actual_lights_apply_each_shadow_profile(style, multiplie
         assert datum.spread == entry["spread"]
         assert datum.size == entry["size"]
         assert list(datum.color) == entry["color"]
-    done = reg.dispatch(Request("lighting.studio_release", {
-        "expected_lighting_token": result.data["lighting_token"]
-    }))
+    done = reg.dispatch(
+        Request(
+            "lighting.studio_release", {"expected_lighting_token": result.data["lighting_token"]}
+        )
+    )
     assert done.status == Status.VERIFIED, done.error
     assert not bpy.data.lights
     assert inspector.summary()["revision"] == before

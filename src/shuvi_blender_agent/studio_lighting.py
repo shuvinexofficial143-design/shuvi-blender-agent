@@ -133,9 +133,7 @@ class RigPreview:
         mood = string(data.get("mood", "NEUTRAL"), "mood", limit=24)
         if mood not in MOOD_STYLES:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown cinematic lighting mood")
-        shadow_profile = string(
-            data.get("shadow_profile", "STANDARD"), "shadow_profile", limit=32
-        )
+        shadow_profile = string(data.get("shadow_profile", "STANDARD"), "shadow_profile", limit=32)
         if shadow_profile not in SHADOW_PROFILES:
             raise AgentError(ErrorCode.INVALID_REQUEST, "Unknown shadow quality profile")
         prefix = object_name(data["name_prefix"])
