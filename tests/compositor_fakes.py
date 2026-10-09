@@ -53,6 +53,15 @@ class Node:
             self.inputs.extend([Socket("Image"), Socket("Bright", 0.0), Socket("Contrast", 0.0)])
             self.outputs.append(Socket("Image"))
             self.use_premultiply = False
+        elif kind == "CompositorNodeBlur":
+            self.inputs.append(Socket("Image"))
+            self.outputs.append(Socket("Image"))
+            self.size_x = 0
+            self.size_y = 0
+            self.filter_type = "FLAT"
+            self.use_extended_bounds = False
+            self.use_relative = False
+            self.use_variable_size = False
         elif kind == "CompositorNodeHueSat":
             self.inputs.extend(
                 [
