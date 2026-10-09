@@ -40,8 +40,8 @@ from .geometry_primitives import ProceduralPrimitiveOperations
 from .geometry_recipe_library import GeometryRecipeLibraryOperations
 from .geometry_scatter import GeometryScatterOperations
 from .hierarchy import HierarchyOperations
-from .lighting_recipes import LightingRecipeOperations
 from .inspection import BpyInspector
+from .lighting_recipes import LightingRecipeOperations
 from .material_nodes import MaterialNodeOperations
 from .material_slots import MaterialSlotOperations
 from .mesh import MeshOperations

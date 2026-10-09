@@ -10,7 +10,6 @@ from .studio_lighting import StudioLightingOperations
 from .tools import Tool
 from .validation import fields, string
 
-
 # Each recipe changes *real, existing, owned* AREA lamp color, power,
 # emitter size, spread and casting. Values are source defaults, not
 # tested visual/render results. No arbitrary bpy code, paths or materials.

@@ -72,12 +72,10 @@ from .geometry_recipe_library import RecipeClear as GeometryRecipeClear
 from .geometry_recipe_library import RecipePreview as GeometryRecipePreview
 from .geometry_scatter import ScatterApply, ScatterClear, ScatterPreview
 from .hierarchy import ParentChange
-from .lighting_recipes import (
-    RecipeApply as LightingRecipeApply,
-    RecipeCatalog as LightingRecipeCatalog,
-    RecipePreview as LightingRecipePreview,
-    RecipeRestore as LightingRecipeRestore,
-)
+from .lighting_recipes import RecipeApply as LightingRecipeApply
+from .lighting_recipes import RecipeCatalog as LightingRecipeCatalog
+from .lighting_recipes import RecipePreview as LightingRecipePreview
+from .lighting_recipes import RecipeRestore as LightingRecipeRestore
 from .material_nodes import PBRTextureAssign, PBRTextureClear, PrincipledSet, ShaderInspect
 from .material_slots import (
     MaterialFaceAssign,
