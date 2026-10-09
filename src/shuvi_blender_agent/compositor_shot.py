@@ -88,9 +88,7 @@ class ShotApply:
     def parse(cls, data):
         fields(data, set(ShotPreview.__dataclass_fields__) | {"expected_shot_revision"})
         payload = dict(data)
-        expected = string(
-            payload.pop("expected_shot_revision"), "expected_shot_revision", limit=64
-        )
+        expected = string(payload.pop("expected_shot_revision"), "expected_shot_revision", limit=64)
         return cls(ShotPreview.parse(payload), expected)
 
 
@@ -136,11 +134,7 @@ def shot_actual(tree, nodes, background, output):
         (set_alpha.outputs["Image"], blend.inputs[2]),
         (blend.outputs["Image"], output.inputs["Image"]),
     )
-    owned_links = [
-        link
-        for link in tree.links
-        if link.from_node in nodes or link.to_node in nodes
-    ]
+    owned_links = [link for link in tree.links if link.from_node in nodes or link.to_node in nodes]
     valid = len(owned_links) == len(links) and all(
         sum(link.from_socket is source and link.to_socket is sink for link in owned_links) == 1
         for source, sink in links
@@ -267,9 +261,7 @@ class GreenScreenShotOperations:
             if not checked.matched:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Shot RNA/link mismatch")
             after = graph_revision(tree)
-            token = revision(
-                {"before": plan["graph_before"], "after": after, "nonce": uuid4().hex}
-            )
+            token = revision({"before": plan["graph_before"], "after": after, "nonce": uuid4().hex})
             self._owned[token] = {
                 "scene": scene,
                 "tree": tree,
