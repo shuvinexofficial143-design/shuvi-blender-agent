@@ -36,8 +36,11 @@ CLOTH_FIELDS = {
 CLOTH_INT = {"quality"}
 CLOTH_BOOL = {"self_collision", "use_pressure", "use_pressure_volume"}
 PRESSURE_KEYS = {
-    "use_pressure", "uniform_pressure_force", "pressure_factor",
-    "target_volume", "use_pressure_volume",
+    "use_pressure",
+    "uniform_pressure_force",
+    "pressure_factor",
+    "target_volume",
+    "use_pressure_volume",
 }
 
 
@@ -199,8 +202,7 @@ class ClothSimulationOperations(WaveSimulationOperations):
                 key = (min(a, b), max(a, b))
                 edges.setdefault(key, []).append((a, b))
         if not edges or any(
-            len(directions) != 2 or directions[0] == directions[1]
-            for directions in edges.values()
+            len(directions) != 2 or directions[0] == directions[1] for directions in edges.values()
         ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Pressure requires closed oriented faces")
         return revision({"vertices": len(vertices), "faces": [list(f.vertices) for f in polygons]})
