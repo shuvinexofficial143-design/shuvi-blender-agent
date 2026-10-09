@@ -1,4 +1,4 @@
-"""Level 12 M1: reversible native compositor Bright/Contrast image grading.
+"""Level 12 M3: reversible native compositor Hue/Saturation/Value adjustment.
 
 Connects an existing native image source to a previously unlinked Composite or
 Viewer output, without changing any foreign links, scene settings or files.
@@ -18,6 +18,8 @@ from .validation import fields, number, string
 from .verification import compare
 
 HUE_NODE = "ShuviHSVAdjust"
+
+
 @dataclass(frozen=True)
 class HuePreview:
     scene_name: str
@@ -54,9 +56,7 @@ class HueApply:
     def parse(cls, data):
         fields(data, set(HuePreview.__dataclass_fields__) | {"expected_hue_revision"})
         payload = dict(data)
-        expected = string(
-            payload.pop("expected_hue_revision"), "expected_hue_revision", limit=64
-        )
+        expected = string(payload.pop("expected_hue_revision"), "expected_hue_revision", limit=64)
         return cls(HuePreview.parse(payload), expected)
 
 
@@ -77,8 +77,7 @@ def actual(tree, source, output, node):
         (node.outputs["Image"], output.inputs["Image"]),
     )
     correct = len(links) == 2 and all(
-        sum(link.from_socket is a and link.to_socket is b for link in links) == 1
-        for a, b in pairs
+        sum(link.from_socket is a and link.to_socket is b for link in links) == 1 for a, b in pairs
     )
     return {
         "node_type": str(node.bl_idname),
@@ -230,11 +229,7 @@ class HSVColorOperations:
 
     def tools(self):
         return [
-            Tool(
-                "compositor.hsv_preview", SafetyClass.READ_ONLY, HuePreview.parse, self.preview
-            ),
+            Tool("compositor.hsv_preview", SafetyClass.READ_ONLY, HuePreview.parse, self.preview),
             Tool("compositor.hsv_apply", SafetyClass.MUTATION, HueApply.parse, self.apply),
-            Tool(
-                "compositor.hsv_release", SafetyClass.MUTATION, HueRelease.parse, self.release
-            ),
+            Tool("compositor.hsv_release", SafetyClass.MUTATION, HueRelease.parse, self.release),
         ]
