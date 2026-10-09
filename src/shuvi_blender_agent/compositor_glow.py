@@ -36,8 +36,14 @@ class GlowPreview:
         fields(
             data,
             {
-                "scene_name", "source_node", "output_node", "glare_type",
-                "quality", "threshold", "size", "mix",
+                "scene_name",
+                "source_node",
+                "output_node",
+                "glare_type",
+                "quality",
+                "threshold",
+                "size",
+                "mix",
             },
         )
         glare_type = string(data["glare_type"], "glare_type", limit=20)
@@ -67,9 +73,7 @@ class GlowApply:
     def parse(cls, data):
         fields(data, set(GlowPreview.__dataclass_fields__) | {"expected_glow_revision"})
         payload = dict(data)
-        expected = string(
-            payload.pop("expected_glow_revision"), "expected_glow_revision", limit=64
-        )
+        expected = string(payload.pop("expected_glow_revision"), "expected_glow_revision", limit=64)
         return cls(GlowPreview.parse(payload), expected)
 
 
@@ -90,8 +94,7 @@ def actual(tree, source, output, node):
         (node.outputs["Image"], output.inputs["Image"]),
     )
     connected = len(links) == 2 and all(
-        sum(item.from_socket is a and item.to_socket is b for item in links) == 1
-        for a, b in pairs
+        sum(item.from_socket is a and item.to_socket is b for item in links) == 1 for a, b in pairs
     )
     return {
         "node_type": str(node.bl_idname),
@@ -209,9 +212,7 @@ class GlowOperations:
             if node is not None and any(item is node for item in tree.nodes):
                 tree.nodes.remove(node)
             if graph_revision(tree) != plan["graph_before"]:
-                raise AgentError(
-                    ErrorCode.VERIFICATION_FAILED, "Glow rollback uncertain"
-                ) from exc
+                raise AgentError(ErrorCode.VERIFICATION_FAILED, "Glow rollback uncertain") from exc
             code = exc.code if isinstance(exc, AgentError) else ErrorCode.EXECUTION_ERROR
             raise AgentError(code, "Glow setup failed; owned node rolled back") from exc
 
