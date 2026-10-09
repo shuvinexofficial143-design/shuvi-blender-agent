@@ -245,9 +245,7 @@ class WorldLightingOperations:
             background.name = WORLD_BACKGROUND
             background.inputs["Strength"].default_value = plan["strength"]
             background.inputs["Color"].default_value = (
-                [1.0, 1.0, 1.0, 1.0]
-                if plan["mode"] == "HDRI"
-                else plan["color"] + [1.0]
+                [1.0, 1.0, 1.0, 1.0] if plan["mode"] == "HDRI" else plan["color"] + [1.0]
             )
             if plan["mode"] == "HDRI":
                 environment = tree.nodes.new("ShaderNodeTexEnvironment")
