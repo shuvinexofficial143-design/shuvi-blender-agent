@@ -33,9 +33,13 @@ def preview(reg, args):
 
 def apply(reg, args, plan):
     return reg.dispatch(
-        Request("compositor.blur_apply", args | {
-            "expected_blur_revision": plan.data["blur_revision"],
-        })
+        Request(
+            "compositor.blur_apply",
+            args
+            | {
+                "expected_blur_revision": plan.data["blur_revision"],
+            },
+        )
     )
 
 
