@@ -38,24 +38,44 @@ class Track(NS):
 def setup(allow=True):
     bpy = fake_bpy()
     track = Track(
-        name="Corner", lock=False, motion_model="Loc", pattern_match="KEYFRAME",
-        correlation_min=0.65, frames_limit=0, margin=12, use_brute=False,
-        use_normalization=False, weight=0.5,
+        name="Corner",
+        lock=False,
+        motion_model="Loc",
+        pattern_match="KEYFRAME",
+        correlation_min=0.65,
+        frames_limit=0,
+        margin=12,
+        use_brute=False,
+        use_normalization=False,
+        weight=0.5,
         markers=Markers([NS(frame=1, co=[0.2, 0.4], mute=False, is_keyed=True)]),
     )
     obj = NS(name="Camera", is_camera=True, tracks=Named([track]))
-    clip = NS(name="Clip", library=None, is_editable=True, size=[1920, 1080],
-              frame_duration=150, tracking=NS(objects=Named([obj])))
+    clip = NS(
+        name="Clip",
+        library=None,
+        is_editable=True,
+        size=[1920, 1080],
+        frame_duration=150,
+        tracking=NS(objects=Named([obj])),
+    )
     bpy.data.movieclips = Named([clip])
-    reg = ToolRegistry(MovieTrackingTrackConfigOperations(bpy).tools(),
-                       SafetyPolicy(allow_mutations=allow))
+    reg = ToolRegistry(
+        MovieTrackingTrackConfigOperations(bpy).tools(), SafetyPolicy(allow_mutations=allow)
+    )
     payload = {
-        "clip_name": "Clip", "tracking_object_name": "Camera",
+        "clip_name": "Clip",
+        "tracking_object_name": "Camera",
         "track_name": "Corner",
         "settings": {
-            "motion_model": "Affine", "pattern_match": "PREV_FRAME",
-            "correlation_min": 0.8, "frames_limit": 24, "margin": 16,
-            "use_brute": True, "use_normalization": True, "weight": 0.75,
+            "motion_model": "Affine",
+            "pattern_match": "PREV_FRAME",
+            "correlation_min": 0.8,
+            "frames_limit": 24,
+            "margin": 16,
+            "use_brute": True,
+            "use_normalization": True,
+            "weight": 0.75,
         },
     }
     return bpy, clip, track, reg, payload
@@ -66,16 +86,18 @@ def preview(reg, payload):
 
 
 def apply(reg, payload, plan):
-    return reg.dispatch(Request(
-        "tracking.track_config_apply",
-        payload | {"expected_track_config_revision": plan.data["track_config_revision"]},
-    ))
+    return reg.dispatch(
+        Request(
+            "tracking.track_config_apply",
+            payload | {"expected_track_config_revision": plan.data["track_config_revision"]},
+        )
+    )
 
 
 def restore(reg, token):
-    return reg.dispatch(Request(
-        "tracking.track_config_restore", {"expected_track_config_token": token}
-    ))
+    return reg.dispatch(
+        Request("tracking.track_config_restore", {"expected_track_config_token": token})
+    )
 
 
 def test_m5_native_track_settings_and_same_session_restore():
@@ -157,28 +179,37 @@ def test_m5_registry_and_read_only_permissions():
     catalog = create_registry(bpy).catalog()
     names = {t["name"] for t in catalog}
     assert len(names) == 299
-    assert {"tracking.track_config_preview", "tracking.track_config_apply",
-            "tracking.track_config_restore"} <= names
-    locked = ToolRegistry(MovieTrackingTrackConfigOperations(bpy).tools(),
-                          SafetyPolicy(allow_mutations=False))
+    assert {
+        "tracking.track_config_preview",
+        "tracking.track_config_apply",
+        "tracking.track_config_restore",
+    } <= names
+    locked = ToolRegistry(
+        MovieTrackingTrackConfigOperations(bpy).tools(), SafetyPolicy(allow_mutations=False)
+    )
     plan = preview(locked, payload)
     assert plan.status == Status.SUCCEEDED
     assert apply(locked, payload, plan).status == Status.FAILED
     assert track.motion_model == "Loc"
 
 
-@pytest.mark.parametrize("key,value", [
-    ("motion_model", "EVIL"), ("pattern_match", "ALL"),
-    ("frames_limit", -1), ("margin", 100), ("weight", -0.1),
-    ("use_brute", 1), ("use_normalization", "true"),
-    ("correlation_min", float("nan")),
-])
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("motion_model", "EVIL"),
+        ("pattern_match", "ALL"),
+        ("frames_limit", -1),
+        ("margin", 100),
+        ("weight", -0.1),
+        ("use_brute", 1),
+        ("use_normalization", "true"),
+        ("correlation_min", float("nan")),
+    ],
+)
 def test_m5_rejects_invalid_rna_settings(key, value):
     _, _, _, _, payload = setup()
     with pytest.raises(AgentError):
-        TrackConfigurationPreview.parse(
-            payload | {"settings": payload["settings"] | {key: value}}
-        )
+        TrackConfigurationPreview.parse(payload | {"settings": payload["settings"] | {key: value}})
 
 
 def test_m5_no_arbitrary_python_fields():
