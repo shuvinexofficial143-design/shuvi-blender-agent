@@ -774,6 +774,15 @@ class FakeModifiers(list):
 
     def new(self, name, modifier_type):
         modifier = NS(name=name, type=modifier_type, show_viewport=True, show_render=True)
+        if modifier_type == "CLOTH":
+            modifier.settings = NS(
+                quality=5,
+                mass=0.3,
+                air_damping=1.0,
+                tension_stiffness=15.0,
+                bending_stiffness=0.5,
+            )
+            modifier.collision_settings = NS(use_self_collision=False, distance_min=0.015)
         if modifier_type == "OCEAN" and self.owner is not None:
             owner = self.owner
 

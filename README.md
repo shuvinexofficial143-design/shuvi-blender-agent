@@ -91,3 +91,6 @@ Level 10 M3 Ocean Foam/Spray: optional guarded real OceanModifier foam mask and 
 
 
 Level 10 M4 Ocean Timeline Animation: three typed tools add 2–8 genuine bpy OceanModifier.time F-Curve keyframes in the current scene timeline and verify each point; guarded one-use restore clears only the new action and reinstates previous Ocean time. Only previously unanimated, current-session owned local mesh accepted. 277 public tools; Level10 source 40%; real rendered frames 0.
+
+
+Level 10 M5 Cloth Simulation: real Cloth modifier with bounded quality, mass, air drag, tensile and bend stiffness, self collisions and safety verified release. Level 10 source 50%, real Blender simulation runtime 0%; 280 tools.
