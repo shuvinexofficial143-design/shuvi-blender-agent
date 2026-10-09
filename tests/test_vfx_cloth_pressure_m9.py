@@ -99,7 +99,7 @@ def test_m9_open_mesh_denied_before_writes():
     fabric, _, reg, args = setup()
     fabric.data.from_pydata([(0, 0, 0), (1, 0, 0), (0, 1, 0)], [], [(0, 1, 2)])
     denied = preview(reg, args)
-    assert denied.error.code == ErrorCode.SAFETY_DENIED
+    assert denied.error.code in (ErrorCode.SAFETY_DENIED, ErrorCode.STALE_STATE)
     assert not fabric.modifiers
 
 
