@@ -39,9 +39,7 @@ def _socket_index(sockets, member):
 
 def graph_revision(tree):
     """Track foreign rewires, not just node counts and labels."""
-    nodes = sorted(
-        (str(node.name), str(node.bl_idname)) for node in tree.nodes
-    )
+    nodes = sorted((str(node.name), str(node.bl_idname)) for node in tree.nodes)
     if len(nodes) != len(set(name for name, _ in nodes)):
         raise AgentError(ErrorCode.SAFETY_DENIED, "Ambiguous compositor node names")
     links = sorted(
@@ -96,8 +94,18 @@ class KeyApply:
 
     @classmethod
     def parse(cls, data):
-        fields(data, {"scene_name", "clip_name", "key_color", "clip_black",
-                      "clip_white", "despill_factor", "expected_key_revision"})
+        fields(
+            data,
+            {
+                "scene_name",
+                "clip_name",
+                "key_color",
+                "clip_black",
+                "clip_white",
+                "despill_factor",
+                "expected_key_revision",
+            },
+        )
         prepared = dict(data)
         token = string(prepared.pop("expected_key_revision"), "expected_key_revision", limit=64)
         return cls(KeyPreview.parse(prepared), token)
@@ -174,8 +182,9 @@ class ChromaKeyOperations:
         }
 
     def preview(self, request, action):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED,
-                      self._plan(action)[3])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[3]
+        )
 
     def apply(self, request, action):
         scene, tree, clip, plan = self._plan(action.preview)
@@ -196,25 +205,45 @@ class ChromaKeyOperations:
             key.despill_factor = plan["despill_factor"]
             tree.links.new(movie.outputs["Image"], key.inputs["Image"])
             checked = compare(self._expected(plan), self._read(movie, key))
-            if not checked.matched or len([
-                link for link in tree.links
-                if link.from_node is movie and link.to_node is key
-                and link.from_socket is movie.outputs["Image"]
-                and link.to_socket is key.inputs["Image"]
-            ]) != 1:
+            if (
+                not checked.matched
+                or len(
+                    [
+                        link
+                        for link in tree.links
+                        if link.from_node is movie
+                        and link.to_node is key
+                        and link.from_socket is movie.outputs["Image"]
+                        and link.to_socket is key.inputs["Image"]
+                    ]
+                )
+                != 1
+            ):
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Chroma key RNA readback failed")
             after = graph_revision(tree)
-            token = revision({"before": plan["graph_before"], "after": after,
-                              "settings": self._expected(plan)})
+            token = revision(
+                {"before": plan["graph_before"], "after": after, "settings": self._expected(plan)}
+            )
             self._owned[token] = {
-                "scene": scene, "tree": tree, "movie": movie, "key": key,
-                "expected": self._expected(plan), "after": after,
+                "scene": scene,
+                "tree": tree,
+                "movie": movie,
+                "key": key,
+                "expected": self._expected(plan),
+                "after": after,
                 "before": plan["graph_before"],
             }
             return Result(
-                request.request_id, request.command_id, Status.VERIFIED,
-                {"key_token": token, "movie_node": CLIP_NODE, "key_node": KEY_NODE,
-                 "render_verified": False, "source_only": True},
+                request.request_id,
+                request.command_id,
+                Status.VERIFIED,
+                {
+                    "key_token": token,
+                    "movie_node": CLIP_NODE,
+                    "key_node": KEY_NODE,
+                    "render_verified": False,
+                    "source_only": True,
+                },
                 verification=checked.to_dict(),
             )
         except Exception as exc:
@@ -233,9 +262,11 @@ class ChromaKeyOperations:
         scene, tree = require_scene(self.bpy, state["scene"].name)
         if scene is not state["scene"] or tree is not state["tree"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Compositor was replaced")
-        if (tree.nodes.get(CLIP_NODE) is not state["movie"]
-                or tree.nodes.get(KEY_NODE) is not state["key"]
-                or graph_revision(tree) != state["after"]):
+        if (
+            tree.nodes.get(CLIP_NODE) is not state["movie"]
+            or tree.nodes.get(KEY_NODE) is not state["key"]
+            or graph_revision(tree) != state["after"]
+        ):
             raise AgentError(ErrorCode.SAFETY_DENIED, "Chroma compositor edited externally")
         if not compare(state["expected"], self._read(state["movie"], state["key"])).matched:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Chroma properties edited externally")
@@ -245,9 +276,13 @@ class ChromaKeyOperations:
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Chroma restore mismatch")
         del self._owned[action.expected_key_token]
         checked = compare({"restored": True}, {"restored": True})
-        return Result(request.request_id, request.command_id, Status.VERIFIED,
-                      {"owned_nodes_removed": 2, "source_only": True},
-                      verification=checked.to_dict())
+        return Result(
+            request.request_id,
+            request.command_id,
+            Status.VERIFIED,
+            {"owned_nodes_removed": 2, "source_only": True},
+            verification=checked.to_dict(),
+        )
 
     def tools(self):
         return [
