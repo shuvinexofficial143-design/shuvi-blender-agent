@@ -157,6 +157,7 @@ from .studio_lighting import (
 from .texture_workflows import AssetScope, BakePrep, ImageInspect, MaterialOnly, UDIMPlan
 from .texture_workflows import RecoveryRestore as TextureRecoveryRestore
 from .tracking_clip import ClipInspect
+from .tracking_markers import MarkerApply, MarkerPreview, MarkerRestore
 from .transform import PatchTransform
 from .uv import SeamSet
 from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPackPlan
@@ -424,6 +425,9 @@ def builtin_contracts() -> dict:
         "vfx.scene_apply": (mutation, VfxSceneApply.parse),
         "vfx.scene_release": (mutation, VfxSceneRelease.parse),
         "tracking.clip_inspect": (read, ClipInspect.parse),
+        "tracking.marker_preview": (read, MarkerPreview.parse),
+        "tracking.marker_apply": (mutation, MarkerApply.parse),
+        "tracking.marker_restore": (mutation, MarkerRestore.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),

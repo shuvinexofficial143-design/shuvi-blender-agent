@@ -1128,3 +1128,5 @@ Level 10 M9: real Cloth pressure settings via bounded nested pressure request on
 Level 10 M10: Level 10 has 10/10 source milestones merged after PR confirmation; four-mesh VFX integrated workflow via `vfx.scene_*`, strict readback and guarded cleanup. Typed tool cap 289, Blender runtime/frame/bake/render acceptance 0%; production ready No. Next authorized source level is Level 11 Tracking / Matchmove / Green Screen M1+M2; do not start without next.
 
 Level 11 M1: `tracking.clip_inspect` (READ_ONLY) inspects already loaded local Blender MovieClip tracking objects, exact-frame marker positions, locked flags and source footage metadata with bounded work, no path disclosure or file loading. Level 11 source 10%, 290 tools. Not an auto-tracker, matchmove solve, keyer, real Blender runtime or render.
+
+Level 11 M2: manual track markers inserted via real `MovieTrackingMarkers.insert_frame` on existing, local/unlocked MovieClip tracks, with typed bounded coordinates/frames, post-insert readback, foreign-edit detection, owned-only recovery/restore and tests. Level 11 source 20%, 293 tools; live Blender runtime 0%. No automatic matchmove or green-screen.

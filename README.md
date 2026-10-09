@@ -101,3 +101,5 @@ Level 10 M6 Collision Simulation: supports real Blender COLLISION obstacle modif
 Level 10 M8: `vfx.cloth_collision_*` can create/release a guarded cloth+collider modifier pair on two meshes. Source-only; no evaluated simulations.
 
 Level 10 M10 source: `vfx.scene_preview/apply/release` orchestrates four Blender modifier types (WAVE/OCEAN/CLOTH/COLLISION) on distinct meshes with safe rollback and release; Blender solver/render execution untested.
+
+Level 11 M1–M2: actual source API inspection of already-loaded MovieClip tracking tracks and reversible manual marker placement through Blender MovieTrackingMarkers; no automatic tracking, matchmove solve or green-screen processing. Source 20%, Blender runtime 0%.
