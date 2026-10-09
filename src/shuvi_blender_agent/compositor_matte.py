@@ -135,7 +135,9 @@ class MatteRefinementOperations:
         return scene, tree, key, plan
 
     def preview(self, request, action):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[3])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[3]
+        )
 
     def apply(self, request, action):
         scene, tree, key, plan = self._plan(action.preview)
@@ -237,7 +239,11 @@ class MatteRefinementOperations:
 
     def tools(self):
         return [
-            Tool("compositor.matte_preview", SafetyClass.READ_ONLY, MattePreview.parse, self.preview),
+            Tool(
+                "compositor.matte_preview", SafetyClass.READ_ONLY, MattePreview.parse, self.preview
+            ),
             Tool("compositor.matte_apply", SafetyClass.MUTATION, MatteApply.parse, self.apply),
-            Tool("compositor.matte_release", SafetyClass.MUTATION, MatteRelease.parse, self.release),
+            Tool(
+                "compositor.matte_release", SafetyClass.MUTATION, MatteRelease.parse, self.release
+            ),
         ]
