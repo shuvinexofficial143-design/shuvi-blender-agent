@@ -1118,3 +1118,5 @@ Actual Blender CLOTH modifier configuration: quality, mass, air damping, tension
 ## Level10 M6 — Cloth Collision Obstacles
 
 Three typed operations for actual collision Blender modifier on another local mesh. Enables physics collider, configures bounded cloth friction, outer thickness, damping, culling and normal flags with full nested RNA readback and owner-only rollback/release. Integration test validates M5 Cloth and M6 Collision coexist on different meshes. Source 60%, tools 283, no evaluated Blender frames.
+
+Level 10 M7 is source-only: existing cloth tools now bind pre-existing weighted pin groups and pin stiffness, with stale checks and owned release. 70% source-side, runtime 0%.

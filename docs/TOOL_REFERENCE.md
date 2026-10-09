@@ -1960,3 +1960,5 @@ real Blender runtime/render acceptance **0%**, production ready No.
 ## Level 10 M6 — Collision Surface
 
 `vfx.collision_preview/apply/release` allow local MESH target, unique name and strict `settings` (thickness_outer, cloth_friction, damping, use_culling, use_normal). Creates actual Blender COLLISION modifier and enables it; reads/writes collision `settings.use`, `thickness_outer`, `cloth_friction`, `damping`, `use_culling` and `use_normal`. Exact owned release, rejection of stale/changed/foreign modifiers. 283 public tools, Level10 source 60%, Blender runtime 0%.
+
+- Level 10 M7: existing `vfx.cloth_*` permits paired `settings.pin_group` + `settings.pin_stiffness` (0..50), guarded by existing vertex weight fingerprint. Tool count unchanged.

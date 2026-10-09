@@ -5,6 +5,7 @@ No animation baking, time stepping, visual verification or solver execution is c
 """
 
 from dataclasses import dataclass
+from math import isfinite
 
 from .contracts import Request, Result, Status
 from .errors import AgentError, ErrorCode
@@ -24,13 +25,17 @@ CLOTH_FIELDS = {
     "bending_stiffness": ("settings", "bending_stiffness"),
     "self_collision": ("collision_settings", "use_self_collision"),
     "collision_distance": ("collision_settings", "distance_min"),
+    "pin_group": ("settings", "vertex_group_mass"),
+    "pin_stiffness": ("settings", "pin_stiffness"),
 }
 CLOTH_INT = {"quality"}
 CLOTH_BOOL = {"self_collision"}
 
 
 def _cloth_settings(data):
-    fields(data, set(CLOTH_FIELDS))
+    fields(data, set(CLOTH_FIELDS) - {"pin_group", "pin_stiffness"}, {"pin_group", "pin_stiffness"})
+    if ("pin_group" in data) != ("pin_stiffness" in data):
+        raise AgentError(ErrorCode.INVALID_REQUEST, "Pin group and stiffness must be paired")
     if type(data["self_collision"]) is not bool:
         raise AgentError(ErrorCode.INVALID_REQUEST, "self_collision must be Boolean")
     return {
@@ -41,6 +46,12 @@ def _cloth_settings(data):
         "bending_stiffness": number(data["bending_stiffness"], "bending_stiffness", 0, 500),
         "self_collision": data["self_collision"],
         "collision_distance": number(data["collision_distance"], "collision_distance", 0.001, 0.1),
+        "pin_group": string(data["pin_group"], "pin_group", limit=64)
+        if "pin_group" in data
+        else "",
+        "pin_stiffness": number(data["pin_stiffness"], "pin_stiffness", 0, 50)
+        if "pin_stiffness" in data
+        else 1.0,
     }
 
 
@@ -91,6 +102,7 @@ class ClothSimulationOperations(WaveSimulationOperations):
     config_fields = CLOTH_FIELDS
     int_fields = CLOTH_INT
     bool_fields = CLOTH_BOOL
+    string_fields = {"pin_group"}
     marker = "cloth"
     revision_key = "cloth_revision"
 
@@ -98,7 +110,9 @@ class ClothSimulationOperations(WaveSimulationOperations):
         read = {}
         for alias, (group, property_name) in self.config_fields.items():
             value = getattr(getattr(mod, group), property_name)
-            if alias in self.bool_fields:
+            if alias in self.string_fields:
+                read[alias] = str(value)
+            elif alias in self.bool_fields:
                 read[alias] = bool(value)
             elif alias in self.int_fields:
                 read[alias] = int(value)
@@ -113,6 +127,27 @@ class ClothSimulationOperations(WaveSimulationOperations):
             "position": list(obj.modifiers).index(mod),
             "owned_object_id": self.inspector.identity(obj),
         }
+
+    def _pin_signature(self, obj, group_name):
+        """Fingerprint existing mesh weights without changing vertex groups."""
+        group = obj.vertex_groups.get(group_name)
+        if group is None:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Pin vertex group not found")
+        vertices = obj.data.vertices
+        if not 0 < len(vertices) <= 12000:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Pinned mesh vertex limit exceeded")
+        weights = []
+        for index, vertex in enumerate(vertices):
+            for member in vertex.groups:
+                if member.group == group.index:
+                    weight = float(member.weight)
+                    if not isfinite(weight) or not 0 <= weight <= 1:
+                        raise AgentError(ErrorCode.SAFETY_DENIED, "Unsafe pin vertex weight")
+                    if weight > 0:
+                        weights.append((index, weight))
+        if not weights:
+            raise AgentError(ErrorCode.SAFETY_DENIED, "Pin group has no weighted vertices")
+        return revision({"group": group.name, "index": group.index, "weights": weights})
 
     def _plan_physics(self, action):
         obj, before = self._target(action.target)
@@ -137,6 +172,10 @@ class ClothSimulationOperations(WaveSimulationOperations):
             "render_verified": False,
             "mutation_performed": False,
         }
+        if action.settings.get("pin_group"):
+            planned["pin_group_signature"] = self._pin_signature(
+                obj, action.settings["pin_group"]
+            )
         planned[self.revision_key] = revision(planned)
         return obj, planned
 
@@ -182,6 +221,8 @@ class ClothSimulationOperations(WaveSimulationOperations):
                     }
                 )
                 self._owned[token] = {
+                    "pin_group": action.settings.get("pin_group", ""),
+                    "pin_signature": plan.get("pin_group_signature"),
                     "object": obj,
                     "modifier": mod,
                     "expected": expected,
@@ -227,6 +268,9 @@ class ClothSimulationOperations(WaveSimulationOperations):
         if owned is None:
             raise AgentError(ErrorCode.STALE_STATE, "Unknown or foreign physics token")
         obj, mod = owned["object"], owned["modifier"]
+        if owned.get("pin_group"):
+            if self._pin_signature(obj, owned["pin_group"]) != owned["pin_signature"]:
+                raise AgentError(ErrorCode.SAFETY_DENIED, "Pinned vertex weights changed")
         if self.inspector.summary()["revision"] != owned["after_scene"]:
             raise AgentError(ErrorCode.SAFETY_DENIED, "Scene changed since physics setup")
         if mod not in obj.modifiers:
