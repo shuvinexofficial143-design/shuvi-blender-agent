@@ -54,9 +54,7 @@ def apply(registry, args, plan):
 
 
 def release(registry, token):
-    return registry.dispatch(
-        Request("vfx.collision_release", {"expected_collision_token": token})
-    )
+    return registry.dispatch(Request("vfx.collision_release", {"expected_collision_token": token}))
 
 
 def test_m6_real_collision_modifier_and_exact_owned_release():
@@ -92,10 +90,10 @@ def test_m6_collision_and_cloth_can_coexist_on_separate_meshes():
     inspector = BpyInspector(bpy)
     objects = ObjectOperations(inspector)
     reg = ToolRegistry(
-        ClothSimulationOperations(objects).tools()
-        + CollisionSimulationOperations(objects).tools(),
+        ClothSimulationOperations(objects).tools() + CollisionSimulationOperations(objects).tools(),
         SafetyPolicy(allow_mutations=True),
     )
+
     def target(obj):
         snap = inspector.snapshot(obj)
         return {
@@ -108,9 +106,13 @@ def test_m6_collision_and_cloth_can_coexist_on_separate_meshes():
         "target": target(cloth_obj),
         "name": "FlagCloth",
         "settings": {
-            "quality": 5, "mass": 0.3, "air_damping": 1,
-            "tension_stiffness": 10, "bending_stiffness": 0.5,
-            "self_collision": False, "collision_distance": 0.015,
+            "quality": 5,
+            "mass": 0.3,
+            "air_damping": 1,
+            "tension_stiffness": 10,
+            "bending_stiffness": 0.5,
+            "self_collision": False,
+            "collision_distance": 0.015,
         },
     }
     cplan = reg.dispatch(Request("vfx.cloth_preview", cloth_args)).data
@@ -125,8 +127,11 @@ def test_m6_collision_and_cloth_can_coexist_on_separate_meshes():
         "target": target(collision_obj),
         "name": "GroundCollider",
         "settings": {
-            "thickness_outer": 0.05, "cloth_friction": 9,
-            "damping": 0.5, "use_culling": False, "use_normal": True,
+            "thickness_outer": 0.05,
+            "cloth_friction": 9,
+            "damping": 0.5,
+            "use_culling": False,
+            "use_normal": True,
         },
     }
     plan = reg.dispatch(Request("vfx.collision_preview", collision_args)).data
@@ -140,9 +145,12 @@ def test_m6_collision_and_cloth_can_coexist_on_separate_meshes():
     assert cloth_obj.modifiers[0].type == "CLOTH"
     assert collision_obj.modifiers[0].type == "COLLISION"
     assert release(reg, collider.data["collision_token"]).status == Status.VERIFIED
-    assert reg.dispatch(
-        Request("vfx.cloth_release", {"expected_cloth_token": cloth.data["cloth_token"]})
-    ).status == Status.VERIFIED
+    assert (
+        reg.dispatch(
+            Request("vfx.cloth_release", {"expected_cloth_token": cloth.data["cloth_token"]})
+        ).status
+        == Status.VERIFIED
+    )
     assert not cloth_obj.modifiers and not collision_obj.modifiers
 
 
@@ -163,10 +171,12 @@ def test_m6_partial_property_corruption_restores_only_own_modifier():
     before = inspector.summary()["revision"]
     plan = preview(reg, args)
     called = {"n": 0}
+
     def corrupt_once():
         called["n"] += 1
         if called["n"] == 1:
             obj.modifiers.get("ShuviCollider").settings.damping = 0.99
+
     bpy.context.view_layer.update = corrupt_once
     failed = apply(reg, args, plan)
     assert failed.status == Status.FAILED
