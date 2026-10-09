@@ -1,6 +1,6 @@
 # Level 12 — Advanced Compositing
 
-**Source milestones: 50% (M1–M5/10); Blender runtime/visual verification 0%; production readiness: No.**
+**Source milestones: 60% (M1–M6/10); Blender runtime/visual verification 0%; production readiness: No.**
 
 ## M1 — Native Bright/Contrast image grading
 The typed `compositor.grade_preview/apply/release` tools connect one existing native image-output node to an *initially unconnected* existing Composite or Viewer output through a new Blender `CompositorNodeBrightContrast`. Bounded Bright (-100..100) and Contrast (-100..100) socket values and use_premultiply are written via real bpy RNA and verified with exact link readback. A stale graph revision blocks apply; release needs an unchanged scene, source, output, graded settings and links, then removes only the owned grade node and two links. Partial creation/link failures roll back the new node without rewriting foreign compositor links. This is source-level functionality: it does not load footage, process image pixels, execute compositing, or render a frame. Tool registry count 314. Next M2 will add a separate native lens-distortion / chromatic aberration pass.
@@ -17,3 +17,7 @@ Three typed tools `compositor.blur_preview/apply/release` use Blender `Composito
 
 ## M5 — Native Sharpen Filter (40% → 50%)
 `compositor.sharpen_preview/apply/release` creates one native `CompositorNodeFilter`, restricted to `SHARPEN` (box) or `SHARPEN_DIAMOND` (moderate), with a bounded `Fac` input [0,1]. Uses an already existing native image source, 2 verified image links and an initially empty Composite or Viewer sink. No foreign link replacement; stale graph guard and exact RNA readback; rollback/release delete only the owned filter node and the two corresponding links if scene remains unchanged. No pixel evaluation or real Blender runtime proof. Registry 326 typed tools.
+
+
+## M6 — Native Fog Glow / Bloom (50% → 60%)
+`compositor.glow_preview/apply/release` creates `CompositorNodeGlare` with `FOG_GLOW` or `BLOOM` 4.2-era native glare_type, bounded HIGH/MEDIUM quality, threshold 0..10, size 6..9, mix -1..1. Connects existing native Image source to a formerly unlinked Composite/Viewer through exactly 2 links; strict image graph readback, stale-preview rejection, owner-only rollback/release and external-edit guards. Blender 4.5+ changed glare node sockets/properties; actual effect correctness must be tested on target Blender version. No real Blender evaluation/visual render tested. Source milestone 60%; 329 tools.
