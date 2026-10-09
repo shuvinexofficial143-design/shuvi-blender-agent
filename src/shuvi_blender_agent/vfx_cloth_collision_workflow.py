@@ -35,7 +35,9 @@ class ClothColliderApply:
         preview = ClothColliderPreview.parse(
             {key: value for key, value in data.items() if key != "expected_workflow_revision"}
         )
-        expected = string(data["expected_workflow_revision"], "expected_workflow_revision", limit=64)
+        expected = string(
+            data["expected_workflow_revision"], "expected_workflow_revision", limit=64
+        )
         return cls(preview, expected)
 
 
