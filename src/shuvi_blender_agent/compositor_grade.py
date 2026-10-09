@@ -249,7 +249,9 @@ class ColorGradeOperations:
 
     def tools(self):
         return [
-            Tool("compositor.grade_preview", SafetyClass.READ_ONLY, GradePreview.parse, self.preview),
+            Tool(
+                "compositor.grade_preview", SafetyClass.READ_ONLY, GradePreview.parse, self.preview
+            ),
             Tool("compositor.grade_apply", SafetyClass.MUTATION, GradeApply.parse, self.apply),
             Tool(
                 "compositor.grade_release", SafetyClass.MUTATION, GradeRelease.parse, self.release
