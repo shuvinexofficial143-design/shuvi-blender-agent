@@ -430,7 +430,7 @@ def test_m9_host_payload_rejects_unexpected_fields_and_missing_token():
 
 def test_m9_factory_and_host_allowlist_246_tools():
     reg = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(reg.catalog()) == MAX_REGISTERED_TOOLS == 299
+    assert len(reg.catalog()) == MAX_REGISTERED_TOOLS == 302
     assert {"cinema.cut_preview", "cinema.cut_apply", "cinema.cut_release"} <= {
         x["name"] for x in reg.catalog()
     }
