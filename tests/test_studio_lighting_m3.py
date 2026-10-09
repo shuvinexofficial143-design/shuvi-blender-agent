@@ -26,13 +26,18 @@ def rig():
         StudioLightingOperations(ObjectOperations(inspector)).tools(),
         SafetyPolicy(allow_mutations=True),
     )
-    return bpy, inspector, registry, {
-        "subject": target,
-        "name_prefix": "MoodRig",
-        "preset": "SOFT_STUDIO",
-        "distance_scale": 3.5,
-        "intensity_scale": 1.0,
-    }
+    return (
+        bpy,
+        inspector,
+        registry,
+        {
+            "subject": target,
+            "name_prefix": "MoodRig",
+            "preset": "SOFT_STUDIO",
+            "distance_scale": 3.5,
+            "intensity_scale": 1.0,
+        },
+    )
 
 
 def test_m3_moods_change_real_planned_rgb_and_watts_without_mutating_preview():
@@ -57,9 +62,10 @@ def test_m3_mood_creates_rgb_power_data_and_owned_release(preset):
     before = inspector.summary()["revision"]
     plan = registry.dispatch(Request("lighting.studio_preview", args)).data
     done = registry.dispatch(
-        Request("lighting.studio_apply", args | {
-            "expected_lighting_revision": plan["lighting_revision"]
-        })
+        Request(
+            "lighting.studio_apply",
+            args | {"expected_lighting_revision": plan["lighting_revision"]},
+        )
     )
     assert done.status == Status.VERIFIED, done.error
     for entry in plan["lights"]:
@@ -80,10 +86,14 @@ def test_m3_changing_mood_after_preview_is_stale():
     initial = data | {"mood": "GOLDEN_HOUR"}
     plan = registry.dispatch(Request("lighting.studio_preview", initial)).data
     done = registry.dispatch(
-        Request("lighting.studio_apply", data | {
-            "mood": "MOONLIT_BLUE",
-            "expected_lighting_revision": plan["lighting_revision"],
-        })
+        Request(
+            "lighting.studio_apply",
+            data
+            | {
+                "mood": "MOONLIT_BLUE",
+                "expected_lighting_revision": plan["lighting_revision"],
+            },
+        )
     )
     assert done.status == Status.FAILED
     assert done.error.code == ErrorCode.STALE_STATE
