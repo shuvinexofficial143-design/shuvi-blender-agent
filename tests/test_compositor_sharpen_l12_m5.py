@@ -99,7 +99,7 @@ def test_m5_external_parameter_change_denies_release():
     result = apply(reg, args, preview(reg, args))
     assert result.status == Status.VERIFIED
     node = tree.nodes.get("ShuviSharpenFilter")
-    node.size_x = 22
+    node.inputs["Fac"].default_value = 0.15
     assert release(reg, result.data["sharpen_token"]).error.code == ErrorCode.SAFETY_DENIED
     assert node in tree.nodes
 
