@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **40%** (Milestones 1–4 of 10).
+Current source progress: **50%** (Milestones 1–5 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M4 source progress is **40%**.
+Level 9 M1–M5 source progress is **50%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M5, Blender launch/render/live evaluation,
+**STOP** before Level 9 M6, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -157,4 +157,35 @@ compatibility, light sampling quality, noise/alias suppression,
 visually clean contact shadows, or final shadow softness. Actual
 Blender evaluated and rendered acceptance remains **0%**.
 Public typed tools stay at **253**, Level 9 source milestone roadmap
-**40%**. Production ready No. **STOP** before Level 9 M5.
+**40%**. Production ready No. M5 was subsequently explicitly authorized.
+
+
+## M5 — Owned World Environment & Preloaded HDRI (40% → 50%)
+
+Adds `lighting.world_preview` (read-only), `lighting.world_apply`
+(approved mutation) and `lighting.world_release` (approved mutation).
+The typed plan chooses COLOR (fixed Background RGB, strength 0–10)
+or HDRI (strict name of a *previously loaded*, local 2:1
+equirectangular Blender image with real pixel data; no file reads,
+network access, or arbitrary Python/paths). Applying creates a
+**new World datablock**, enables shader nodes, configures a World Output
+and Background with optional Environment Texture node, and connects
+the exact links through bpy. The previous foreign World is preserved
+as-is, not adopted or edited. The newly created World is assigned to
+the scene only after the node graph is set up. Typed revision includes
+scene revision, original World identity and HDRI identity/metadata.
+Readback compares the exact created node graph (node names, types,
+links, Background color/strength and HDRI identity/projection).
+
+On setup failure/mismatch, the scene's original World is restored and
+only the newly-created World removed, requiring scene-revision recovery.
+Same-session release refuses changed world nodes, missing HDRI,
+swapped scene World, changed scene, or foreign ownership.
+It restores the original World and deletes only the untouched owned one.
+An interrupted removal may require manual scene inspection.
+
+M5 host cap **256** (+3 world tools), source roadmap **50%**.
+No Blender executable was launched, no HDRI sourced or downloaded,
+no real lighting/render/exposure acceptance; runtime remains **0%**.
+Stop before M6 unless separately authorized (the current user
+authorized M5+M6 in one instruction).

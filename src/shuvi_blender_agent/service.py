@@ -79,6 +79,7 @@ from .uv_packing import UVPackingOperations
 from .uv_workflows import UVWorkflowOperations
 from .validation import fields
 from .visibility import VisibilityOperations
+from .world_lighting import WorldLightingOperations
 
 
 def create_registry(
@@ -143,6 +144,7 @@ def create_registry(
         CameraCutOperations(objects),
         CinematicSequenceOperations(objects),
         StudioLightingOperations(objects),
+        WorldLightingOperations(objects),
         AnimationControlOperations(animation, rigging),
         RenderOperations(objects, policy, workspace),
         rigging,
