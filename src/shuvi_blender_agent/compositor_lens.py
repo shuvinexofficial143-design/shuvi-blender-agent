@@ -66,9 +66,7 @@ class LensApply:
     def parse(cls, data):
         fields(data, set(LensPreview.__dataclass_fields__) | {"expected_lens_revision"})
         payload = dict(data)
-        expected = string(
-            payload.pop("expected_lens_revision"), "expected_lens_revision", limit=64
-        )
+        expected = string(payload.pop("expected_lens_revision"), "expected_lens_revision", limit=64)
         return cls(LensPreview.parse(payload), expected)
 
 
@@ -247,7 +245,5 @@ class LensDistortionOperations:
         return [
             Tool("compositor.lens_preview", SafetyClass.READ_ONLY, LensPreview.parse, self.preview),
             Tool("compositor.lens_apply", SafetyClass.MUTATION, LensApply.parse, self.apply),
-            Tool(
-                "compositor.lens_release", SafetyClass.MUTATION, LensRelease.parse, self.release
-            ),
+            Tool("compositor.lens_release", SafetyClass.MUTATION, LensRelease.parse, self.release),
         ]
