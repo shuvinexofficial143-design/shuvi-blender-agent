@@ -137,7 +137,6 @@ from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelT
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .studio_lighting import RigApply, RigPreview, RigRelease, StudioPresetCatalog
-from .world_lighting import WorldApply, WorldPreview, WorldRelease
 from .texture_workflows import AssetScope, BakePrep, ImageInspect, MaterialOnly, UDIMPlan
 from .texture_workflows import RecoveryRestore as TextureRecoveryRestore
 from .transform import PatchTransform
@@ -146,6 +145,7 @@ from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPa
 from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
 from .validation import fields, string
 from .visibility import SetVisibility
+from .world_lighting import WorldApply, WorldPreview, WorldRelease
 
 
 def empty(data):

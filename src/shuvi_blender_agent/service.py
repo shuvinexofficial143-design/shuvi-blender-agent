@@ -71,7 +71,6 @@ from .sculpting_remesh import SculptRemeshPlanningOperations
 from .selection import SelectionOperations
 from .shape_ops import ShapeOperations
 from .studio_lighting import StudioLightingOperations
-from .world_lighting import WorldLightingOperations
 from .texture_workflows import TextureWorkflowOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .transform import TransformOperations
@@ -80,6 +79,7 @@ from .uv_packing import UVPackingOperations
 from .uv_workflows import UVWorkflowOperations
 from .validation import fields
 from .visibility import VisibilityOperations
+from .world_lighting import WorldLightingOperations
 
 
 def create_registry(

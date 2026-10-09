@@ -21,7 +21,9 @@ def setup():
 
 def args(mode="COLOR"):
     common = {"name": "SHUVI_ENV", "mode": mode, "strength": 0.8}
-    return common | ({"color": [0.2, 0.4, 0.8]} if mode == "COLOR" else {"image_name": "LoadedHDRI"})
+    return common | (
+        {"color": [0.2, 0.4, 0.8]} if mode == "COLOR" else {"image_name": "LoadedHDRI"}
+    )
 
 
 def imported_hdri(bpy):
@@ -134,7 +136,8 @@ def test_m5_corrupted_world_strength_readback_rolls_back_without_foreign_edits()
     def corrupt():
         owned = bpy.data.worlds.get("SHUVI_ENV")
         if owned is not None:
-            owned.node_tree.nodes.get("SHUVI_WORLD_BACKGROUND").inputs["Strength"].default_value = 999
+            background = owned.node_tree.nodes.get("SHUVI_WORLD_BACKGROUND")
+            background.inputs["Strength"].default_value = 999
 
     bpy.context.view_layer.update = corrupt
     outcome = apply(reg, data, planned)

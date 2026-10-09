@@ -121,7 +121,9 @@ class WorldLightingOperations:
 
     def _plan(self, action: WorldPreview):
         scene = self.bpy.context.scene
-        image, image_state = (self._loaded_hdri(action.image_name) if action.image_name else (None, None))
+        image, image_state = (
+            self._loaded_hdri(action.image_name) if action.image_name else (None, None)
+        )
         before = scene.world
         blockers = []
         if self._owned:
@@ -153,7 +155,9 @@ class WorldLightingOperations:
         return image, before, plan
 
     def preview(self, request: Request, action: WorldPreview):
-        return Result(request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[2])
+        return Result(
+            request.request_id, request.command_id, Status.SUCCEEDED, self._plan(action)[2]
+        )
 
     def _read(self, world):
         if world.node_tree is None or not world.use_nodes:
@@ -269,15 +273,24 @@ class WorldLightingOperations:
                 }
                 return Result(
                     request.request_id, request.command_id, Status.VERIFIED,
-                    {"world_token": token, "mode": plan["mode"], "source_only": True, "render_verified": False},
+                    {
+                        "world_token": token,
+                        "mode": plan["mode"],
+                        "source_only": True,
+                        "render_verified": False,
+                    },
                     verification=checked.to_dict(),
                 )
         except Exception as exc:
             try:
                 self._clean(new_world, original, plan["scene_revision"])
             except Exception as recovery_exc:
-                raise AgentError(ErrorCode.VERIFICATION_FAILED, "World rollback not verified") from recovery_exc
-            raise AgentError(ErrorCode.EXECUTION_ERROR, "World setup interrupted; original world restored") from exc
+                raise AgentError(
+                    ErrorCode.VERIFICATION_FAILED, "World rollback not verified"
+                ) from recovery_exc
+            raise AgentError(
+                ErrorCode.EXECUTION_ERROR, "World setup interrupted; original world restored"
+            ) from exc
         self._clean(new_world, original, plan["scene_revision"])
         return Result(
             request.request_id, request.command_id, Status.FAILED,
