@@ -16,8 +16,13 @@ def prepare():
     tree.nodes.new("CompositorNodeComposite").name = "Composite"
     reg = ToolRegistry(HSVColorOperations(bpy).tools(), SafetyPolicy(allow_mutations=True))
     args = {
-        "scene_name": "Scene", "source_node": "Source", "output_node": "Composite",
-        "hue": 0.65, "saturation": 1.25, "value": 0.8, "factor": 0.75,
+        "scene_name": "Scene",
+        "source_node": "Source",
+        "output_node": "Composite",
+        "hue": 0.65,
+        "saturation": 1.25,
+        "value": 0.8,
+        "factor": 0.75,
     }
     return bpy, tree, reg, args
 
@@ -27,10 +32,12 @@ def preview(reg, args):
 
 
 def apply(reg, args, plan):
-    return reg.dispatch(Request(
-        "compositor.hsv_apply",
-        args | {"expected_hue_revision": plan.data["hue_revision"]},
-    ))
+    return reg.dispatch(
+        Request(
+            "compositor.hsv_apply",
+            args | {"expected_hue_revision": plan.data["hue_revision"]},
+        )
+    )
 
 
 def release(reg, token):
@@ -47,7 +54,10 @@ def test_hsv_native_sockets_exact_links_and_release():
     node = tree.nodes.get("ShuviHSVAdjust")
     assert node.bl_idname == "CompositorNodeHueSat"
     assert [node.inputs[k].default_value for k in ("Hue", "Saturation", "Value", "Fac")] == [
-        0.65, 1.25, 0.8, 0.75
+        0.65,
+        1.25,
+        0.8,
+        0.75,
     ]
     assert len(tree.links) == 2
     assert any(x.from_node is node and x.to_node.name == "Composite" for x in tree.links)
@@ -116,11 +126,20 @@ def test_hsv_registry_and_policy():
     assert tree.nodes.get("ShuviHSVAdjust") is None
 
 
-@pytest.mark.parametrize("update", [
-    {"hue": -0.1}, {"hue": 1.1}, {"hue": float("nan")},
-    {"saturation": 2.1}, {"value": -0.1}, {"factor": float("inf")},
-    {"factor": True}, {"source_node": ""}, {"python": "exec()"},
-])
+@pytest.mark.parametrize(
+    "update",
+    [
+        {"hue": -0.1},
+        {"hue": 1.1},
+        {"hue": float("nan")},
+        {"saturation": 2.1},
+        {"value": -0.1},
+        {"factor": float("inf")},
+        {"factor": True},
+        {"source_node": ""},
+        {"python": "exec()"},
+    ],
+)
 def test_hsv_parser_rejects_invalid_values(update):
     with pytest.raises(AgentError):
         HuePreview.parse(prepare()[-1] | update)
