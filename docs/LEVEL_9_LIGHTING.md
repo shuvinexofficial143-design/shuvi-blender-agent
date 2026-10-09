@@ -1,6 +1,6 @@
 # Level 9 — Lighting & Look Development
 
-Current source progress: **50%** (Milestones 1–5 of 10).
+Current source progress: **60%** (Milestones 1–6 of 10).
 Real Blender runtime/render acceptance: **0%**.
 Production ready: **No**.
 
@@ -65,11 +65,11 @@ Any scene-level mutation not owned by the current adapter should
 cause a stale-state denial before new setup/release.
 
 Previously completed Level 8 remains **100% source-side** only.
-Level 9 M1–M5 source progress is **50%**.
+Level 9 M1–M6 source progress is **60%**.
 Real Blender runtime acceptance is **0%**.
 Production ready: **No**.
 
-**STOP** before Level 9 M6, Blender launch/render/live evaluation,
+**STOP** before Level 9 M7, Blender launch/render/live evaluation,
 Level 10, and merging this repo into the master `shuvi-agent`
 without fresh explicit user authorization.
 
@@ -189,3 +189,33 @@ No Blender executable was launched, no HDRI sourced or downloaded,
 no real lighting/render/exposure acceptance; runtime remains **0%**.
 Stop before M6 unless separately authorized (the current user
 authorized M5+M6 in one instruction).
+
+
+## M6 — Per-light Sub-object Targeting (50% → 60%)
+
+The existing `lighting.studio_preview`/`lighting.studio_apply`
+accept a strictly parsed optional `target_offsets` dictionary:
+one role (Key, Fill, Rim, Catchlight, Top or Edge **only if present**)
+maps to three finite normalized X/Y/Z values in [-0.45, 0.45].
+The aim target is the static, unrotated subject origin plus the
+reported object dimensions multiplied by the normalized offset.
+Every fixture can now aim at a distinct subject region without
+relocating the subject or moving foreign lights.
+
+M6 uses actual per-fixture XYZ Euler rotations and verified bpy
+light-object transform readback. Default omitted/zero offsets retain
+exact M1–M5 central aiming and pose values. The plan exposes each
+computed world-space `aim_point`, original `target_offset`, and
+a deterministic revision bound to every offset. Changing any target
+between preview/apply is rejected as STALE_STATE; failures roll back
+all owned newly-created light datablocks and objects. Same-session
+release still checks all owned light poses and scene revisions.
+
+These are object bounding-box coordinate aim points, **not**
+face/vertex tracking, evaluated world-space ray tests, real-time
+target following or proof of rendered highlights. Rotated, parented,
+animated, constrained, or nonunit-scaled subjects are still refused.
+
+Registered public tools remain **256**. Level 9 source **60%**
+(M1–M6 of 10), Blender runtime/render verification **0%**,
+production ready No. **STOP before M7**.
