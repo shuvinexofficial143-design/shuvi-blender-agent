@@ -1089,3 +1089,8 @@ Broken partial recovery is reported as uncertain, not as success.
 Live Blender runtime/render acceptance **0%**;
 production readiness **No**. Stop before Level 10 or master Shuvi
 merge without explicit authorization.
+
+
+## Level 10 M1 — Real ripple/WAVE modifier
+
+Actual bpy modifier operations (WAVE) with strict bounded parameter schema, stale target and scene revision, readback of properties, owned session token and exact guarded release. Source Level 10 **10%**; no frame simulation or Blender live acceptance; 271 typed tools. Next M2 Ocean.

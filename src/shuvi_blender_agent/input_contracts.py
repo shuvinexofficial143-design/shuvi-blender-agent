@@ -162,6 +162,7 @@ from .uv_packing import TexelDensityInspect, TexelDensityPlan, UVPackApply, UVPa
 from .uv_workflows import UVIslandTransform, UVUnwrapApply, UVUnwrapPlan
 from .validation import fields, string
 from .visibility import SetVisibility
+from .vfx_wave import WaveApply, WavePreview, WaveRelease
 from .world_lighting import WorldApply, WorldPreview, WorldRelease
 
 
@@ -399,6 +400,9 @@ def builtin_contracts() -> dict:
         "lighting.workflow_preview": (read, LightingWorkflowPreview.parse),
         "lighting.workflow_apply": (mutation, LightingWorkflowApply.parse),
         "lighting.workflow_release": (mutation, LightingWorkflowRelease.parse),
+        "vfx.wave_preview": (read, WavePreview.parse),
+        "vfx.wave_apply": (mutation, WaveApply.parse),
+        "vfx.wave_release": (mutation, WaveRelease.parse),
         "animation.control_inspect": (read, ControlInspect.parse),
         "animation.control_keyframe_insert": (mutation, ControlKeyframeInsert.parse),
         "animation.retime_preview": (read, TimelineRetime.parse),

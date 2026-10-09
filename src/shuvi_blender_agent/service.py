@@ -81,6 +81,7 @@ from .uv_packing import UVPackingOperations
 from .uv_workflows import UVWorkflowOperations
 from .validation import fields
 from .visibility import VisibilityOperations
+from .vfx_wave import WaveSimulationOperations
 from .world_lighting import WorldLightingOperations
 
 
@@ -108,6 +109,7 @@ def create_registry(
         SelectionOperations(objects),
         HierarchyOperations(objects),
         GeometryNodeOperations(objects),
+        WaveSimulationOperations(objects),
         GeometryAcceptanceOperations(objects),
         GeometryBindingOperations(objects),
         GeometryArchitectureOperations(objects),
