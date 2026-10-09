@@ -59,9 +59,7 @@ class CameraCalibrationPreview:
             "focal_length": number(values["focal_length"], "focal_length", 1, 300),
             "sensor_width": number(values["sensor_width"], "sensor_width", 1, 100),
             "pixel_aspect": number(values["pixel_aspect"], "pixel_aspect", 0.5, 2),
-            "principal_point": [
-                number(value, "principal_point", -1, 1) for value in point
-            ],
+            "principal_point": [number(value, "principal_point", -1, 1) for value in point],
             "k1": number(values["k1"], "k1", -0.5, 0.5),
             "k2": number(values["k2"], "k2", -0.5, 0.5),
             "k3": number(values["k3"], "k3", -0.5, 0.5),
@@ -129,14 +127,11 @@ class MovieClipCameraCalibrationOperations:
             else:
                 value = str(value)
             out[key] = value
-        numbers = (
-            out["principal_point"]
-            + [
-                out[key]
-                for key in CALIBRATION_FIELDS
-                if key not in {"units", "distortion_model", "principal_point"}
-            ]
-        )
+        numbers = out["principal_point"] + [
+            out[key]
+            for key in CALIBRATION_FIELDS
+            if key not in {"units", "distortion_model", "principal_point"}
+        ]
         if (
             not all(isfinite(value) and abs(value) < 1e8 for value in numbers)
             or out["units"] not in {"PIXELS", "MILLIMETERS"}
