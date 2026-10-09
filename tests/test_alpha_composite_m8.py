@@ -17,9 +17,7 @@ def prepare():
     comp.name = "Composite"
     bg = tree.nodes.new("CompositorNodeImage")
     bg.name = "Background"
-    key_reg = ToolRegistry(
-        ChromaKeyOperations(bpy).tools(), SafetyPolicy(allow_mutations=True)
-    )
+    key_reg = ToolRegistry(ChromaKeyOperations(bpy).tools(), SafetyPolicy(allow_mutations=True))
     key_params = {
         "scene_name": "Scene",
         "clip_name": "Footage",
@@ -30,14 +28,16 @@ def prepare():
     }
     plan = key_reg.dispatch(Request("compositor.key_preview", key_params))
     keyed = key_reg.dispatch(
-        Request("compositor.key_apply", key_params | {
-            "expected_key_revision": plan.data["key_revision"],
-        })
+        Request(
+            "compositor.key_apply",
+            key_params
+            | {
+                "expected_key_revision": plan.data["key_revision"],
+            },
+        )
     )
     assert keyed.status == Status.VERIFIED, keyed.error
-    reg = ToolRegistry(
-        AlphaCompositeOperations(bpy).tools(), SafetyPolicy(allow_mutations=True)
-    )
+    reg = ToolRegistry(AlphaCompositeOperations(bpy).tools(), SafetyPolicy(allow_mutations=True))
     payload = {
         "scene_name": "Scene",
         "foreground_node": "ShuviGreenKey",
@@ -79,16 +79,21 @@ def test_m8_connect_background_keying_to_final_composite_and_restore():
     assert alpha.inputs[0].default_value == 0.85
     assert alpha.use_premultiply is True
     assert len(tree.links) == original + 3
-    assert any(link.to_node is tree.nodes.get("Composite") and
-               link.from_node is alpha for link in tree.links)
+    assert any(
+        link.to_node is tree.nodes.get("Composite") and link.from_node is alpha
+        for link in tree.links
+    )
     gone = release(reg, done.data["blend_token"])
     assert gone.status == Status.VERIFIED, gone.error
     assert tree.nodes.get("ShuviAlphaOver") is None
     assert len(tree.links) == original
     assert release(reg, done.data["blend_token"]).error.code == ErrorCode.STALE_STATE
-    assert key_reg.dispatch(
-        Request("compositor.key_release", {"expected_key_token": key_token})
-    ).status == Status.VERIFIED
+    assert (
+        key_reg.dispatch(
+            Request("compositor.key_release", {"expected_key_token": key_token})
+        ).status
+        == Status.VERIFIED
+    )
 
 
 def test_m8_existing_composite_input_refuses_destructive_rewire():
@@ -161,8 +166,9 @@ def test_m8_readonly_host_and_registry():
     bpy, tree, _, _, _, params = prepare()
     catalog = create_registry(bpy).catalog()
     assert len(catalog) == 305
-    assert {"compositor.blend_preview", "compositor.blend_apply",
-            "compositor.blend_release"} <= {x["name"] for x in catalog}
+    assert {"compositor.blend_preview", "compositor.blend_apply", "compositor.blend_release"} <= {
+        x["name"] for x in catalog
+    }
     locked = ToolRegistry(
         AlphaCompositeOperations(bpy).tools(), SafetyPolicy(allow_mutations=False)
     )
@@ -172,12 +178,15 @@ def test_m8_readonly_host_and_registry():
     assert tree.nodes.get("ShuviAlphaOver") is None
 
 
-@pytest.mark.parametrize("data", [
-    {"opacity": -1},
-    {"opacity": float("nan")},
-    {"use_premultiply": 1},
-    {"foreground_node": ""},
-])
+@pytest.mark.parametrize(
+    "data",
+    [
+        {"opacity": -1},
+        {"opacity": float("nan")},
+        {"use_premultiply": 1},
+        {"foreground_node": ""},
+    ],
+)
 def test_m8_invalid_payload_is_rejected(data):
     _, _, _, _, _, params = prepare()
     with pytest.raises(AgentError):
