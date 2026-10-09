@@ -24,9 +24,7 @@ def apply(registry, payload, plan):
 
 
 def restore(registry, look_token):
-    return registry.dispatch(
-        Request("lighting.look_restore", {"expected_look_token": look_token})
-    )
+    return registry.dispatch(Request("lighting.look_restore", {"expected_look_token": look_token}))
 
 
 @pytest.mark.parametrize(
@@ -130,9 +128,12 @@ def test_m8_bad_readback_rolls_back_every_owned_lamp():
         lamp = bpy.data.objects.get(name).data
         assert lamp.energy == watts
         assert list(lamp.color) == rgb
-    assert registry.dispatch(
-        Request("lighting.studio_release", {"expected_lighting_token": token})
-    ).status == Status.VERIFIED
+    assert (
+        registry.dispatch(
+            Request("lighting.studio_release", {"expected_lighting_token": token})
+        ).status
+        == Status.VERIFIED
+    )
 
 
 @pytest.mark.parametrize("look", ["", "RAINBOW", 999, None, True])

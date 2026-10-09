@@ -319,9 +319,7 @@ class LookApply:
     def parse(cls, data):
         fields(data, {"expected_lighting_token", "look", "expected_look_revision"})
         return cls(
-            LookPreview.parse(
-                {k: v for k, v in data.items() if k != "expected_look_revision"}
-            ),
+            LookPreview.parse({k: v for k, v in data.items() if k != "expected_look_revision"}),
             string(data["expected_look_revision"], "expected_look_revision", limit=64),
         )
 
