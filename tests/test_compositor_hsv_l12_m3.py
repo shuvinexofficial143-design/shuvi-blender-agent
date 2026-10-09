@@ -117,7 +117,7 @@ def test_hsv_partial_link_failure_rolls_back_owned_node_only():
 def test_hsv_registry_and_policy():
     bpy, tree, _, args = prepare()
     catalog = {x["name"] for x in create_registry(bpy).catalog()}
-    assert len(catalog) == 323
+    assert len(catalog) == 326
     assert {"compositor.hsv_preview", "compositor.hsv_apply", "compositor.hsv_release"} <= catalog
     locked = ToolRegistry(HSVColorOperations(bpy).tools(), SafetyPolicy())
     plan = preview(locked, args)

@@ -320,7 +320,7 @@ def test_m10_acceptance_rejects_stale_revision():
 
 def test_m10_factory_registers_all_tools_with_host_contracts():
     registry = create_registry(fake_bpy(), SafetyPolicy(allow_mutations=True))
-    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 323
+    assert len(registry.catalog()) == MAX_REGISTERED_TOOLS == 326
     names = {item["name"] for item in registry.catalog()}
     assert {
         "animation.qa_inspect",

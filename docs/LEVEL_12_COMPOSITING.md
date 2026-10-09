@@ -1,6 +1,6 @@
 # Level 12 — Advanced Compositing
 
-**Source milestones: 40% (M1–M4/10); Blender runtime/visual verification 0%; production readiness: No.**
+**Source milestones: 50% (M1–M5/10); Blender runtime/visual verification 0%; production readiness: No.**
 
 ## M1 — Native Bright/Contrast image grading
 The typed `compositor.grade_preview/apply/release` tools connect one existing native image-output node to an *initially unconnected* existing Composite or Viewer output through a new Blender `CompositorNodeBrightContrast`. Bounded Bright (-100..100) and Contrast (-100..100) socket values and use_premultiply are written via real bpy RNA and verified with exact link readback. A stale graph revision blocks apply; release needs an unchanged scene, source, output, graded settings and links, then removes only the owned grade node and two links. Partial creation/link failures roll back the new node without rewriting foreign compositor links. This is source-level functionality: it does not load footage, process image pixels, execute compositing, or render a frame. Tool registry count 314. Next M2 will add a separate native lens-distortion / chromatic aberration pass.
@@ -13,3 +13,7 @@ Typed `compositor.lens_preview/apply/release` connect an existing native composi
 
 ## M4 — Native bounded Gaussian Blur (30% → 40%)
 Three typed tools `compositor.blur_preview/apply/release` use Blender `CompositorNodeBlur` configured with GAUSS or FAST_GAUSS filter, fixed integer X/Y radii 1..64, absolute pixels (use_relative=false), no variable size and optional extended bounds. Existing native image source feeds the owned blur which feeds a previously unlinked Composite or Viewer sink; exactly two links, full Blender RNA property readback, stale revision checks, guarded own-node atomic rollback and one-use owner-only release. No background, foreground, file, compositor render, foreign links or evaluated pixels are changed. Source-side only, Blender 4.x actual runtime/render acceptance 0%; tool count 323.
+
+
+## M5 — Native Sharpen Filter (40% → 50%)
+`compositor.sharpen_preview/apply/release` creates one native `CompositorNodeFilter`, restricted to `SHARPEN` (box) or `SHARPEN_DIAMOND` (moderate), with a bounded `Fac` input [0,1]. Uses an already existing native image source, 2 verified image links and an initially empty Composite or Viewer sink. No foreign link replacement; stale graph guard and exact RNA readback; rollback/release delete only the owned filter node and the two corresponding links if scene remains unchanged. No pixel evaluation or real Blender runtime proof. Registry 326 typed tools.

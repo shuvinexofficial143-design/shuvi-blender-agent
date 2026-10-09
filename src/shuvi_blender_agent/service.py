@@ -35,6 +35,7 @@ from .compositor_hsv import HSVColorOperations
 from .compositor_keying import ChromaKeyOperations
 from .compositor_lens import LensDistortionOperations
 from .compositor_matte import MatteRefinementOperations
+from .compositor_sharpen import SharpenFilterOperations
 from .compositor_shot import GreenScreenShotOperations
 from .contracts import Result, Status
 from .destructive import DestructiveOperations
@@ -142,6 +143,7 @@ def create_registry(
         LensDistortionOperations(bpy),
         MatteRefinementOperations(bpy),
         GreenScreenShotOperations(bpy),
+        SharpenFilterOperations(bpy),
         MovieClipCameraCalibrationOperations(bpy),
         MarkerPlacementOperations(bpy),
         MovieTrackingTrackConfigOperations(bpy),

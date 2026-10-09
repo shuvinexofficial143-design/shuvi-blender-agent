@@ -55,6 +55,7 @@ from .compositor_hsv import HueApply, HuePreview, HueRelease
 from .compositor_keying import KeyApply, KeyPreview, KeyRelease
 from .compositor_lens import LensApply, LensPreview, LensRelease
 from .compositor_matte import MatteApply, MattePreview, MatteRelease
+from .compositor_sharpen import SharpenApply, SharpenPreview, SharpenRelease
 from .compositor_shot import ShotApply as CompositeShotApply
 from .compositor_shot import ShotPreview as CompositeShotPreview
 from .compositor_shot import ShotRelease as CompositeShotRelease
@@ -478,6 +479,9 @@ def builtin_contracts() -> dict:
         "compositor.shot_preview": (read, CompositeShotPreview.parse),
         "compositor.shot_apply": (mutation, CompositeShotApply.parse),
         "compositor.shot_release": (mutation, CompositeShotRelease.parse),
+        "compositor.sharpen_preview": (read, SharpenPreview.parse),
+        "compositor.sharpen_apply": (mutation, SharpenApply.parse),
+        "compositor.sharpen_release": (mutation, SharpenRelease.parse),
         "vfx.wave_preview": (read, WavePreview.parse),
         "vfx.wave_apply": (mutation, WaveApply.parse),
         "vfx.wave_release": (mutation, WaveRelease.parse),
