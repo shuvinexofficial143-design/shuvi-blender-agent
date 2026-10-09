@@ -77,6 +77,7 @@ from .texture_workflows import TextureWorkflowOperations
 from .tools import Tool, ToolRegistry, ping_tool
 from .tracking_calibration import MovieClipCameraCalibrationOperations
 from .tracking_clip import MovieClipInspectionOperations
+from .tracking_configuration import MovieTrackingTrackConfigOperations
 from .tracking_markers import MarkerPlacementOperations
 from .transform import TransformOperations
 from .uv import UVOperations
@@ -127,6 +128,7 @@ def create_registry(
         MovieClipInspectionOperations(bpy),
         MovieClipCameraCalibrationOperations(bpy),
         MarkerPlacementOperations(bpy),
+        MovieTrackingTrackConfigOperations(bpy),
         ocean_simulation,
         OceanTimelineOperations(ocean_simulation),
         GeometryAcceptanceOperations(objects),

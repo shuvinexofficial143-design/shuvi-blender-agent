@@ -1,6 +1,6 @@
 # Level 11 — Tracking, Matchmove & Green Screen
 
-Source milestone: **40%** (M1–M4/10). Blender runtime verification: **0%**. Production: No.
+Source milestone: **50%** (M1–M5/10). Blender runtime verification: **0%**. Production: No.
 
 ## M1 — Existing MovieClip tracking inspection
 The allowlisted read-only `tracking.clip_inspect` takes an exact, already-loaded Blender MovieClip name, its tracking object name, and 1–16 sorted unique sample frames. It inspects the actual Blender MovieTrackingObject tracks and uses `MovieTrackingMarkers.find_frame(frame, exact=True)` to read real coordinates, keyed/mute status and lock flags (max 64 tracks). It also reports clip pixel dimensions/duration, without file paths. It never loads a clip, runs Blender tracking, solves camera movement, touches external files, changes any tracking data, or renders. Full runtime acceptance is not demonstrated. M2 will add reversible manual marker placement to an existing track; green screen and actual matchmove solve remain future milestones.
@@ -13,3 +13,6 @@ The existing read-only `tracking.clip_inspect` accepts optional Boolean `analyze
 
 ## M4 — Existing MovieClip Camera lens calibration (30% → 40%)
 Three strict typed operations `tracking.calibration_preview/apply/restore` change native `clip.tracking.camera` RNA on an already-loaded local clip's **camera tracking object**. The bounded POLYNOMIAL lens profile configures MILLIMETERS focal length, sensor width, pixel aspect, normalized optical center (`principal_point`), and radial `k1/k2/k3`; preview captures the original 9 camera properties and hash. Apply uses direct Blender RNA setters with full readback and verified rollback on a fault. Restore requires unchanged camera/clip identity and full lens values and consumes an owner token. Clips with already valid camera reconstruction and active owned calibrations are rejected. Does not auto-calibrate lenses, solve matchmove, evaluate frames, access footage files, or render. 296 registered tools; Blender runtime acceptance 0%.
+
+## M5 — Native tracking strategy configuration (40% → 50%)
+Adds `tracking.track_config_preview/apply/restore` for one existing local, unlocked `MovieTrackingTrack`. Settings use Blender RNA motion_model (Loc, LocRot, LocScale, LocRotScale, Affine, Perspective), pattern_match (KEYFRAME/PREV_FRAME), correlation_min, frames_limit, margin, use_brute, use_normalization and weight. Apply captures original settings and full marker fingerprint, writes actual RNA, verifies readback and reverses partial failure. Restore is an owned one-use token requiring unchanged clip/track identity, all marker coordinates and settings. No automatic frames tracked or footage loaded. 299 typed tools; real Blender runtime remains unverified.
