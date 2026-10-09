@@ -377,6 +377,15 @@ class FakeNode:
             self._socket(self.outputs, "BSDF")
         elif self.type == "OUTPUT_MATERIAL":
             self._socket(self.inputs, "Surface")
+        elif self.type == "OUTPUT_WORLD":
+            self._socket(self.inputs, "Surface")
+        elif self.type == "BACKGROUND":
+            self._socket(self.inputs, "Color", [0.05, 0.05, 0.05, 1.0])
+            self._socket(self.inputs, "Strength", 1.0)
+            self._socket(self.outputs, "Background")
+        elif self.type == "TEX_ENVIRONMENT":
+            self.projection = "EQUIRECTANGULAR"
+            self._socket(self.outputs, "Color")
         elif self.type == "TEX_IMAGE":
             self._socket(self.outputs, "Color")
             self._socket(self.outputs, "Alpha")
@@ -453,6 +462,9 @@ class FakeNodes(list):
         "ShaderNodeBsdfPrincipled": ("BSDF_PRINCIPLED", "Principled BSDF"),
         "ShaderNodeOutputMaterial": ("OUTPUT_MATERIAL", "Material Output"),
         "ShaderNodeTexImage": ("TEX_IMAGE", "Image Texture"),
+        "ShaderNodeTexEnvironment": ("TEX_ENVIRONMENT", "Environment Texture"),
+        "ShaderNodeBackground": ("BACKGROUND", "Background"),
+        "ShaderNodeOutputWorld": ("OUTPUT_WORLD", "World Output"),
         "ShaderNodeNormalMap": ("NORMAL_MAP", "Normal Map"),
         "ShaderNodeBump": ("BUMP", "Bump"),
         "GeometryNodeMeshCube": ("MESH_CUBE", "Cube"),
@@ -553,6 +565,27 @@ class FakeNodeGroups(list):
         super().remove(group)
 
 
+class FakeWorlds(list):
+    def get(self, name):
+        return next((item for item in self if item.name == name), None)
+
+    def new(self, name):
+        tree = NS(nodes=FakeNodes(), links=FakeNodeLinks())
+        tree.nodes.tree = tree
+        world = NS(
+            name=name,
+            use_nodes=False,
+            node_tree=tree,
+            users=0,
+            library=None,
+        )
+        self.append(world)
+        return world
+
+    def remove(self, world, do_unlink=True):
+        super().remove(world)
+
+
 class FakeImages(list):
     def get(self, name):
         return next((item for item in self if item.name == name), None)
@@ -564,6 +597,8 @@ class FakeImages(list):
             size=[width, height],
             library=None,
             colorspace_settings=NS(name="sRGB"),
+            source="GENERATED",
+            has_data=True,
         )
         self.append(image)
         return image
@@ -1045,6 +1080,7 @@ def fake_bpy(objects=None):
         name="Scene",
         objects=table,
         camera=None,
+        world=None,
         timeline_markers=FakeTimelineMarkers(),
         frame_start=1,
         frame_end=250,
@@ -1073,6 +1109,7 @@ def fake_bpy(objects=None):
             collections=collections,
             materials=FakeMaterials(),
             images=FakeImages(),
+            worlds=FakeWorlds(),
             node_groups=FakeNodeGroups(),
             cameras=FakeDevices("CAMERA"),
             lights=FakeDevices("LIGHT"),

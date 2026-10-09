@@ -1830,3 +1830,23 @@ NO_SHADOWS (casts no shadow). Apply writes real AREA Light
 requires exact per-light matches and retained ownership guards.
 No shadow-buffer/samples, material, render-engine or compositor edits.
 Tool count remains 253, Level 9 source 40%, runtime accepted 0%.
+
+
+## Level 9 M5 — World environment and already-loaded HDRI
+
+- `lighting.world_preview`: strict `name`, `mode` COLOR/HDRI,
+  `strength` 0–10, and either `color` RGB or `image_name`.
+  Requires HDRI already loaded in bpy.data.images (local, 2:1,
+  FILE/TILED, pixel data available), no external file access.
+  Preflights collisions and reports scene, original world and image
+  identity in a deterministic world revision without mutation.
+- `lighting.world_apply`: rechecks revision; uses
+  bpy.data.worlds.new, `use_nodes`, ShaderNodeOutputWorld,
+  ShaderNodeBackground, optionally ShaderNodeTexEnvironment and the
+  exact environment/background/output links. Verifies properties and
+  node identities, never writes into a pre-existing World.
+- `lighting.world_release`: current-session ownership token;
+  requires World and scene unchanged; restores exact prior World
+  and removes only the managed datablock.
+- M5 typed tool count **256**, Level 9 source **50%**. No real Blender
+  execution, HDRI loading, render, measured lux or environment preview.

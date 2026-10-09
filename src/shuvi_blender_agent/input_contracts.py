@@ -137,6 +137,7 @@ from .sculpting_remesh import SurfaceAnchors, SurfaceSnapshot, VoxelPlan, VoxelT
 from .selection import SelectionChange
 from .shape_ops import CreateCurve, CreateText
 from .studio_lighting import RigApply, RigPreview, RigRelease, StudioPresetCatalog
+from .world_lighting import WorldApply, WorldPreview, WorldRelease
 from .texture_workflows import AssetScope, BakePrep, ImageInspect, MaterialOnly, UDIMPlan
 from .texture_workflows import RecoveryRestore as TextureRecoveryRestore
 from .transform import PatchTransform
@@ -363,6 +364,9 @@ def builtin_contracts() -> dict:
         "cinema.sequence_apply": (mutation, SequenceApply.parse),
         "cinema.sequence_release": (mutation, SequenceRelease.parse),
         "lighting.preset_catalog": (read, StudioPresetCatalog.parse),
+        "lighting.world_preview": (read, WorldPreview.parse),
+        "lighting.world_apply": (mutation, WorldApply.parse),
+        "lighting.world_release": (mutation, WorldRelease.parse),
         "lighting.studio_preview": (read, RigPreview.parse),
         "lighting.studio_apply": (mutation, RigApply.parse),
         "lighting.studio_release": (mutation, RigRelease.parse),

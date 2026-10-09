@@ -997,3 +997,21 @@ Blender runtime/render acceptance 0%, production-ready NO**.
 No Level 9 M5, Blender launch or master Shuvi merge without fresh
 permission. This user authorized two sequential 10% milestones
 (M3+M4) in one `next`.
+
+
+## Level 9 M5 — Owned World Background and Preloaded HDRI
+
+New typed `lighting.world_preview`, `lighting.world_apply`,
+`lighting.world_release`. Creates new exclusively owned Blender
+World shader graph, COLOR or already-loaded real 2:1 HDRI image,
+assigns scene world only after setup and checks exact node types,
+links, Strength, Color or Environment Texture image identity and
+projection. Previous foreign world never modified/deleted. Preview
+detects stale scene/world/image and rejects name collisions.
+Partial creation/readback mismatch removes only the new world and
+reinstates prior world; same-session release refuses all changed
+world/image/scene state and removes only the owned world.
+
+New host/tool cap **256**, Level 9 source **50%**. Source/fake CI
+only, live Blender world-render acceptance **0%**. No file IO.
+M6 targeting is separately tested before completion.
