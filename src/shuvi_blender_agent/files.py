@@ -102,6 +102,31 @@ class OutputWorkspace:
                 pass
 
 
+def valid_blend_header(header: bytes) -> bool:
+    """Accept only Blender's two documented uncompressed file-header layouts.
+
+    Format 0 (pre-5.x) uses 12 bytes; format 1 (5.x) uses 17 bytes.
+    A signature alone is not proof a whole project can be opened.
+    """
+    if not header.startswith(b"BLENDER"):
+        return False
+    old = (
+        len(header) >= 12
+        and header[7:8] in (b"_", b"-")
+        and header[8:9] in (b"v", b"V")
+        and header[9:12].isdigit()
+    )
+    modern = (
+        len(header) >= 17
+        and header[7:9] == b"17"
+        and header[9:10] == b"-"
+        and header[10:12] == b"01"
+        and header[12:13] == b"v"
+        and header[13:17].isdigit()
+    )
+    return old or modern
+
+
 def read_output(path: Path, kind: str) -> dict:
     if kind not in ("BLEND", "PNG"):
         raise invalid("Unsupported output format")
@@ -125,7 +150,7 @@ def read_output(path: Path, kind: str) -> dict:
             if count > size:
                 raise AgentError(ErrorCode.VERIFICATION_FAILED, "Output grew during readback")
             if not header:
-                header = chunk[:12]
+                header = chunk[:17]
             digest.update(chunk)
             if kind == "PNG":
                 chunks.append(chunk)
@@ -145,12 +170,7 @@ def read_output(path: Path, kind: str) -> dict:
         "format": kind,
     }
     if kind == "BLEND":
-        if (
-            header[:7] != b"BLENDER"
-            or header[7:8] not in (b"_", b"-")
-            or header[8:9] not in (b"v", b"V")
-            or not header[9:12].isdigit()
-        ):
+        if not valid_blend_header(header):
             raise AgentError(ErrorCode.VERIFICATION_FAILED, "Invalid uncompressed Blender header")
     elif kind == "PNG":
         result.update(verify_png(b"".join(chunks)))
