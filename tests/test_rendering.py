@@ -257,6 +257,7 @@ def test_blend_header_version_must_be_numeric(tmp_path):
     with pytest.raises(AgentError):
         read_output(path, "BLEND")
 
+
 @pytest.mark.parametrize(
     "header",
     [b"BLENDER-v402", b"BLENDER_V305", b"BLENDER17-01v0500", b"BLENDER17-01v0502"],
