@@ -256,3 +256,35 @@ def test_blend_header_version_must_be_numeric(tmp_path):
     path.write_bytes(b"BLENDER-vBAD" + b"data")
     with pytest.raises(AgentError):
         read_output(path, "BLEND")
+
+@pytest.mark.parametrize(
+    "header",
+    [b"BLENDER-v402", b"BLENDER_V305", b"BLENDER17-01v0500", b"BLENDER17-01v0502"],
+)
+def test_legacy_and_blender_five_headers_are_accepted(tmp_path, header):
+    path = tmp_path / "valid.blend"
+    path.write_bytes(header + b"test payload; not an actual .blend scene")
+    result = read_output(path, "BLEND")
+    assert result["format"] == "BLEND"
+    assert result["bytes"] == path.stat().st_size
+    assert len(result["sha256"]) == 64
+
+
+@pytest.mark.parametrize(
+    "header",
+    [
+        b"BLENDER17-01v05x2",
+        b"BLENDER17-02v0502",
+        b"BLENDER18-01v0502",
+        b"BLENDER17_01v0502",
+        b"BLENDER17-01V0502",
+        b"BLENDER17-01v050",
+        b"BLENDER-vBAD",
+    ],
+)
+def test_corrupted_new_and_old_blend_headers_remain_denied(tmp_path, header):
+    path = tmp_path / "invalid.blend"
+    path.write_bytes(header)
+    with pytest.raises(AgentError) as error:
+        read_output(path, "BLEND")
+    assert error.value.code == ErrorCode.VERIFICATION_FAILED
